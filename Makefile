@@ -286,13 +286,12 @@ setup-dirs:
 # Linting and formatting
 .PHONY: lint
 lint:
-	$(PYTHON) -m flake8 scripts/
-	$(PYTHON) -m black --check scripts/
+	$(PYTHON) -m ruff check scripts/
 
 .PHONY: format
 format:
-	$(PYTHON) -m black scripts/
-	$(PYTHON) -m isort scripts/
+	$(PYTHON) -m ruff format scripts/
+	$(PYTHON) -m ruff check --fix scripts/
 
 # Quick development targets
 .PHONY: quick-extract

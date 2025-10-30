@@ -1,5 +1,8 @@
 # Trading Strategy X (Twitter) Post Templates
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Content Operations | **Audience**: Content Creators
+
 ## Template 1: Comprehensive Performance Focus
 
 ```

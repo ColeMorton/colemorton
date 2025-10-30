@@ -77,16 +77,14 @@ class TestEnvironmentLoadingConsistency:
 
     def test_ensure_test_environment_loaded_failure(self):
         """Test that ensure_test_environment_loaded fails correctly for invalid environment"""
-        # Patch both os.environ and the ConfigLoader to simulate complete failure
+        # Patch os.environ to simulate missing environment variables
         with patch.dict('os.environ', {}, clear=True):
-            with patch('environment_test_helpers.ConfigLoader') as mock_loader:
-                # Make ConfigLoader fail to load environment
-                mock_loader.side_effect = Exception("Config loading failed")
+            # ConfigLoader will still run but won't find any .env file
+            # This should result in no API keys being loaded
+            with pytest.raises(EnvironmentError) as exc_info:
+                ensure_test_environment_loaded()
 
-                with pytest.raises(EnvironmentError) as exc_info:
-                    ensure_test_environment_loaded()
-
-                assert "Required environment variables not found" in str(exc_info.value)
+            assert "Required environment variables not found" in str(exc_info.value)
 
 
 class TestCLIServiceEnvironmentIntegration:

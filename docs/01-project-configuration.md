@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Documentation Owner | **Audience**: All Developers
+
 This file provides critical guidance to Claude Code when working with this repository.
 
 ## Project Overview

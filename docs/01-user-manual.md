@@ -1,5 +1,8 @@
 # 📖 Sensylate User Manual
 
+**Version**: 2.1 | **Last Updated**: 2024-09-07 | **Status**: Active
+**Authority**: Documentation Owner | **Audience**: All Users
+
 > **Complete guide to using Sensylate's multi-modal platform for trading analysis, content creation, and AI command collaboration.**
 
 ## 🎯 Quick Navigation

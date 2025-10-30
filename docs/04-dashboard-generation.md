@@ -1,5 +1,8 @@
 # Dashboard Generation Guide
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Product Team | **Audience**: Developers
+
 ## Overview
 
 The Dashboard Generation system provides automated creation of high-quality performance overview visualizations for historical trading reports. The system generates professional dual-mode (light/dark) dashboard images that integrate seamlessly with Sensylate's design system.

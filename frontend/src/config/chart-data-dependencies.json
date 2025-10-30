@@ -37,7 +37,9 @@
   },
   "chartTypeMapping": {
     "apple-price": "AAPL",
-    "mstr-price": "MSTR"
+    "mstr-price": "MSTR",
+    "xpev-price": "XPEV",
+    "nio-price": "NIO"
   },
   "multiStockMapping": {
     "xpev-nio-stock-price": ["XPEV", "NIO"]

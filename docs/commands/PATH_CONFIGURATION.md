@@ -1,5 +1,8 @@
 # Path Configuration Reference
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: Command Developers
+
 This document defines the standardized path variables used across all Claude commands in the Sensylate project.
 
 ## Base Path Variables

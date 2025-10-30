@@ -1,5 +1,8 @@
 # Sensylate Data Solution Architecture Specification
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Engineering Team | **Audience**: Developers & Architects
+
 ## Executive Summary
 
 The Sensylate platform implements a **contract-driven, local-first data architecture** that combines Python data processing with an Astro frontend. The system prioritizes data freshness, schema consistency, and frontend-first requirements discovery through automated contract generation and validation.

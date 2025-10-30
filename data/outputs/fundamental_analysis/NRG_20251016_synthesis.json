@@ -1,0 +1,17 @@
+{
+  "integration_status": "no_sector_mapping",
+  "ticker": "NRG",
+  "available_sectors": [
+    "consumer_discretionary",
+    "communication_services",
+    "finance",
+    "consumer_staples",
+    "technology",
+    "energy",
+    "healthcare",
+    "utilities",
+    "materials",
+    "real_estate",
+    "industrial"
+  ]
+}

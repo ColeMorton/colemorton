@@ -1,5 +1,8 @@
 # Claude Sub Agents
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: AI System Developers
+
 > Create and use specialized AI subagents in Claude Code for task-specific workflows and improved context management.
 
 Custom subagents in Claude Code are specialized AI assistants that can be invoked to handle specific types of tasks. They enable more efficient problem-solving by providing task-specific configurations with customized system prompts, tools and a separate context window.

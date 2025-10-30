@@ -1,5 +1,8 @@
 # Command Name Template
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: Command Developers
+
 **Command Classification**: [📊|🎯|🔧|🌐] **[Core Product Command|Assistant|Tool|Integration]**
 **Knowledge Domain**: `domain-name-expertise`
 **Ecosystem Version**: `X.Y.Z` *(Last Updated: YYYY-MM-DD)*

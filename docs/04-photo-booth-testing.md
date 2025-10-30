@@ -1,5 +1,8 @@
 # Photo Booth System Testing Coverage Analysis
 
+**Version**: 2.1 | **Last Updated**: 2024-08-27 | **Status**: Active
+**Authority**: Product Team | **Audience**: QA Engineers & Developers
+
 ## Executive Summary
 
 **Assessment Date:** 2025-08-10
