@@ -12,12 +12,10 @@ import {
   setupPhotoBoothE2E,
   cleanupPhotoBoothE2E,
   type E2ETestContext,
-  PhotoBoothE2EHelper,
   skipIfNotDevelopmentMode,
   isPhotoBoothDevelopmentMode,
 } from "../utils/e2e-setup";
 import * as fs from "fs/promises";
-import * as fsSync from "fs";
 import * as path from "path";
 import * as os from "os";
 
@@ -45,8 +43,8 @@ describe("Photo Booth File System & Resource Management", () => {
     if (tempTestDir && isPhotoBoothDevelopmentMode()) {
       try {
         await fs.rmdir(tempTestDir, { recursive: true });
-      } catch (error) {
-        console.warn(`Failed to cleanup temp directory: ${error}`);
+      } catch (err) {
+        console.warn(`Failed to cleanup temp directory: ${err}`);
       }
     }
   });
@@ -539,7 +537,7 @@ describe("Photo Booth File System & Resource Management", () => {
           try {
             await fs.unlink(oldFile);
             cleanedUpFiles++;
-          } catch (error) {
+          } catch {
             // File might not exist
           }
         }
@@ -739,7 +737,7 @@ describe("Photo Booth File System & Resource Management", () => {
               staleLockPid: lockPid,
             }),
           });
-        } catch (error) {
+        } catch {
           await route.fulfill({
             status: 200,
             contentType: "application/json",

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Chart Data Dependency Management System provides intelligent data refresh capabilities for Sensylate's mixed data ecosystem. It handles manual data sources (unpredictable timing), CLI API services (automatic refresh), static data (never updates), and hybrid sources seamlessly.
+The Chart Data Dependency Management System provides intelligent data refresh capabilities for Cole Morton's mixed data ecosystem. It handles manual data sources (unpredictable timing), CLI API services (automatic refresh), static data (never updates), and hybrid sources seamlessly.
 
 ## Quick Start
 

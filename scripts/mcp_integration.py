@@ -399,23 +399,23 @@ class MCPDataAccess:
         """Get interest rate data via FRED MCP server"""
         return self._call_mcp_tool("external-api", "get_economic_data", indicator="FEDFUNDS")
 
-    # Sensylate Trading Integration (deprecated - using external-api)
+    # Cole Morton Trading Integration (deprecated - using external-api)
     def get_fundamental_analysis(self, ticker: str) -> dict:
         """Get comprehensive fundamental analysis via External API server"""
         return self._call_mcp_tool("external-api", "get_comprehensive_stock_analysis", ticker=ticker)
 
     def list_available_analyses(self, analysis_type: str = "fundamental_analysis") -> dict:
-        """List available analyses via Sensylate Trading MCP server"""
+        """List available analyses via Cole Morton Trading MCP server"""
         raise NotImplementedError(
-            "sensylate-trading server has been deprecated. Use external-api for fundamental analysis."
+            "colemorton-trading server has been deprecated. Use external-api for fundamental analysis."
         )
 
     def get_trading_performance(self) -> dict:
-        """Get trading performance data via Sensylate Trading MCP server"""
-        raise NotImplementedError("sensylate-trading server has been deprecated.")
+        """Get trading performance data via Cole Morton Trading MCP server"""
+        raise NotImplementedError("colemorton-trading server has been deprecated.")
 
     def generate_blog_content_from_analysis(self, ticker: str, content_type: str = "fundamental_analysis") -> dict:
-        """Generate blog content from analysis via Sensylate Trading MCP server"""
+        """Generate blog content from analysis via Cole Morton Trading MCP server"""
         return self._call_mcp_tool(
             "content-publishing",
             "generate_fundamental_analysis_blog",

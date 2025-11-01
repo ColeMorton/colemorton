@@ -59,7 +59,7 @@ describe("Homepage Footer Links E2E Tests", () => {
         { name: "github", expectedUrl: "https://github.com/ColeMorton" },
         {
           name: "linkedin",
-          expectedUrl: "https://www.linkedin.com/in/cole-morton-72300745/",
+          expectedUrl: "https://www.linkedin.com/in/colemorton-72300745/",
         },
       ];
 

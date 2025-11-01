@@ -1,12 +1,6 @@
 import React from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  cleanup,
-} from "@testing-library/react";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // Mock photo-booth config BEFORE importing the component
@@ -128,7 +122,7 @@ vi.mock("@/shortcodes/ChartDisplay", () => ({
 import PhotoBoothDisplay from "@/shortcodes/PhotoBoothDisplay";
 import { DashboardLoader } from "@/services/dashboardLoader";
 import { testURLParams } from "../__mocks__/test-data.mock";
-import { mockURLSearchParams, mockWindowHistory } from "../utils/test-helpers";
+import { mockURLSearchParams } from "../utils/test-helpers";
 
 // Get the mocked DashboardLoader for per-test overrides
 const mockDashboardLoader = vi.mocked(DashboardLoader);

@@ -6,7 +6,6 @@ import {
   fireEvent,
   waitFor,
   cleanup,
-  act,
 } from "@testing-library/react";
 
 // Mock photo-booth config BEFORE importing the component
@@ -129,12 +128,8 @@ import PhotoBoothDisplay from "@/shortcodes/PhotoBoothDisplay";
 import { DashboardLoader } from "@/services/dashboardLoader";
 import {
   setupPhotoBoothMocks,
-  mockAllDashboards,
-  mockFetchSuccess,
   mockFetchError,
   mockNetworkError,
-  mockExportSuccess,
-  mockExportError,
 } from "../__mocks__/setup.tsx";
 import { testURLParams } from "../__mocks__/test-data.mock";
 import { mockURLSearchParams, mockWindowHistory } from "../utils/test-helpers";

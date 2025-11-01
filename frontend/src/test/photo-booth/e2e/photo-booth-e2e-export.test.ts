@@ -90,9 +90,6 @@ describe("Photo Booth End-to-End Export Integration", () => {
       // Wait for ready state
       await photoBoothE2EHelper.waitForPhotoBoothReady(page, 30000);
 
-      // Get current timestamp for export tracking
-      const exportTimestamp = Date.now();
-
       // Execute export via UI interaction
       const exportButton = await page.waitForSelector(
         'button:has-text("Export Dashboard")',
@@ -450,8 +447,6 @@ describe("Photo Booth End-to-End Export Integration", () => {
       });
 
       await photoBoothE2EHelper.waitForPhotoBoothReady(page, 30000);
-
-      const requestCount = 0;
 
       // Override fetch to fail first request, succeed second
       await page.evaluate(() => {

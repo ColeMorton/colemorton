@@ -3,7 +3,7 @@
 Dashboard generator for creating scalable performance overview visualizations.
 
 This script generates high-resolution dashboard images from historical trading
-performance data, following Sensylate design system specifications.
+performance data, following Cole Morton design system specifications.
 """
 
 import argparse
@@ -113,7 +113,7 @@ class DashboardGenerator:
         return output_path
 
     def _setup_matplotlib(self, mode: str):
-        """Setup matplotlib with Sensylate theme."""
+        """Setup matplotlib with Cole Morton theme."""
         style_config = self.theme_manager.get_matplotlib_style(mode)
 
         # Apply style configuration

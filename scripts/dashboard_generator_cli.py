@@ -4,7 +4,7 @@ Dashboard Generator CLI
 
 Command-line interface for dashboard generation with:
 - High-resolution performance overview visualizations
-- Scalable Sensylate design system integration
+- Scalable Cole Morton design system integration
 - Light/dark mode generation
 - Production-ready chart generation
 """

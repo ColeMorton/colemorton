@@ -2,7 +2,7 @@
 """
 Environment Setup and Validation Script
 
-Helps users set up and validate their API key configuration for the Sensylate system.
+Helps users set up and validate their API key configuration for the Cole Morton system.
 Provides detailed status reporting and setup guidance.
 """
 
@@ -196,7 +196,7 @@ def check_financial_services_config() -> bool:
 
 def main():
     """Main setup and validation routine"""
-    print_header("Sensylate Environment Setup & Validation")
+    print_header("Cole Morton Environment Setup & Validation")
 
     # Check current directory
     if not Path("scripts").exists() or not Path("config").exists():

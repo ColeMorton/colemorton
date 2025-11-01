@@ -199,7 +199,7 @@ export class ScreenshotBaselineManager {
         encoding: "utf-8",
       });
       return hash.split(" ")[0];
-    } catch (error) {
+    } catch {
       // Fallback: use file size and modification time as pseudo-hash
       const stats = require("fs").statSync(imagePath);
       return `${stats.size}-${stats.mtime.getTime()}`;
@@ -298,7 +298,7 @@ export class ScreenshotBaselineManager {
       const maxSize = Math.max(baselineStats.size, comparisonStats.size);
 
       return Math.max(0, 1 - sizeDiff / maxSize);
-    } catch (error) {
+    } catch {
       return 0;
     }
   }
@@ -360,7 +360,7 @@ export class ScreenshotBaselineManager {
         } else {
           invalid.push(name);
         }
-      } catch (error) {
+      } catch {
         invalid.push(name);
       }
     }

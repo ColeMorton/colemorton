@@ -3,7 +3,7 @@
 Plotly-native dashboard generator for creating interactive performance visualizations.
 
 This script generates high-resolution dashboard images using Plotly's native
-subplot system, following Sensylate design system specifications.
+subplot system, following Cole Morton design system specifications.
 """
 
 import argparse

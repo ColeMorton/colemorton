@@ -1,13 +1,13 @@
 ---
 title: "Contact"
 meta_title: "Contact Cole Morton"
-description: "Connect with Cole Morton about technical collaboration, professional opportunities, or Sensylate platform inquiries. Enterprise-grade GenContentOps expertise available for systematic trading analysis projects."
+description: "Connect with Cole Morton about technical collaboration, professional opportunities, or Cole Morton platform inquiries. Enterprise-grade GenContentOps expertise available for systematic trading analysis projects."
 draft: false
 ---
 
 ## Professional Inquiries Welcome
 
-I'm interested in connecting with technical professionals, trading firms, and organizations working with systematic market analysis. The Sensylate platform demonstrates **enterprise-grade GenContentOps capabilities** that can be adapted for institutional applications.
+I'm interested in connecting with technical professionals, trading firms, and organizations working with systematic market analysis. The Cole Morton platform demonstrates **enterprise-grade GenContentOps capabilities** that can be adapted for institutional applications.
 
 ### Technical Collaboration
 
@@ -29,7 +29,7 @@ I welcome discussions about:
 
 ### Platform Inquiries
 
-**About Sensylate**: Questions regarding the platform's technical implementation, analysis methodologies, or potential enterprise applications are welcome. All generated content follows documented procedures with full audit trails and institutional compliance standards.
+**About Cole Morton**: Questions regarding the platform's technical implementation, analysis methodologies, or potential enterprise applications are welcome. All generated content follows documented procedures with full audit trails and institutional compliance standards.
 
 ### Communication Standards
 

@@ -5,7 +5,7 @@
     {
       "contract_id": "open-positions_live_signals_open_positions_pnl",
       "category": "open-positions",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/open-positions/live_signals_open_positions_pnl.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/open-positions/live_signals_open_positions_pnl.csv",
       "relative_path": "open-positions/live_signals_open_positions_pnl.csv",
       "schema": [
         {
@@ -162,7 +162,7 @@
     {
       "contract_id": "portfolio_multi_strategy_portfolio_cumulative_returns",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_cumulative_returns.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_cumulative_returns.csv",
       "relative_path": "portfolio/multi_strategy_portfolio_cumulative_returns.csv",
       "schema": [
         {
@@ -230,7 +230,7 @@
     {
       "contract_id": "portfolio_multi_strategy_portfolio_drawdowns",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_drawdowns.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_drawdowns.csv",
       "relative_path": "portfolio/multi_strategy_portfolio_drawdowns.csv",
       "schema": [
         {
@@ -328,7 +328,7 @@
     {
       "contract_id": "portfolio_multi_strategy_portfolio_returns",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_returns.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_returns.csv",
       "relative_path": "portfolio/multi_strategy_portfolio_returns.csv",
       "schema": [
         {
@@ -396,7 +396,7 @@
     {
       "contract_id": "portfolio_multi_strategy_portfolio_portfolio_value",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_portfolio_value.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/multi_strategy_portfolio_portfolio_value.csv",
       "relative_path": "portfolio/multi_strategy_portfolio_portfolio_value.csv",
       "schema": [
         {
@@ -464,7 +464,7 @@
     {
       "contract_id": "portfolio_portfolio_buy_and_hold_portfolio_value",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/portfolio_buy_and_hold_portfolio_value.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/portfolio_buy_and_hold_portfolio_value.csv",
       "relative_path": "portfolio/portfolio_buy_and_hold_portfolio_value.csv",
       "schema": [
         {
@@ -532,7 +532,7 @@
     {
       "contract_id": "portfolio_portfolio_buy_and_hold_returns",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/portfolio_buy_and_hold_returns.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/portfolio_buy_and_hold_returns.csv",
       "relative_path": "portfolio/portfolio_buy_and_hold_returns.csv",
       "schema": [
         {
@@ -600,7 +600,7 @@
     {
       "contract_id": "portfolio_live-signals_live_signals_equity",
       "category": "portfolio",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/portfolio/live-signals/live_signals_equity.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/portfolio/live-signals/live_signals_equity.csv",
       "relative_path": "portfolio/live-signals/live_signals_equity.csv",
       "schema": [
         {
@@ -773,7 +773,7 @@
     {
       "contract_id": "trade-history_live_signals",
       "category": "trade-history",
-      "file_path": "/Users/colemorton/Projects/sensylate-command-system-enhancements/frontend/public/data/trade-history/live_signals.csv",
+      "file_path": "/Users/colemorton/Projects/colemorton-command-system-enhancements/frontend/public/data/trade-history/live_signals.csv",
       "relative_path": "trade-history/live_signals.csv",
       "schema": [
         {

@@ -1,4 +1,4 @@
-# Sensylate Frontend Style Guide
+# Cole Morton Frontend Style Guide
 
 > **Version**: 1.0.0  
 > **Framework**: Astro 5.7+ with Tailwind CSS 4+  
@@ -24,7 +24,7 @@
 
 ### Tech Stack Foundation
 
-The Sensylate frontend implements a modern, performance-optimized styling system built on:
+The Cole Morton frontend implements a modern, performance-optimized styling system built on:
 
 - **Astro 5.7+**: Static site generation with component islands
 - **Tailwind CSS 4.0**: Utility-first CSS framework with custom plugin architecture
@@ -298,7 +298,7 @@ function toggleTheme(themeSwitch) {
 
 ## Brand Typography Usage
 
-Sensylate implements a strategic dual brand approach using the Paytone One font for both personal identity and content attribution. Complete CSS specifications have been extracted using automated browser analysis to ensure pixel-perfect recreation.
+Cole Morton implements a strategic dual brand approach using the Paytone One font for both personal identity and content attribution. Complete CSS specifications have been extracted using automated browser analysis to ensure pixel-perfect recreation.
 
 ### Personal Brand: "Cole Morton"
 
@@ -1293,7 +1293,7 @@ function ThemedComponent() {
 
 ## Conclusion
 
-This style guide provides comprehensive documentation for the Sensylate frontend styling system. The architecture emphasizes:
+This style guide provides comprehensive documentation for the Cole Morton frontend styling system. The architecture emphasizes:
 
 - **Performance**: Self-hosted fonts, optimized CSS delivery, build-time optimizations
 - **Maintainability**: Centralized theme configuration, systematic naming conventions

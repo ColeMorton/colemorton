@@ -283,9 +283,9 @@ class LayoutManager:
     def _get_indicator_color(self, indicator: str, theme_colors: dict[str, str]) -> str:
         """Get color for metric indicators."""
         indicator_colors = {
-            "positive": "#26c6da",  # Sensylate cyan
-            "negative": "#7e57c2",  # Sensylate purple
-            "neutral": "#3179f5",  # Sensylate blue
+            "positive": "#26c6da",  # Cole Morton cyan
+            "negative": "#7e57c2",  # Cole Morton purple
+            "neutral": "#3179f5",  # Cole Morton blue
             "warning": "#ff7043",  # Orange
             "good": "#66bb6a",  # Green
         }

@@ -67,7 +67,7 @@ export function generatePersonSchema(): Person {
     sameAs: [
       "https://twitter.com/ColeMoreton",
       "https://github.com/ColeMorton",
-      "https://www.linkedin.com/in/cole-morton-72300745/",
+      "https://www.linkedin.com/in/colemorton-72300745/",
       "https://colemorton.substack.com/",
     ],
   };
@@ -88,7 +88,7 @@ export function generateOrganizationSchema(): Organization {
     sameAs: [
       "https://twitter.com/ColeMoreton",
       "https://github.com/ColeMorton",
-      "https://www.linkedin.com/in/cole-morton-72300745/",
+      "https://www.linkedin.com/in/colemorton-72300745/",
       "https://colemorton.substack.com/",
     ],
   };

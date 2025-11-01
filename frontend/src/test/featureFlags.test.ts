@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-// Use standardized test environment from setup
-const _testEnv = global.TEST_ENV_VARIABLES;
-
 // Mock config.json
 vi.mock("@/config/config.json", () => ({
   default: {

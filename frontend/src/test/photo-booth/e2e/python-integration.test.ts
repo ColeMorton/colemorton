@@ -1,12 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  beforeAll,
-  afterAll,
-} from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import {
   photoBoothE2EHelper,
   setupPhotoBoothE2E,
@@ -22,7 +14,6 @@ import * as childProcess from "child_process";
 import { promisify } from "util";
 
 const execAsync = promisify(childProcess.exec);
-const spawnAsync = childProcess.spawn;
 
 describe("Photo Booth Python Process Management Integration", () => {
   let context: E2ETestContext;
@@ -46,7 +37,7 @@ describe("Photo Booth Python Process Management Integration", () => {
     );
     try {
       await fs.access(pythonScriptPath);
-    } catch (error) {
+    } catch {
       console.warn(`⚠️  Python script not found: ${pythonScriptPath}`);
       console.warn("   Python integration tests may fail");
     }
@@ -54,7 +45,7 @@ describe("Photo Booth Python Process Management Integration", () => {
     // Validate Python environment
     try {
       await execAsync("python3 --version");
-    } catch (error) {
+    } catch {
       console.warn(
         "⚠️  Python3 not available - Python integration tests may fail",
       );

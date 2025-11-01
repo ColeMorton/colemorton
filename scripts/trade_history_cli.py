@@ -4,7 +4,7 @@ Trade History CLI
 
 Command-line interface for trade history image generation with:
 - Automated chart selection for trade reports
-- Sensylate design system compliance
+- Cole Morton design system compliance
 - Multiple report type support
 - Production-ready visualization generation
 """

@@ -22,7 +22,6 @@ import * as os from "os";
 
 describe("Photo Booth Configuration Hot-Reloading", () => {
   let context: E2ETestContext;
-  let originalConfig: any;
   let tempConfigPath: string;
   let projectRoot: string;
 
@@ -44,8 +43,8 @@ describe("Photo Booth Configuration Hot-Reloading", () => {
     );
     try {
       const configContent = await fs.readFile(originalConfigPath, "utf-8");
-      originalConfig = JSON.parse(configContent);
-    } catch (error) {
+      JSON.parse(configContent);
+    } catch {
       console.warn("⚠️  Could not read original photo-booth.json config");
     }
 

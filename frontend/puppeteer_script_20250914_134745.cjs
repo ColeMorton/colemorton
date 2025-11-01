@@ -103,13 +103,13 @@ const puppeteer = require('puppeteer');
     // Take screenshot
     console.log('Taking screenshot...');
     await page.screenshot({
-      path: '/Users/colemorton/Projects/sensylate/data/outputs/photo-booth/logo_generation_dark_16x9_png_150dpi_attribution_20250914_134745_temp.png',
+      path: '/Users/colemorton/Projects/colemorton/data/outputs/photo-booth/logo_generation_dark_16x9_png_150dpi_attribution_20250914_134745_temp.png',
       fullPage: false,
       type: 'png',
       quality: undefined
     });
 
-    console.log('Screenshot saved to:', '/Users/colemorton/Projects/sensylate/data/outputs/photo-booth/logo_generation_dark_16x9_png_150dpi_attribution_20250914_134745_temp.png');
+    console.log('Screenshot saved to:', '/Users/colemorton/Projects/colemorton/data/outputs/photo-booth/logo_generation_dark_16x9_png_150dpi_attribution_20250914_134745_temp.png');
 
   } catch (error) {
     console.error('Screenshot generation failed:', error);

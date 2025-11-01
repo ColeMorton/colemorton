@@ -117,7 +117,7 @@ class DataQualityMonitor:
                 "enabled": False,
                 "smtp_server": "localhost",
                 "smtp_port": 587,
-                "from_email": "monitor@sensylate.com",
+                "from_email": "monitor@colemorton.com",
                 "to_emails": [],
                 "password": "",
             },

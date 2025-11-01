@@ -6,7 +6,7 @@ Generates interactive Plotly dashboards for live signals trade history with:
 - 2x2 grid layout for comprehensive signal analysis
 - High-DPI PNG export with dual-mode variants
 - Frontend-ready JSON configurations
-- Sensylate design system compliance
+- Cole Morton design system compliance
 """
 
 import json
@@ -24,12 +24,12 @@ class LiveSignalsDashboard:
     """Generate interactive Plotly dashboards for live signals data"""
 
     def __init__(self, sensylate_theme: dict[str, Any] | None = None):
-        """Initialize dashboard generator with Sensylate theme"""
+        """Initialize dashboard generator with Cole Morton theme"""
         self.theme = sensylate_theme or self._default_sensylate_theme()
         self._setup_plotly_theme()
 
     def _default_sensylate_theme(self) -> dict[str, Any]:
-        """Default Sensylate design system theme"""
+        """Default Cole Morton design system theme"""
         return {
             "colors": {
                 "primary": "#26c6da",
@@ -48,7 +48,7 @@ class LiveSignalsDashboard:
         }
 
     def _setup_plotly_theme(self):
-        """Setup custom Plotly themes for Sensylate design system"""
+        """Setup custom Plotly themes for Cole Morton design system"""
         # Light theme
         light_template = go.layout.Template(
             layout=go.Layout(

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Theme manager for Sensylate design system integration.
+Theme manager for Cole Morton design system integration.
 
 This module provides color palette and theme management for dashboard generation,
-ensuring consistency with the Sensylate brand guidelines.
+ensuring consistency with the Cole Morton brand guidelines.
 """
 
 import logging
@@ -16,7 +16,7 @@ import yaml
 
 @dataclass
 class ColorPalette:
-    """Represents the Sensylate color palette."""
+    """Represents the Cole Morton color palette."""
 
     # Primary chart colors
     primary_data: str = "#26c6da"  # Cyan
@@ -97,7 +97,7 @@ class ThemeManager:
             return self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default Sensylate theme configuration."""
+        """Get default Cole Morton theme configuration."""
         return {
             "design_system": {
                 "colors": {

@@ -3,7 +3,7 @@
 MCP Compliance Checking Script
 
 This script enforces MCP-first development patterns and context decoupling
-standards across the Sensylate codebase. It identifies violations of the
+standards across the Cole Morton codebase. It identifies violations of the
 MCP architecture and helps maintain consistency with established patterns.
 
 Usage:
@@ -64,7 +64,7 @@ class ComplianceViolation:
 
 class MCPComplianceChecker:
     """
-    Comprehensive MCP compliance checker for Sensylate codebase.
+    Comprehensive MCP compliance checker for Cole Morton codebase.
 
     This checker enforces:
     1. MCP-first development patterns
@@ -500,7 +500,7 @@ class MCPComplianceChecker:
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="Check MCP compliance for Sensylate codebase",
+        description="Check MCP compliance for Cole Morton codebase",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

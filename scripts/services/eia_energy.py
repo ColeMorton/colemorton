@@ -742,7 +742,7 @@ def create_eia_energy_service(env: str = "dev") -> EIAEnergyService:
         ),
         headers={
             "Accept": "application/json",
-            "User-Agent": "Sensylate Energy Analysis Platform",
+            "User-Agent": "Cole Morton Energy Analysis Platform",
         },
     )
 

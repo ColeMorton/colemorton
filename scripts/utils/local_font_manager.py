@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Local font manager for Sensylate unified font system.
+Local font manager for Cole Morton unified font system.
 
 This module provides local font loading and management for Python/matplotlib
 integration, using the same font files as the frontend for consistency.

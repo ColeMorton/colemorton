@@ -3,7 +3,7 @@
 Type Safety Metrics Collection - Team Adoption Monitoring
 
 This module provides comprehensive metrics collection for monitoring team adoption
-of type safety guidelines and MyPy compliance across the Sensylate platform.
+of type safety guidelines and MyPy compliance across the Cole Morton platform.
 """
 
 import ast

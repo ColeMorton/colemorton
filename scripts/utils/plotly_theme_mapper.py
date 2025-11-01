@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Plotly theme mapper for Sensylate design system integration.
+Plotly theme mapper for Cole Morton design system integration.
 
-This module maps Sensylate theme configurations to Plotly templates
+This module maps Cole Morton theme configurations to Plotly templates
 and layout specifications for consistent styling across chart engines.
 """
 
@@ -13,14 +13,14 @@ import plotly.io as pio
 
 
 class PlotlyThemeMapper:
-    """Maps Sensylate themes to Plotly configurations."""
+    """Maps Cole Morton themes to Plotly configurations."""
 
     def __init__(self, theme_manager):
         """
         Initialize Plotly theme mapper.
 
         Args:
-            theme_manager: Sensylate theme manager instance
+            theme_manager: Cole Morton theme manager instance
         """
         self.theme_manager = theme_manager
         self._create_sensylate_templates()
@@ -224,7 +224,7 @@ class PlotlyThemeMapper:
         dashboard: bool = False,
     ) -> go.Figure:
         """
-        Apply appropriate Sensylate template to figure.
+        Apply appropriate Cole Morton template to figure.
 
         Args:
             fig: Plotly figure
@@ -283,7 +283,7 @@ class PlotlyThemeMapper:
 
     def apply_theme_to_figure(self, fig: go.Figure, mode: str = "light", title: str = ""):
         """
-        Apply Sensylate theme to a Plotly figure.
+        Apply Cole Morton theme to a Plotly figure.
 
         Args:
             fig: Plotly figure object

@@ -10,9 +10,9 @@ output:
   height: 800
   dpi: 150
 
-# Theme configuration - Sensylate design system compliant
+# Theme configuration - Cole Morton design system compliant
 theme:
-  name: "sensylate"
+  name: "colemorton"
   primary_color: "#00BCD4"      # Cyan - Multi-Strategy
   secondary_color: "#9575CD"    # Purple - Buy & Hold
   tertiary_color: "#4285F4"     # Blue - Supporting

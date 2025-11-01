@@ -3,7 +3,7 @@
 Trade History Images Generator
 
 Generate visualization images for trade history reports with automated chart selection
-and Sensylate design system compliance.
+and Cole Morton design system compliance.
 
 Usage:
     python scripts/trade_history_images.py YYYYMMDD [--report-type TYPE] [--debug] [--validate-only]

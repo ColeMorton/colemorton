@@ -2158,7 +2158,7 @@ Generated: {{ timestamp }}"""
             "framework": "DASV",
             "economic_context": True,
             "multi_source_validation": True,
-            "generated_by": "Sensylate Content Automation CLI",
+            "generated_by": "Cole Morton Content Automation CLI",
             "author": "Cole Morton",
             "creation_timestamp": datetime.now().isoformat(),
         }

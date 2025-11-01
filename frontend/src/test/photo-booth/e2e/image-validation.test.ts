@@ -451,8 +451,6 @@ describe("Photo Booth Image Quality & Metadata Validation", () => {
         return;
       }
 
-      const { page } = context;
-
       // Create a mock export file for validation
       const mockExportPath = path.join(tempDir, "test_export.png");
 
