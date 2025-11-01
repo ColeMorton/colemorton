@@ -13,9 +13,9 @@ and network resilience validation. These tests verify:
 import sys
 import time
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -69,9 +69,7 @@ class TestBitcoinServicesConnectivity(unittest.TestCase):
                 self.assertIsInstance(result[fee_key], (int, float))
                 self.assertGreater(result[fee_key], 0)
 
-            print(
-                f"✅ Mempool.space API working - FastestFee: {result['fastestFee']} sat/vB"
-            )
+            print(f"✅ Mempool.space API working - FastestFee: {result['fastestFee']} sat/vB")
 
         except Exception as e:
             self.skipTest(f"Mempool.space API unavailable: {str(e)}")
@@ -125,9 +123,7 @@ class TestBitcoinServicesConnectivity(unittest.TestCase):
             ]
             self.assertIn(classification, valid_classifications)
 
-            print(
-                f"✅ Alternative.me API working - Fear & Greed: {fear_greed_value} ({classification})"
-            )
+            print(f"✅ Alternative.me API working - Fear & Greed: {fear_greed_value} ({classification})")
 
         except Exception as e:
             self.skipTest(f"Alternative.me API unavailable: {str(e)}")
@@ -151,9 +147,7 @@ class TestBitcoinServicesConnectivity(unittest.TestCase):
             # Should be within 1 hour (3600000 ms)
             self.assertLess(time_diff, 3600000)
 
-            print(
-                f"✅ Binance API working - Server time: {datetime.fromtimestamp(server_time_ms / 1000)}"
-            )
+            print(f"✅ Binance API working - Server time: {datetime.fromtimestamp(server_time_ms / 1000)}")
 
         except Exception as e:
             self.skipTest(f"Binance API unavailable: {str(e)}")
@@ -176,7 +170,7 @@ class TestBitcoinDataConsistency(unittest.TestCase):
         """Rate limit between tests"""
         time.sleep(1)
 
-    def get_bitcoin_prices(self) -> Dict[str, float]:
+    def get_bitcoin_prices(self) -> dict[str, float]:
         """Get Bitcoin prices from multiple sources"""
         prices = {}
 
@@ -187,7 +181,7 @@ class TestBitcoinDataConsistency(unittest.TestCase):
                 prices["mempool_space"] = float(mempool_result["USD"])
             elif isinstance(mempool_result, dict) and "price" in mempool_result:
                 prices["mempool_space"] = float(mempool_result["price"])
-        except Exception as e:
+        except Exception:
             print("⚠️ Mempool.space price unavailable: {e}")
 
         # Blockchain.com price
@@ -195,17 +189,15 @@ class TestBitcoinDataConsistency(unittest.TestCase):
             blockchain_result = self.services["blockchain_com"].get_market_price_usd()
             if isinstance(blockchain_result, dict) and "price_usd" in blockchain_result:
                 prices["blockchain_com"] = float(blockchain_result["price_usd"])
-        except Exception as e:
+        except Exception:
             print("⚠️ Blockchain.com price unavailable: {e}")
 
         # Binance price
         try:
-            binance_result = self.services["binance_api"].get_symbol_price_ticker(
-                "BTCUSDT"
-            )
+            binance_result = self.services["binance_api"].get_symbol_price_ticker("BTCUSDT")
             if isinstance(binance_result, dict) and "price" in binance_result:
                 prices["binance_api"] = float(binance_result["price"])
-        except Exception as e:
+        except Exception:
             print("⚠️ Binance price unavailable: {e}")
 
         return prices
@@ -267,9 +259,7 @@ class TestBitcoinNetworkStatsIntegration(unittest.TestCase):
             sources = result.get("sources", [])
             errors = result.get("errors", [])
 
-            print(
-                f"📡 Network overview - Sources: {len(sources)}, Errors: {len(errors)}"
-            )
+            print(f"📡 Network overview - Sources: {len(sources)}, Errors: {len(errors)}")
 
             if errors:
                 print("⚠️ API errors: {errors}")
@@ -314,9 +304,7 @@ class TestBitcoinNetworkStatsIntegration(unittest.TestCase):
             )
 
             # At least some data should be available
-            self.assertGreater(
-                data_sources, 0, "No data sources in comprehensive report"
-            )
+            self.assertGreater(data_sources, 0, "No data sources in comprehensive report")
 
         except Exception as e:
             self.skipTest(f"Comprehensive report test failed: {str(e)}")
@@ -350,9 +338,7 @@ class TestServiceErrorResilience(unittest.TestCase):
         for service_name, service in self.services.items():
             self.assertIsInstance(service.config.timeout_seconds, int)
             self.assertGreater(service.config.timeout_seconds, 0)
-            self.assertLessEqual(
-                service.config.timeout_seconds, 120
-            )  # Reasonable timeout
+            self.assertLessEqual(service.config.timeout_seconds, 120)  # Reasonable timeout
 
             print("⏱️ {service_name} timeout: {service.config.timeout_seconds}s")
 

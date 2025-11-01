@@ -9,12 +9,14 @@ for datasets ranging from 15 trades to 200+ trades and 1-12 months of data.
 import math
 import sys
 from collections import defaultdict
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Collection, Dict, List, Tuple, Union
+from typing import Any
 
 import numpy as np
 from sklearn.cluster import DBSCAN
+
 
 # Configure path before imports
 project_root = Path(__file__).parent.parent.parent
@@ -57,7 +59,7 @@ class ScalabilityConfig:
 class ScalabilityManager:
     """Manages chart scalability and optimization for high-volume datasets."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize scalability manager.
 
@@ -74,27 +76,13 @@ class ScalabilityManager:
         thresholds_config = self.scalability_config
 
         return VolumeThresholds(
-            small_trades=thresholds_config.get("trade_volume_thresholds", {}).get(
-                "small", 50
-            ),
-            medium_trades=thresholds_config.get("trade_volume_thresholds", {}).get(
-                "medium", 100
-            ),
-            large_trades=thresholds_config.get("trade_volume_thresholds", {}).get(
-                "large", 200
-            ),
-            compact_months=thresholds_config.get("monthly_timeline_thresholds", {}).get(
-                "compact", 3
-            ),
-            medium_months=thresholds_config.get("monthly_timeline_thresholds", {}).get(
-                "medium", 8
-            ),
-            condensed_months=thresholds_config.get(
-                "monthly_timeline_thresholds", {}
-            ).get("condensed", 12),
-            low_density=thresholds_config.get("density_management", {})
-            .get("scatter_plot", {})
-            .get("low_density", 50),
+            small_trades=thresholds_config.get("trade_volume_thresholds", {}).get("small", 50),
+            medium_trades=thresholds_config.get("trade_volume_thresholds", {}).get("medium", 100),
+            large_trades=thresholds_config.get("trade_volume_thresholds", {}).get("large", 200),
+            compact_months=thresholds_config.get("monthly_timeline_thresholds", {}).get("compact", 3),
+            medium_months=thresholds_config.get("monthly_timeline_thresholds", {}).get("medium", 8),
+            condensed_months=thresholds_config.get("monthly_timeline_thresholds", {}).get("condensed", 12),
+            low_density=thresholds_config.get("density_management", {}).get("scatter_plot", {}).get("low_density", 50),
             medium_density=thresholds_config.get("density_management", {})
             .get("scatter_plot", {})
             .get("medium_density", 150),
@@ -114,7 +102,7 @@ class ScalabilityManager:
             cluster_eps=0.3,
         )
 
-    def detect_trade_volume_category(self, trades: List[TradeData]) -> str:
+    def detect_trade_volume_category(self, trades: list[TradeData]) -> str:
         """
         Detect trade volume category for chart selection.
 
@@ -128,14 +116,11 @@ class ScalabilityManager:
 
         if trade_count <= self.thresholds.small_trades:
             return "small"
-        elif trade_count <= self.thresholds.medium_trades:
+        if trade_count <= self.thresholds.medium_trades:
             return "medium"
-        else:
-            return "large"
+        return "large"
 
-    def detect_monthly_timeline_category(
-        self, monthly_data: List[MonthlyPerformance]
-    ) -> str:
+    def detect_monthly_timeline_category(self, monthly_data: list[MonthlyPerformance]) -> str:
         """
         Detect monthly timeline category for display optimization.
 
@@ -149,12 +134,11 @@ class ScalabilityManager:
 
         if month_count <= self.thresholds.compact_months:
             return "compact"
-        elif month_count <= self.thresholds.medium_months:
+        if month_count <= self.thresholds.medium_months:
             return "medium"
-        else:
-            return "condensed"
+        return "condensed"
 
-    def detect_scatter_density_category(self, trades: List[TradeData]) -> str:
+    def detect_scatter_density_category(self, trades: list[TradeData]) -> str:
         """
         Detect scatter plot density category.
 
@@ -168,14 +152,13 @@ class ScalabilityManager:
 
         if trade_count <= self.thresholds.low_density:
             return "low"
-        elif trade_count <= self.thresholds.medium_density:
+        if trade_count <= self.thresholds.medium_density:
             return "medium"
-        else:
-            return "high"
+        return "high"
 
     def create_performance_histogram(
-        self, trades: List[TradeData], bins: int = 20
-    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+        self, trades: list[TradeData], bins: int = 20
+    ) -> tuple[np.ndarray, np.ndarray, list[str]]:
         """
         Create performance histogram for high-volume datasets.
 
@@ -200,9 +183,7 @@ class ScalabilityManager:
 
         return counts, bin_edges, labels
 
-    def create_performance_bands(
-        self, trades: List[TradeData]
-    ) -> Dict[str, List[TradeData]]:
+    def create_performance_bands(self, trades: list[TradeData]) -> dict[str, list[TradeData]]:
         """
         Group trades into performance bands for medium-volume datasets.
 
@@ -212,7 +193,7 @@ class ScalabilityManager:
         Returns:
             Dictionary of performance bands
         """
-        bands: Dict[str, List[TradeData]] = {
+        bands: dict[str, list[TradeData]] = {
             "Large Winners (>10%)": [],
             "Winners (2-10%)": [],
             "Small Winners (0-2%)": [],
@@ -239,7 +220,7 @@ class ScalabilityManager:
         # Remove empty bands
         return {k: v for k, v in bands.items() if v}
 
-    def cluster_scatter_points(self, trades: List[TradeData]) -> Dict[str, Any]:
+    def cluster_scatter_points(self, trades: list[TradeData]) -> dict[str, Any]:
         """
         Cluster scatter plot points for high-density management.
 
@@ -261,10 +242,8 @@ class ScalabilityManager:
         returns_array = np.array(returns)
         X = np.column_stack(
             [
-                (durations_array - np.mean(durations_array))
-                / (np.std(durations_array) + 1e-8),
-                (returns_array - np.mean(returns_array))
-                / (np.std(returns_array) + 1e-8),
+                (durations_array - np.mean(durations_array)) / (np.std(durations_array) + 1e-8),
+                (returns_array - np.mean(returns_array)) / (np.std(returns_array) + 1e-8),
             ]
         )
 
@@ -310,9 +289,7 @@ class ScalabilityManager:
             "noise_points": len(noise),
         }
 
-    def optimize_monthly_labels(
-        self, monthly_data: List[MonthlyPerformance], category: str
-    ) -> List[str]:
+    def optimize_monthly_labels(self, monthly_data: list[MonthlyPerformance], category: str) -> list[str]:
         """
         Optimize monthly labels based on timeline category.
 
@@ -326,16 +303,13 @@ class ScalabilityManager:
         if category == "compact":
             # Full month names for 1-3 months
             return [f"{data.month} {data.year}" for data in monthly_data]
-        elif category == "medium":
+        if category == "medium":
             # Month abbreviations for 4-8 months
             return [f"{data.month[:3]} '{str(data.year)[2:]}" for data in monthly_data]
-        else:
-            # Condensed view for 9-12 months
-            return [f"{data.month[0]}{str(data.year)[2:]}" for data in monthly_data]
+        # Condensed view for 9-12 months
+        return [f"{data.month[0]}{str(data.year)[2:]}" for data in monthly_data]
 
-    def calculate_adaptive_label_frequency(
-        self, data_length: int, max_labels: int = None
-    ) -> int:
+    def calculate_adaptive_label_frequency(self, data_length: int, max_labels: int = None) -> int:
         """
         Calculate adaptive label frequency to avoid overcrowding.
 
@@ -351,12 +325,9 @@ class ScalabilityManager:
 
         if data_length <= max_labels:
             return 1
-        else:
-            return math.ceil(data_length / max_labels)
+        return math.ceil(data_length / max_labels)
 
-    def optimize_chart_performance(
-        self, chart_type: str, data_size: int
-    ) -> Dict[str, Any]:
+    def optimize_chart_performance(self, chart_type: str, data_size: int) -> dict[str, Any]:
         """
         Optimize chart performance settings based on data size.
 
@@ -397,7 +368,7 @@ class ScalabilityManager:
 
         return settings
 
-    def create_summary_statistics(self, trades: List[TradeData]) -> Dict[str, Any]:
+    def create_summary_statistics(self, trades: list[TradeData]) -> dict[str, Any]:
         """
         Create summary statistics for large datasets.
 
@@ -433,23 +404,19 @@ class ScalabilityManager:
                 "max": np.max(durations),
             },
             "quality_distribution": self._calculate_quality_distribution(trades),
-            "win_rate": len([t for t in trades if t.return_pct > 0])
-            / len(trades)
-            * 100,
+            "win_rate": len([t for t in trades if t.return_pct > 0]) / len(trades) * 100,
         }
 
-    def _calculate_quality_distribution(
-        self, trades: List[TradeData]
-    ) -> Dict[str, int]:
+    def _calculate_quality_distribution(self, trades: list[TradeData]) -> dict[str, int]:
         """Calculate quality distribution for trades."""
-        quality_counts: Dict[str, int] = defaultdict(int)
+        quality_counts: dict[str, int] = defaultdict(int)
         for trade in trades:
             quality_counts[trade.quality] += 1
         return dict(quality_counts)
 
     def get_chart_recommendation(
-        self, trades: List[TradeData], monthly_data: List[MonthlyPerformance]
-    ) -> Dict[str, Union[str, Collection[str]]]:
+        self, trades: list[TradeData], monthly_data: list[MonthlyPerformance]
+    ) -> dict[str, str | Collection[str]]:
         """
         Get chart type recommendations based on data volume.
 
@@ -490,7 +457,7 @@ class ScalabilityManager:
         return recommendations
 
 
-def create_scalability_manager(config: Dict[str, Any]) -> ScalabilityManager:
+def create_scalability_manager(config: dict[str, Any]) -> ScalabilityManager:
     """
     Factory function to create a ScalabilityManager instance.
 
@@ -539,25 +506,17 @@ if __name__ == "__main__":
         monthly_data = data["monthly_performance"]
 
         print("Trades: {len(trades)}")
-        print(
-            f"Trade volume category: {scalability_manager.detect_trade_volume_category(trades)}"
-        )
-        print(
-            f"Monthly timeline category: {scalability_manager.detect_monthly_timeline_category(monthly_data)}"
-        )
-        print(
-            f"Scatter density category: {scalability_manager.detect_scatter_density_category(trades)}"
-        )
+        print(f"Trade volume category: {scalability_manager.detect_trade_volume_category(trades)}")
+        print(f"Monthly timeline category: {scalability_manager.detect_monthly_timeline_category(monthly_data)}")
+        print(f"Scatter density category: {scalability_manager.detect_scatter_density_category(trades)}")
 
         # Test recommendations
-        recommendations = scalability_manager.get_chart_recommendation(
-            trades, monthly_data
-        )
+        recommendations = scalability_manager.get_chart_recommendation(trades, monthly_data)
         print("Chart recommendations: {recommendations}")
 
         print("Scalability manager test completed successfully!")
 
-    except Exception as e:
+    except Exception:
         print("Test failed: {e}")
         import traceback
 

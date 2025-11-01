@@ -10,6 +10,7 @@ import sys
 import time
 from pathlib import Path
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 
@@ -62,9 +63,7 @@ def test_single_api_call_triggers_collection():
                 data_path = Path("data/raw")
                 recent_files = []
                 for file_path in data_path.rglob("*.json"):
-                    if (
-                        file_path.stat().st_mtime > time.time() - 20
-                    ):  # Modified in last 20 seconds
+                    if file_path.stat().st_mtime > time.time() - 20:  # Modified in last 20 seconds
                         recent_files.append(file_path)
 
                 if recent_files:
@@ -78,14 +77,12 @@ def test_single_api_call_triggers_collection():
                         print("   • ... and {len(recent_files) - 5} more")
 
                 return True
-            else:
-                print("⚠️  No new files created - collection may still be running")
-                return False
-        else:
-            print("❌ API call failed")
+            print("⚠️  No new files created - collection may still be running")
             return False
+        print("❌ API call failed")
+        return False
 
-    except Exception as e:
+    except Exception:
         print("❌ Test failed: {e}")
         import traceback
 
@@ -98,9 +95,7 @@ if __name__ == "__main__":
 
     if success:
         print("\n✅ DIRECT TEST PASSED")
-        print(
-            "Auto-collection is working - single API calls trigger comprehensive data collection!"
-        )
+        print("Auto-collection is working - single API calls trigger comprehensive data collection!")
     else:
         print("\n⚠️  Test needs investigation")
         print("Auto-collection may need debugging or more time to complete")

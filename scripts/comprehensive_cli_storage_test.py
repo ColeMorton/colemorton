@@ -9,10 +9,9 @@ Verifies that API calls create the correct CSV + metadata JSON files.
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 
-def get_current_file_count() -> Tuple[int, int, int]:
+def get_current_file_count() -> tuple[int, int, int]:
     """
     Get current count of data files
 
@@ -25,14 +24,12 @@ def get_current_file_count() -> Tuple[int, int, int]:
 
     csv_files = len(list(raw_path.rglob("*.csv")))
     meta_files = len(list(raw_path.rglob("*.meta.json")))
-    old_json_files = len(
-        [f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")]
-    )
+    old_json_files = len([f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")])
 
     return csv_files, meta_files, old_json_files
 
 
-def get_latest_files(count: int = 5) -> List[Path]:
+def get_latest_files(count: int = 5) -> list[Path]:
     """Get the latest created files"""
     raw_path = Path("data/raw")
     if not raw_path.exists():
@@ -41,9 +38,7 @@ def get_latest_files(count: int = 5) -> List[Path]:
     # Get all data files
     csv_files = list(raw_path.rglob("*.csv"))
     meta_files = list(raw_path.rglob("*.meta.json"))
-    old_json_files = [
-        f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")
-    ]
+    old_json_files = [f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")]
 
     all_files = csv_files + meta_files + old_json_files
     all_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -51,7 +46,7 @@ def get_latest_files(count: int = 5) -> List[Path]:
     return all_files[:count]
 
 
-def run_cli_command(cmd: List[str], timeout: int = 30) -> Dict[str, any]:
+def run_cli_command(cmd: list[str], timeout: int = 30) -> dict[str, any]:
     """
     Run a CLI command and capture results
 
@@ -93,9 +88,7 @@ def run_cli_command(cmd: List[str], timeout: int = 30) -> Dict[str, any]:
 
         # Get file count after command
         csv_after, meta_after, old_after = get_current_file_count()
-        files_created = (csv_after + meta_after + old_after) - (
-            csv_before + meta_before + old_before
-        )
+        files_created = (csv_after + meta_after + old_after) - (csv_before + meta_before + old_before)
         result["files_created"] = files_created
 
         if result["success"]:
@@ -258,9 +251,7 @@ def analyze_file_structure():
     # Get file counts
     csv_files = list(raw_path.rglob("*.csv"))
     meta_files = list(raw_path.rglob("*.meta.json"))
-    old_json_files = [
-        f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")
-    ]
+    old_json_files = [f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")]
 
     print("📊 File Counts:")
     print("   - CSV Data Files: {len(csv_files)}")
@@ -275,9 +266,7 @@ def analyze_file_structure():
             relative_path = file_path.relative_to(raw_path)
             size = file_path.stat().st_size
             file_type = (
-                "CSV"
-                if file_path.suffix == ".csv"
-                else ("META" if file_path.name.endswith(".meta.json") else "JSON")
+                "CSV" if file_path.suffix == ".csv" else ("META" if file_path.name.endswith(".meta.json") else "JSON")
             )
             print("   📄 {relative_path} ({size}b) [{file_type}]")
 
@@ -360,11 +349,10 @@ def main():
         print("   - Hybrid storage system is working correctly")
         print("   - CLI commands are creating data files as expected")
         return True
-    else:
-        print("\n⚠️  CLI STORAGE INTEGRATION: ISSUES DETECTED")
-        print("   - Only {success_rate:.0%} of tests passed")
-        print("   - Storage system may have integration problems")
-        return False
+    print("\n⚠️  CLI STORAGE INTEGRATION: ISSUES DETECTED")
+    print("   - Only {success_rate:.0%} of tests passed")
+    print("   - Storage system may have integration problems")
+    return False
 
 
 if __name__ == "__main__":

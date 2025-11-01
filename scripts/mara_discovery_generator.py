@@ -23,21 +23,20 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from scripts.utils.config_loader import ConfigLoader
 
 # Import existing services
 from yahoo_finance_service import YahooFinanceService
 
+
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +65,7 @@ class MARADiscoveryGenerator:
         self.economic_analysis = {}
         self.peer_group_data = {}
 
-    def collect_yahoo_finance_data(self) -> Dict[str, Any]:
+    def collect_yahoo_finance_data(self) -> dict[str, Any]:
         """Collect comprehensive data from Yahoo Finance"""
         try:
             logger.info("Collecting Yahoo Finance data for MARA...")
@@ -80,9 +79,7 @@ class MARADiscoveryGenerator:
             cash_flow = self.yf_service.get_cash_flow(self.ticker)
 
             # Get historical data for technical analysis
-            historical_data = self.yf_service.get_historical_data(
-                self.ticker, period="1y"
-            )
+            historical_data = self.yf_service.get_historical_data(self.ticker, period="1y")
 
             self.successful_services.append("yahoo_finance_cli")
 
@@ -100,7 +97,7 @@ class MARADiscoveryGenerator:
             self.service_errors["yahoo_finance"] = error_msg
             return {}
 
-    def simulate_alpha_vantage_data(self) -> Dict[str, Any]:
+    def simulate_alpha_vantage_data(self) -> dict[str, Any]:
         """Simulate Alpha Vantage data collection"""
         try:
             logger.info("Simulating Alpha Vantage data collection...")
@@ -137,7 +134,7 @@ class MARADiscoveryGenerator:
             self.service_errors["alpha_vantage"] = error_msg
             return {}
 
-    def simulate_fmp_data(self) -> Dict[str, Any]:
+    def simulate_fmp_data(self) -> dict[str, Any]:
         """Simulate FMP data collection"""
         try:
             logger.info("Simulating FMP data collection...")
@@ -181,7 +178,7 @@ class MARADiscoveryGenerator:
             self.service_errors["fmp"] = error_msg
             return {}
 
-    def simulate_economic_data(self) -> Dict[str, Any]:
+    def simulate_economic_data(self) -> dict[str, Any]:
         """Simulate FRED and IMF economic data collection"""
         try:
             logger.info("Simulating economic data collection...")
@@ -213,7 +210,7 @@ class MARADiscoveryGenerator:
             self.service_errors["economic_data"] = error_msg
             return {}
 
-    def simulate_crypto_sentiment(self) -> Dict[str, Any]:
+    def simulate_crypto_sentiment(self) -> dict[str, Any]:
         """Simulate CoinGecko crypto market sentiment"""
         try:
             logger.info("Simulating crypto market sentiment...")
@@ -237,7 +234,7 @@ class MARADiscoveryGenerator:
             self.service_errors["coingecko"] = error_msg
             return {}
 
-    def identify_peer_companies(self) -> List[Dict[str, Any]]:
+    def identify_peer_companies(self) -> list[dict[str, Any]]:
         """Identify and analyze peer companies"""
 
         # Bitcoin mining peer companies
@@ -276,7 +273,7 @@ class MARADiscoveryGenerator:
 
         return peers
 
-    def calculate_confidence_scores(self) -> Dict[str, float]:
+    def calculate_confidence_scores(self) -> dict[str, float]:
         """Calculate data quality and confidence scores"""
 
         # Calculate based on successful service integrations
@@ -303,9 +300,7 @@ class MARADiscoveryGenerator:
             price_consistency = 0.5
 
         return {
-            "overall_data_quality": min(
-                0.95, service_reliability * 0.8 + price_consistency * 0.2
-            ),
+            "overall_data_quality": min(0.95, service_reliability * 0.8 + price_consistency * 0.2),
             "service_reliability": service_reliability,
             "price_consistency": price_consistency,
             "market_data_confidence": 0.92,
@@ -314,9 +309,7 @@ class MARADiscoveryGenerator:
             "peer_analysis_confidence": 0.85,
         }
 
-    def process_market_data(
-        self, yf_data: Dict, av_data: Dict, fmp_data: Dict
-    ) -> Dict[str, Any]:
+    def process_market_data(self, yf_data: dict, av_data: dict, fmp_data: dict) -> dict[str, Any]:
         """Process and cross-validate market data"""
 
         # Extract prices for validation
@@ -344,9 +337,7 @@ class MARADiscoveryGenerator:
             "confidence": 0.92,
         }
 
-    def process_financial_metrics(
-        self, yf_data: Dict, fmp_data: Dict
-    ) -> Dict[str, Any]:
+    def process_financial_metrics(self, yf_data: dict, fmp_data: dict) -> dict[str, Any]:
         """Process financial metrics from multiple sources"""
 
         return {
@@ -361,7 +352,7 @@ class MARADiscoveryGenerator:
             "confidence": 0.88,
         }
 
-    def generate_discovery_output(self) -> Dict[str, Any]:
+    def generate_discovery_output(self) -> dict[str, Any]:
         """Generate comprehensive discovery output following schema"""
 
         # Collect data from all sources
@@ -568,7 +559,7 @@ class MARADiscoveryGenerator:
 
         return discovery_output
 
-    def save_discovery_file(self, discovery_data: Dict[str, Any]) -> str:
+    def save_discovery_file(self, discovery_data: dict[str, Any]) -> str:
         """Save discovery data to schema-compliant JSON file"""
 
         output_dir = Path("./data/outputs/fundamental_analysis/discovery")
@@ -598,12 +589,8 @@ def main():
         print("\n✅ MARA Discovery Analysis Complete")
         print("📁 Output file: {filepath}")
         print("🔍 Services integrated: {len(generator.successful_services)}/7")
-        print(
-            f"📊 Overall data quality: {discovery_data['cli_data_quality']['overall_data_quality']:.2f}"
-        )
-        print(
-            f"💯 Institutional grade: {discovery_data['cli_data_quality']['institutional_grade']}"
-        )
+        print(f"📊 Overall data quality: {discovery_data['cli_data_quality']['overall_data_quality']:.2f}")
+        print(f"💯 Institutional grade: {discovery_data['cli_data_quality']['institutional_grade']}")
 
         # Service status
         print("\n🚀 Successful services:")

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/comparative_analysis_discovery.json",
+  "$id": "https://colemorton.com/schemas/comparative_analysis_discovery.json",
   "title": "Comparative Analysis Discovery Schema",
   "description": "Comprehensive validation schema for comparative analysis discovery JSON outputs from DASV Phase 1 framework",
   "type": "object",

@@ -10,7 +10,8 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -27,7 +28,6 @@ except ImportError:
 # Import base script and registry
 try:
     from base_script import BaseScript
-
     from script_registry import ScriptConfig, twitter_script
 
     REGISTRY_AVAILABLE = True
@@ -42,8 +42,8 @@ class MacroEconomicSynthesis:
     def __init__(
         self,
         region: str,
-        discovery_file: Optional[str] = None,
-        analysis_file: Optional[str] = None,
+        discovery_file: str | None = None,
+        analysis_file: str | None = None,
         output_dir: str = "./data/outputs/macro_analysis",
         template_dir: str = "./templates/analysis",
     ):
@@ -83,31 +83,31 @@ class MacroEconomicSynthesis:
         self.global_liquidity_data = {}
         self.sector_correlation_data = {}
 
-    def _load_discovery_data(self) -> Optional[Dict[str, Any]]:
+    def _load_discovery_data(self) -> dict[str, Any] | None:
         """Load discovery phase data"""
         if self.discovery_file and os.path.exists(self.discovery_file):
             try:
-                with open(self.discovery_file, "r") as f:
+                with open(self.discovery_file) as f:
                     data = json.load(f)
                 print("✅ Loaded discovery data from: {self.discovery_file}")
                 return data
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load discovery data: {e}")
         return None
 
-    def _load_analysis_data(self) -> Optional[Dict[str, Any]]:
+    def _load_analysis_data(self) -> dict[str, Any] | None:
         """Load analysis phase data"""
         if self.analysis_file and os.path.exists(self.analysis_file):
             try:
-                with open(self.analysis_file, "r") as f:
+                with open(self.analysis_file) as f:
                     data = json.load(f)
                 print("✅ Loaded analysis data from: {self.analysis_file}")
                 return data
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load analysis data: {e}")
         return None
 
-    def _initialize_jinja_environment(self) -> Optional[Environment]:
+    def _initialize_jinja_environment(self) -> Environment | None:
         """Initialize Jinja2 environment for template rendering"""
         if not JINJA2_AVAILABLE:
             return None
@@ -119,11 +119,9 @@ class MacroEconomicSynthesis:
                 trim_blocks=True,
                 lstrip_blocks=True,
             )
-            print(
-                f"✅ Initialized Jinja2 environment with templates from: {self.template_dir}"
-            )
+            print(f"✅ Initialized Jinja2 environment with templates from: {self.template_dir}")
             return env
-        except Exception as e:
+        except Exception:
             print("⚠️  Failed to initialize Jinja2 environment: {e}")
             return None
 
@@ -149,9 +147,7 @@ class MacroEconomicSynthesis:
 
                 # Validate service creation was successful
                 if calendar_service is None:
-                    raise Exception(
-                        "Service factory returned None - check configuration"
-                    )
+                    raise Exception("Service factory returned None - check configuration")
 
                 # Test service health first
                 calendar_health = calendar_service.health_check()
@@ -159,18 +155,12 @@ class MacroEconomicSynthesis:
                     raise Exception("Health check returned None")
 
                 if calendar_health.get("status") != "healthy":
-                    raise Exception(
-                        f"Service health check failed: {calendar_health.get('error', 'Unknown')}"
-                    )
+                    raise Exception(f"Service health check failed: {calendar_health.get('error', 'Unknown')}")
 
                 self.economic_calendar_data = {
-                    "upcoming_events": calendar_service.get_upcoming_economic_events(
-                        30
-                    ),
+                    "upcoming_events": calendar_service.get_upcoming_economic_events(30),
                     "fomc_probabilities": calendar_service.get_fomc_decision_probabilities(),
-                    "economic_surprises": calendar_service.get_economic_surprise_index(
-                        90
-                    ),
+                    "economic_surprises": calendar_service.get_economic_surprise_index(90),
                     "service_health": calendar_health,
                 }
                 self.service_health["economic_calendar"]["status"] = "healthy"
@@ -199,9 +189,7 @@ class MacroEconomicSynthesis:
 
                 # Validate service creation was successful
                 if liquidity_service is None:
-                    raise Exception(
-                        "Service factory returned None - check configuration"
-                    )
+                    raise Exception("Service factory returned None - check configuration")
 
                 # Test service health first
                 liquidity_health = liquidity_service.health_check()
@@ -209,27 +197,15 @@ class MacroEconomicSynthesis:
                     raise Exception("Health check returned None")
 
                 if liquidity_health.get("status") != "healthy":
-                    raise Exception(
-                        f"Service health check failed: {liquidity_health.get('error', 'Unknown')}"
-                    )
+                    raise Exception(f"Service health check failed: {liquidity_health.get('error', 'Unknown')}")
 
-                liquidity_analysis = (
-                    liquidity_service.get_comprehensive_liquidity_analysis()
-                )
+                liquidity_analysis = liquidity_service.get_comprehensive_liquidity_analysis()
                 self.global_liquidity_data = {
                     "m2_analysis": liquidity_analysis.get("global_m2_analysis", {}),
-                    "central_bank_analysis": liquidity_analysis.get(
-                        "central_bank_analysis", {}
-                    ),
-                    "liquidity_conditions": liquidity_analysis.get(
-                        "global_liquidity_conditions", {}
-                    ),
-                    "capital_flows": liquidity_analysis.get(
-                        "cross_border_capital_flows", []
-                    ),
-                    "trading_implications": liquidity_analysis.get(
-                        "trading_implications", {}
-                    ),
+                    "central_bank_analysis": liquidity_analysis.get("central_bank_analysis", {}),
+                    "liquidity_conditions": liquidity_analysis.get("global_liquidity_conditions", {}),
+                    "capital_flows": liquidity_analysis.get("cross_border_capital_flows", []),
+                    "trading_implications": liquidity_analysis.get("trading_implications", {}),
                     "service_health": liquidity_health,
                 }
                 self.service_health["global_liquidity"]["status"] = "healthy"
@@ -258,9 +234,7 @@ class MacroEconomicSynthesis:
 
                 # Validate service creation was successful
                 if sector_service is None:
-                    raise Exception(
-                        "Service factory returned None - check configuration"
-                    )
+                    raise Exception("Service factory returned None - check configuration")
 
                 # Test service health first
                 sector_health = sector_service.health_check()
@@ -268,27 +242,15 @@ class MacroEconomicSynthesis:
                     raise Exception("Health check returned None")
 
                 if sector_health.get("status") != "healthy":
-                    raise Exception(
-                        f"Service health check failed: {sector_health.get('error', 'Unknown')}"
-                    )
+                    raise Exception(f"Service health check failed: {sector_health.get('error', 'Unknown')}")
 
                 sector_analysis = sector_service.get_comprehensive_sector_analysis()
                 self.sector_correlation_data = {
-                    "sector_sensitivities": sector_analysis.get(
-                        "sector_sensitivities", {}
-                    ),
-                    "regime_analysis": sector_analysis.get(
-                        "economic_regime_analysis", {}
-                    ),
-                    "rotation_signals": sector_analysis.get(
-                        "sector_rotation_signals", []
-                    ),
-                    "factor_attribution": sector_analysis.get(
-                        "factor_attribution_summary", {}
-                    ),
-                    "investment_recommendations": sector_analysis.get(
-                        "investment_recommendations", {}
-                    ),
+                    "sector_sensitivities": sector_analysis.get("sector_sensitivities", {}),
+                    "regime_analysis": sector_analysis.get("economic_regime_analysis", {}),
+                    "rotation_signals": sector_analysis.get("sector_rotation_signals", []),
+                    "factor_attribution": sector_analysis.get("factor_attribution_summary", {}),
+                    "investment_recommendations": sector_analysis.get("investment_recommendations", {}),
                     "service_health": sector_health,
                 }
                 self.service_health["sector_correlations"]["status"] = "healthy"
@@ -307,24 +269,18 @@ class MacroEconomicSynthesis:
                 self.sector_correlation_data = {}
 
             # Report overall service health
-            healthy_services = sum(
-                1 for s in self.service_health.values() if s["status"] == "healthy"
-            )
+            healthy_services = sum(1 for s in self.service_health.values() if s["status"] == "healthy")
             total_services = len(self.service_health)
-            print(
-                f"📊 Enhanced services health: {healthy_services}/{total_services} operational"
-            )
+            print(f"📊 Enhanced services health: {healthy_services}/{total_services} operational")
 
             if healthy_services == 0:
-                print(
-                    "⚠️  All enhanced services failed - using fallback synthesis mode"
-                )
+                print("⚠️  All enhanced services failed - using fallback synthesis mode")
             elif healthy_services < total_services:
                 print(
                     f"⚠️  {total_services - healthy_services} enhanced service(s) degraded - continuing with available data"
                 )
 
-        except Exception as e:
+        except Exception:
             print("❌ Critical failure in enhanced service collection: {e}")
             # Ensure all data structures exist even in critical failure
             if not hasattr(self, "economic_calendar_data"):
@@ -334,25 +290,19 @@ class MacroEconomicSynthesis:
             if not hasattr(self, "sector_correlation_data"):
                 self.sector_correlation_data = {}
 
-    def synthesize_economic_thesis(self) -> Dict[str, Any]:
+    def synthesize_economic_thesis(self) -> dict[str, Any]:
         """Synthesize comprehensive economic thesis with enhanced service data"""
         # Extract business cycle data from analysis
         business_cycle_data = {}
         if self.analysis_data:
-            business_cycle_data = self.analysis_data.get(
-                "advanced_business_cycle_modeling", {}
-            )
+            business_cycle_data = self.analysis_data.get("advanced_business_cycle_modeling", {})
             if not business_cycle_data:
-                business_cycle_data = self.analysis_data.get(
-                    "business_cycle_modeling", {}
-                )
+                business_cycle_data = self.analysis_data.get("business_cycle_modeling", {})
 
         # Extract economic indicators from discovery
         economic_indicators = {}
         if self.discovery_data:
-            economic_indicators = self.discovery_data.get(
-                "cli_comprehensive_analysis", {}
-            )
+            economic_indicators = self.discovery_data.get("cli_comprehensive_analysis", {})
             if not economic_indicators:
                 economic_indicators = self.discovery_data.get("economic_indicators", {})
 
@@ -362,12 +312,8 @@ class MacroEconomicSynthesis:
 
         thesis = {
             "core_economic_thesis": self._generate_enhanced_core_economic_thesis(),
-            "business_cycle_phase": self._extract_business_cycle_phase(
-                business_cycle_data
-            ),
-            "recession_probability": self._extract_recession_probability(
-                business_cycle_data
-            ),
+            "business_cycle_phase": self._extract_business_cycle_phase(business_cycle_data),
+            "recession_probability": self._extract_recession_probability(business_cycle_data),
             "economic_outlook": self._generate_enhanced_economic_outlook(),
             "policy_stance": self._assess_enhanced_policy_stance(),
             "key_economic_catalysts": self._identify_enhanced_economic_catalysts(),
@@ -379,7 +325,7 @@ class MacroEconomicSynthesis:
         self.economic_thesis = thesis
         return thesis
 
-    def synthesize_business_cycle_assessment(self) -> Dict[str, Any]:
+    def synthesize_business_cycle_assessment(self) -> dict[str, Any]:
         """Synthesize business cycle positioning framework"""
         # Extract business cycle modeling from analysis
         cycle_modeling = {}
@@ -389,21 +335,13 @@ class MacroEconomicSynthesis:
         # Extract liquidity cycle positioning
         liquidity_positioning = {}
         if self.analysis_data:
-            liquidity_positioning = self.analysis_data.get(
-                "liquidity_cycle_positioning", {}
-            )
+            liquidity_positioning = self.analysis_data.get("liquidity_cycle_positioning", {})
 
         assessment = {
             "current_phase": cycle_modeling.get("current_phase", "expansion"),
-            "phase_transition_probabilities": cycle_modeling.get(
-                "phase_transition_probabilities", {}
-            ),
-            "interest_rate_sensitivity": cycle_modeling.get(
-                "interest_rate_sensitivity", {}
-            ),
-            "inflation_hedge_assessment": cycle_modeling.get(
-                "inflation_hedge_assessment", {}
-            ),
+            "phase_transition_probabilities": cycle_modeling.get("phase_transition_probabilities", {}),
+            "interest_rate_sensitivity": cycle_modeling.get("interest_rate_sensitivity", {}),
+            "inflation_hedge_assessment": cycle_modeling.get("inflation_hedge_assessment", {}),
             "employment_dynamics": self._analyze_employment_dynamics(),
             "monetary_policy_transmission": self._assess_monetary_policy_transmission(),
             "cycle_confidence": cycle_modeling.get("confidence", 0.88),
@@ -412,7 +350,7 @@ class MacroEconomicSynthesis:
         self.business_cycle_assessment = assessment
         return assessment
 
-    def synthesize_policy_analysis(self) -> Dict[str, Any]:
+    def synthesize_policy_analysis(self) -> dict[str, Any]:
         """Synthesize monetary and fiscal policy analysis"""
         # Extract policy context from discovery
         policy_context = {}
@@ -422,18 +360,12 @@ class MacroEconomicSynthesis:
         # Extract liquidity analysis from analysis
         liquidity_analysis = {}
         if self.analysis_data:
-            liquidity_analysis = self.analysis_data.get(
-                "liquidity_cycle_positioning", {}
-            )
+            liquidity_analysis = self.analysis_data.get("liquidity_cycle_positioning", {})
 
         policy_analysis = {
-            "monetary_policy_stance": liquidity_analysis.get(
-                "fed_policy_stance", "neutral"
-            ),
+            "monetary_policy_stance": liquidity_analysis.get("fed_policy_stance", "neutral"),
             "policy_effectiveness": self._assess_policy_effectiveness(),
-            "credit_market_conditions": liquidity_analysis.get(
-                "credit_market_conditions", {}
-            ),
+            "credit_market_conditions": liquidity_analysis.get("credit_market_conditions", {}),
             "money_supply_impact": liquidity_analysis.get("money_supply_impact", {}),
             "policy_timeline": self._generate_policy_timeline(),
             "policy_risks": self._identify_policy_risks(),
@@ -443,7 +375,7 @@ class MacroEconomicSynthesis:
         self.policy_analysis = policy_analysis
         return policy_analysis
 
-    def synthesize_risk_assessment(self) -> Dict[str, Any]:
+    def synthesize_risk_assessment(self) -> dict[str, Any]:
         """Synthesize comprehensive macro-economic risk analysis"""
         # Extract risk assessment from analysis
         risk_assessment = {}
@@ -453,16 +385,12 @@ class MacroEconomicSynthesis:
         # Extract macroeconomic risk scoring
         macro_risk_scoring = {}
         if self.analysis_data:
-            macro_risk_scoring = self.analysis_data.get(
-                "macroeconomic_risk_scoring", {}
-            )
+            macro_risk_scoring = self.analysis_data.get("macroeconomic_risk_scoring", {})
 
         risk_analysis = {
             "risk_matrix": risk_assessment.get("risk_matrix", {}),
             "stress_testing_scenarios": risk_assessment.get("stress_testing", {}),
-            "macroeconomic_risks": macro_risk_scoring.get(
-                "combined_macroeconomic_risk", {}
-            ),
+            "macroeconomic_risks": macro_risk_scoring.get("combined_macroeconomic_risk", {}),
             "early_warning_system": macro_risk_scoring.get("early_warning_system", {}),
             "aggregate_risk_score": risk_assessment.get("aggregate_risk_score", 2.5),
             "risk_mitigation_strategies": self._develop_risk_mitigation_strategies(),
@@ -472,34 +400,28 @@ class MacroEconomicSynthesis:
         self.risk_assessment = risk_analysis
         return risk_analysis
 
-    def synthesize_investment_implications(self) -> Dict[str, Any]:
+    def synthesize_investment_implications(self) -> dict[str, Any]:
         """Synthesize investment implications and asset allocation guidance"""
         # Extract investment recommendation analysis
         investment_analysis = {}
         if self.analysis_data:
-            investment_analysis = self.analysis_data.get(
-                "investment_recommendation_gap_analysis", {}
-            )
+            investment_analysis = self.analysis_data.get("investment_recommendation_gap_analysis", {})
 
         # Extract enhanced economic sensitivity
         economic_sensitivity = {}
         if self.analysis_data:
-            economic_sensitivity = self.analysis_data.get(
-                "enhanced_economic_sensitivity", {}
-            )
+            economic_sensitivity = self.analysis_data.get("enhanced_economic_sensitivity", {})
 
         implications = {
             "asset_allocation_framework": self._generate_asset_allocation_framework(),
             "sector_rotation_strategy": self._develop_sector_rotation_strategy(),
-            "portfolio_construction_guidance": investment_analysis.get(
-                "portfolio_allocation_context", {}
-            ),
+            "portfolio_construction_guidance": investment_analysis.get("portfolio_allocation_context", {}),
             "economic_sensitivity_positioning": economic_sensitivity,
             "tactical_adjustments": self._identify_tactical_adjustments(),
             "risk_management_framework": self._create_risk_management_framework(),
-            "implications_confidence": investment_analysis.get(
-                "portfolio_allocation_context", {}
-            ).get("confidence", 0.86),
+            "implications_confidence": investment_analysis.get("portfolio_allocation_context", {}).get(
+                "confidence", 0.86
+            ),
         }
 
         self.investment_implications = implications
@@ -531,7 +453,7 @@ class MacroEconomicSynthesis:
         print("✅ Generated macro-economic synthesis document")
         return document
 
-    def _generate_markdown_document(self, synthesis_data: Dict[str, Any]) -> str:
+    def _generate_markdown_document(self, synthesis_data: dict[str, Any]) -> str:
         """Generate markdown document following macro_analysis_template.md structure"""
         # Prepare template context with comprehensive data
         context = {
@@ -566,30 +488,20 @@ class MacroEconomicSynthesis:
             "economic_forecasts": self._generate_economic_forecasts(),
             "scenario_analysis": self._extract_scenario_analysis(),
             # CLI insights and validation
-            "cli_insights": (
-                self.discovery_data.get("cli_insights", {})
-                if self.discovery_data
-                else {}
-            ),
-            "discovery_insights": (
-                self.discovery_data.get("discovery_insights", {})
-                if self.discovery_data
-                else {}
-            ),
+            "cli_insights": (self.discovery_data.get("cli_insights", {}) if self.discovery_data else {}),
+            "discovery_insights": (self.discovery_data.get("discovery_insights", {}) if self.discovery_data else {}),
         }
 
         # Skip Jinja2 template rendering - template file contains specification document, not Jinja2 template
         # The template file macro_analysis_template.md contains placeholder syntax [REGION], [DATE] etc.
         # instead of Jinja2 variables {{ region }}, {{ generation_date }} etc.
         # Use structured markdown generation instead which properly substitutes real data
-        print(
-            "🔄 Using structured markdown generation (Jinja2 template contains specification document)"
-        )
+        print("🔄 Using structured markdown generation (Jinja2 template contains specification document)")
 
         # Generate document using structured markdown
         return self._generate_structured_markdown_document(context)
 
-    def _generate_structured_markdown_document(self, context: Dict[str, Any]) -> str:
+    def _generate_structured_markdown_document(self, context: dict[str, Any]) -> str:
         """Generate structured markdown document following template specification"""
         economic_thesis = context["economic_thesis"]
         business_cycle = context["business_cycle_assessment"]
@@ -602,36 +514,30 @@ class MacroEconomicSynthesis:
         liquidity_assessment = self._synthesize_liquidity_assessment()
 
         # Format core economic metrics with enhanced data
-        recession_prob = (
-            f"{economic_thesis.get('recession_probability', 0.15) * 100:.0f}%"
-        )
+        recession_prob = f"{economic_thesis.get('recession_probability', 0.15) * 100:.0f}%"
         cycle_phase = economic_thesis.get("business_cycle_phase", "expansion").title()
         policy_stance = policy_analysis.get("monetary_policy_stance", "neutral").title()
 
         # Enhanced thesis with service data integration
-        enhanced_thesis = economic_thesis.get(
-            "core_economic_thesis", self._generate_enhanced_core_economic_thesis()
-        )
+        enhanced_thesis = economic_thesis.get("core_economic_thesis", self._generate_enhanced_core_economic_thesis())
         enhanced_catalysts = ", ".join(
-            economic_thesis.get(
-                "key_economic_catalysts", self._identify_enhanced_economic_catalysts()
-            )
+            economic_thesis.get("key_economic_catalysts", self._identify_enhanced_economic_catalysts())
         )
         enhanced_confidence = self._calculate_enhanced_economic_confidence()
 
-        document = f"""# {context.get('region', 'US')} Macro-Economic Analysis
-*Generated: {context['generation_date']} | Confidence: {enhanced_confidence:.1f}/1.0 | Data Quality: {context['data_quality']:.1f}/1.0 | Economic Context: Current*
-<!-- Author: {context['author']} -->
+        document = f"""# {context.get("region", "US")} Macro-Economic Analysis
+*Generated: {context["generation_date"]} | Confidence: {enhanced_confidence:.1f}/1.0 | Data Quality: {context["data_quality"]:.1f}/1.0 | Economic Context: Current*
+<!-- Author: {context["author"]} -->
 
 ## 🎯 Executive Summary & Economic Thesis
 
 ### Core Economic Thesis
 {enhanced_thesis}
 
-### Economic Outlook: {economic_thesis.get('economic_outlook', self._generate_enhanced_economic_outlook()).upper()} | Business Cycle: {cycle_phase} | Confidence: {enhanced_confidence:.1f}/1.0
+### Economic Outlook: {economic_thesis.get("economic_outlook", self._generate_enhanced_economic_outlook()).upper()} | Business Cycle: {cycle_phase} | Confidence: {enhanced_confidence:.1f}/1.0
 - **Recession Probability**: {recession_prob} over next 12 months | Economic Cycle: {cycle_phase} phase
-- **Monetary Policy Context**: {self._assess_enhanced_policy_stance().title()} policy stance | FOMC Rate: {fomc_analysis.get('current_rate', 5.25):.2f}% | Market Implied: {fomc_analysis.get('market_implied_rate', 5.0):.2f}%
-- **Liquidity Environment**: {liquidity_assessment.get('liquidity_regime', 'adequate').title()} global liquidity | M2 Growth: {liquidity_assessment.get('m2_analysis', {}).get('global_m2_growth', 'N/A')}
+- **Monetary Policy Context**: {self._assess_enhanced_policy_stance().title()} policy stance | FOMC Rate: {fomc_analysis.get("current_rate", 5.25):.2f}% | Market Implied: {fomc_analysis.get("market_implied_rate", 5.0):.2f}%
+- **Liquidity Environment**: {liquidity_assessment.get("liquidity_regime", "adequate").title()} global liquidity | M2 Growth: {liquidity_assessment.get("m2_analysis", {}).get("global_m2_growth", "N/A")}
 - **Growth Forecast**: Based on current leading indicators, policy transmission mechanisms, and liquidity conditions
 - **Key Economic Catalysts**: {enhanced_catalysts}
 
@@ -667,16 +573,16 @@ class MacroEconomicSynthesis:
 ### Current Business Cycle Phase
 - **Phase Identification**: {cycle_phase} | Recession probability: {recession_prob} over 12 months
 - **Phase Duration**: Current phase positioning based on leading/coincident indicators
-- **Transition Probabilities**: {self._format_transition_probabilities(business_cycle.get('phase_transition_probabilities', {}))}
+- **Transition Probabilities**: {self._format_transition_probabilities(business_cycle.get("phase_transition_probabilities", {}))}
 - **Economic Momentum**: {self._assess_economic_momentum(business_cycle)}
-- **Interest Rate Sensitivity**: {business_cycle.get('interest_rate_sensitivity', {}).get('duration_analysis', 'Moderate duration risk based on current rate environment')}
-- **Inflation Hedge Assessment**: {business_cycle.get('inflation_hedge_assessment', {}).get('pricing_power', 'Moderate pricing power protection against inflation pressures')}
+- **Interest Rate Sensitivity**: {business_cycle.get("interest_rate_sensitivity", {}).get("duration_analysis", "Moderate duration risk based on current rate environment")}
+- **Inflation Hedge Assessment**: {business_cycle.get("inflation_hedge_assessment", {}).get("pricing_power", "Moderate pricing power protection against inflation pressures")}
 
 ### Monetary Policy Transmission Analysis
-- **Policy Stance**: {policy_stance} | Policy effectiveness: {policy_analysis.get('policy_effectiveness', 'Moderate transmission strength')}
-- **Credit Channel**: {policy_analysis.get('credit_market_conditions', {}).get('banking_standards', 'Stable lending standards with adequate credit availability')}
-- **Money Supply Impact**: {policy_analysis.get('money_supply_impact', {}).get('m2_growth_sensitivity', 'M2 growth consistent with economic activity levels')}
-- **Policy Timeline**: {self._format_policy_timeline(policy_analysis.get('policy_timeline', []))}
+- **Policy Stance**: {policy_stance} | Policy effectiveness: {policy_analysis.get("policy_effectiveness", "Moderate transmission strength")}
+- **Credit Channel**: {policy_analysis.get("credit_market_conditions", {}).get("banking_standards", "Stable lending standards with adequate credit availability")}
+- **Money Supply Impact**: {policy_analysis.get("money_supply_impact", {}).get("m2_growth_sensitivity", "M2 growth consistent with economic activity levels")}
+- **Policy Timeline**: {self._format_policy_timeline(policy_analysis.get("policy_timeline", []))}
 
 ### Employment Dynamics Assessment
 {self._generate_employment_dynamics_section(business_cycle)}
@@ -727,9 +633,9 @@ class MacroEconomicSynthesis:
 ---
 *Framework: Multi-source economic intelligence, business cycle integrated, policy-aware asset allocation*
 
-**Author**: {context['author']}
-**Confidence**: {context['confidence']:.1f}/1.0
-**Data Quality**: {context['data_quality']:.1f}/1.0
+**Author**: {context["author"]}
+**Confidence**: {context["confidence"]:.1f}/1.0
+**Data Quality**: {context["data_quality"]:.1f}/1.0
 **Framework**: Macro-Economic DASV Methodology
 """
 
@@ -748,7 +654,7 @@ class MacroEconomicSynthesis:
         print("✅ Saved macro-economic synthesis document to: {filepath}")
         return filepath
 
-    def generate_synthesis_output(self) -> Dict[str, Any]:
+    def generate_synthesis_output(self) -> dict[str, Any]:
         """Generate comprehensive synthesis phase output"""
         synthesis_data = {
             "metadata": {
@@ -777,7 +683,7 @@ class MacroEconomicSynthesis:
         }
         return synthesis_data
 
-    def save_synthesis_metadata(self, data: Dict[str, Any]) -> str:
+    def save_synthesis_metadata(self, data: dict[str, Any]) -> str:
         """Save synthesis metadata to JSON file"""
         metadata_dir = os.path.join(self.output_dir, "metadata")
         os.makedirs(metadata_dir, exist_ok=True)
@@ -802,9 +708,7 @@ class MacroEconomicSynthesis:
             economic_indicators = self.discovery_data.get("economic_indicators", {})
             gdp_data = economic_indicators.get("gdp_data", {})
             if gdp_data.get("growth_trend") == "positive":
-                indicators = (
-                    "positive growth momentum supported by robust economic fundamentals"
-                )
+                indicators = "positive growth momentum supported by robust economic fundamentals"
 
         return f"The {region_name} economic environment demonstrates {indicators}, positioning the region for sustained economic expansion with manageable policy and market risks."
 
@@ -816,10 +720,9 @@ class MacroEconomicSynthesis:
 
             if recession_prob < 0.2:
                 return "EXPANSIONARY"
-            elif recession_prob > 0.4:
+            if recession_prob > 0.4:
                 return "CONTRACTIONARY"
-            else:
-                return "NEUTRAL"
+            return "NEUTRAL"
         return "NEUTRAL"
 
     def _assess_policy_stance(self) -> str:
@@ -829,7 +732,7 @@ class MacroEconomicSynthesis:
             return liquidity.get("fed_policy_stance", "neutral").title()
         return "Neutral"
 
-    def _identify_economic_catalysts(self) -> List[str]:
+    def _identify_economic_catalysts(self) -> list[str]:
         """Identify key economic catalysts"""
         catalysts = [
             "Monetary policy transmission effectiveness",
@@ -844,16 +747,14 @@ class MacroEconomicSynthesis:
 
         return catalysts
 
-    def _analyze_employment_dynamics(self) -> Dict[str, Any]:
+    def _analyze_employment_dynamics(self) -> dict[str, Any]:
         """Analyze employment dynamics"""
         employment_data = {}
         if self.analysis_data:
             liquidity = self.analysis_data.get("liquidity_cycle_positioning", {})
             employment_sensitivity = liquidity.get("employment_sensitivity", {})
             employment_data = {
-                "payroll_correlation": employment_sensitivity.get(
-                    "payroll_correlation", 0.75
-                ),
+                "payroll_correlation": employment_sensitivity.get("payroll_correlation", 0.75),
                 "labor_participation_impact": employment_sensitivity.get(
                     "labor_participation_impact",
                     "Moderate positive correlation with economic cycle",
@@ -869,14 +770,14 @@ class MacroEconomicSynthesis:
             "employment_cycle_positioning": "Mid-cycle employment dynamics",
         }
 
-    def _assess_monetary_policy_transmission(self) -> Dict[str, Any]:
+    def _assess_monetary_policy_transmission(self) -> dict[str, Any]:
         """Assess monetary policy transmission mechanisms"""
         if self.analysis_data:
             liquidity = self.analysis_data.get("liquidity_cycle_positioning", {})
             return {
-                "credit_channel_effectiveness": liquidity.get(
-                    "credit_market_conditions", {}
-                ).get("corporate_bond_issuance", "Moderate credit transmission"),
+                "credit_channel_effectiveness": liquidity.get("credit_market_conditions", {}).get(
+                    "corporate_bond_issuance", "Moderate credit transmission"
+                ),
                 "asset_price_channel": liquidity.get("money_supply_impact", {}).get(
                     "asset_price_inflation", "Balanced asset price effects"
                 ),
@@ -897,7 +798,7 @@ class MacroEconomicSynthesis:
             return f"{effectiveness.title()} policy transmission strength"
         return "Moderate policy transmission strength"
 
-    def _generate_policy_timeline(self) -> List[str]:
+    def _generate_policy_timeline(self) -> list[str]:
         """Generate policy timeline and key events"""
         return [
             "Q1 2025: Continued policy rate assessment based on economic data",
@@ -905,7 +806,7 @@ class MacroEconomicSynthesis:
             "Q3-Q4 2025: Policy adjustments based on inflation and employment trends",
         ]
 
-    def _identify_policy_risks(self) -> List[str]:
+    def _identify_policy_risks(self) -> list[str]:
         """Identify key policy risks"""
         return [
             "Policy transmission lag effects",
@@ -913,7 +814,7 @@ class MacroEconomicSynthesis:
             "Market expectations vs policy reality divergence",
         ]
 
-    def _develop_risk_mitigation_strategies(self) -> Dict[str, List[str]]:
+    def _develop_risk_mitigation_strategies(self) -> dict[str, list[str]]:
         """Develop risk mitigation strategies"""
         return {
             "recession_risks": [
@@ -938,7 +839,7 @@ class MacroEconomicSynthesis:
             ],
         }
 
-    def _generate_asset_allocation_framework(self) -> Dict[str, Any]:
+    def _generate_asset_allocation_framework(self) -> dict[str, Any]:
         """Generate asset allocation framework based on economic environment"""
         economic_phase = self.economic_thesis.get("business_cycle_phase", "expansion")
 
@@ -1002,7 +903,7 @@ class MacroEconomicSynthesis:
 
         return allocation
 
-    def _develop_sector_rotation_strategy(self) -> Dict[str, Any]:
+    def _develop_sector_rotation_strategy(self) -> dict[str, Any]:
         """Develop sector rotation strategy based on economic cycle"""
         cycle_phase = self.economic_thesis.get("business_cycle_phase", "expansion")
 
@@ -1026,7 +927,7 @@ class MacroEconomicSynthesis:
 
         return strategies.get(cycle_phase, strategies["mid_expansion"])
 
-    def _identify_tactical_adjustments(self) -> List[str]:
+    def _identify_tactical_adjustments(self) -> list[str]:
         """Identify tactical portfolio adjustments"""
         return [
             "Monitor economic inflection points for rebalancing opportunities",
@@ -1035,7 +936,7 @@ class MacroEconomicSynthesis:
             "Maintain geographic diversification aligned with policy divergence",
         ]
 
-    def _create_risk_management_framework(self) -> Dict[str, Any]:
+    def _create_risk_management_framework(self) -> dict[str, Any]:
         """Create comprehensive risk management framework"""
         return {
             "position_sizing": "VIX-based position sizing with correlation adjustments",
@@ -1067,7 +968,7 @@ class MacroEconomicSynthesis:
         }
         return region_names.get(self.region, self.region)
 
-    def _extract_economic_indicators(self) -> Dict[str, Any]:
+    def _extract_economic_indicators(self) -> dict[str, Any]:
         """Extract comprehensive economic indicators from discovery data"""
         if not self.discovery_data:
             return {}
@@ -1081,44 +982,32 @@ class MacroEconomicSynthesis:
             "employment_data": fred_data.get("employment_data", {}),
             "inflation_data": fred_data.get("inflation_data", {}),
             "monetary_policy_data": fred_data.get("monetary_policy_data", {}),
-            "leading_indicators": self.discovery_data.get(
-                "economic_indicators", {}
-            ).get("leading_indicators", {}),
-            "coincident_indicators": self.discovery_data.get(
-                "economic_indicators", {}
-            ).get("coincident_indicators", {}),
-            "lagging_indicators": self.discovery_data.get(
-                "economic_indicators", {}
-            ).get("lagging_indicators", {}),
-            "composite_scores": self.discovery_data.get("economic_indicators", {}).get(
-                "composite_scores", {}
+            "leading_indicators": self.discovery_data.get("economic_indicators", {}).get("leading_indicators", {}),
+            "coincident_indicators": self.discovery_data.get("economic_indicators", {}).get(
+                "coincident_indicators", {}
             ),
+            "lagging_indicators": self.discovery_data.get("economic_indicators", {}).get("lagging_indicators", {}),
+            "composite_scores": self.discovery_data.get("economic_indicators", {}).get("composite_scores", {}),
         }
 
         return indicators
 
-    def _extract_cross_regional_data(self) -> Dict[str, Any]:
+    def _extract_cross_regional_data(self) -> dict[str, Any]:
         """Extract comprehensive cross-regional comparison data"""
         if not self.discovery_data:
             return {}
 
         return {
-            "regional_analysis": self.discovery_data.get(
-                "global_economic_context", {}
-            ).get("regional_analysis", {}),
-            "trade_flows": self.discovery_data.get("global_economic_context", {}).get(
-                "trade_flows", {}
+            "regional_analysis": self.discovery_data.get("global_economic_context", {}).get("regional_analysis", {}),
+            "trade_flows": self.discovery_data.get("global_economic_context", {}).get("trade_flows", {}),
+            "currency_dynamics": self.discovery_data.get("global_economic_context", {}).get("currency_dynamics", {}),
+            "geopolitical_assessment": self.discovery_data.get("global_economic_context", {}).get(
+                "geopolitical_assessment", {}
             ),
-            "currency_dynamics": self.discovery_data.get(
-                "global_economic_context", {}
-            ).get("currency_dynamics", {}),
-            "geopolitical_assessment": self.discovery_data.get(
-                "global_economic_context", {}
-            ).get("geopolitical_assessment", {}),
             "cross_regional_data": self.discovery_data.get("cross_regional_data", {}),
         }
 
-    def _extract_business_cycle_data(self) -> Dict[str, Any]:
+    def _extract_business_cycle_data(self) -> dict[str, Any]:
         """Extract comprehensive business cycle data"""
         data = {}
 
@@ -1126,98 +1015,78 @@ class MacroEconomicSynthesis:
         if self.discovery_data:
             data.update(
                 {
-                    "current_phase": self.discovery_data.get(
-                        "business_cycle_data", {}
-                    ).get("current_phase", "expansion"),
-                    "transition_probabilities": self.discovery_data.get(
-                        "business_cycle_data", {}
-                    ).get("transition_probabilities", {}),
-                    "historical_context": self.discovery_data.get(
-                        "business_cycle_data", {}
-                    ).get("historical_context", {}),
-                    "economic_indicators": self.discovery_data.get(
-                        "economic_indicators", {}
+                    "current_phase": self.discovery_data.get("business_cycle_data", {}).get(
+                        "current_phase", "expansion"
                     ),
+                    "transition_probabilities": self.discovery_data.get("business_cycle_data", {}).get(
+                        "transition_probabilities", {}
+                    ),
+                    "historical_context": self.discovery_data.get("business_cycle_data", {}).get(
+                        "historical_context", {}
+                    ),
+                    "economic_indicators": self.discovery_data.get("economic_indicators", {}),
                 }
             )
 
         # From analysis data
         if self.analysis_data:
-            business_cycle_modeling = self.analysis_data.get(
-                "business_cycle_modeling", {}
-            )
+            business_cycle_modeling = self.analysis_data.get("business_cycle_modeling", {})
             data.update(
                 {
                     "cycle_modeling": business_cycle_modeling,
-                    "multi_dimensional_phase": self.analysis_data.get(
-                        "multi_dimensional_phase_identification", {}
-                    ),
+                    "multi_dimensional_phase": self.analysis_data.get("multi_dimensional_phase_identification", {}),
                 }
             )
 
         return data
 
-    def _extract_monetary_policy_context(self) -> Dict[str, Any]:
+    def _extract_monetary_policy_context(self) -> dict[str, Any]:
         """Extract comprehensive monetary policy context"""
         if not self.discovery_data:
             return {}
 
         return {
-            "policy_stance": self.discovery_data.get("monetary_policy_context", {}).get(
-                "policy_stance", {}
+            "policy_stance": self.discovery_data.get("monetary_policy_context", {}).get("policy_stance", {}),
+            "transmission_mechanisms": self.discovery_data.get("monetary_policy_context", {}).get(
+                "transmission_mechanisms", {}
             ),
-            "transmission_mechanisms": self.discovery_data.get(
-                "monetary_policy_context", {}
-            ).get("transmission_mechanisms", {}),
-            "forward_guidance": self.discovery_data.get(
-                "monetary_policy_context", {}
-            ).get("forward_guidance", {}),
-            "international_coordination": self.discovery_data.get(
-                "monetary_policy_context", {}
-            ).get("international_coordination", {}),
-            "cli_monetary_data": self.discovery_data.get(
-                "cli_comprehensive_analysis", {}
-            )
+            "forward_guidance": self.discovery_data.get("monetary_policy_context", {}).get("forward_guidance", {}),
+            "international_coordination": self.discovery_data.get("monetary_policy_context", {}).get(
+                "international_coordination", {}
+            ),
+            "cli_monetary_data": self.discovery_data.get("cli_comprehensive_analysis", {})
             .get("fred_economic_data", {})
             .get("monetary_policy_data", {}),
         }
 
-    def _extract_market_intelligence(self) -> Dict[str, Any]:
+    def _extract_market_intelligence(self) -> dict[str, Any]:
         """Extract market intelligence and volatility data"""
         if not self.discovery_data:
             return {}
 
         return {
-            "volatility_analysis": self.discovery_data.get(
-                "cli_market_intelligence", {}
-            ).get("volatility_analysis", {}),
-            "cross_asset_correlations": self.discovery_data.get(
-                "cli_market_intelligence", {}
-            ).get("cross_asset_correlations", {}),
-            "risk_appetite": self.discovery_data.get("cli_market_intelligence", {}).get(
-                "risk_appetite", {}
+            "volatility_analysis": self.discovery_data.get("cli_market_intelligence", {}).get(
+                "volatility_analysis", {}
             ),
-            "market_regime": self.discovery_data.get("cli_market_intelligence", {}).get(
-                "market_regime", {}
+            "cross_asset_correlations": self.discovery_data.get("cli_market_intelligence", {}).get(
+                "cross_asset_correlations", {}
             ),
-            "alpha_vantage_data": self.discovery_data.get(
-                "cli_comprehensive_analysis", {}
-            ).get("alpha_vantage_market_data", {}),
+            "risk_appetite": self.discovery_data.get("cli_market_intelligence", {}).get("risk_appetite", {}),
+            "market_regime": self.discovery_data.get("cli_market_intelligence", {}).get("market_regime", {}),
+            "alpha_vantage_data": self.discovery_data.get("cli_comprehensive_analysis", {}).get(
+                "alpha_vantage_market_data", {}
+            ),
         }
 
-    def _extract_data_quality_metrics(self) -> Dict[str, Any]:
+    def _extract_data_quality_metrics(self) -> dict[str, Any]:
         """Extract comprehensive data quality metrics"""
         quality_metrics = {}
 
         if self.discovery_data:
             quality_metrics.update(
                 {
-                    "discovery_quality": self.discovery_data.get(
-                        "data_quality_assessment", {}
-                    ),
-                    "cli_service_validation": self.discovery_data.get(
-                        "cli_service_validation", {}
-                    ),
+                    "discovery_quality": self.discovery_data.get("data_quality_assessment", {}),
+                    "cli_service_validation": self.discovery_data.get("cli_service_validation", {}),
                     "cli_data_quality": self.discovery_data.get("cli_data_quality", {}),
                 }
             )
@@ -1226,22 +1095,20 @@ class MacroEconomicSynthesis:
             quality_metrics.update(
                 {
                     "analysis_quality": self.analysis_data.get("metadata", {}),
-                    "confidence_scores": self.analysis_data.get(
-                        "confidence_assessment", {}
-                    ),
+                    "confidence_scores": self.analysis_data.get("confidence_assessment", {}),
                 }
             )
 
         return quality_metrics
 
-    def _extract_energy_market_data(self) -> Dict[str, Any]:
+    def _extract_energy_market_data(self) -> dict[str, Any]:
         """Extract energy market integration data"""
         if not self.discovery_data:
             return {}
 
         return self.discovery_data.get("energy_market_integration", {})
 
-    def _generate_economic_forecasts(self) -> Dict[str, Any]:
+    def _generate_economic_forecasts(self) -> dict[str, Any]:
         """Generate economic forecasts from analysis data"""
         forecasts = {
             "gdp_growth": "2.1-2.8% range",
@@ -1257,7 +1124,7 @@ class MacroEconomicSynthesis:
 
         return forecasts
 
-    def _extract_scenario_analysis(self) -> Dict[str, Any]:
+    def _extract_scenario_analysis(self) -> dict[str, Any]:
         """Extract scenario analysis from risk assessment"""
         if self.analysis_data:
             risk_data = self.analysis_data.get("quantified_risk_assessment", {})
@@ -1265,7 +1132,7 @@ class MacroEconomicSynthesis:
         return {}
 
     # Table generation methods
-    def _generate_economic_metrics_table(self, context: Dict[str, Any]) -> str:
+    def _generate_economic_metrics_table(self, context: dict[str, Any]) -> str:
         """Generate economic metrics comparison table with real data"""
         indicators = context.get("economic_indicators", {})
         cross_regional = context.get("cross_regional_data", {})
@@ -1296,9 +1163,7 @@ class MacroEconomicSynthesis:
         current_inflation = "N/A"
         if cpi_obs:
             latest_cpi = cpi_obs[0] if cpi_obs else {}
-            current_inflation = (
-                f"{latest_cpi.get('value', 0):.1f}%" if latest_cpi else "N/A"
-            )
+            current_inflation = f"{latest_cpi.get('value', 0):.1f}%" if latest_cpi else "N/A"
 
         # Extract policy rate
         monetary_data = indicators.get("monetary_policy_data", {})
@@ -1320,7 +1185,7 @@ class MacroEconomicSynthesis:
 | Inflation (CPI YoY) | {current_inflation} | Baseline | -30bps | +45bps | FRED/ECB | {inflation_confidence:.2f} |
 | Policy Rate | {current_rate} | Baseline | +125bps | +200bps | FRED | {monetary_confidence:.2f} |"""
 
-    def _generate_monetary_policy_table(self, context: Dict[str, Any]) -> str:
+    def _generate_monetary_policy_table(self, context: dict[str, Any]) -> str:
         """Generate monetary policy and financial conditions table"""
         return """| Indicator | Current | 1M Change | 3M Change | 6M Change | Trend | Confidence |
 |-----------|---------|-----------|-----------|-----------|-------|------------|
@@ -1330,7 +1195,7 @@ class MacroEconomicSynthesis:
 | Credit Spreads | 125bps | -5bps | -15bps | -20bps | Tightening | 0.88 |
 | DXY (Dollar Index) | 103.2 | -0.8 | -2.1 | -3.5 | Weakening | 0.85 |"""
 
-    def _generate_economic_health_table(self, context: Dict[str, Any]) -> str:
+    def _generate_economic_health_table(self, context: dict[str, Any]) -> str:
         """Generate economic health assessment table with real data"""
         indicators = context.get("economic_indicators", {})
         leading_indicators = indicators.get("leading_indicators", {})
@@ -1366,13 +1231,7 @@ class MacroEconomicSynthesis:
                 return default
 
         cc_current_safe = safe_float(cc_current, 108.5)
-        cc_signal = (
-            "Optimistic"
-            if cc_current_safe > 100
-            else "Pessimistic"
-            if cc_current_safe < 90
-            else "Neutral"
-        )
+        cc_signal = "Optimistic" if cc_current_safe > 100 else "Pessimistic" if cc_current_safe < 90 else "Neutral"
 
         # Extract stock market data as proxy for sentiment
         stock_market = leading_indicators.get("stock_market", {})
@@ -1387,17 +1246,11 @@ class MacroEconomicSynthesis:
         # Extract employment data for initial claims proxy
         employment_data = indicators.get("employment_data", {})
         unemployment_data = employment_data.get("unemployment_data", {})
-        unemployment_trend = unemployment_data.get(
-            "trend", "slightly rising but stable"
-        )
+        unemployment_trend = unemployment_data.get("trend", "slightly rising but stable")
 
         # Get confidence scores
-        leading_confidence = indicators.get("leading_indicators", {}).get(
-            "confidence", 0.88
-        )
-        coincident_confidence = indicators.get("coincident_indicators", {}).get(
-            "confidence", 0.92
-        )
+        leading_confidence = indicators.get("leading_indicators", {}).get("confidence", 0.88)
+        coincident_confidence = indicators.get("coincident_indicators", {}).get("confidence", 0.92)
 
         # Convert all numeric and string values safely
         volatility_num = safe_float(volatility, 14.8)
@@ -1408,9 +1261,7 @@ class MacroEconomicSynthesis:
 
         # Convert string values safely
         ind_trends_safe = safe_string(ind_trends, "steady expansion")
-        unemployment_trend_safe = safe_string(
-            unemployment_trend, "slightly rising but stable"
-        )
+        unemployment_trend_safe = safe_string(unemployment_trend, "slightly rising but stable")
 
         # Generate additional signals
         volatility_signal = "Low" if volatility_num < 20 else "Elevated"
@@ -1424,7 +1275,7 @@ class MacroEconomicSynthesis:
 | Capacity Utilization | {ind_capacity_num:.1f}% | N/A | 76.0% | {capacity_signal} | {coincident_confidence_num:.2f} |
 | Employment Trend | N/A | N/A | N/A | {unemployment_trend_safe.title()} | {safe_float(employment_data.get("confidence", 0.89), 0.89):.2f} |"""
 
-    def _generate_economic_sensitivity_matrix(self, context: Dict[str, Any]) -> str:
+    def _generate_economic_sensitivity_matrix(self, context: dict[str, Any]) -> str:
         """Generate economic sensitivity matrix"""
         return """| Economic Driver | Current Level | 3M Trend | Impact Score | Policy Sensitivity | Confidence |
 |-----------------|---------------|----------|--------------|-------------------|------------|
@@ -1435,7 +1286,7 @@ class MacroEconomicSynthesis:
 | Yield Curve Slope | 25bps | +15bps | 3.8/5.0 | Medium | 0.91 |
 | Money Supply (M2) | 6.2% | Stable | 3.5/5.0 | Medium | 0.85 |"""
 
-    def _generate_economic_forecasting_table(self, context: Dict[str, Any]) -> str:
+    def _generate_economic_forecasting_table(self, context: dict[str, Any]) -> str:
         """Generate economic forecasting framework table"""
         return """| Method | GDP Growth | Inflation | Unemployment | Weight | Confidence |
 |--------|------------|-----------|--------------|---------|------------|
@@ -1443,7 +1294,7 @@ class MacroEconomicSynthesis:
 | Leading Indicators | 2.4% | 2.3% | 3.9% | 35% | 0.86 |
 | Survey-Based | 2.0% | 2.2% | 4.1% | 25% | 0.83 |"""
 
-    def _generate_scenario_analysis_table(self, context: Dict[str, Any]) -> str:
+    def _generate_scenario_analysis_table(self, context: dict[str, Any]) -> str:
         """Generate economic scenario analysis table"""
         return """| Scenario | Probability | GDP Growth | Inflation | Unemployment | Policy Response |
 |----------|-------------|------------|-----------|--------------|----------------|
@@ -1452,7 +1303,7 @@ class MacroEconomicSynthesis:
 | Bear Case | 15% | 0.8% | 2.8% | 4.8% | Aggressive easing |
 | Recession | 5% | -1.2% | 1.9% | 6.2% | Emergency measures |"""
 
-    def _generate_risk_assessment_table(self, risk_assessment: Dict[str, Any]) -> str:
+    def _generate_risk_assessment_table(self, risk_assessment: dict[str, Any]) -> str:
         """Generate quantified risk assessment table"""
         return """| Risk Factor | Probability | Impact (1-5) | Risk Score | Policy Response | Monitoring Indicators |
 |-------------|-------------|--------------|------------|-----------------|----------------------|
@@ -1462,7 +1313,7 @@ class MacroEconomicSynthesis:
 | Financial Instability | 0.08 | 5 | 3.5 | Liquidity provision | Credit spreads, VIX |
 | Policy Error | 0.18 | 3 | 2.4 | Policy correction | Economic indicators |"""
 
-    def _generate_stress_testing_table(self, risk_assessment: Dict[str, Any]) -> str:
+    def _generate_stress_testing_table(self, risk_assessment: dict[str, Any]) -> str:
         """Generate economic stress testing scenarios table"""
         return """| Scenario | Probability | Economic Impact | Recovery Timeline | Policy Tools |
 |----------|-------------|-----------------|-------------------|--------------|
@@ -1471,22 +1322,16 @@ class MacroEconomicSynthesis:
 | Inflation Spike (+5%) | 12% | Real income decline | 2-3 quarters | Aggressive tightening |
 | Financial Crisis | 5% | Credit crunch | 4-6 quarters | Bailout/liquidity |"""
 
-    def _generate_asset_allocation_table(
-        self, investment_implications: Dict[str, Any]
-    ) -> str:
+    def _generate_asset_allocation_table(self, investment_implications: dict[str, Any]) -> str:
         """Generate asset allocation guidance table"""
-        allocation_framework = investment_implications.get(
-            "asset_allocation_framework", {}
-        )
+        allocation_framework = investment_implications.get("asset_allocation_framework", {})
 
         rows = []
         for asset_class, details in allocation_framework.items():
             if isinstance(details, dict):
                 allocation = details.get("allocation", "Neutral")
                 rationale = details.get("rationale", "Standard positioning")
-                rows.append(
-                    f"| {asset_class.title()} | {allocation} | {rationale} | 0.87 |"
-                )
+                rows.append(f"| {asset_class.title()} | {allocation} | {rationale} | 0.87 |")
 
         if not rows:
             rows = [
@@ -1496,84 +1341,51 @@ class MacroEconomicSynthesis:
                 "| Alternatives | Neutral | Portfolio diversification | 0.86 |",
             ]
 
-        header = (
-            "| Asset Class | Allocation Guidance | Investment Rationale | Confidence |"
-        )
-        separator = (
-            "|-------------|-------------------|---------------------|------------|"
-        )
+        header = "| Asset Class | Allocation Guidance | Investment Rationale | Confidence |"
+        separator = "|-------------|-------------------|---------------------|------------|"
 
         return "\n".join([header, separator] + rows)
 
-    def _generate_sector_rotation_guidance(
-        self, investment_implications: Dict[str, Any]
-    ) -> str:
+    def _generate_sector_rotation_guidance(self, investment_implications: dict[str, Any]) -> str:
         """Generate sector rotation guidance based on economic cycle and enhanced data"""
         try:
             # Get sector rotation strategy from investment implications
-            sector_strategy = investment_implications.get(
-                "sector_rotation_strategy", {}
-            )
-            cycle_phase = investment_implications.get(
-                "business_cycle_phase", "mid_expansion"
-            )
+            sector_strategy = investment_implications.get("sector_rotation_strategy", {})
+            cycle_phase = investment_implications.get("business_cycle_phase", "mid_expansion")
 
             # Get enhanced sector correlation data if available
             sector_signals = ""
-            if (
-                hasattr(self, "sector_correlation_data")
-                and self.sector_correlation_data
-            ):
-                rotation_signals = self.sector_correlation_data.get(
-                    "rotation_signals", []
-                )
+            if hasattr(self, "sector_correlation_data") and self.sector_correlation_data:
+                rotation_signals = self.sector_correlation_data.get("rotation_signals", [])
                 if rotation_signals:
                     signal = rotation_signals[0]
-                    rotation_type = (
-                        signal.get("rotation_type", "").replace("_", " ").title()
-                    )
+                    rotation_type = signal.get("rotation_type", "").replace("_", " ").title()
                     confidence = signal.get("confidence", 0)
                     sector_signals = f"\n- **Current Rotation Signal**: {rotation_type} ({confidence:.0%} confidence)"
 
             # Default sector guidance based on cycle phase
             if cycle_phase == "early_expansion":
-                overweight = sector_strategy.get(
-                    "overweight", ["Technology", "Consumer Discretionary", "Financials"]
-                )
-                underweight = sector_strategy.get(
-                    "underweight", ["Utilities", "Consumer Staples", "REITs"]
-                )
-                rationale = sector_strategy.get(
-                    "rationale", "Growth sectors benefit from economic acceleration"
-                )
+                overweight = sector_strategy.get("overweight", ["Technology", "Consumer Discretionary", "Financials"])
+                underweight = sector_strategy.get("underweight", ["Utilities", "Consumer Staples", "REITs"])
+                rationale = sector_strategy.get("rationale", "Growth sectors benefit from economic acceleration")
             elif cycle_phase == "late_expansion":
-                overweight = sector_strategy.get(
-                    "overweight", ["Consumer Staples", "Healthcare", "Utilities"]
-                )
+                overweight = sector_strategy.get("overweight", ["Consumer Staples", "Healthcare", "Utilities"])
                 underweight = sector_strategy.get(
                     "underweight",
                     ["Technology", "Consumer Discretionary", "Financials"],
                 )
-                rationale = sector_strategy.get(
-                    "rationale", "Defensive positioning for cycle maturity"
-                )
+                rationale = sector_strategy.get("rationale", "Defensive positioning for cycle maturity")
             else:  # mid_expansion or default
-                overweight = sector_strategy.get(
-                    "overweight", ["Healthcare", "Technology", "Industrials"]
-                )
-                underweight = sector_strategy.get(
-                    "underweight", ["Energy", "Materials", "Utilities"]
-                )
-                rationale = sector_strategy.get(
-                    "rationale", "Quality growth with defensive characteristics"
-                )
+                overweight = sector_strategy.get("overweight", ["Healthcare", "Technology", "Industrials"])
+                underweight = sector_strategy.get("underweight", ["Energy", "Materials", "Utilities"])
+                rationale = sector_strategy.get("rationale", "Quality growth with defensive characteristics")
 
             overweight_str = ", ".join(overweight)
             underweight_str = ", ".join(underweight)
 
             return f"""| Economic Phase | Sector Preferences | Duration Positioning | Style Bias | Risk Management |
 |----------------|-------------------|---------------------|------------|-----------------|
-| {cycle_phase.replace('_', ' ').title()} | Overweight: {overweight_str} | Short duration | Quality Growth | Correlation monitoring |
+| {cycle_phase.replace("_", " ").title()} | Overweight: {overweight_str} | Short duration | Quality Growth | Correlation monitoring |
 | Current | Underweight: {underweight_str} | Long duration | Value screening | Sector rotation signals |
 
 **Rationale**: {rationale}{sector_signals}
@@ -1581,7 +1393,7 @@ class MacroEconomicSynthesis:
 - **Risk Controls**: Maximum 15% sector concentration, correlation-based rebalancing triggers
 - **Monitoring**: Weekly sector performance attribution, monthly rotation signal review"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating sector rotation guidance: {e}")
             return """| Economic Phase | Sector Preferences | Duration Positioning | Style Bias |
 |----------------|-------------------|---------------------|------------|
@@ -1590,9 +1402,7 @@ class MacroEconomicSynthesis:
 - **Sector Rotation**: Based on economic cycle positioning and fundamental analysis
 - **Risk Management**: Diversified sector exposure with rebalancing triggers"""
 
-    def _generate_portfolio_construction_guidance(
-        self, investment_implications: Dict[str, Any]
-    ) -> str:
+    def _generate_portfolio_construction_guidance(self, investment_implications: dict[str, Any]) -> str:
         """Generate portfolio construction guidance"""
         return """
 - **Growth Portfolios**: 70-80% equities, 15-20% fixed income, 5-10% alternatives
@@ -1601,7 +1411,7 @@ class MacroEconomicSynthesis:
 - **Risk Management**: VIX-based sizing, correlation limits, rebalancing triggers
 - **Tactical Adjustments**: Economic inflection points, policy shifts, market dislocations"""
 
-    def _format_transition_probabilities(self, probabilities: Dict[str, float]) -> str:
+    def _format_transition_probabilities(self, probabilities: dict[str, float]) -> str:
         """Format business cycle transition probabilities"""
         if not probabilities:
             return "Moderate transition probabilities based on current indicators"
@@ -1612,25 +1422,22 @@ class MacroEconomicSynthesis:
 
         return ", ".join(formatted)
 
-    def _assess_economic_momentum(self, business_cycle: Dict[str, Any]) -> str:
+    def _assess_economic_momentum(self, business_cycle: dict[str, Any]) -> str:
         """Assess current economic momentum"""
         confidence = business_cycle.get("confidence", 0.88)
         if confidence > 0.9:
             return "Strong positive momentum with high confidence"
-        elif confidence > 0.8:
+        if confidence > 0.8:
             return "Moderate positive momentum with good visibility"
-        else:
-            return "Mixed momentum signals requiring monitoring"
+        return "Mixed momentum signals requiring monitoring"
 
-    def _format_policy_timeline(self, timeline: List[str]) -> str:
+    def _format_policy_timeline(self, timeline: list[str]) -> str:
         """Format policy timeline"""
         if not timeline:
             return "Policy decisions data-dependent with gradual adjustment approach"
         return "; ".join(timeline)
 
-    def _generate_employment_dynamics_section(
-        self, business_cycle: Dict[str, Any]
-    ) -> str:
+    def _generate_employment_dynamics_section(self, business_cycle: dict[str, Any]) -> str:
         """Generate employment dynamics assessment section"""
         employment = self._analyze_employment_dynamics()
 
@@ -1643,14 +1450,12 @@ class MacroEconomicSynthesis:
 
         payroll_corr = safe_float(employment.get("payroll_correlation", 0.75), 0.75)
 
-        return f"""- **Labor Market Health**: Employment correlation: {payroll_corr:.2f} | {employment.get('labor_participation_impact', 'Stable participation trends')}
-- **Employment Cycle Positioning**: {employment.get('employment_cycle_positioning', 'Mid-cycle employment dynamics')}
+        return f"""- **Labor Market Health**: Employment correlation: {payroll_corr:.2f} | {employment.get("labor_participation_impact", "Stable participation trends")}
+- **Employment Cycle Positioning**: {employment.get("employment_cycle_positioning", "Mid-cycle employment dynamics")}
 - **Consumer Spending Linkage**: Employment → consumer spending transmission remains strong
 - **Labor Market Indicators**: Participation rate and initial claims trend supportive of continued employment growth"""
 
-    def _generate_investment_recommendation_summary(
-        self, context: Dict[str, Any]
-    ) -> str:
+    def _generate_investment_recommendation_summary(self, context: dict[str, Any]) -> str:
         """Generate comprehensive investment recommendation summary"""
         economic_thesis = context["economic_thesis"]
         business_cycle = context["business_cycle_assessment"]
@@ -1660,9 +1465,7 @@ class MacroEconomicSynthesis:
 
         region_name = context["region_name"]
         cycle_phase = economic_thesis.get("business_cycle_phase", "expansion").title()
-        recession_prob = (
-            f"{economic_thesis.get('recession_probability', 0.15) * 100:.0f}%"
-        )
+        recession_prob = f"{economic_thesis.get('recession_probability', 0.15) * 100:.0f}%"
         policy_stance = policy_analysis.get("monetary_policy_stance", "neutral").title()
         confidence = context["confidence"]
 
@@ -1719,7 +1522,7 @@ class MacroEconomicSynthesis:
 
         return round(sum(quality_factors) / len(quality_factors), 2)
 
-    def _verify_template_compliance(self) -> Dict[str, bool]:
+    def _verify_template_compliance(self) -> dict[str, bool]:
         """Verify template compliance"""
         return {
             "structure_compliance": True,
@@ -1755,69 +1558,57 @@ class MacroEconomicSynthesis:
         """Generate enhanced core economic thesis with new service data"""
         try:
             # Extract key data points from enhanced services
-            liquidity_regime = self.global_liquidity_data.get(
-                "liquidity_conditions", {}
-            ).get("liquidity_regime", "adequate")
-            fomc_probabilities = self.economic_calendar_data.get(
-                "fomc_probabilities", {}
+            liquidity_regime = self.global_liquidity_data.get("liquidity_conditions", {}).get(
+                "liquidity_regime", "adequate"
             )
-            sector_regime = self.sector_correlation_data.get("regime_analysis", {}).get(
-                "current_regime", "expansion"
-            )
+            fomc_probabilities = self.economic_calendar_data.get("fomc_probabilities", {})
+            sector_regime = self.sector_correlation_data.get("regime_analysis", {}).get("current_regime", "expansion")
 
             # Extract discovery data
-            discovery_cli = (
-                self.discovery_data.get("cli_comprehensive_analysis", {})
-                if self.discovery_data
-                else {}
-            )
+            discovery_cli = self.discovery_data.get("cli_comprehensive_analysis", {}) if self.discovery_data else {}
             fred_data = discovery_cli.get("fred_economic_data", {})
             gdp_analysis = fred_data.get("gdp_data", {}).get("analysis", "")
 
             # Generate enhanced thesis
-            thesis = f"US economy demonstrates exceptional resilience with above-trend growth"
+            thesis = "US economy demonstrates exceptional resilience with above-trend growth"
             if gdp_analysis:
                 thesis += f" as evidenced by {gdp_analysis.lower()}"
 
             thesis += f", supported by {liquidity_regime} global liquidity conditions"
 
             if fomc_probabilities:
-                policy_surprise = fomc_probabilities.get(
-                    "policy_surprise_potential", 0.5
-                )
+                policy_surprise = fomc_probabilities.get("policy_surprise_potential", 0.5)
                 if policy_surprise > 0.3:
-                    thesis += f" and moderate Fed policy uncertainty"
+                    thesis += " and moderate Fed policy uncertainty"
                 else:
-                    thesis += f" and stable monetary policy expectations"
+                    thesis += " and stable monetary policy expectations"
 
             thesis += f" within a {sector_regime} business cycle framework."
 
             return thesis
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating enhanced thesis: {e}")
             return "US economic environment presents a balanced outlook with moderate growth expectations and manageable risk factors."
 
-    def _extract_business_cycle_phase(self, business_cycle_data: Dict[str, Any]) -> str:
+    def _extract_business_cycle_phase(self, business_cycle_data: dict[str, Any]) -> str:
         """Extract business cycle phase from analysis data"""
         # Try enhanced analysis first
-        phase_classification = business_cycle_data.get(
-            "multi_dimensional_phase_identification", {}
-        ).get("phase_classification", {})
+        phase_classification = business_cycle_data.get("multi_dimensional_phase_identification", {}).get(
+            "phase_classification", {}
+        )
         if phase_classification:
             return phase_classification.get("primary_phase", "expansion")
 
         # Fallback to basic analysis
         return business_cycle_data.get("current_phase", "expansion")
 
-    def _extract_recession_probability(
-        self, business_cycle_data: Dict[str, Any]
-    ) -> float:
+    def _extract_recession_probability(self, business_cycle_data: dict[str, Any]) -> float:
         """Extract recession probability from analysis data"""
         # Try enhanced analysis first
-        phase_classification = business_cycle_data.get(
-            "multi_dimensional_phase_identification", {}
-        ).get("phase_classification", {})
+        phase_classification = business_cycle_data.get("multi_dimensional_phase_identification", {}).get(
+            "phase_classification", {}
+        )
         if phase_classification:
             # Convert to float if it's a percentage
             prob = phase_classification.get("recession_probability", 0.15)
@@ -1831,17 +1622,14 @@ class MacroEconomicSynthesis:
     def _generate_enhanced_economic_outlook(self) -> str:
         """Generate enhanced economic outlook"""
         try:
-            liquidity_conditions = self.global_liquidity_data.get(
-                "liquidity_conditions", {}
-            )
+            liquidity_conditions = self.global_liquidity_data.get("liquidity_conditions", {})
             regime = liquidity_conditions.get("liquidity_regime", "adequate")
 
             if regime == "abundant":
                 return "EXPANSIONARY"
-            elif regime == "tight" or regime == "restrictive":
+            if regime == "tight" or regime == "restrictive":
                 return "CONTRACTIONARY"
-            else:
-                return "NEUTRAL"
+            return "NEUTRAL"
         except:
             return "NEUTRAL"
 
@@ -1864,7 +1652,7 @@ class MacroEconomicSynthesis:
         except:
             return "neutral"
 
-    def _identify_enhanced_economic_catalysts(self) -> List[str]:
+    def _identify_enhanced_economic_catalysts(self) -> list[str]:
         """Identify enhanced economic catalysts with FOMC analysis"""
         catalysts = []
 
@@ -1874,14 +1662,10 @@ class MacroEconomicSynthesis:
             if fomc_data:
                 policy_surprise = fomc_data.get("policy_surprise_potential", 0)
                 if policy_surprise > 0.3:
-                    catalysts.append(
-                        f"Fed policy pivot initiation ({policy_surprise:.0%} probability)"
-                    )
+                    catalysts.append(f"Fed policy pivot initiation ({policy_surprise:.0%} probability)")
 
             # Liquidity-related catalysts
-            liquidity_conditions = self.global_liquidity_data.get(
-                "liquidity_conditions", {}
-            )
+            liquidity_conditions = self.global_liquidity_data.get("liquidity_conditions", {})
             key_drivers = liquidity_conditions.get("key_drivers", [])
             for driver in key_drivers[:2]:  # Top 2 drivers
                 catalysts.append(f"{driver} (liquidity factor)")
@@ -1892,9 +1676,7 @@ class MacroEconomicSynthesis:
                 signal = rotation_signals[0]
                 signal_type = signal.get("rotation_type", "")
                 confidence = signal.get("confidence", 0)
-                catalysts.append(
-                    f"{signal_type.replace('_', ' ').title()} ({confidence:.0%} probability)"
-                )
+                catalysts.append(f"{signal_type.replace('_', ' ').title()} ({confidence:.0%} probability)")
 
             # Default catalysts if no enhanced data
             if not catalysts:
@@ -1906,7 +1688,7 @@ class MacroEconomicSynthesis:
 
             return catalysts[:4]  # Limit to 4 catalysts
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error identifying catalysts: {e}")
             return [
                 "Monetary policy effectiveness",
@@ -1921,50 +1703,40 @@ class MacroEconomicSynthesis:
 
             # Economic calendar confidence
             if self.economic_calendar_data:
-                calendar_confidence = self.economic_calendar_data.get(
-                    "economic_surprises", {}
-                ).get("confidence", 0.85)
+                calendar_confidence = self.economic_calendar_data.get("economic_surprises", {}).get("confidence", 0.85)
                 confidences.append(calendar_confidence)
 
             # Liquidity monitor confidence
             if self.global_liquidity_data:
-                liquidity_confidence = self.global_liquidity_data.get(
-                    "liquidity_conditions", {}
-                ).get("regime_probability", 0.85)
+                liquidity_confidence = self.global_liquidity_data.get("liquidity_conditions", {}).get(
+                    "regime_probability", 0.85
+                )
                 confidences.append(liquidity_confidence)
 
             # Sector correlation confidence
             if self.sector_correlation_data:
-                sector_confidence = self.sector_correlation_data.get(
-                    "factor_attribution", {}
-                ).get("confidence", 0.82)
+                sector_confidence = self.sector_correlation_data.get("factor_attribution", {}).get("confidence", 0.82)
                 if isinstance(sector_confidence, dict):
                     # Take average if it's a dict of confidences
                     sector_confidence = (
-                        sum(sector_confidence.values())
-                        / len(sector_confidence.values())
-                        if sector_confidence
-                        else 0.82
+                        sum(sector_confidence.values()) / len(sector_confidence.values()) if sector_confidence else 0.82
                     )
                 confidences.append(sector_confidence)
 
             # Analysis data confidence
             if self.analysis_data:
-                analysis_confidence = self.analysis_data.get("metadata", {}).get(
-                    "confidence_baseline", 0.90
-                )
+                analysis_confidence = self.analysis_data.get("metadata", {}).get("confidence_baseline", 0.90)
                 confidences.append(analysis_confidence)
 
             if confidences:
                 return round(sum(confidences) / len(confidences), 2)
-            else:
-                return 0.88  # Default
+            return 0.88  # Default
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error calculating enhanced confidence: {e}")
             return 0.88
 
-    def _synthesize_fomc_analysis(self) -> Dict[str, Any]:
+    def _synthesize_fomc_analysis(self) -> dict[str, Any]:
         """Synthesize FOMC analysis from economic calendar data"""
         try:
             fomc_data = self.economic_calendar_data.get("fomc_probabilities", {})
@@ -1973,24 +1745,20 @@ class MacroEconomicSynthesis:
 
             return {
                 "meeting_date": (
-                    fomc_data.get("meeting_date", "").split("T")[0]
-                    if fomc_data.get("meeting_date")
-                    else ""
+                    fomc_data.get("meeting_date", "").split("T")[0] if fomc_data.get("meeting_date") else ""
                 ),
                 "current_rate": fomc_data.get("current_rate", 5.25),
                 "rate_probabilities": fomc_data.get("rate_change_probabilities", {}),
                 "market_implied_rate": fomc_data.get("market_implied_rate", 5.0),
-                "policy_surprise_potential": fomc_data.get(
-                    "policy_surprise_potential", 0.5
-                ),
+                "policy_surprise_potential": fomc_data.get("policy_surprise_potential", 0.5),
                 "market_scenarios": fomc_data.get("market_reaction_scenarios", {}),
             }
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error synthesizing FOMC analysis: {e}")
             return {}
 
-    def _synthesize_liquidity_assessment(self) -> Dict[str, Any]:
+    def _synthesize_liquidity_assessment(self) -> dict[str, Any]:
         """Synthesize liquidity assessment from global liquidity data"""
         try:
             liquidity_data = self.global_liquidity_data.get("liquidity_conditions", {})
@@ -2002,18 +1770,16 @@ class MacroEconomicSynthesis:
                 "composite_score": liquidity_data.get("composite_score", 0.0),
                 "regime_probability": liquidity_data.get("regime_probability", 0.75),
                 "key_drivers": liquidity_data.get("key_drivers", []),
-                "risk_asset_implications": liquidity_data.get(
-                    "risk_asset_implications", {}
-                ),
+                "risk_asset_implications": liquidity_data.get("risk_asset_implications", {}),
                 "m2_analysis": self.global_liquidity_data.get("m2_analysis", {}),
                 "central_bank_summary": self._summarize_central_bank_analysis(),
             }
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error synthesizing liquidity assessment: {e}")
             return {}
 
-    def _summarize_central_bank_analysis(self) -> Dict[str, Any]:
+    def _summarize_central_bank_analysis(self) -> dict[str, Any]:
         """Summarize central bank analysis"""
         try:
             cb_analysis = self.global_liquidity_data.get("central_bank_analysis", {})
@@ -2032,11 +1798,11 @@ class MacroEconomicSynthesis:
 
             return summary
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error summarizing central bank analysis: {e}")
             return {}
 
-    def _generate_fomc_analysis_section(self, fomc_analysis: Dict[str, Any]) -> str:
+    def _generate_fomc_analysis_section(self, fomc_analysis: dict[str, Any]) -> str:
         """Generate FOMC analysis section with enhanced data"""
         if not fomc_analysis:
             return """- **Next FOMC Meeting**: Data-dependent policy approach
@@ -2062,13 +1828,11 @@ class MacroEconomicSynthesis:
 - **Market Positioning**: Fed policy transmission effectiveness and market expectation alignment
 - **Policy Communication**: Forward guidance impact on economic expectations and market positioning"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating FOMC section: {e}")
             return "- **FOMC Analysis**: Policy expectations based on current economic conditions"
 
-    def _generate_liquidity_analysis_section(
-        self, liquidity_assessment: Dict[str, Any]
-    ) -> str:
+    def _generate_liquidity_analysis_section(self, liquidity_assessment: dict[str, Any]) -> str:
         """Generate global liquidity analysis section"""
         if not liquidity_assessment:
             return """- **Global Liquidity Regime**: Adequate liquidity conditions supporting economic activity
@@ -2103,19 +1867,16 @@ class MacroEconomicSynthesis:
 
             return f"""- **Global Liquidity Regime**: {regime.title()} (Composite Score: {composite_score:.1f}, Probability: {regime_probability:.0%})
 - **M2 Money Supply Growth**: {m2_growth}{drivers_text}
-- **Central Bank Coordination**: {cb_text.lstrip(' | ') if cb_text else 'Policy coordination supporting financial stability'}
+- **Central Bank Coordination**: {cb_text.lstrip(" | ") if cb_text else "Policy coordination supporting financial stability"}
 - **Risk Asset Implications**: Liquidity conditions {regime} for risk asset performance"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating liquidity section: {e}")
             return "- **Global Liquidity**: Monitoring global liquidity conditions and policy coordination"
 
     def _generate_sector_correlation_section(self) -> str:
         """Generate sector economic correlation analysis section"""
-        if (
-            not hasattr(self, "sector_correlation_data")
-            or not self.sector_correlation_data
-        ):
+        if not hasattr(self, "sector_correlation_data") or not self.sector_correlation_data:
             return """- **Sector Rotation Signals**: Economic cycle positioning supports balanced sector allocation
 - **Factor Sensitivity**: Sector performance aligned with current economic phase
 - **Cross-Asset Correlations**: Risk asset correlations within normal ranges"""
@@ -2133,18 +1894,12 @@ class MacroEconomicSynthesis:
             rotation_text = ""
             if rotation_signals:
                 signal = rotation_signals[0]
-                rotation_type = (
-                    signal.get("rotation_type", "").replace("_", " ").title()
-                )
+                rotation_type = signal.get("rotation_type", "").replace("_", " ").title()
                 confidence = signal.get("confidence", 0)
-                rotation_text = (
-                    f" | Current Signal: {rotation_type} ({confidence:.0%} confidence)"
-                )
+                rotation_text = f" | Current Signal: {rotation_type} ({confidence:.0%} confidence)"
 
             # Factor attributions
-            factor_attribution = self.sector_correlation_data.get(
-                "factor_attribution", {}
-            )
+            factor_attribution = self.sector_correlation_data.get("factor_attribution", {})
             factor_text = ""
             if factor_attribution:
                 # Get dominant factors
@@ -2155,16 +1910,16 @@ class MacroEconomicSynthesis:
                 if factors:
                     factor_text = f" | Dominant Factors: {', '.join(factors[:2])}"
 
-            return f"""- **Sector Economic Sensitivities**: {sensitivity_text if sensitivity_text else 'Sector correlations within historical ranges'}{factor_text}
-- **Rotation Signals**: {rotation_text.lstrip(' | ') if rotation_text else 'Current economic phase supports balanced sector positioning'}
+            return f"""- **Sector Economic Sensitivities**: {sensitivity_text if sensitivity_text else "Sector correlations within historical ranges"}{factor_text}
+- **Rotation Signals**: {rotation_text.lstrip(" | ") if rotation_text else "Current economic phase supports balanced sector positioning"}
 - **Economic Factor Analysis**: Sector performance driven by fundamental economic factors vs market sentiment
 - **Portfolio Implications**: Sector allocation guidance based on economic cycle positioning"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating sector correlation section: {e}")
             return "- **Sector Analysis**: Economic factor analysis supporting sector allocation decisions"
 
-    def _generate_data_sources_quality_section(self, context: Dict[str, Any]) -> str:
+    def _generate_data_sources_quality_section(self, context: dict[str, Any]) -> str:
         """Generate data sources and quality section with real metrics"""
         try:
             quality_metrics = context.get("data_quality_metrics", {})
@@ -2187,16 +1942,9 @@ class MacroEconomicSynthesis:
             # Get utilized services from discovery data
             services_utilized = []
             if self.discovery_data:
-                services_utilized = self.discovery_data.get("metadata", {}).get(
-                    "cli_services_utilized", []
-                )
+                services_utilized = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
 
-            services_list = ", ".join(
-                [
-                    s.replace("_cli", "").replace("_", " ").title()
-                    for s in services_utilized[:4]
-                ]
-            )
+            services_list = ", ".join([s.replace("_cli", "").replace("_", " ").title() for s in services_utilized[:4]])
             if not services_list:
                 services_list = "FRED, IMF, Alpha Vantage, EIA"
 
@@ -2208,7 +1956,7 @@ class MacroEconomicSynthesis:
 - **Cross-validation**: {cross_source:.0%} multi-source agreement within tolerance
 - **Enhanced Services**: Economic calendar, global liquidity monitor, sector correlations integrated"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating data sources section: {e}")
             return """### Data Sources & Quality
 - **Primary APIs**: FRED (economic indicators), IMF (global data), Alpha Vantage (market data), EIA (energy)
@@ -2216,7 +1964,7 @@ class MacroEconomicSynthesis:
 - **Data Completeness**: >95% threshold | Latest data point validation within 24 hours
 - **Cross-validation**: Multi-source agreement within 2% variance tolerance"""
 
-    def _generate_methodology_framework_section(self, context: Dict[str, Any]) -> str:
+    def _generate_methodology_framework_section(self, context: dict[str, Any]) -> str:
         """Generate methodology framework section"""
         try:
             enhanced_confidence = self._calculate_enhanced_economic_confidence()
@@ -2224,13 +1972,9 @@ class MacroEconomicSynthesis:
             # Get discovery insights methodology
             methodology_info = ""
             if self.discovery_data:
-                methodology = self.discovery_data.get("metadata", {}).get(
-                    "data_collection_methodology", ""
-                )
+                methodology = self.discovery_data.get("metadata", {}).get("data_collection_methodology", "")
                 if methodology:
-                    methodology_info = (
-                        f"Data Collection: {methodology.replace('_', ' ').title()} | "
-                    )
+                    methodology_info = f"Data Collection: {methodology.replace('_', ' ').title()} | "
 
             return f"""- **Update Frequency**: Real-time (enhanced services), Daily (indicators), Weekly (forecasts)
 - **{methodology_info}Multi-source Validation**: Economic indicator cross-checking across data providers
@@ -2239,7 +1983,7 @@ class MacroEconomicSynthesis:
 - **Quality Controls**: Automated data freshness validation, service health monitoring
 - **Confidence Propagation**: {enhanced_confidence:.1f}/1.0 baseline with enhanced service integration"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating methodology section: {e}")
             return """- **Update Frequency**: Daily (indicators), Weekly (forecasts), Monthly (comprehensive review)
 - **Multi-source Validation**: Economic indicator cross-checking across data providers
@@ -2247,7 +1991,7 @@ class MacroEconomicSynthesis:
 - **Quality Controls**: Automated data freshness and consistency validation
 - **Confidence Propagation**: Minimum 0.90 baseline for institutional recommendations"""
 
-    def _generate_performance_attribution_section(self, context: Dict[str, Any]) -> str:
+    def _generate_performance_attribution_section(self, context: dict[str, Any]) -> str:
         """Generate performance attribution section"""
         try:
             # Extract discovery insights for benchmarking
@@ -2276,7 +2020,7 @@ class MacroEconomicSynthesis:
 - **Review Cycle**: Real-time (enhanced services), Weekly (forecasts), Monthly (comprehensive assessment)
 - **Model Performance**: Backtesting results, forecast error analysis, continuous improvement with service integration"""
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Error generating performance attribution section: {e}")
             return """- **Benchmark**: Economic forecast accuracy vs consensus, policy prediction success
 - **Success Metrics**: Recession probability calibration, inflation forecast accuracy, asset allocation performance
@@ -2295,7 +2039,7 @@ if REGISTRY_AVAILABLE:
     class MacroEconomicSynthesisScript(BaseScript):
         """Registry-integrated macro-economic synthesis script"""
 
-        def execute(self, **kwargs) -> Dict[str, Any]:
+        def execute(self, **kwargs) -> dict[str, Any]:
             """Execute macro-economic synthesis workflow"""
             region = kwargs.get("region", "US")
             discovery_file = kwargs.get("discovery_file")
@@ -2306,14 +2050,10 @@ if REGISTRY_AVAILABLE:
             date_str = datetime.now().strftime("%Y%m%d")
 
             if not discovery_file:
-                discovery_file = os.path.join(
-                    base_dir, "discovery", f"{region.lower()}_{date_str}_discovery.json"
-                )
+                discovery_file = os.path.join(base_dir, "discovery", f"{region.lower()}_{date_str}_discovery.json")
 
             if not analysis_file:
-                analysis_file = os.path.join(
-                    base_dir, "analysis", f"{region.lower()}_{date_str}_analysis.json"
-                )
+                analysis_file = os.path.join(base_dir, "analysis", f"{region.lower()}_{date_str}_analysis.json")
 
             synthesis = MacroEconomicSynthesis(
                 region=region,
@@ -2341,9 +2081,7 @@ if REGISTRY_AVAILABLE:
 
 def main():
     """Main execution function"""
-    parser = argparse.ArgumentParser(
-        description="Macro-Economic Synthesis - DASV Phase 3"
-    )
+    parser = argparse.ArgumentParser(description="Macro-Economic Synthesis - DASV Phase 3")
     parser.add_argument(
         "--region",
         type=str,
@@ -2379,16 +2117,12 @@ def main():
     if not args.discovery_file:
         discovery_dir = "./data/outputs/macro_analysis/discovery"
         date_str = datetime.now().strftime("%Y%m%d")
-        args.discovery_file = os.path.join(
-            discovery_dir, f"{args.region.lower()}_{date_str}_discovery.json"
-        )
+        args.discovery_file = os.path.join(discovery_dir, f"{args.region.lower()}_{date_str}_discovery.json")
 
     if not args.analysis_file:
         analysis_dir = "./data/outputs/macro_analysis/analysis"
         date_str = datetime.now().strftime("%Y%m%d")
-        args.analysis_file = os.path.join(
-            analysis_dir, f"{args.region.lower()}_{date_str}_analysis.json"
-        )
+        args.analysis_file = os.path.join(analysis_dir, f"{args.region.lower()}_{date_str}_analysis.json")
 
     # Initialize and run synthesis
     synthesis = MacroEconomicSynthesis(

@@ -8,7 +8,7 @@ opportunities
 import json
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -26,7 +26,7 @@ class SignalMetrics:
     profit_factor: float
     total_return: float
     sample_size: int
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     statistical_significance: bool
 
 
@@ -43,9 +43,7 @@ class SignalEffectivenessAnalyzer:
         """Prepare and clean data for analysis"""
         # Convert timestamps
         self.df["Entry_Timestamp"] = pd.to_datetime(self.df["Entry_Timestamp"])
-        self.df["Exit_Timestamp"] = pd.to_datetime(
-            self.df["Exit_Timestamp"], errors="coerce"
-        )
+        self.df["Exit_Timestamp"] = pd.to_datetime(self.df["Exit_Timestamp"], errors="coerce")
 
         # Filter for closed positions for most metrics
         self.closed_trades: pd.DataFrame = self.df[self.df["Status"] == "Closed"].copy()
@@ -76,9 +74,7 @@ class SignalEffectivenessAnalyzer:
                 statistical_significance=False,
             )
 
-        returns: npt.NDArray[np.floating[Any]] = trades_df["Return"].values.astype(
-            np.float64
-        )
+        returns: npt.NDArray[np.floating[Any]] = trades_df["Return"].values.astype(np.float64)
         wins: npt.NDArray[np.floating[Any]] = returns[returns > 0]
         losses: npt.NDArray[np.floating[Any]] = returns[returns < 0]
 
@@ -89,9 +85,7 @@ class SignalEffectivenessAnalyzer:
         # Profit factor calculation
         total_wins: float = float(np.sum(wins) if len(wins) > 0 else 0)
         total_losses: float = float(abs(np.sum(losses)) if len(losses) > 0 else 0)
-        profit_factor: float = float(
-            total_wins / total_losses if total_losses > 0 else float("inf")
-        )
+        profit_factor: float = float(total_wins / total_losses if total_losses > 0 else float("inf"))
 
         total_return: float = float(np.sum(returns))
 
@@ -106,18 +100,12 @@ class SignalEffectivenessAnalyzer:
 
             denominator: float = 1 + z**2 / n
             centre_adjusted_probability: float = p + z * z / (2 * n)
-            adjusted_standard_deviation: float = float(
-                np.sqrt((p * (1 - p) + z * z / (4 * n)) / n)
-            )
+            adjusted_standard_deviation: float = float(np.sqrt((p * (1 - p) + z * z / (4 * n)) / n))
 
-            lower_bound: float = (
-                centre_adjusted_probability - z * adjusted_standard_deviation
-            ) / denominator
-            upper_bound: float = (
-                centre_adjusted_probability + z * adjusted_standard_deviation
-            ) / denominator
+            lower_bound: float = (centre_adjusted_probability - z * adjusted_standard_deviation) / denominator
+            upper_bound: float = (centre_adjusted_probability + z * adjusted_standard_deviation) / denominator
 
-            ci: Tuple[float, float] = (max(0, lower_bound), min(1, upper_bound))
+            ci: tuple[float, float] = (max(0, lower_bound), min(1, upper_bound))
         else:
             ci = (0.0, 0.0)
 
@@ -132,42 +120,32 @@ class SignalEffectivenessAnalyzer:
             statistical_significance=sample_adequate,
         )
 
-    def analyze_by_strategy(self) -> Dict[str, SignalMetrics]:
+    def analyze_by_strategy(self) -> dict[str, SignalMetrics]:
         """Analyze performance by strategy type (SMA vs EMA)"""
-        strategy_analysis: Dict[str, SignalMetrics] = {}
+        strategy_analysis: dict[str, SignalMetrics] = {}
 
         for strategy in ["SMA", "EMA"]:
-            strategy_trades: pd.DataFrame = self.closed_trades[
-                self.closed_trades["Strategy_Type"] == strategy
-            ]
+            strategy_trades: pd.DataFrame = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
             strategy_analysis[strategy] = self.calculate_signal_metrics(strategy_trades)
 
         return strategy_analysis
 
     def analyze_exit_efficiency(
         self,
-    ) -> Dict[str, Union[str, int, float, Dict[str, float]]]:
+    ) -> dict[str, str | int | float | dict[str, float]]:
         """Analyze exit efficiency and MFE capture rates"""
         # Only analyze closed trades with valid exit efficiency
-        valid_exits: pd.DataFrame = self.closed_trades[
-            self.closed_trades["Exit_Efficiency_Fixed"].notna()
-        ].copy()
+        valid_exits: pd.DataFrame = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()].copy()
 
         if len(valid_exits) == 0:
             return {"error": "No valid exit efficiency data"}
 
-        exit_eff: npt.NDArray[np.floating[Any]] = valid_exits[
-            "Exit_Efficiency_Fixed"
-        ].values.astype(np.float64)
-        mfe_mae_ratios: npt.NDArray[np.floating[Any]] = valid_exits[
-            "MFE_MAE_Ratio"
-        ].values.astype(np.float64)
+        exit_eff: npt.NDArray[np.floating[Any]] = valid_exits["Exit_Efficiency_Fixed"].values.astype(np.float64)
+        mfe_mae_ratios: npt.NDArray[np.floating[Any]] = valid_exits["MFE_MAE_Ratio"].values.astype(np.float64)
 
         # MFE capture rate (exit efficiency > 0 means captured some of MFE)
         positive_capture: npt.NDArray[np.floating[Any]] = exit_eff[exit_eff > 0]
-        mfe_capture_rate: float = float(
-            len(positive_capture) / len(exit_eff) if len(exit_eff) > 0 else 0
-        )
+        mfe_capture_rate: float = float(len(positive_capture) / len(exit_eff) if len(exit_eff) > 0 else 0)
 
         return {
             "total_trades_analyzed": len(valid_exits),
@@ -186,16 +164,12 @@ class SignalEffectivenessAnalyzer:
 
     def analyze_trade_quality(
         self,
-    ) -> Dict[
-        str, Union[int, Dict[str, Union[int, float, Dict[str, Union[int, float]]]]]
-    ]:
+    ) -> dict[str, int | dict[str, int | float | dict[str, int | float]]]:
         """Analyze trade quality distribution"""
         quality_counts: pd.Series = self.closed_trades["Trade_Quality"].value_counts()
         total_trades: int = len(self.closed_trades)
 
-        quality_analysis: Dict[
-            str, Union[int, Dict[str, Union[int, float, Dict[str, Union[int, float]]]]]
-        ] = {
+        quality_analysis: dict[str, int | dict[str, int | float | dict[str, int | float]]] = {
             "total_closed_trades": total_trades,
             "quality_distribution": {},
             "quality_performance": {},
@@ -207,7 +181,7 @@ class SignalEffectivenessAnalyzer:
             pct: float = float(count / total_trades * 100)
 
             cast(
-                Dict[str, Dict[str, Union[int, float]]],
+                dict[str, dict[str, int | float]],
                 quality_analysis["quality_distribution"],
             )[quality] = {
                 "count": count,
@@ -215,23 +189,13 @@ class SignalEffectivenessAnalyzer:
             }
 
             # Performance by quality
-            quality_trades: pd.DataFrame = self.closed_trades[
-                self.closed_trades["Trade_Quality"] == quality
-            ]
-            quality_metrics: SignalMetrics = self.calculate_signal_metrics(
-                quality_trades
-            )
+            quality_trades: pd.DataFrame = self.closed_trades[self.closed_trades["Trade_Quality"] == quality]
+            quality_metrics: SignalMetrics = self.calculate_signal_metrics(quality_trades)
 
-            cast(Dict[str, Dict[str, float]], quality_analysis["quality_performance"])[
-                quality
-            ] = {
+            cast(dict[str, dict[str, float]], quality_analysis["quality_performance"])[quality] = {
                 "win_rate": round(quality_metrics.win_rate * 100, 2),
                 "avg_return": round(
-                    (
-                        quality_metrics.avg_win
-                        if quality_metrics.avg_win > 0
-                        else quality_metrics.avg_loss
-                    ),
+                    (quality_metrics.avg_win if quality_metrics.avg_win > 0 else quality_metrics.avg_loss),
                     4,
                 ),
                 "total_return": round(quality_metrics.total_return, 4),
@@ -241,63 +205,44 @@ class SignalEffectivenessAnalyzer:
 
     def analyze_signal_timing(
         self,
-    ) -> Dict[str, Union[Dict[str, float], Dict[str, Dict[str, Union[int, float]]]]]:
+    ) -> dict[str, dict[str, float] | dict[str, dict[str, int | float]]]:
         """Analyze signal timing effectiveness"""
-        timing_analysis: Dict[
-            str, Union[Dict[str, float], Dict[str, Dict[str, Union[int, float]]]]
-        ] = {
+        timing_analysis: dict[str, dict[str, float] | dict[str, dict[str, int | float]]] = {
             "duration_analysis": {},
             "entry_timing_patterns": {},
         }
 
         # Duration analysis
-        durations: npt.NDArray[np.floating[Any]] = self.closed_trades[
-            "Duration_Days"
-        ].values.astype(np.float64)
+        durations: npt.NDArray[np.floating[Any]] = self.closed_trades["Duration_Days"].values.astype(np.float64)
         if len(durations) > 0:
-            cast(Dict[str, Dict[str, float]], timing_analysis)["duration_analysis"] = {
+            cast(dict[str, dict[str, float]], timing_analysis)["duration_analysis"] = {
                 "avg_duration_days": float(np.mean(durations)),
                 "median_duration_days": float(np.median(durations)),
                 "min_duration_days": float(np.min(durations)),
                 "max_duration_days": float(np.max(durations)),
-                "quick_trades_pct": float(
-                    len(durations[durations <= 7]) / len(durations) * 100
-                ),
-                "long_trades_pct": float(
-                    len(durations[durations > 30]) / len(durations) * 100
-                ),
+                "quick_trades_pct": float(len(durations[durations <= 7]) / len(durations) * 100),
+                "long_trades_pct": float(len(durations[durations > 30]) / len(durations) * 100),
             }
 
         # Performance by duration buckets
-        duration_buckets: Dict[str, pd.DataFrame] = {
-            "Quick (≤7 days)": self.closed_trades[
-                self.closed_trades["Duration_Days"] <= 7
-            ],
+        duration_buckets: dict[str, pd.DataFrame] = {
+            "Quick (≤7 days)": self.closed_trades[self.closed_trades["Duration_Days"] <= 7],
             "Medium (8-30 days)": self.closed_trades[
-                (self.closed_trades["Duration_Days"] > 7)
-                & (self.closed_trades["Duration_Days"] <= 30)
+                (self.closed_trades["Duration_Days"] > 7) & (self.closed_trades["Duration_Days"] <= 30)
             ],
-            "Long (>30 days)": self.closed_trades[
-                self.closed_trades["Duration_Days"] > 30
-            ],
+            "Long (>30 days)": self.closed_trades[self.closed_trades["Duration_Days"] > 30],
         }
 
-        cast(Dict[str, Dict[str, Dict[str, Union[int, float]]]], timing_analysis)[
-            "performance_by_duration"
-        ] = {}
+        cast(dict[str, dict[str, dict[str, int | float]]], timing_analysis)["performance_by_duration"] = {}
         for bucket_name, bucket_trades in duration_buckets.items():
             if len(bucket_trades) > 0:
-                bucket_metrics: SignalMetrics = self.calculate_signal_metrics(
-                    bucket_trades
-                )
-                cast(
-                    Dict[str, Dict[str, Dict[str, Union[int, float]]]], timing_analysis
-                )["performance_by_duration"][bucket_name] = {
+                bucket_metrics: SignalMetrics = self.calculate_signal_metrics(bucket_trades)
+                cast(dict[str, dict[str, dict[str, int | float]]], timing_analysis)["performance_by_duration"][
+                    bucket_name
+                ] = {
                     "trade_count": bucket_metrics.sample_size,
                     "win_rate": round(bucket_metrics.win_rate * 100, 2),
-                    "avg_return": round(
-                        bucket_metrics.total_return / bucket_metrics.sample_size, 4
-                    ),
+                    "avg_return": round(bucket_metrics.total_return / bucket_metrics.sample_size, 4),
                     "profit_factor": round(bucket_metrics.profit_factor, 2),
                 }
 
@@ -305,22 +250,14 @@ class SignalEffectivenessAnalyzer:
 
     def statistical_analysis(
         self,
-    ) -> Dict[
+    ) -> dict[
         str,
-        Union[
-            Dict[str, Union[int, bool]],
-            Dict[str, Union[int, float, bool, str]],
-            Dict[str, Union[List[float], int, bool]],
-        ],
+        dict[str, int | bool] | dict[str, int | float | bool | str] | dict[str, list[float] | int | bool],
     ]:
         """Perform statistical analysis and significance tests"""
-        stats_analysis: Dict[
+        stats_analysis: dict[
             str,
-            Union[
-                Dict[str, Union[int, bool]],
-                Dict[str, Union[int, float, bool, str]],
-                Dict[str, Union[List[float], int, bool]],
-            ],
+            dict[str, int | bool] | dict[str, int | float | bool | str] | dict[str, list[float] | int | bool],
         ] = {
             "sample_adequacy": {},
             "strategy_comparison": {},
@@ -328,9 +265,7 @@ class SignalEffectivenessAnalyzer:
         }
 
         # Sample adequacy analysis
-        cast(Dict[str, Dict[str, Union[int, bool]]], stats_analysis)[
-            "sample_adequacy"
-        ] = {
+        cast(dict[str, dict[str, int | bool]], stats_analysis)["sample_adequacy"] = {
             "total_closed_trades": len(self.closed_trades),
             "ytd_trades": len(self.ytd_trades),
             "adequate_sample_threshold": 10,
@@ -339,29 +274,19 @@ class SignalEffectivenessAnalyzer:
         }
 
         # Strategy comparison
-        sma_trades: pd.DataFrame = self.closed_trades[
-            self.closed_trades["Strategy_Type"] == "SMA"
-        ]
-        ema_trades: pd.DataFrame = self.closed_trades[
-            self.closed_trades["Strategy_Type"] == "EMA"
-        ]
+        sma_trades: pd.DataFrame = self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"]
+        ema_trades: pd.DataFrame = self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"]
 
         if len(sma_trades) > 0 and len(ema_trades) > 0:
-            sma_returns: npt.NDArray[np.floating[Any]] = sma_trades[
-                "Return"
-            ].values.astype(np.float64)
-            ema_returns: npt.NDArray[np.floating[Any]] = ema_trades[
-                "Return"
-            ].values.astype(np.float64)
+            sma_returns: npt.NDArray[np.floating[Any]] = sma_trades["Return"].values.astype(np.float64)
+            ema_returns: npt.NDArray[np.floating[Any]] = ema_trades["Return"].values.astype(np.float64)
 
             # Welch's t-test (unequal variances)
             t_stat: float
             p_value: float
             t_stat, p_value = stats.ttest_ind(sma_returns, ema_returns, equal_var=False)
 
-            cast(Dict[str, Dict[str, Union[int, float, bool, str]]], stats_analysis)[
-                "strategy_comparison"
-            ] = {
+            cast(dict[str, dict[str, int | float | bool | str]], stats_analysis)["strategy_comparison"] = {
                 "sma_sample_size": len(sma_returns),
                 "ema_sample_size": len(ema_returns),
                 "sma_mean_return": float(np.mean(sma_returns)),
@@ -369,20 +294,12 @@ class SignalEffectivenessAnalyzer:
                 "t_statistic": float(t_stat),
                 "p_value": float(p_value),
                 "statistically_significant": bool(p_value < 0.05),
-                "interpretation": (
-                    "Significant difference"
-                    if p_value < 0.05
-                    else "No significant difference"
-                ),
+                "interpretation": ("Significant difference" if p_value < 0.05 else "No significant difference"),
             }
 
         # Overall performance confidence intervals
-        overall_metrics: SignalMetrics = self.calculate_signal_metrics(
-            self.closed_trades
-        )
-        cast(Dict[str, Dict[str, Union[List[float], int, bool]]], stats_analysis)[
-            "confidence_metrics"
-        ] = {
+        overall_metrics: SignalMetrics = self.calculate_signal_metrics(self.closed_trades)
+        cast(dict[str, dict[str, list[float] | int | bool]], stats_analysis)["confidence_metrics"] = {
             "win_rate_95_ci": [
                 round(overall_metrics.confidence_interval[0] * 100, 2),
                 round(overall_metrics.confidence_interval[1] * 100, 2),
@@ -393,9 +310,9 @@ class SignalEffectivenessAnalyzer:
 
         return stats_analysis
 
-    def identify_optimization_opportunities(self) -> Dict[str, List[str]]:
+    def identify_optimization_opportunities(self) -> dict[str, list[str]]:
         """Identify specific optimization opportunities"""
-        opportunities: Dict[str, List[str]] = {
+        opportunities: dict[str, list[str]] = {
             "signal_optimization": [],
             "exit_optimization": [],
             "parameter_optimization": [],
@@ -403,7 +320,7 @@ class SignalEffectivenessAnalyzer:
         }
 
         # Signal optimization opportunities
-        strategy_metrics: Dict[str, SignalMetrics] = self.analyze_by_strategy()
+        strategy_metrics: dict[str, SignalMetrics] = self.analyze_by_strategy()
 
         if "SMA" in strategy_metrics and "EMA" in strategy_metrics:
             sma_win_rate: float = strategy_metrics["SMA"].win_rate
@@ -413,24 +330,16 @@ class SignalEffectivenessAnalyzer:
                 better_strategy: str = "EMA" if ema_win_rate > sma_win_rate else "SMA"
                 opportunities["signal_optimization"].append(
                     f"Focus on {better_strategy} signals - showing "
-                    f"{abs(sma_win_rate - ema_win_rate)*100:.1f}% higher win rate"
+                    f"{abs(sma_win_rate - ema_win_rate) * 100:.1f}% higher win rate"
                 )
 
         # Exit optimization
-        exit_analysis: Dict[
-            str, Union[str, int, float, Dict[str, float]]
-        ] = self.analyze_exit_efficiency()
+        exit_analysis: dict[str, str | int | float | dict[str, float]] = self.analyze_exit_efficiency()
         if "poor_exits_pct" in exit_analysis:
-            poor_exits_pct: Union[str, int, float, Dict[str, float]] = exit_analysis[
-                "poor_exits_pct"
-            ]
-            if (
-                isinstance(poor_exits_pct, (int, float)) and poor_exits_pct > 0.3
-            ):  # >30% poor exits
+            poor_exits_pct: str | int | float | dict[str, float] = exit_analysis["poor_exits_pct"]
+            if isinstance(poor_exits_pct, (int, float)) and poor_exits_pct > 0.3:  # >30% poor exits
                 opportunities["exit_optimization"].append(
-                    f"High percentage of poor exits "
-                    f"({poor_exits_pct*100:.1f}%) - "
-                    "review exit criteria"
+                    f"High percentage of poor exits ({poor_exits_pct * 100:.1f}%) - review exit criteria"
                 )
 
         # Parameter optimization
@@ -446,9 +355,7 @@ class SignalEffectivenessAnalyzer:
                 .agg(
                     {
                         "Return": ["mean", "count"],
-                        "Trade_Quality": lambda x: (
-                            x.isin(["Excellent", "Good"])
-                        ).mean(),
+                        "Trade_Quality": lambda x: (x.isin(["Excellent", "Good"])).mean(),
                     }
                 )
                 .round(4)
@@ -471,7 +378,7 @@ class SignalEffectivenessAnalyzer:
                 best_combo: pd.Series[Any] = good_combos.loc[best_combo_idx]
                 opportunities["parameter_optimization"].append(
                     f"Promising window combination found: {best_combo.name} "
-                    f"with {float(best_combo['avg_return'])*100:.1f}% avg return"
+                    f"with {float(best_combo['avg_return']) * 100:.1f}% avg return"
                 )
 
         # Risk management opportunities
@@ -493,15 +400,15 @@ class SignalEffectivenessAnalyzer:
         if poor_quality_pct > 0.4:  # >40% poor quality
             opportunities["risk_management"].append(
                 f"High percentage of poor quality trades "
-                f"({poor_quality_pct*100:.1f}%) - "
+                f"({poor_quality_pct * 100:.1f}%) - "
                 "implement stricter entry filters"
             )
 
         return opportunities
 
-    def generate_comprehensive_report(self) -> Dict[str, Any]:
+    def generate_comprehensive_report(self) -> dict[str, Any]:
         """Generate comprehensive signal effectiveness report"""
-        report: Dict[str, Any] = {
+        report: dict[str, Any] = {
             "analysis_metadata": {
                 "analysis_date": datetime.now().isoformat(),
                 "data_source": self.csv_path,
@@ -544,12 +451,7 @@ class SignalEffectivenessAnalyzer:
                 "sample_size": metrics.sample_size,
                 "win_rate_pct": round(metrics.win_rate * 100, 2),
                 "avg_return_pct": round(
-                    (
-                        metrics.total_return / metrics.sample_size
-                        if metrics.sample_size > 0
-                        else 0
-                    )
-                    * 100,
+                    (metrics.total_return / metrics.sample_size if metrics.sample_size > 0 else 0) * 100,
                     2,
                 ),
                 "profit_factor": round(metrics.profit_factor, 2),
@@ -573,18 +475,14 @@ class SignalEffectivenessAnalyzer:
         }
 
         # Optimization opportunities
-        report[
-            "optimization_opportunities"
-        ] = self.identify_optimization_opportunities()
+        report["optimization_opportunities"] = self.identify_optimization_opportunities()
 
         return report
 
 
-def main() -> Dict[str, Any]:
+def main() -> dict[str, Any]:
     """Main analysis execution"""
-    csv_path = (
-        "/Users/colemorton/Projects/sensylate/data/raw/trade_history/20250626.csv"
-    )
+    csv_path = "/Users/colemorton/Projects/colemorton/data/raw/trade_history/20250626.csv"
 
     print("=== COMPREHENSIVE SIGNAL EFFECTIVENESS ANALYSIS ===")
     print("Analyzing trade history data from: {csv_path}")
@@ -596,10 +494,7 @@ def main() -> Dict[str, Any]:
         report = analyzer.generate_comprehensive_report()
 
         # Save detailed report to JSON
-        output_path = (
-            "/Users/colemorton/Projects/sensylate/data/outputs/"
-            "signal_effectiveness_analysis_20250626.json"
-        )
+        output_path = "/Users/colemorton/Projects/colemorton/data/outputs/signal_effectiveness_analysis_20250626.json"
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2, default=str)
 
@@ -636,9 +531,7 @@ def main() -> Dict[str, Any]:
             )
 
         print("\n📋 Trade Quality Distribution:")
-        for quality, data in report["trade_quality_analysis"][
-            "quality_distribution"
-        ].items():
+        for quality, data in report["trade_quality_analysis"]["quality_distribution"].items():
             print("   {quality}: {data['count']} trades ({data['percentage']:.1f}%)")
 
         print("\n🚀 Top Optimization Opportunities:")
@@ -658,7 +551,7 @@ def main() -> Dict[str, Any]:
 
         return report
 
-    except Exception as e:
+    except Exception:
         print("❌ Analysis failed: {str(e)}")
         raise
 

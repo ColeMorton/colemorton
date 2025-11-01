@@ -6,7 +6,7 @@ DASV Phase 1 Framework - Multi-Source Data Collection
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import yfinance as yf
 
@@ -43,18 +43,10 @@ def collect_yahoo_finance_data(ticker="3350.T"):
             "balance_sheet": df_to_serializable(balance_sheet),
             "cash_flow": df_to_serializable(cash_flow),
             "price_history": {
-                "current_price": (
-                    float(hist_data["Close"].iloc[-1]) if not hist_data.empty else None
-                ),
-                "52_week_high": (
-                    float(hist_data["High"].max()) if not hist_data.empty else None
-                ),
-                "52_week_low": (
-                    float(hist_data["Low"].min()) if not hist_data.empty else None
-                ),
-                "volume": (
-                    float(hist_data["Volume"].iloc[-1]) if not hist_data.empty else None
-                ),
+                "current_price": (float(hist_data["Close"].iloc[-1]) if not hist_data.empty else None),
+                "52_week_high": (float(hist_data["High"].max()) if not hist_data.empty else None),
+                "52_week_low": (float(hist_data["Low"].min()) if not hist_data.empty else None),
+                "volume": (float(hist_data["Volume"].iloc[-1]) if not hist_data.empty else None),
             },
         }
     except Exception as e:
@@ -126,7 +118,7 @@ def main():
     peer_data = generate_peer_analysis()
 
     # Generate timestamp
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     date_str = datetime.now().strftime("%Y%m%d")
 
     # Extract key metrics from Yahoo Finance data
@@ -159,12 +151,10 @@ def main():
             "quality_metrics": "Institutional-grade data quality with comprehensive error handling and validation protocols",
         },
         "market_data": {
-            "current_price": price_data.get("current_price", 0.0)
-            or info.get("currentPrice", 0.0),
+            "current_price": price_data.get("current_price", 0.0) or info.get("currentPrice", 0.0),
             "market_cap": info.get("marketCap", 0.0),
             "price_validation": {
-                "yahoo_finance_price": price_data.get("current_price", 0.0)
-                or info.get("currentPrice", 0.0),
+                "yahoo_finance_price": price_data.get("current_price", 0.0) or info.get("currentPrice", 0.0),
                 "alpha_vantage_price": price_data.get("current_price", 0.0)
                 or info.get("currentPrice", 0.0),  # Using Yahoo as backup
                 "fmp_price": price_data.get("current_price", 0.0)
@@ -174,10 +164,8 @@ def main():
             },
             "volume": price_data.get("volume", 0.0) or info.get("volume", 0.0),
             "beta": info.get("beta", 1.0),
-            "52_week_high": price_data.get("52_week_high", 0.0)
-            or info.get("fiftyTwoWeekHigh", 0.0),
-            "52_week_low": price_data.get("52_week_low", 0.0)
-            or info.get("fiftyTwoWeekLow", 0.0),
+            "52_week_high": price_data.get("52_week_high", 0.0) or info.get("fiftyTwoWeekHigh", 0.0),
+            "52_week_low": price_data.get("52_week_low", 0.0) or info.get("fiftyTwoWeekLow", 0.0),
             "confidence": 0.95,
         },
         "financial_metrics": {
@@ -368,7 +356,7 @@ def main():
     }
 
     # Create output directory
-    output_dir = "/Users/colemorton/Projects/sensylate/data/outputs/fundamental_analysis/discovery"
+    output_dir = "/Users/colemorton/Projects/colemorton/data/outputs/fundamental_analysis/discovery"
     os.makedirs(output_dir, exist_ok=True)
 
     # Save discovery data
@@ -379,15 +367,9 @@ def main():
 
     print("✅ Discovery analysis completed successfully")
     print("📄 Output saved to: {output_file}")
-    print(
-        f"📊 Data quality score: {discovery_data['cli_data_quality']['overall_data_quality']}"
-    )
-    print(
-        f"🔍 Services utilized: {len(discovery_data['metadata']['cli_services_utilized'])}"
-    )
-    print(
-        f"✅ Ready for next phase: {discovery_data['discovery_insights']['next_phase_readiness']}"
-    )
+    print(f"📊 Data quality score: {discovery_data['cli_data_quality']['overall_data_quality']}")
+    print(f"🔍 Services utilized: {len(discovery_data['metadata']['cli_services_utilized'])}")
+    print(f"✅ Ready for next phase: {discovery_data['discovery_insights']['next_phase_readiness']}")
 
 
 if __name__ == "__main__":

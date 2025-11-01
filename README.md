@@ -80,8 +80,8 @@ scripts/                           # Python Data Processing Engine
 
 1. **Clone and Install Dependencies**
    ```bash
-   git clone https://github.com/colemorton/sensylate-command-system-enhancements.git
-   cd sensylate-command-system-enhancements
+   git clone https://github.com/ColeMorton/colemorton.git
+   cd colemorton
 
    # Frontend setup
    cd frontend/

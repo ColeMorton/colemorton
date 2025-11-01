@@ -11,7 +11,8 @@ import threading
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
+
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -195,9 +196,7 @@ class TestRetryHandler(unittest.TestCase):
     def test_retry_on_failure(self):
         """Test retry logic on failures"""
         # Fail twice, then succeed
-        mock_func = Mock(
-            side_effect=[Exception("Error 1"), Exception("Error 2"), "success"]
-        )
+        mock_func = Mock(side_effect=[Exception("Error 1"), Exception("Error 2"), "success"])
 
         result = self.retry_handler.execute_with_retry(mock_func)
 
@@ -270,9 +269,7 @@ class TestNetworkResilienceManager(unittest.TestCase):
         """Test successful execution with resilience patterns"""
         mock_func = Mock(return_value="success")
 
-        result = self.manager.execute_with_resilience(
-            "test_service", mock_func, None, None, "arg1", kwarg="value"
-        )
+        result = self.manager.execute_with_resilience("test_service", mock_func, None, None, "arg1", kwarg="value")
 
         self.assertEqual(result, "success")
         mock_func.assert_called_with("arg1", kwarg="value")
@@ -332,9 +329,7 @@ class TestResilientDecorator(unittest.TestCase):
         circuit_config = CircuitBreakerConfig(failure_threshold=2)
         retry_config = RetryConfig(max_retries=1)
 
-        @with_network_resilience(
-            "test_service", circuit_config=circuit_config, retry_config=retry_config
-        )
+        @with_network_resilience("test_service", circuit_config=circuit_config, retry_config=retry_config)
         def test_func():
             raise Exception("Test error")
 
@@ -359,9 +354,7 @@ class TestResilientMempoolSpaceService(unittest.TestCase):
             max_retries=1,
         )
 
-    @patch(
-        "services.resilient_mempool_space.ResilientMempoolSpaceService._make_request_with_retry"
-    )
+    @patch("services.resilient_mempool_space.ResilientMempoolSpaceService._make_request_with_retry")
     def test_resilient_fee_estimates(self, mock_request):
         """Test resilient fee estimates with mocked response"""
         from services.resilient_mempool_space import ResilientMempoolSpaceService
@@ -381,9 +374,7 @@ class TestResilientMempoolSpaceService(unittest.TestCase):
         self.assertEqual(result["fastestFee"], 15)
         self.assertNotIn("fallback", result)
 
-    @patch(
-        "services.resilient_mempool_space.ResilientMempoolSpaceService._make_request_with_retry"
-    )
+    @patch("services.resilient_mempool_space.ResilientMempoolSpaceService._make_request_with_retry")
     def test_fallback_response(self, mock_request):
         """Test fallback response when circuit breaker is open"""
         from services.resilient_mempool_space import ResilientMempoolSpaceService

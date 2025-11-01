@@ -22,7 +22,7 @@ def get_symbol_data_years(symbol: str) -> int:
         project_root = Path(__file__).parent.parent
         config_path = project_root / "frontend/src/config/chart-data-dependencies.json"
 
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = json.load(f)
 
         symbol_config = config.get("symbolMetadata", {}).get(symbol.upper(), {})
@@ -31,16 +31,11 @@ def get_symbol_data_years(symbol: str) -> int:
         if data_years is not None:
             print("Found dataYears configuration for {symbol}: {data_years} years")
             return data_years
-        else:
-            print(
-                f"No dataYears configuration found for {symbol}, using default 1 year"
-            )
-            return 1
+        print(f"No dataYears configuration found for {symbol}, using default 1 year")
+        return 1
 
     except Exception as e:
-        print(
-            f"Error reading chart data dependencies config: {e}, using default 1 year"
-        )
+        print(f"Error reading chart data dependencies config: {e}, using default 1 year")
         return 1
 
 
@@ -74,9 +69,7 @@ def fetch_and_copy_stock_data(symbol: str) -> bool:
 
     # Define paths dynamically based on symbol
     project_root = Path(__file__).parent.parent
-    frontend_csv_path = (
-        project_root / f"frontend/public/data/raw/stocks/{symbol}/daily.csv"
-    )
+    frontend_csv_path = project_root / f"frontend/public/data/raw/stocks/{symbol}/daily.csv"
 
     # Check if data already exists in data directory (from pipeline)
     scripts_csv_path = project_root / f"data/raw/stocks/{symbol}/daily.csv"
@@ -136,20 +129,16 @@ def fetch_and_copy_stock_data(symbol: str) -> bool:
         # Write to CSV
         df.to_csv(frontend_csv_path, index=False)
 
-        print(
-            f"Successfully copied {len(df)} rows of {symbol} data to {frontend_csv_path}"
-        )
+        print(f"Successfully copied {len(df)} rows of {symbol} data to {frontend_csv_path}")
         return True
 
-    except Exception as e:
+    except Exception:
         print("Error processing {symbol} data: {e}")
         return False
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Copy stock data for any symbol to frontend"
-    )
+    parser = argparse.ArgumentParser(description="Copy stock data for any symbol to frontend")
     parser.add_argument("symbol", help="Stock symbol (e.g., AAPL, MSTR, TSLA)")
 
     args = parser.parse_args()

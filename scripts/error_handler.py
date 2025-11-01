@@ -12,7 +12,7 @@ Centralized error handling with fail-fast approach:
 import json
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from errors import (
     ConfigurationError,
@@ -21,7 +21,6 @@ from errors import (
     TemplateError,
     TwitterSystemError,
     TypeValidationError,
-    ValidationError,
     data_file_not_found,
     invalid_data_format,
     missing_required_field,
@@ -33,15 +32,15 @@ from errors import (
 class ErrorHandler:
     """Centralized error handling with fail-fast approach"""
 
-    def __init__(self, logger: Optional[Any] = None):
+    def __init__(self, logger: Any | None = None):
         """Initialize error handler with optional logger"""
         self.logger = logger
         self.error_count = 0
-        self.error_history: List[Dict[str, Any]] = []
+        self.error_history: list[dict[str, Any]] = []
 
     def handle_file_error(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         operation: str,
         error: Exception,
         fail_fast: bool = True,
@@ -57,11 +56,7 @@ class ErrorHandler:
                 message=f"Permission denied accessing {path_obj}",
                 source_path=path_obj,
                 operation=operation,
-                context={
-                    "permissions": (
-                        oct(path_obj.stat().st_mode) if path_obj.exists() else "unknown"
-                    )
-                },
+                context={"permissions": (oct(path_obj.stat().st_mode) if path_obj.exists() else "unknown")},
             )
         elif isinstance(error, IsADirectoryError):
             data_error = DataError(
@@ -88,7 +83,7 @@ class ErrorHandler:
     def handle_validation_error(
         self,
         content_type: str,
-        validation_result: Dict[str, Any],
+        validation_result: dict[str, Any],
         fail_fast: bool = True,
     ) -> None:
         """Handle validation errors with fail-fast approach"""
@@ -117,16 +112,14 @@ class ErrorHandler:
     def handle_template_error(
         self,
         template_name: str,
-        data_context: Dict[str, Any],
+        data_context: dict[str, Any],
         error: Exception,
         fail_fast: bool = True,
     ) -> None:
         """Handle template processing errors with fail-fast approach"""
 
         if "not found" in str(error).lower():
-            template_error = template_not_found(
-                template_name, data_context.get("content_type", "unknown")
-            )
+            template_error = template_not_found(template_name, data_context.get("content_type", "unknown"))
         else:
             template_error = TemplateError(
                 message=f"Template processing failed: {str(error)}",
@@ -144,18 +137,14 @@ class ErrorHandler:
 
     def handle_data_validation_error(
         self,
-        data: Dict[str, Any],
-        expected_fields: List[str],
+        data: dict[str, Any],
+        expected_fields: list[str],
         data_type: str,
         fail_fast: bool = True,
     ) -> None:
         """Handle data validation errors with fail-fast approach"""
 
-        missing_fields = [
-            field
-            for field in expected_fields
-            if field not in data or data[field] is None
-        ]
+        missing_fields = [field for field in expected_fields if field not in data or data[field] is None]
 
         if missing_fields:
             for field in missing_fields:
@@ -193,7 +182,7 @@ class ErrorHandler:
     def handle_processing_error(
         self,
         stage: str,
-        input_data: Dict[str, Any],
+        input_data: dict[str, Any],
         error: Exception,
         fail_fast: bool = True,
     ) -> None:
@@ -213,9 +202,7 @@ class ErrorHandler:
 
         return processing_error
 
-    def validate_file_format(
-        self, file_path: Path, expected_format: str, fail_fast: bool = True
-    ) -> None:
+    def validate_file_format(self, file_path: Path, expected_format: str, fail_fast: bool = True) -> None:
         """Validate file format with fail-fast approach"""
 
         if not file_path.exists():
@@ -234,9 +221,7 @@ class ErrorHandler:
                 raise error
             return error
 
-    def validate_required_paths(
-        self, paths: Dict[str, Path], fail_fast: bool = True
-    ) -> None:
+    def validate_required_paths(self, paths: dict[str, Path], fail_fast: bool = True) -> None:
         """Validate required paths exist with fail-fast approach"""
 
         missing_paths = []
@@ -270,11 +255,9 @@ class ErrorHandler:
         self.error_history.append(error_dict)
 
         if self.logger:
-            self.logger.error(
-                f"Error #{self.error_count}: {error.message}", extra=error_dict
-            )
+            self.logger.error(f"Error #{self.error_count}: {error.message}", extra=error_dict)
 
-    def get_error_summary(self) -> Dict[str, Any]:
+    def get_error_summary(self) -> dict[str, Any]:
         """Get summary of all errors encountered"""
 
         error_types = {}
@@ -319,13 +302,9 @@ def fail_if_missing_file(file_path: Path, operation: str) -> None:
         raise data_file_not_found(file_path, operation)
 
 
-def fail_if_invalid_data(
-    data: Dict[str, Any], required_fields: List[str], data_type: str
-) -> None:
+def fail_if_invalid_data(data: dict[str, Any], required_fields: list[str], data_type: str) -> None:
     """Fail fast if data is invalid"""
-    missing_fields = [
-        field for field in required_fields if field not in data or data[field] is None
-    ]
+    missing_fields = [field for field in required_fields if field not in data or data[field] is None]
     if missing_fields:
         raise missing_required_field(missing_fields[0], data_type)
 

@@ -131,9 +131,7 @@ def test_report_generation_logic():
         return roadmap
 
     # Test report generation
-    internal_report = generate_internal_report_content(
-        sample_discovery_data, sample_analysis_data
-    )
+    internal_report = generate_internal_report_content(sample_discovery_data, sample_analysis_data)
 
     print("Portfolio Health Score: {internal_report['portfolio_health_score']}/100")
     print("Critical Issues Identified: {len(internal_report['critical_issues'])}")
@@ -227,18 +225,14 @@ def test_executive_dashboard_generation():
     dashboard = generate_thirty_second_brief(sample_metrics)
 
     print("30-Second Brief Generated:")
-    print(
-        f"  Portfolio Health: {dashboard['key_metrics']['portfolio_health_score']}/100"
-    )
+    print(f"  Portfolio Health: {dashboard['key_metrics']['portfolio_health_score']}/100")
     print("  YTD Return: {dashboard['key_metrics']['ytd_return']:+.1%}")
     print("  Sharpe Ratio: {dashboard['key_metrics']['sharpe_ratio']:.2f}")
     print("  Max Drawdown: {dashboard['key_metrics']['max_drawdown']:.1%}")
 
     print("\nTrend Indicators:")
     for trend, direction in dashboard["trend_indicators"].items():
-        emoji = (
-            "↗️" if direction == "improving" else "→" if direction == "stable" else "↘️"
-        )
+        emoji = "↗️" if direction == "improving" else "→" if direction == "stable" else "↘️"
         print("  {trend}: {direction} {emoji}")
 
     print("\nAction Requirements: {len(dashboard['action_requirements'])}")
@@ -312,9 +306,7 @@ def test_live_monitor_generation():
         """Identify top performing positions."""
 
         # Sort by current return
-        sorted_positions = sorted(
-            positions, key=lambda x: x["current_return"], reverse=True
-        )
+        sorted_positions = sorted(positions, key=lambda x: x["current_return"], reverse=True)
 
         top_performers = []
         for pos in sorted_positions[:3]:  # Top 3
@@ -325,9 +317,7 @@ def test_live_monitor_generation():
                         "company": pos["company"],
                         "return": pos["current_return"],
                         "strategy": pos["strategy"],
-                        "momentum": (
-                            "strong" if pos["current_return"] > 0.10 else "moderate"
-                        ),
+                        "momentum": ("strong" if pos["current_return"] > 0.10 else "moderate"),
                     }
                 )
 
@@ -359,16 +349,10 @@ def test_live_monitor_generation():
         strong_momentum = len([p for p in positions if p["current_return"] > 0.10])
 
         return {
-            "positive_rate": (
-                positive_positions / total_positions if total_positions > 0 else 0
-            ),
+            "positive_rate": (positive_positions / total_positions if total_positions > 0 else 0),
             "strong_momentum_count": strong_momentum,
-            "developing_positions": total_positions
-            - positive_positions
-            - strong_momentum,
-            "overall_strength": (
-                "strong" if positive_positions / total_positions > 0.6 else "moderate"
-            ),
+            "developing_positions": total_positions - positive_positions - strong_momentum,
+            "overall_strength": ("strong" if positive_positions / total_positions > 0.6 else "moderate"),
         }
 
     # Test live monitor generation
@@ -384,9 +368,7 @@ def test_live_monitor_generation():
 
     print("\nTop Performers:")
     for performer in monitor["top_performers"]:
-        print(
-            f"  {performer['ticker']}: {performer['return']:+.1%} ({performer['momentum']} momentum)"
-        )
+        print(f"  {performer['ticker']}: {performer['return']:+.1%} ({performer['momentum']} momentum)")
 
     print("\nWatch List:")
     for watch in monitor["watch_list"]:
@@ -455,8 +437,7 @@ def test_template_compliance():
         formatting_checks = {
             "consistent_percentages": len(re.findall(r"\d+\.\d%", content)) >= 3,
             "proper_table_format": content.count("|") >= 8,  # Table structure
-            "emoji_usage": content.count("📊") + content.count("✅") + content.count("❌")
-            >= 3,
+            "emoji_usage": content.count("📊") + content.count("✅") + content.count("❌") >= 3,
             "section_hierarchy": content.count("##") >= 2,
             "bullet_points": content.count("-") >= 5,
         }
@@ -466,12 +447,8 @@ def test_template_compliance():
         return formatting_score, formatting_checks
 
     # Test template compliance
-    compliance_score, compliance_details = validate_template_compliance(
-        sample_report_content
-    )
-    formatting_score, formatting_details = validate_formatting_consistency(
-        sample_report_content
-    )
+    compliance_score, compliance_details = validate_template_compliance(sample_report_content)
+    formatting_score, formatting_details = validate_formatting_consistency(sample_report_content)
 
     print("Template Compliance: {compliance_score:.1%}")
     for check, passed in compliance_details.items():
@@ -494,12 +471,14 @@ def validate_synthesis_schema():
     Validate that the synthesis JSON schema is properly structured.
     """
 
-    schema_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/synthesize/trading_synthesis_schema_v1.json"
+    schema_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/synthesize/trading_synthesis_schema_v1.json"
+    )
 
     print("=== Synthesis Schema Validation ===\n")
 
     try:
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = json.load(f)
 
         # Check required top-level properties
@@ -555,9 +534,9 @@ def validate_synthesis_schema():
 
     except FileNotFoundError:
         print("❌ Schema file not found")
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("❌ Invalid JSON in schema: {e}")
-    except Exception as e:
+    except Exception:
         print("❌ Schema validation error: {e}")
 
 

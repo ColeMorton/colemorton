@@ -13,7 +13,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -23,12 +23,12 @@ from plotly.subplots import make_subplots
 class LiveSignalsDashboard:
     """Generate interactive Plotly dashboards for live signals data"""
 
-    def __init__(self, sensylate_theme: Optional[Dict[str, Any]] = None):
+    def __init__(self, sensylate_theme: dict[str, Any] | None = None):
         """Initialize dashboard generator with Sensylate theme"""
         self.theme = sensylate_theme or self._default_sensylate_theme()
         self._setup_plotly_theme()
 
-    def _default_sensylate_theme(self) -> Dict[str, Any]:
+    def _default_sensylate_theme(self) -> dict[str, Any]:
         """Default Sensylate design system theme"""
         return {
             "colors": {
@@ -71,7 +71,7 @@ class LiveSignalsDashboard:
                 ),
             )
         )
-        pio.templates["sensylate_light"] = light_template
+        pio.templates["colemorton_light"] = light_template
 
         # Dark theme
         dark_template = go.layout.Template(
@@ -99,11 +99,11 @@ class LiveSignalsDashboard:
                 ),
             )
         )
-        pio.templates["sensylate_dark"] = dark_template
+        pio.templates["colemorton_dark"] = dark_template
 
-    def parse_live_signals_report(self, file_path: Path) -> Dict[str, Any]:
+    def parse_live_signals_report(self, file_path: Path) -> dict[str, Any]:
         """Parse live signals markdown report and extract structured data"""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         data = {
@@ -116,7 +116,7 @@ class LiveSignalsDashboard:
 
         return data
 
-    def _extract_metadata(self, content: str) -> Dict[str, Any]:
+    def _extract_metadata(self, content: str) -> dict[str, Any]:
         """Extract report metadata"""
         lines = content.split("\n")
         header_line = lines[1] if len(lines) > 1 else ""
@@ -140,7 +140,7 @@ class LiveSignalsDashboard:
 
         return metadata
 
-    def _extract_portfolio_overview(self, content: str) -> Dict[str, Any]:
+    def _extract_portfolio_overview(self, content: str) -> dict[str, Any]:
         """Extract portfolio overview metrics"""
         overview = {}
 
@@ -168,7 +168,7 @@ class LiveSignalsDashboard:
 
         return overview
 
-    def _extract_positions_table(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_positions_table(self, content: str) -> list[dict[str, Any]]:
         """Extract positions from the complete active positions table"""
         positions = []
 
@@ -207,7 +207,7 @@ class LiveSignalsDashboard:
 
         return positions
 
-    def _extract_performance_metrics(self, content: str) -> Dict[str, Any]:
+    def _extract_performance_metrics(self, content: str) -> dict[str, Any]:
         """Extract historical performance metrics"""
         metrics = {}
 
@@ -224,30 +224,24 @@ class LiveSignalsDashboard:
             match = re.search(pattern, content)
             if match:
                 value = match.group(1)
-                if key in ["win_rate", "average_win", "average_loss", "best_trade"]:
-                    metrics[key] = float(value)
-                elif key == "profit_factor":
+                if key in ["win_rate", "average_win", "average_loss", "best_trade"] or key == "profit_factor":
                     metrics[key] = float(value)
                 else:
                     metrics[key] = int(value) if value.isdigit() else value
 
         return metrics
 
-    def _extract_composition_data(self, content: str) -> Dict[str, Any]:
+    def _extract_composition_data(self, content: str) -> dict[str, Any]:
         """Extract portfolio composition data"""
         composition = {}
 
         # Extract sector exposure
         if "Technology-heavy" in content:
-            tech_match = re.search(
-                r"Technology-heavy \((\d+)/(\d+) positions\)", content
-            )
+            tech_match = re.search(r"Technology-heavy \((\d+)/(\d+) positions\)", content)
             if tech_match:
                 tech_positions = int(tech_match.group(1))
                 total_positions = int(tech_match.group(2))
-                composition["technology_exposure"] = (
-                    tech_positions / total_positions * 100
-                )
+                composition["technology_exposure"] = tech_positions / total_positions * 100
 
         # Extract strategy mix
         sma_match = re.search(r"(\d+\.?\d*)% SMA", content)
@@ -264,9 +258,7 @@ class LiveSignalsDashboard:
             return float(value.replace("%", "").replace("+", ""))
         return float(value)
 
-    def generate_dashboard(
-        self, data: Dict[str, Any], mode: str = "both"
-    ) -> Tuple[Optional[go.Figure], Optional[go.Figure]]:
+    def generate_dashboard(self, data: dict[str, Any], mode: str = "both") -> tuple[go.Figure | None, go.Figure | None]:
         """Generate 2x2 grid dashboard with dual-mode variants"""
         light_fig = None
         dark_fig = None
@@ -279,9 +271,7 @@ class LiveSignalsDashboard:
 
         return light_fig, dark_fig
 
-    def _create_dashboard_figure(
-        self, data: Dict[str, Any], theme_mode: str
-    ) -> go.Figure:
+    def _create_dashboard_figure(self, data: dict[str, Any], theme_mode: str) -> go.Figure:
         """Create 2x2 grid dashboard figure"""
         # Create subplots with 2x2 grid
         fig = make_subplots(
@@ -309,19 +299,10 @@ class LiveSignalsDashboard:
         if positions:
             tickers = [pos["ticker"] for pos in positions]
             returns = [pos["current_return"] for pos in positions]
-            colors = [
-                (
-                    self.theme["colors"]["success"]
-                    if r > 0
-                    else self.theme["colors"]["danger"]
-                )
-                for r in returns
-            ]
+            colors = [(self.theme["colors"]["success"] if r > 0 else self.theme["colors"]["danger"]) for r in returns]
 
             fig.add_trace(
-                go.Bar(
-                    x=tickers, y=returns, marker_color=colors, name="Position Returns"
-                ),
+                go.Bar(x=tickers, y=returns, marker_color=colors, name="Position Returns"),
                 row=1,
                 col=1,
             )
@@ -409,11 +390,11 @@ class LiveSignalsDashboard:
 
     def export_dashboard(
         self,
-        light_fig: Optional[go.Figure],
-        dark_fig: Optional[go.Figure],
+        light_fig: go.Figure | None,
+        dark_fig: go.Figure | None,
         output_dir: Path,
         filename_base: str,
-    ) -> List[Path]:
+    ) -> list[Path]:
         """Export dashboard figures as high-DPI PNG files"""
         exported_files = []
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -438,7 +419,7 @@ class LiveSignalsDashboard:
 
         return exported_files
 
-    def generate_frontend_config(self, data: Dict[str, Any], output_dir: Path) -> Path:
+    def generate_frontend_config(self, data: dict[str, Any], output_dir: Path) -> Path:
         """Generate frontend-ready JSON configuration"""
         config = {
             "dashboard_type": "live_signals",
@@ -520,9 +501,7 @@ def main():
         # Export images
         output_dir = latest_file.parent
         filename_base = f"live_signals_dashboard_{datetime.now().strftime('%Y%m%d')}"
-        exported_files = dashboard.export_dashboard(
-            light_fig, dark_fig, output_dir, filename_base
-        )
+        exported_files = dashboard.export_dashboard(light_fig, dark_fig, output_dir, filename_base)
 
         # Generate frontend config
         config_path = dashboard.generate_frontend_config(data, output_dir)
@@ -531,7 +510,7 @@ def main():
         print("📸 Exported images: {[f.name for f in exported_files]}")
         print("⚙️  Frontend config: {config_path.name}")
 
-    except Exception as e:
+    except Exception:
         print("❌ Dashboard generation failed: {e}")
         raise
 

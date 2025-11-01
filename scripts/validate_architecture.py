@@ -13,7 +13,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -41,7 +41,7 @@ class ArchitectureValidator:
             "overall_score": 0.0,
         }
 
-    def validate_direct_imports(self) -> Tuple[List[str], bool]:
+    def validate_direct_imports(self) -> tuple[list[str], bool]:
         """Check for direct Python import violations in command files"""
         violations = []
 
@@ -49,7 +49,7 @@ class ArchitectureValidator:
             return violations, True
 
         for cmd_file in self.commands_dir.glob("*.md"):
-            with open(cmd_file, "r") as f:
+            with open(cmd_file) as f:
                 content = f.read()
 
             # Check for direct script imports
@@ -66,9 +66,7 @@ class ArchitectureValidator:
                     violations.append(f"{cmd_file.name}: {len(matches)} direct imports")
 
         self.validation_results["direct_imports"]["violations"] = violations
-        self.validation_results["direct_imports"]["status"] = (
-            "pass" if not violations else "fail"
-        )
+        self.validation_results["direct_imports"]["status"] = "pass" if not violations else "fail"
 
         return violations, len(violations) == 0
 
@@ -80,7 +78,7 @@ class ArchitectureValidator:
             return cli_usage_count
 
         for cmd_file in self.commands_dir.glob("*.md"):
-            with open(cmd_file, "r") as f:
+            with open(cmd_file) as f:
                 content = f.read()
 
             # Count CLI usage patterns
@@ -95,19 +93,17 @@ class ArchitectureValidator:
                 cli_usage_count += len(matches)
 
         self.validation_results["cli_usage"]["count"] = cli_usage_count
-        self.validation_results["cli_usage"]["status"] = (
-            "pass" if cli_usage_count > 100 else "warning"
-        )
+        self.validation_results["cli_usage"]["status"] = "pass" if cli_usage_count > 100 else "warning"
 
         return cli_usage_count
 
-    def validate_base_cli_compliance(self) -> Tuple[List[str], List[str]]:
+    def validate_base_cli_compliance(self) -> tuple[list[str], list[str]]:
         """Check CLI scripts for BaseFinancialCLI compliance"""
         compliant = []
         non_compliant = []
 
         for cli_file in self.scripts_dir.glob("*_cli.py"):
-            with open(cli_file, "r") as f:
+            with open(cli_file) as f:
                 content = f.read()
 
             if "BaseFinancialCLI" in content:
@@ -117,20 +113,18 @@ class ArchitectureValidator:
 
         self.validation_results["base_cli_compliance"]["compliant"] = compliant
         self.validation_results["base_cli_compliance"]["non_compliant"] = non_compliant
-        self.validation_results["base_cli_compliance"]["status"] = (
-            "pass" if len(non_compliant) <= 1 else "warning"
-        )
+        self.validation_results["base_cli_compliance"]["status"] = "pass" if len(non_compliant) <= 1 else "warning"
 
         return compliant, non_compliant
 
-    def find_service_factories(self) -> List[str]:
+    def find_service_factories(self) -> list[str]:
         """Find service factory pattern implementations"""
         factories = []
 
         services_dir = self.scripts_dir / "services"
         if services_dir.exists():
             for service_file in services_dir.glob("*.py"):
-                with open(service_file, "r") as f:
+                with open(service_file) as f:
                     content = f.read()
 
                 # Look for factory functions
@@ -145,13 +139,11 @@ class ArchitectureValidator:
                         factories.append(f"{service_file.name}: {pattern}")
 
         self.validation_results["service_factories"]["found"] = factories
-        self.validation_results["service_factories"]["status"] = (
-            "pass" if len(factories) > 3 else "warning"
-        )
+        self.validation_results["service_factories"]["status"] = "pass" if len(factories) > 3 else "warning"
 
         return factories
 
-    def count_test_coverage(self) -> Tuple[int, int]:
+    def count_test_coverage(self) -> tuple[int, int]:
         """Count CLI and service layer tests"""
         cli_tests = 0
         service_tests = 0
@@ -159,7 +151,7 @@ class ArchitectureValidator:
         tests_dir = self.scripts_dir / "tests"
         if tests_dir.exists():
             for test_file in tests_dir.glob("test_*.py"):
-                with open(test_file, "r") as f:
+                with open(test_file) as f:
                     content = f.read()
 
                 if "cli" in test_file.name.lower():
@@ -169,13 +161,11 @@ class ArchitectureValidator:
 
         self.validation_results["test_coverage"]["cli_tests"] = cli_tests
         self.validation_results["test_coverage"]["service_tests"] = service_tests
-        self.validation_results["test_coverage"]["status"] = (
-            "pass" if (cli_tests + service_tests) > 10 else "warning"
-        )
+        self.validation_results["test_coverage"]["status"] = "pass" if (cli_tests + service_tests) > 10 else "warning"
 
         return cli_tests, service_tests
 
-    def run_cli_health_checks(self) -> Dict[str, bool]:
+    def run_cli_health_checks(self) -> dict[str, bool]:
         """Run health checks on CLI scripts"""
         health_results = {}
 
@@ -219,12 +209,8 @@ class ArchitectureValidator:
             score += 10.0
 
         # BaseFinancialCLI compliance (20 points)
-        compliant_count = len(
-            self.validation_results["base_cli_compliance"]["compliant"]
-        )
-        non_compliant_count = len(
-            self.validation_results["base_cli_compliance"]["non_compliant"]
-        )
+        compliant_count = len(self.validation_results["base_cli_compliance"]["compliant"])
+        non_compliant_count = len(self.validation_results["base_cli_compliance"]["non_compliant"])
 
         if non_compliant_count == 0:
             score += 20.0
@@ -258,7 +244,7 @@ class ArchitectureValidator:
 
         return self.validation_results["overall_score"]
 
-    def run_full_validation(self) -> Dict:
+    def run_full_validation(self) -> dict:
         """Run complete architecture validation"""
         print("🔍 Running CLI-Centric Architecture Validation...")
         print("=" * 60)
@@ -327,9 +313,7 @@ class ArchitectureValidator:
         print("\nDetailed Breakdown:")
         print("- Direct Import Compliance: {'✅' if imports_clean else '❌'}")
         print("- CLI Usage Patterns: {cli_count} instances")
-        print(
-            f"- BaseFinancialCLI Compliance: {len(compliant)}/{len(compliant) + len(non_compliant)} scripts"
-        )
+        print(f"- BaseFinancialCLI Compliance: {len(compliant)}/{len(compliant) + len(non_compliant)} scripts")
         print("- Service Factory Patterns: {len(factories)} found")
         print("- Test Coverage: {cli_tests + service_tests} tests")
         print("- Overall Score: {score}/10")

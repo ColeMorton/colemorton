@@ -13,9 +13,10 @@ Command-line interface for Blockchain.com blockchain explorer with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -41,7 +42,7 @@ class BlockchainComCLI(BaseFinancialCLI):
             self.service = create_blockchain_com_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Blockchain.com service health check"""
         try:
             service = self._get_service(env)
@@ -55,7 +56,7 @@ class BlockchainComCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -170,9 +171,7 @@ class BlockchainComCLI(BaseFinancialCLI):
 
         @self.app.command("multi-balance")
         def get_multiple_addresses_balance(
-            addresses: str = typer.Argument(
-                ..., help="Comma-separated Bitcoin addresses"
-            ),
+            addresses: str = typer.Argument(..., help="Comma-separated Bitcoin addresses"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
         ):
@@ -201,9 +200,7 @@ class BlockchainComCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_unspent_outputs(address)
-                self._output_result(
-                    result, output_format, f"Unspent Outputs for {address}"
-                )
+                self._output_result(result, output_format, f"Unspent Outputs for {address}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get unspent outputs for {address}")
@@ -278,9 +275,7 @@ class BlockchainComCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_total_bitcoins()
-                self._output_result(
-                    result, output_format, "Total Bitcoins in Circulation"
-                )
+                self._output_result(result, output_format, "Total Bitcoins in Circulation")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get total bitcoins")
@@ -345,9 +340,7 @@ class BlockchainComCLI(BaseFinancialCLI):
                     offset = 0
 
                 result = service.get_address_transactions(address, offset)
-                self._output_result(
-                    result, output_format, f"Transactions for {address}"
-                )
+                self._output_result(result, output_format, f"Transactions for {address}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get transactions for {address}")

@@ -8,9 +8,10 @@ These tests focus on service logic, data transformation, and error handling.
 
 import sys
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -21,14 +22,12 @@ from fixtures.test_utils import (
     MockHTTPAdapter,
     MockServiceFactory,
     create_test_services_with_mocks,
-    patch_requests_get,
 )
-
-from services.alternative_me import AlternativeMeService, create_alternative_me_service
-from services.binance_api import BinanceAPIService, create_binance_api_service
+from services.alternative_me import create_alternative_me_service
+from services.binance_api import create_binance_api_service
 from services.bitcoin_network_stats import create_bitcoin_network_stats_service
 from services.blockchain_com import BlockchainComService, create_blockchain_com_service
-from services.coinmetrics import CoinMetricsService, create_coinmetrics_service
+from services.coinmetrics import create_coinmetrics_service
 from services.mempool_space import MempoolSpaceService, create_mempool_space_service
 
 
@@ -122,9 +121,7 @@ class TestBlockchainComServiceUnit(unittest.TestCase):
     @patch("requests.get")
     def test_get_network_stats_with_mock(self, mock_get):
         """Test network stats with mocked response"""
-        mock_get.return_value = self.mock_adapter.get_mock_response(
-            "https://blockchain.info/stats?format=json"
-        )
+        mock_get.return_value = self.mock_adapter.get_mock_response("https://blockchain.info/stats?format=json")
 
         result = self.service.get_network_stats()
 
@@ -175,9 +172,7 @@ class TestAlternativeMeServiceUnit(unittest.TestCase):
     @patch("requests.get")
     def test_get_current_fear_greed_with_mock(self, mock_get):
         """Test current Fear & Greed index with mocked response"""
-        mock_get.return_value = self.mock_adapter.get_mock_response(
-            "https://api.alternative.me/fng/?limit=1"
-        )
+        mock_get.return_value = self.mock_adapter.get_mock_response("https://api.alternative.me/fng/?limit=1")
 
         result = self.service.get_current_fear_greed()
 
@@ -213,9 +208,7 @@ class TestBinanceAPIServiceUnit(unittest.TestCase):
     @patch("requests.get")
     def test_get_24hr_ticker_with_mock(self, mock_get):
         """Test 24hr ticker with mocked response"""
-        mock_get.return_value = self.mock_adapter.get_mock_response(
-            "https://api.binance.com/api/v3/ticker/24hr"
-        )
+        mock_get.return_value = self.mock_adapter.get_mock_response("https://api.binance.com/api/v3/ticker/24hr")
 
         result = self.service.get_24hr_ticker_stats("BTCUSDT")
 
@@ -227,9 +220,7 @@ class TestBinanceAPIServiceUnit(unittest.TestCase):
     @patch("requests.get")
     def test_get_server_time_with_mock(self, mock_get):
         """Test server time with mocked response"""
-        mock_get.return_value = self.mock_adapter.get_mock_response(
-            "https://api.binance.com/api/v3/time"
-        )
+        mock_get.return_value = self.mock_adapter.get_mock_response("https://api.binance.com/api/v3/time")
 
         result = self.service.get_server_time()
 
@@ -282,9 +273,7 @@ class TestBitcoinNetworkStatsServiceUnit(unittest.TestCase):
         self.assertIn("mining_statistics", result)
         self.assertIn("summary", result)
 
-        self.assertEqual(
-            result["report_type"], "comprehensive_bitcoin_network_statistics"
-        )
+        self.assertEqual(result["report_type"], "comprehensive_bitcoin_network_statistics")
 
     def test_service_uses_injected_dependencies(self):
         """Test that service uses injected mock services instead of creating real ones"""

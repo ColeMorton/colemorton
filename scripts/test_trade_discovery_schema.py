@@ -8,29 +8,26 @@ import json
 import sys
 from pathlib import Path
 
+
 try:
     from jsonschema import ValidationError, validate
 except ImportError:
-    print(
-        "Error: jsonschema library not found. Install it with: pip install jsonschema"
-    )
+    print("Error: jsonschema library not found. Install it with: pip install jsonschema")
     sys.exit(1)
 
 
 def load_schema():
     """Load the trade history discovery schema from the schemas directory."""
-    schema_path = (
-        Path(__file__).parent / "schemas" / "trade_history_discovery_schema.json"
-    )
+    schema_path = Path(__file__).parent / "schemas" / "trade_history_discovery_schema.json"
 
     if not schema_path.exists():
         print("Error: Schema file not found at {schema_path}")
         return None
 
     try:
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             return json.load(f)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("Error: Invalid JSON in schema file: {e}")
         return None
 
@@ -38,9 +35,9 @@ def load_schema():
 def load_discovery_file(file_path):
     """Load a trade history discovery JSON file."""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("Error: Invalid JSON in {file_path}: {e}")
         return None
     except FileNotFoundError:
@@ -70,29 +67,17 @@ def analyze_institutional_quality(discovery_data, file_name):
 
     # Extract quality metrics
     if "discovery_metadata" in discovery_data:
-        quality_metrics["overall_confidence"] = discovery_data[
-            "discovery_metadata"
-        ].get("confidence_score", 0)
-        quality_metrics["data_completeness"] = discovery_data["discovery_metadata"].get(
-            "data_completeness", 0
-        )
+        quality_metrics["overall_confidence"] = discovery_data["discovery_metadata"].get("confidence_score", 0)
+        quality_metrics["data_completeness"] = discovery_data["discovery_metadata"].get("data_completeness", 0)
 
     if "performance_metrics" in discovery_data:
-        quality_metrics["win_rate"] = discovery_data["performance_metrics"].get(
-            "win_rate", 0
-        )
-        quality_metrics["profit_factor"] = discovery_data["performance_metrics"].get(
-            "profit_factor", 0
-        )
-        quality_metrics["closed_trades"] = discovery_data["performance_metrics"].get(
-            "total_closed_trades", 0
-        )
+        quality_metrics["win_rate"] = discovery_data["performance_metrics"].get("win_rate", 0)
+        quality_metrics["profit_factor"] = discovery_data["performance_metrics"].get("profit_factor", 0)
+        quality_metrics["closed_trades"] = discovery_data["performance_metrics"].get("total_closed_trades", 0)
 
     # Assess statistical adequacy
     closed_trades = quality_metrics["closed_trades"]
-    quality_metrics["statistical_adequacy"] = (
-        closed_trades >= 5 if closed_trades else False
-    )
+    quality_metrics["statistical_adequacy"] = closed_trades >= 5 if closed_trades else False
 
     return quality_metrics
 
@@ -129,9 +114,7 @@ def print_quality_assessment(metrics, file_name):
     closed_trades = metrics["closed_trades"]
     if closed_trades is not None:
         status = "✅" if closed_trades >= 5 else "❌"
-        print(
-            f"     Statistical Adequacy: {status} {closed_trades} trades (minimum: 5)"
-        )
+        print(f"     Statistical Adequacy: {status} {closed_trades} trades (minimum: 5)")
 
 
 def main():
@@ -147,13 +130,7 @@ def main():
     print("✅ Trade history discovery schema loaded successfully")
 
     # Test files (all available trade history discovery files)
-    discovery_dir = (
-        Path(__file__).parent.parent
-        / "data"
-        / "outputs"
-        / "trade_history"
-        / "discovery"
-    )
+    discovery_dir = Path(__file__).parent.parent / "data" / "outputs" / "trade_history" / "discovery"
     test_files = [
         "live_signals_20250719.json",  # Most recent
         "live_signals_20250718.json",  # Recent
@@ -176,9 +153,7 @@ def main():
             continue
 
         # Validate against schema
-        is_valid, error_message = validate_discovery_file(
-            discovery_data, schema, file_path
-        )
+        is_valid, error_message = validate_discovery_file(discovery_data, schema, file_path)
         validation_results.append((file_name, is_valid, error_message))
 
         # Print immediate result
@@ -210,19 +185,18 @@ def main():
         print("Schema validates institutional-grade trading framework requirements.")
         print("Ready for production algorithmic trading validation.")
         return 0
-    else:
-        print("\n⚠️  {total_count - valid_count} files failed validation.")
-        print("Schema may need adjustments for framework evolution.")
+    print("\n⚠️  {total_count - valid_count} files failed validation.")
+    print("Schema may need adjustments for framework evolution.")
 
-        # Print detailed errors for failed validations
-        print("\n🔍 DETAILED VALIDATION ERRORS:")
-        print("-" * 60)
-        for file_name, is_valid, error_message in validation_results:
-            if not is_valid:
-                print("\n❌ {file_name}:")
-                print("   {error_message}")
+    # Print detailed errors for failed validations
+    print("\n🔍 DETAILED VALIDATION ERRORS:")
+    print("-" * 60)
+    for file_name, is_valid, error_message in validation_results:
+        if not is_valid:
+            print("\n❌ {file_name}:")
+            print("   {error_message}")
 
-        return 1
+    return 1
 
 
 if __name__ == "__main__":

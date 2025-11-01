@@ -1,11 +1,11 @@
-# Sensylate Documentation
+# Colemorton Documentation
 
 **Version**: 1.0 | **Last Updated**: 2025-01-15 | **Status**: Active
 **Authority**: Documentation Owner | **Audience**: All Users
 
 ## 📖 Documentation Overview
 
-This directory contains comprehensive documentation for the Sensylate multi-modal trading analysis platform. All documentation follows standardized formatting and is regularly updated to reflect the current system state.
+This directory contains comprehensive documentation for the Colemorton multi-modal trading analysis platform. All documentation follows standardized formatting and is regularly updated to reflect the current system state.
 
 ## 🎯 Quick Navigation
 
@@ -174,4 +174,4 @@ This directory contains comprehensive documentation for the Sensylate multi-moda
 **Maintenance**: Active updates with system changes
 **User Experience**: Streamlined learning paths and clear navigation
 
-*Welcome to Sensylate - your comprehensive trading analysis platform with institutional-quality documentation!*
+*Welcome to Colemorton - your comprehensive trading analysis platform with institutional-quality documentation!*

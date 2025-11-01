@@ -14,9 +14,10 @@ import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yfinance as yf
+
 
 # Import trading session manager for session-aware caching
 try:
@@ -34,31 +35,21 @@ except ImportError:
 class YahooFinanceError(Exception):
     """Base exception for Yahoo Finance service errors"""
 
-    pass
-
 
 class ValidationError(YahooFinanceError):
     """Raised when input validation fails"""
-
-    pass
 
 
 class RateLimitError(YahooFinanceError):
     """Raised when rate limit is exceeded"""
 
-    pass
-
 
 class DataNotFoundError(YahooFinanceError):
     """Raised when requested data is not available"""
 
-    pass
-
 
 class APITimeoutError(YahooFinanceError):
     """Raised when API request times out"""
-
-    pass
 
 
 class FileBasedCache:
@@ -90,10 +81,7 @@ class FileBasedCache:
         """Get effective TTL based on key content and trading session"""
         if self.trading_session_manager and self.use_trading_session_ttl:
             # Check if this is market data based on key content
-            is_market_data = any(
-                term in key.lower()
-                for term in ["historical", "quote", "price", "stock_info"]
-            )
+            is_market_data = any(term in key.lower() for term in ["historical", "quote", "price", "stock_info"])
 
             if is_market_data:
                 try:
@@ -105,7 +93,7 @@ class FileBasedCache:
 
         return self.ttl
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> dict[str, Any] | None:
         """Retrieve cached data if not expired using dynamic TTL"""
         cache_path = self._get_cache_path(key)
 
@@ -113,7 +101,7 @@ class FileBasedCache:
             return None
 
         try:
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 cached_data = json.load(f)
 
             # Check if cache is expired using effective TTL
@@ -131,7 +119,7 @@ class FileBasedCache:
             cache_path.unlink(missing_ok=True)
             return None
 
-    def set(self, key: str, data: Dict[str, Any]) -> None:
+    def set(self, key: str, data: dict[str, Any]) -> None:
         """Store data in cache with timestamp"""
         cache_path = self._get_cache_path(key)
 
@@ -150,7 +138,7 @@ class RateLimiter:
 
     def __init__(self, requests_per_minute: int = 10):
         self.requests_per_minute = requests_per_minute
-        self.requests: List[float] = []
+        self.requests: list[float] = []
 
     def can_make_request(self) -> bool:
         """Check if request is allowed under rate limit"""
@@ -224,9 +212,7 @@ class YahooFinanceService:
         logger = logging.getLogger(__name__)
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
@@ -252,24 +238,16 @@ class YahooFinanceService:
     def _validate_period(self, period: str) -> str:
         """Validate period parameter"""
         if period not in self.VALID_PERIODS:
-            raise ValidationError(
-                f"Invalid period '{period}'. "
-                f"Valid periods: {', '.join(self.VALID_PERIODS)}"
-            )
+            raise ValidationError(f"Invalid period '{period}'. Valid periods: {', '.join(self.VALID_PERIODS)}")
         return period
 
     def _validate_interval(self, interval: str) -> str:
         """Validate interval parameter"""
         if interval not in self.VALID_INTERVALS:
-            raise ValidationError(
-                f"Invalid interval '{interval}'. "
-                f"Valid intervals: {', '.join(self.VALID_INTERVALS)}"
-            )
+            raise ValidationError(f"Invalid interval '{interval}'. Valid intervals: {', '.join(self.VALID_INTERVALS)}")
         return interval
 
-    def _make_request_with_retry(
-        self, request_func: Any, *args: Any, max_retries: int = 3, **kwargs: Any
-    ) -> Any:
+    def _make_request_with_retry(self, request_func: Any, *args: Any, max_retries: int = 3, **kwargs: Any) -> Any:
         """Execute request with exponential backoff retry logic"""
         correlation_id = hashlib.md5(  # nosec B324
             f"{request_func.__name__}{str(args)}{str(kwargs)}".encode()
@@ -281,10 +259,7 @@ class YahooFinanceService:
                 self.rate_limiter.wait_if_needed()
                 self.rate_limiter.record_request()
 
-                self.logger.info(
-                    f"Making request (attempt {attempt + 1}/"
-                    f"{max_retries + 1}) - ID: {correlation_id}"
-                )
+                self.logger.info(f"Making request (attempt {attempt + 1}/{max_retries + 1}) - ID: {correlation_id}")
 
                 result = request_func(*args, **kwargs)
 
@@ -303,22 +278,17 @@ class YahooFinanceService:
                     time.sleep(wait_time)
                 else:
                     self.logger.error(
-                        f"Request failed after {max_retries + 1} attempts - "
-                        f"ID: {correlation_id}, Error: {str(e)}"
+                        f"Request failed after {max_retries + 1} attempts - ID: {correlation_id}, Error: {str(e)}"
                     )
 
                     # Classify and raise appropriate exception
                     if "timeout" in str(e).lower():
-                        raise APITimeoutError(
-                            f"Request timed out after {max_retries + 1} "
-                            f"attempts: {str(e)}"
-                        )
-                    elif "not found" in str(e).lower() or "invalid" in str(e).lower():
+                        raise APITimeoutError(f"Request timed out after {max_retries + 1} attempts: {str(e)}")
+                    if "not found" in str(e).lower() or "invalid" in str(e).lower():
                         raise DataNotFoundError(f"Data not available: {str(e)}")
-                    else:
-                        raise YahooFinanceError(f"API request failed: {str(e)}")
+                    raise YahooFinanceError(f"API request failed: {str(e)}")
 
-    def get_stock_info(self, symbol: str) -> Dict[str, Any]:
+    def get_stock_info(self, symbol: str) -> dict[str, Any]:
         """
         Get comprehensive stock information with validation and caching
 
@@ -342,7 +312,7 @@ class YahooFinanceService:
             self.logger.info(f"Cache hit for stock info: {symbol}")
             return cached_data
 
-        def _fetch_stock_info() -> Dict[str, Any]:
+        def _fetch_stock_info() -> dict[str, Any]:
             ticker = yf.Ticker(symbol)
             info = ticker.info
 
@@ -352,9 +322,7 @@ class YahooFinanceService:
             return {
                 "symbol": symbol,
                 "name": info.get("longName", "N/A"),
-                "current_price": info.get(
-                    "currentPrice", info.get("regularMarketPrice")
-                ),
+                "current_price": info.get("currentPrice", info.get("regularMarketPrice")),
                 "market_cap": info.get("marketCap"),
                 "pe_ratio": info.get("trailingPE"),
                 "dividend_yield": info.get("dividendYield"),
@@ -381,13 +349,9 @@ class YahooFinanceService:
             # Don't retry these errors
             raise
         except Exception as e:
-            raise YahooFinanceError(
-                f"Failed to fetch stock info for {symbol}: {str(e)}"
-            )
+            raise YahooFinanceError(f"Failed to fetch stock info for {symbol}: {str(e)}")
 
-    def get_historical_data(
-        self, symbol: str, period: str = "1y", interval: str = "1d"
-    ) -> Dict[str, Any]:
+    def get_historical_data(self, symbol: str, period: str = "1y", interval: str = "1d") -> dict[str, Any]:
         """
         Get historical price data with period and interval validation
 
@@ -414,19 +378,16 @@ class YahooFinanceService:
         # Check cache first
         cached_data = self.cache.get(cache_key)
         if cached_data:
-            self.logger.info(
-                f"Cache hit for historical data: {symbol} ({period}, {interval})"
-            )
+            self.logger.info(f"Cache hit for historical data: {symbol} ({period}, {interval})")
             return cached_data
 
-        def _fetch_historical_data() -> Dict[str, Any]:
+        def _fetch_historical_data() -> dict[str, Any]:
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period=period, interval=interval)
 
             if hist.empty:
                 raise DataNotFoundError(
-                    f"No historical data available for symbol: {symbol} "
-                    f"(period: {period}, interval: {interval})"
+                    f"No historical data available for symbol: {symbol} (period: {period}, interval: {interval})"
                 )
 
             # Reset index to make Date a column, then convert to records
@@ -452,11 +413,9 @@ class YahooFinanceService:
             # Don't retry these errors
             raise
         except Exception as e:
-            raise YahooFinanceError(
-                f"Failed to fetch historical data for {symbol}: {str(e)}"
-            )
+            raise YahooFinanceError(f"Failed to fetch historical data for {symbol}: {str(e)}")
 
-    def get_financials(self, symbol: str) -> Dict[str, Any]:
+    def get_financials(self, symbol: str) -> dict[str, Any]:
         """
         Get financial statements with data quality validation
 
@@ -480,7 +439,7 @@ class YahooFinanceService:
             self.logger.info(f"Cache hit for financials: {symbol}")
             return cached_data
 
-        def _fetch_financials() -> Dict[str, Any]:
+        def _fetch_financials() -> dict[str, Any]:
             ticker = yf.Ticker(symbol)
 
             # Validate that we can get basic info first
@@ -489,7 +448,7 @@ class YahooFinanceService:
                 raise DataNotFoundError(f"No data available for symbol: {symbol}")
 
             # Helper function to safely convert DataFrames to JSON-serializable format
-            def safe_dataframe_to_dict(df: Any) -> Dict[str, Any]:
+            def safe_dataframe_to_dict(df: Any) -> dict[str, Any]:
                 if df.empty:
                     return {}
                 # Convert DataFrame to dict with string keys for JSON serialization
@@ -517,11 +476,9 @@ class YahooFinanceService:
             # Don't retry these errors
             raise
         except Exception as e:
-            raise YahooFinanceError(
-                f"Failed to fetch financials for {symbol}: {str(e)}"
-            )
+            raise YahooFinanceError(f"Failed to fetch financials for {symbol}: {str(e)}")
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         Service health check for monitoring and debugging
 

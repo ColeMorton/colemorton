@@ -224,7 +224,7 @@ Your unique market position is as a software engineer and quantitative trader wh
   - SEO optimization for organic discovery
   - Email capture and nurture sequences
 
-- **Website Authority Building (sensylate.com)**
+- **Website Authority Building (colemorton.com)**
   - Showcase institutional-quality fundamental analysis with clear methodology
   - Feature systematic approach to market research and analysis
   - About page emphasizing software engineering + trading expertise combination
@@ -736,7 +736,7 @@ python {SCRIPTS_BASE}/competitor_intelligence_cli.py \
 
 ---
 
-**Integration with Framework**: This command integrates with the broader Sensylate ecosystem through standardized script registry, template system, CLI service integration, and validation framework protocols.
+**Integration with Framework**: This command integrates with the broader Colemorton ecosystem through standardized script registry, template system, CLI service integration, and validation framework protocols.
 
 **Author**: Cole Morton
 **Framework**: Social Media Strategy Development Framework

@@ -11,9 +11,10 @@ Command-line interface for dashboard generation with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -39,9 +40,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
 
         @self.app.command("generate")
         def generate_dashboard(
-            input_file: str = typer.Argument(
-                ..., help="Input historical performance markdown file"
-            ),
+            input_file: str = typer.Argument(..., help="Input historical performance markdown file"),
             mode: str = typer.Option("both", help="Dashboard mode (light/dark/both)"),
             output_dir: str = typer.Option(None, help="Output directory override"),
             config_file: str = typer.Option(
@@ -59,9 +58,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
                     raise ValidationError(f"Input file does not exist: {input_file}")
 
                 if mode not in ["light", "dark", "both"]:
-                    raise ValidationError(
-                        f"Invalid mode: {mode}. Must be light, dark, or both"
-                    )
+                    raise ValidationError(f"Invalid mode: {mode}. Must be light, dark, or both")
 
                 # Load configuration
                 config_path = Path(config_file)
@@ -86,15 +83,12 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
                     "status": "success",
                     "mode": mode,
                     "input_file": str(input_path),
-                    "output_directory": output_dir
-                    or config.get("output", {}).get("directory", ""),
+                    "output_directory": output_dir or config.get("output", {}).get("directory", ""),
                     "generated_files": [str(f) for f in generated_files],
                     "file_count": len(generated_files),
                 }
 
-                self._output_result(
-                    result, output_format, f"Dashboard Generation: {mode} mode"
-                )
+                self._output_result(result, output_format, f"Dashboard Generation: {mode} mode")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to generate dashboard for {input_file}")
@@ -162,13 +156,12 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
             except Exception as e:
                 self._handle_error(e, "Failed to list dashboard themes")
 
-    def _load_dashboard_config(self, config_path: Path, env: str) -> Dict[str, Any]:
+    def _load_dashboard_config(self, config_path: Path, env: str) -> dict[str, Any]:
         """Load and validate dashboard configuration"""
         import yaml
-
         from utils.config_validator import validate_dashboard_config
 
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = yaml.safe_load(f)
 
         # Apply environment-specific overrides
@@ -180,7 +173,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
 
         return config
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Dashboard Generator service health check"""
         try:
             # Check if required dependencies are available
@@ -220,7 +213,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
                 "environment": env,
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         cache_dir = Path("data/cache/dashboard_generation")
 
@@ -235,7 +228,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
                 "status": "success",
                 "message": "Dashboard generation cache cleared",
             }
-        elif action == "cleanup":
+        if action == "cleanup":
             # Remove old generated files (older than 7 days)
             import os
             import time
@@ -253,7 +246,7 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
                 "status": "success",
                 "message": "Old dashboard files removed",
             }
-        elif action == "stats":
+        if action == "stats":
             stats = {
                 "cache_directory": str(cache_dir),
                 "cache_exists": cache_dir.exists(),
@@ -261,19 +254,14 @@ class DashboardGeneratorCLI(BaseFinancialCLI):
             }
 
             if cache_dir.exists():
-                total_size = sum(
-                    file_path.stat().st_size
-                    for file_path in cache_dir.rglob("*")
-                    if file_path.is_file()
-                )
+                total_size = sum(file_path.stat().st_size for file_path in cache_dir.rglob("*") if file_path.is_file())
                 stats["cache_size_mb"] = round(total_size / (1024 * 1024), 2)
 
             return {
                 "action": "stats",
                 "cache_info": stats,
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

@@ -15,7 +15,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -27,7 +28,7 @@ from scripts.utils.logging_setup import setup_logging
 class PhotoBoothGenerator:
     """Main photo booth screenshot generation class."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize photo booth generator.
 
@@ -37,9 +38,7 @@ class PhotoBoothGenerator:
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.base_url = config.get("base_url", "http://localhost:4321")
-        output_dir_path = config.get("output", {}).get(
-            "directory", "data/outputs/photo-booth"
-        )
+        output_dir_path = config.get("output", {}).get("directory", "data/outputs/photo-booth")
         if not Path(output_dir_path).is_absolute():
             self.output_dir = project_root / output_dir_path
         else:
@@ -67,11 +66,8 @@ class PhotoBoothGenerator:
                 if response.status == 200:
                     self.logger.info("✅ Development server is running and accessible")
                     return True
-                else:
-                    self.logger.error(
-                        f"❌ Server responded with status {response.status}"
-                    )
-                    return False
+                self.logger.error(f"❌ Server responded with status {response.status}")
+                return False
 
         except urllib.error.URLError as e:
             if "Connection refused" in str(e):
@@ -95,10 +91,10 @@ class PhotoBoothGenerator:
         export_format: str = "png",
         dpi: int = 300,
         scale_factor: int = 3,
-        custom_config: Optional[Dict[str, Any]] = None,
-        ticker: Optional[str] = None,
-        brand: Optional[str] = None,
-    ) -> Union[Path, List[Path]]:
+        custom_config: dict[str, Any] | None = None,
+        ticker: str | None = None,
+        brand: str | None = None,
+    ) -> Path | list[Path]:
         """
         Generate a single dashboard screenshot.
 
@@ -114,15 +110,11 @@ class PhotoBoothGenerator:
         Returns:
             Path to the generated screenshot (or list of paths for 'both' format)
         """
-        self.logger.info(
-            f"Generating {export_format} export: {dashboard_id} ({mode} mode, {aspect_ratio}, {dpi} DPI)"
-        )
+        self.logger.info(f"Generating {export_format} export: {dashboard_id} ({mode} mode, {aspect_ratio}, {dpi} DPI)")
 
         # Check if development server is running before attempting screenshot
         if not self.check_server_status():
-            raise RuntimeError(
-                "Development server is not accessible. Please start the server first."
-            )
+            raise RuntimeError("Development server is not accessible. Please start the server first.")
 
         # Build URL with parameters
         url = f"{self.base_url}/photo-booth?dashboard={dashboard_id}&mode={mode}&aspect_ratio={aspect_ratio}"
@@ -132,9 +124,7 @@ class PhotoBoothGenerator:
             url += f"&ticker={ticker}"
 
         # Get aspect ratio dimensions from config (use fundamental-specific dimensions if applicable)
-        aspect_dimensions = self._get_aspect_ratio_dimensions(
-            aspect_ratio, dashboard_id
-        )
+        aspect_dimensions = self._get_aspect_ratio_dimensions(aspect_ratio, dashboard_id)
 
         # Generate output filename(s)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -146,9 +136,7 @@ class PhotoBoothGenerator:
         )
 
         output_paths = []
-        formats_to_generate = (
-            ["png", "svg"] if export_format == "both" else [export_format]
-        )
+        formats_to_generate = ["png", "svg"] if export_format == "both" else [export_format]
 
         for fmt in formats_to_generate:
             extension = "svg" if fmt == "svg" else "png"
@@ -179,9 +167,7 @@ class PhotoBoothGenerator:
 
                 if fmt == "svg":
                     # Generate SVG using dedicated SVG exporter
-                    result = self._generate_svg(
-                        url, str(output_path), aspect_dimensions
-                    )
+                    result = self._generate_svg(url, str(output_path), aspect_dimensions)
                     if result:
                         generated_files.append(output_path)
                         self.logger.info(f"SVG saved to: {output_path}")
@@ -191,18 +177,14 @@ class PhotoBoothGenerator:
                     temp_png_path = str(output_path).replace(".png", "_temp.png")
 
                     # Create Node.js script for Puppeteer
-                    puppeteer_script = self._create_puppeteer_script(
-                        url, temp_png_path, settings
-                    )
+                    puppeteer_script = self._create_puppeteer_script(url, temp_png_path, settings)
 
                     # Execute Puppeteer script to get raw PNG
                     self._execute_puppeteer_script(puppeteer_script)
 
                     if Path(temp_png_path).exists():
                         # Process with Sharp.js for high-DPI and optimization
-                        sharp_result = self._process_with_sharp(
-                            temp_png_path, str(output_path), dpi, scale_factor
-                        )
+                        sharp_result = self._process_with_sharp(temp_png_path, str(output_path), dpi, scale_factor)
 
                         if sharp_result:
                             generated_files.append(output_path)
@@ -211,13 +193,9 @@ class PhotoBoothGenerator:
                             # Clean up temp file
                             Path(temp_png_path).unlink()
                         else:
-                            raise RuntimeError(
-                                f"Sharp processing failed for {output_path}"
-                            )
+                            raise RuntimeError(f"Sharp processing failed for {output_path}")
                     else:
-                        raise RuntimeError(
-                            f"Puppeteer PNG generation failed: {temp_png_path} not created"
-                        )
+                        raise RuntimeError(f"Puppeteer PNG generation failed: {temp_png_path} not created")
 
             if not generated_files:
                 raise RuntimeError("No files were generated successfully")
@@ -230,14 +208,14 @@ class PhotoBoothGenerator:
 
     def generate_all_dashboards(
         self,
-        dashboards: Optional[List[str]] = None,
-        modes: Optional[List[str]] = None,
+        dashboards: list[str] | None = None,
+        modes: list[str] | None = None,
         aspect_ratio: str = "16:9",
         export_format: str = "png",
         dpi: int = 300,
         scale_factor: int = 3,
-        ticker: Optional[str] = None,
-    ) -> List[Path]:
+        ticker: str | None = None,
+    ) -> list[Path]:
         """
         Generate screenshots for multiple dashboards.
 
@@ -254,9 +232,7 @@ class PhotoBoothGenerator:
         """
         # Check if development server is running before attempting multiple screenshots
         if not self.check_server_status():
-            raise RuntimeError(
-                "Development server is not accessible. Please start the server first."
-            )
+            raise RuntimeError("Development server is not accessible. Please start the server first.")
 
         # Load photo booth config
         photo_booth_config_path = project_root / "frontend/src/config/photo-booth.json"
@@ -265,9 +241,7 @@ class PhotoBoothGenerator:
 
         # Determine dashboards to generate
         if dashboards is None:
-            active_dashboards = [
-                d["id"] for d in photo_booth_config["active_dashboards"] if d["enabled"]
-            ]
+            active_dashboards = [d["id"] for d in photo_booth_config["active_dashboards"] if d["enabled"]]
         else:
             active_dashboards = dashboards
 
@@ -295,17 +269,13 @@ class PhotoBoothGenerator:
                     else:
                         generated_files.append(result)
                 except Exception as e:
-                    self.logger.error(
-                        f"Failed to generate {export_format} export for {dashboard_id} ({mode}): {e}"
-                    )
+                    self.logger.error(f"Failed to generate {export_format} export for {dashboard_id} ({mode}): {e}")
                     continue
 
         self.logger.info(f"Generated {len(generated_files)} screenshots")
         return generated_files
 
-    def _create_puppeteer_script(
-        self, url: str, output_path: str, settings: Dict[str, Any]
-    ) -> str:
+    def _create_puppeteer_script(self, url: str, output_path: str, settings: dict[str, Any]) -> str:
         """Create Node.js Puppeteer script for screenshot generation."""
         viewport = settings.get("viewport", {"width": 1920, "height": 1080})
         device_scale_factor = settings.get("device_scale_factor", 2)
@@ -439,10 +409,7 @@ const puppeteer = require('puppeteer');
         """Execute the Puppeteer script using Node.js."""
         # Write script to temporary file in frontend directory for proper module resolution
         frontend_dir = project_root / "frontend"
-        script_path = (
-            frontend_dir
-            / f"puppeteer_script_{datetime.now().strftime('%Y%m%d_%H%M%S')}.cjs"
-        )
+        script_path = frontend_dir / f"puppeteer_script_{datetime.now().strftime('%Y%m%d_%H%M%S')}.cjs"
 
         try:
             with open(script_path, "w") as f:
@@ -467,9 +434,7 @@ const puppeteer = require('puppeteer');
             if script_path.exists():
                 script_path.unlink()
 
-    def _get_aspect_ratio_dimensions(
-        self, aspect_ratio: str, dashboard_id: str = None
-    ) -> Dict[str, int]:
+    def _get_aspect_ratio_dimensions(self, aspect_ratio: str, dashboard_id: str = None) -> dict[str, int]:
         """Get viewport dimensions for the specified aspect ratio."""
         # Load export options from config
         export_options = self.config.get("export_options", {})
@@ -479,10 +444,7 @@ const puppeteer = require('puppeteer');
         for ar in aspect_ratios:
             if ar["id"] == aspect_ratio:
                 # Use fundamental-specific dimensions for fundamental analysis dashboard
-                if (
-                    dashboard_id == "fundamental_analysis"
-                    and "fundamental_dimensions" in ar
-                ):
+                if dashboard_id == "fundamental_analysis" and "fundamental_dimensions" in ar:
                     self.logger.info(
                         f"Using fundamental-specific dimensions for {dashboard_id}: {ar['fundamental_dimensions']}"
                     )
@@ -490,14 +452,10 @@ const puppeteer = require('puppeteer');
                 return ar["dimensions"]
 
         # Default fallback to 16:9
-        self.logger.warning(
-            f"Aspect ratio {aspect_ratio} not found, using default 16:9"
-        )
+        self.logger.warning(f"Aspect ratio {aspect_ratio} not found, using default 16:9")
         return {"width": 1920, "height": 1080}
 
-    def _generate_svg(
-        self, url: str, output_path: str, dimensions: Dict[str, int]
-    ) -> bool:
+    def _generate_svg(self, url: str, output_path: str, dimensions: dict[str, int]) -> bool:
         """Generate SVG using the SVG exporter utility."""
         try:
             # Execute SVG exporter
@@ -523,17 +481,14 @@ const puppeteer = require('puppeteer');
             if result.returncode == 0:
                 self.logger.debug(f"SVG exporter output: {result.stdout}")
                 return True
-            else:
-                self.logger.error(f"SVG exporter failed: {result.stderr}")
-                return False
+            self.logger.error(f"SVG exporter failed: {result.stderr}")
+            return False
 
         except Exception as e:
             self.logger.error(f"SVG generation failed: {e}")
             return False
 
-    def _process_with_sharp(
-        self, input_path: str, output_path: str, dpi: int, scale_factor: int
-    ) -> bool:
+    def _process_with_sharp(self, input_path: str, output_path: str, dpi: int, scale_factor: int) -> bool:
         """Process PNG with Sharp.js for high-DPI and optimization."""
         try:
             # Execute Sharp processor
@@ -559,9 +514,8 @@ const puppeteer = require('puppeteer');
             if result.returncode == 0:
                 self.logger.debug(f"Sharp processor output: {result.stdout}")
                 return True
-            else:
-                self.logger.error(f"Sharp processor failed: {result.stderr}")
-                return False
+            self.logger.error(f"Sharp processor failed: {result.stderr}")
+            return False
 
         except Exception as e:
             self.logger.error(f"Sharp processing failed: {e}")
@@ -579,12 +533,10 @@ const puppeteer = require('puppeteer');
 
         # Implementation for cleanup logic
         # This is a placeholder - would implement file age checking and deletion
-        self.logger.info(
-            f"Cleanup: keeping latest {keep_latest}, removing files older than {older_than_days} days"
-        )
+        self.logger.info(f"Cleanup: keeping latest {keep_latest}, removing files older than {older_than_days} days")
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """Load configuration from photo-booth config file."""
     config_path = project_root / "frontend/src/config/photo-booth.json"
 
@@ -598,9 +550,7 @@ def load_config() -> Dict[str, Any]:
 def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--dashboard", help="Dashboard ID to generate (default: all active dashboards)"
-    )
+    parser.add_argument("--dashboard", help="Dashboard ID to generate (default: all active dashboards)")
     parser.add_argument(
         "--mode",
         choices=["light", "dark", "both"],
@@ -638,9 +588,7 @@ def main():
         default="http://localhost:4321",
         help="Base URL for the Astro development server",
     )
-    parser.add_argument(
-        "--output-dir", help="Output directory override (default from config)"
-    )
+    parser.add_argument("--output-dir", help="Output directory override (default from config)")
     parser.add_argument(
         "--cleanup",
         action="store_true",

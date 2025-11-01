@@ -17,20 +17,16 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Define paths
 PROJECT_ROOT = Path(__file__).parent.parent
 LIVE_SIGNALS_PATH = PROJECT_ROOT / "frontend/public/data/trade-history/live_signals.csv"
 BENCHMARK_DATA_PATH = PROJECT_ROOT / "data/raw/stocks"
-OUTPUT_PATH = (
-    PROJECT_ROOT
-    / "frontend/public/data/portfolio/live_signals_benchmark_comparison.csv"
-)
+OUTPUT_PATH = PROJECT_ROOT / "frontend/public/data/portfolio/live_signals_benchmark_comparison.csv"
 
 # Constants
 START_DATE = "2025-04-01"
@@ -126,9 +122,7 @@ def calculate_portfolio_equity_curve(trades_df):
     # Convert to percentage returns
     portfolio_returns = (equity_curve / INITIAL_CAPITAL) * 100
 
-    logger.info(
-        f"Portfolio equity curve calculated with final return: {portfolio_returns.iloc[-1]:.2f}%"
-    )
+    logger.info(f"Portfolio equity curve calculated with final return: {portfolio_returns.iloc[-1]:.2f}%")
     return portfolio_returns
 
 
@@ -169,9 +163,7 @@ def align_data(portfolio_returns, benchmark_data):
     aligned_df = aligned_df.dropna()
 
     if len(aligned_df) < initial_len:
-        logger.warning(
-            f"Dropped {initial_len - len(aligned_df)} rows with missing data"
-        )
+        logger.warning(f"Dropped {initial_len - len(aligned_df)} rows with missing data")
 
     return aligned_df
 
@@ -221,9 +213,7 @@ def main():
 
         # Print summary
         logger.info("\nSummary:")
-        logger.info(
-            f"Date range: {aligned_df['Date'].iloc[0]} to {aligned_df['Date'].iloc[-1]}"
-        )
+        logger.info(f"Date range: {aligned_df['Date'].iloc[0]} to {aligned_df['Date'].iloc[-1]}")
         logger.info(f"Number of days: {len(aligned_df)}")
         logger.info("\nFinal cumulative returns:")
         for col in aligned_df.columns[1:]:  # Skip Date column

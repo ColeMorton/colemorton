@@ -19,7 +19,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class AAPLEndToEndTest:
@@ -37,7 +36,7 @@ class AAPLEndToEndTest:
         print("Test started: {self.test_start_time}")
         print("Working directory: {self.script_dir}")
 
-    def get_file_counts(self) -> Tuple[int, int]:
+    def get_file_counts(self) -> tuple[int, int]:
         """Get current count of AAPL CSV and metadata files"""
         if not self.aapl_dir.exists():
             return 0, 0
@@ -47,9 +46,7 @@ class AAPLEndToEndTest:
 
         return csv_files, meta_files
 
-    def run_cli_command(
-        self, cmd: List[str], description: str, timeout: int = 60
-    ) -> Dict:
+    def run_cli_command(self, cmd: list[str], description: str, timeout: int = 60) -> dict:
         """Execute CLI command and capture results"""
         result = {
             "command": " ".join(cmd),
@@ -87,18 +84,12 @@ class AAPLEndToEndTest:
             # Calculate files created
             csv_before, meta_before = result["files_before"]
             csv_after, meta_after = result["files_after"]
-            result["files_created"] = (csv_after + meta_after) - (
-                csv_before + meta_before
-            )
+            result["files_created"] = (csv_after + meta_after) - (csv_before + meta_before)
 
             if result["success"]:
-                print(
-                    f"   ✅ Success ({result['execution_time']:.2f}s, {result['files_created']} files)"
-                )
+                print(f"   ✅ Success ({result['execution_time']:.2f}s, {result['files_created']} files)")
             else:
-                print(
-                    f"   ❌ Failed (code: {process.returncode}, {result['execution_time']:.2f}s)"
-                )
+                print(f"   ❌ Failed (code: {process.returncode}, {result['execution_time']:.2f}s)")
                 if result["stderr"]:
                     print("   Error: {result['stderr'][:200]}...")
 
@@ -114,7 +105,7 @@ class AAPLEndToEndTest:
         self.results.append(result)
         return result
 
-    def verify_consolidated_files(self) -> Dict:
+    def verify_consolidated_files(self) -> dict:
         """Verify AAPL consolidated files exist and contain valid data"""
         verification = {
             "daily_csv_exists": False,
@@ -143,7 +134,7 @@ class AAPLEndToEndTest:
         # Verify daily data
         if verification["daily_csv_exists"]:
             try:
-                with open(daily_csv, "r") as f:
+                with open(daily_csv) as f:
                     reader = csv.DictReader(f)
                     daily_records = list(reader)
                     verification["daily_records"] = len(daily_records)
@@ -159,18 +150,12 @@ class AAPLEndToEndTest:
                             "volume",
                         ]
                         first_record = daily_records[0]
-                        missing_fields = [
-                            f for f in required_fields if f not in first_record
-                        ]
+                        missing_fields = [f for f in required_fields if f not in first_record]
                         if missing_fields:
-                            verification["errors"].append(
-                                f"Daily CSV missing fields: {missing_fields}"
-                            )
+                            verification["errors"].append(f"Daily CSV missing fields: {missing_fields}")
                             verification["data_integrity"] = False
 
-                        print(
-                            f"   📄 Daily CSV: {verification['daily_records']} records"
-                        )
+                        print(f"   📄 Daily CSV: {verification['daily_records']} records")
                     else:
                         verification["errors"].append("Daily CSV is empty")
                         verification["data_integrity"] = False
@@ -182,7 +167,7 @@ class AAPLEndToEndTest:
         # Verify daily metadata
         if verification["daily_meta_exists"]:
             try:
-                with open(daily_meta, "r") as f:
+                with open(daily_meta) as f:
                     daily_metadata = json.load(f)
 
                     # Check required metadata fields
@@ -193,20 +178,13 @@ class AAPLEndToEndTest:
                         "records",
                         "format_version",
                     ]
-                    missing_meta = [
-                        f for f in required_meta_fields if f not in daily_metadata
-                    ]
+                    missing_meta = [f for f in required_meta_fields if f not in daily_metadata]
                     if missing_meta:
-                        verification["errors"].append(
-                            f"Daily metadata missing fields: {missing_meta}"
-                        )
+                        verification["errors"].append(f"Daily metadata missing fields: {missing_meta}")
                         verification["data_integrity"] = False
 
                     # Verify metadata matches data
-                    if (
-                        "records" in daily_metadata
-                        and daily_metadata["records"] != verification["daily_records"]
-                    ):
+                    if "records" in daily_metadata and daily_metadata["records"] != verification["daily_records"]:
                         verification["errors"].append(
                             f"Daily metadata record count mismatch: {daily_metadata['records']} vs {verification['daily_records']}"
                         )
@@ -223,7 +201,7 @@ class AAPLEndToEndTest:
         # Verify weekly data
         if verification["weekly_csv_exists"]:
             try:
-                with open(weekly_csv, "r") as f:
+                with open(weekly_csv) as f:
                     reader = csv.DictReader(f)
                     weekly_records = list(reader)
                     verification["weekly_records"] = len(weekly_records)
@@ -236,7 +214,7 @@ class AAPLEndToEndTest:
         # Verify weekly metadata
         if verification["weekly_meta_exists"]:
             try:
-                with open(weekly_meta, "r") as f:
+                with open(weekly_meta) as f:
                     weekly_metadata = json.load(f)
                     print(
                         f"   📋 Weekly Meta: {weekly_metadata.get('records', 0)} records, format {weekly_metadata.get('format_version', 'unknown')}"
@@ -270,9 +248,7 @@ class AAPLEndToEndTest:
         # Categorize files
         csv_files = [f for f in files_only if f.suffix == ".csv"]
         meta_files = [f for f in files_only if f.name.endswith(".meta.json")]
-        other_files = [
-            f for f in files_only if f not in csv_files and f not in meta_files
-        ]
+        other_files = [f for f in files_only if f not in csv_files and f not in meta_files]
 
         print("   📊 File Summary:")
         print("      - CSV files: {len(csv_files)}")
@@ -280,19 +256,15 @@ class AAPLEndToEndTest:
         print("      - Other files: {len(other_files)}")
 
         # Show file details
-        for file_path in sorted(
-            files_only, key=lambda x: x.stat().st_mtime, reverse=True
-        ):
+        for file_path in sorted(files_only, key=lambda x: x.stat().st_mtime, reverse=True):
             relative_path = file_path.relative_to(self.aapl_dir)
             size = file_path.stat().st_size
             file_type = (
-                "CSV"
-                if file_path.suffix == ".csv"
-                else ("META" if file_path.name.endswith(".meta.json") else "OTHER")
+                "CSV" if file_path.suffix == ".csv" else ("META" if file_path.name.endswith(".meta.json") else "OTHER")
             )
             print("      📄 {relative_path} ({size}b) [{file_type}]")
 
-    def test_yahoo_finance_comprehensive(self) -> Dict:
+    def test_yahoo_finance_comprehensive(self) -> dict:
         """Test Yahoo Finance CLI for AAPL comprehensive data (daily + weekly)"""
         return self.run_cli_command(
             ["python", "yahoo_finance_cli.py", "history", "AAPL", "--env", "dev"],
@@ -300,14 +272,14 @@ class AAPLEndToEndTest:
             timeout=120,
         )
 
-    def test_yahoo_finance_quote(self) -> Dict:
+    def test_yahoo_finance_quote(self) -> dict:
         """Test Yahoo Finance CLI for AAPL quote data"""
         return self.run_cli_command(
             ["python", "yahoo_finance_cli.py", "quote", "AAPL", "--env", "dev"],
             "Yahoo Finance CLI - AAPL Quote",
         )
 
-    def test_direct_service_calls(self) -> List[Dict]:
+    def test_direct_service_calls(self) -> list[dict]:
         """Test direct service calls to ensure data creation"""
         results = []
 
@@ -349,9 +321,7 @@ print("Total records: {len(daily_data.get('data', [])) + len(weekly_data.get('da
         # Initial state
         self.analyze_file_structure()
         initial_csv, initial_meta = self.get_file_counts()
-        print(
-            f"\n📊 Initial State: {initial_csv} CSV files, {initial_meta} metadata files"
-        )
+        print(f"\n📊 Initial State: {initial_csv} CSV files, {initial_meta} metadata files")
 
         # Test 1: Direct service calls (most reliable for file creation)
         print("\n📡 Phase 1: Direct Service Integration")
@@ -377,15 +347,11 @@ print("Total records: {len(daily_data.get('data', [])) + len(weekly_data.get('da
         total_files_created = (final_csv + final_meta) - (initial_csv + initial_meta)
 
         # Generate report
-        self.generate_final_report(
-            service_results + cli_results, verification, total_files_created
-        )
+        self.generate_final_report(service_results + cli_results, verification, total_files_created)
 
         return verification["data_integrity"] and total_files_created > 0
 
-    def generate_final_report(
-        self, all_results: List[Dict], verification: Dict, total_files_created: int
-    ):
+    def generate_final_report(self, all_results: list[dict], verification: dict, total_files_created: int):
         """Generate comprehensive test report"""
         test_duration = datetime.now() - self.test_start_time
 
@@ -399,18 +365,12 @@ print("Total records: {len(daily_data.get('data', [])) + len(weekly_data.get('da
         failed_commands = [r for r in all_results if not r["success"]]
 
         print("\n🖥️  Command Execution Results:")
-        print(
-            f"   - Successful Commands: {len(successful_commands)}/{len(all_results)}"
-        )
-        print(
-            f"   - Total Execution Time: {sum(r['execution_time'] for r in all_results):.2f}s"
-        )
+        print(f"   - Successful Commands: {len(successful_commands)}/{len(all_results)}")
+        print(f"   - Total Execution Time: {sum(r['execution_time'] for r in all_results):.2f}s")
 
         for result in all_results:
             status = "✅" if result["success"] else "❌"
-            print(
-                f"   {status} {result['description']} ({result['execution_time']:.2f}s)"
-            )
+            print(f"   {status} {result['description']} ({result['execution_time']:.2f}s)")
             if not result["success"] and result["stderr"]:
                 print("      Error: {result['stderr'][:100]}...")
 
@@ -426,15 +386,11 @@ print("Total records: {len(daily_data.get('data', [])) + len(weekly_data.get('da
         print(
             f"   - Daily CSV: {'✅' if verification['daily_csv_exists'] else '❌'} ({verification['daily_records']} records)"
         )
-        print(
-            f"   - Daily Metadata: {'✅' if verification['daily_meta_exists'] else '❌'}"
-        )
+        print(f"   - Daily Metadata: {'✅' if verification['daily_meta_exists'] else '❌'}")
         print(
             f"   - Weekly CSV: {'✅' if verification['weekly_csv_exists'] else '❌'} ({verification['weekly_records']} records)"
         )
-        print(
-            f"   - Weekly Metadata: {'✅' if verification['weekly_meta_exists'] else '❌'}"
-        )
+        print(f"   - Weekly Metadata: {'✅' if verification['weekly_meta_exists'] else '❌'}")
         print("   - Data Integrity: {'✅' if verification['data_integrity'] else '❌'}")
 
         if verification["errors"]:
@@ -443,9 +399,7 @@ print("Total records: {len(daily_data.get('data', [])) + len(weekly_data.get('da
                 print("   - {error}")
 
         # Overall assessment
-        command_success_rate = (
-            len(successful_commands) / len(all_results) if all_results else 0
-        )
+        command_success_rate = len(successful_commands) / len(all_results) if all_results else 0
 
         # Check for comprehensive data volumes
         daily_records_sufficient = (

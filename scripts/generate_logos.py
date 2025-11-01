@@ -33,7 +33,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Union
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -155,11 +155,11 @@ class LogoGenerator:
 
     def filter_configurations(
         self,
-        formats: Union[str, List[str]] = "both",
-        sizes: Union[str, List[str]] = "all",
-        themes: Union[str, List[str]] = "both",
-        brands: Union[str, List[str]] = "both",
-    ) -> List[dict]:
+        formats: str | list[str] = "both",
+        sizes: str | list[str] = "all",
+        themes: str | list[str] = "both",
+        brands: str | list[str] = "both",
+    ) -> list[dict]:
         """Filter configurations based on user preferences."""
         configs = self.configurations.copy()
 
@@ -241,14 +241,10 @@ class LogoGenerator:
             self.logger.info(f"✅ Generated {config['use_case']} logo successfully")
             return True
         except subprocess.CalledProcessError as e:
-            self.logger.error(
-                f"❌ Failed to generate {config['use_case']} logo: {e.stderr}"
-            )
+            self.logger.error(f"❌ Failed to generate {config['use_case']} logo: {e.stderr}")
             return False
 
-    def generate_all_logos(
-        self, formats="both", sizes="all", themes="both", brands="both"
-    ) -> dict:
+    def generate_all_logos(self, formats="both", sizes="all", themes="both", brands="both") -> dict:
         """Generate all requested logo variants."""
         configs = self.filter_configurations(formats, sizes, themes, brands)
         results = {"success": [], "failed": []}
@@ -307,9 +303,7 @@ class LogoGenerator:
                 aspect = parts[3]  # 16:9, 3:4
                 format_ext = parts[4]  # png, svg
                 dpi = parts[5]  # 150dpi, 300dpi, 600dpi
-                brand = (
-                    parts[6] if len(parts) > 6 else "personal"
-                )  # personal/attribution
+                brand = parts[6] if len(parts) > 6 else "personal"  # personal/attribution
 
                 # Create organized path with brand prefix
                 if brand == "attribution":
@@ -374,9 +368,7 @@ def main():
         action="store_true",
         help="Organize existing logo files without generating new ones",
     )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

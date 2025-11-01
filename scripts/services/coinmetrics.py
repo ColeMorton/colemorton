@@ -12,13 +12,14 @@ Production-grade CoinMetrics institutional-grade cryptocurrency data integration
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
     ServiceConfig,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -48,8 +49,8 @@ class CoinMetricsService(BaseFinancialService):
             self.config.headers["api_key"] = config.api_key
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate CoinMetrics response data"""
 
         if not data:
@@ -61,13 +62,13 @@ class CoinMetricsService(BaseFinancialService):
 
         return data
 
-    def get_supported_assets(self) -> List[Dict[str, Any]]:
+    def get_supported_assets(self) -> list[dict[str, Any]]:
         """Get list of supported assets"""
         endpoint = "/catalog/assets"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "supported assets")
 
-    def get_available_metrics(self, asset: str = "btc") -> List[Dict[str, Any]]:
+    def get_available_metrics(self, asset: str = "btc") -> list[dict[str, Any]]:
         """Get available metrics for an asset"""
         endpoint = "/catalog/asset-metrics"
         params = {"assets": asset.lower()}
@@ -79,8 +80,8 @@ class CoinMetricsService(BaseFinancialService):
         asset: str = "btc",
         metrics: str = "AdrActCnt,BlkCnt,TxCnt,TxTfrValUSD",
         start_date: str = "2024-01-01",
-        end_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        end_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get network data for specified asset and metrics"""
 
         if not end_date:
@@ -102,8 +103,8 @@ class CoinMetricsService(BaseFinancialService):
         self,
         asset: str = "btc",
         start_date: str = "2024-01-01",
-        end_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        end_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get market data for specified asset"""
 
         if not end_date:
@@ -122,8 +123,8 @@ class CoinMetricsService(BaseFinancialService):
         return self._validate_response(data, f"market data for {asset}")
 
     def get_bitcoin_cycle_metrics(
-        self, start_date: str = "2024-01-01", end_date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, start_date: str = "2024-01-01", end_date: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get Bitcoin cycle-specific metrics using Community API available metrics"""
 
         if not end_date:
@@ -156,9 +157,7 @@ class CoinMetricsService(BaseFinancialService):
             basic_metrics = ["PriceUSD", "CapMrktCurUSD", "TxCnt"]
             params["metrics"] = ",".join(basic_metrics)
 
-            self.logger.warning(
-                f"Full metrics request failed, trying with basic metrics: {basic_metrics}"
-            )
+            self.logger.warning(f"Full metrics request failed, trying with basic metrics: {basic_metrics}")
             data = self._make_request_with_retry(endpoint, params=params)
             return self._validate_response(data, "Bitcoin basic cycle metrics")
 
@@ -166,8 +165,8 @@ class CoinMetricsService(BaseFinancialService):
         self,
         asset: str = "btc",
         start_date: str = "2024-01-01",
-        end_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        end_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get supply-related data for specified asset"""
 
         if not end_date:
@@ -198,8 +197,8 @@ class CoinMetricsService(BaseFinancialService):
         self,
         asset: str = "btc",
         start_date: str = "2024-01-01",
-        end_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        end_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get mining-related data (hash rate, difficulty, etc.)"""
 
         if not end_date:
@@ -230,14 +229,14 @@ class CoinMetricsService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"mining data for {asset}")
 
-    def get_exchange_data(self, asset: str = "btc") -> List[Dict[str, Any]]:
+    def get_exchange_data(self, asset: str = "btc") -> list[dict[str, Any]]:
         """Get exchange-related data and metrics"""
         endpoint = "/catalog/exchanges"
         params = {"assets": asset.lower()}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"exchange data for {asset}")
 
-    def get_institutional_data(self, asset: str = "btc") -> Dict[str, Any]:
+    def get_institutional_data(self, asset: str = "btc") -> dict[str, Any]:
         """Get institutional holdings and flow data"""
         # Note: Institutional data might be limited in free tier
         # This is a placeholder for institutional metrics
@@ -268,8 +267,8 @@ class CoinMetricsService(BaseFinancialService):
         self,
         asset: str = "btc",
         start_date: str = "2024-01-01",
-        end_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        end_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get realized capitalization data for Bitcoin cycle analysis"""
 
         if not end_date:
@@ -295,8 +294,8 @@ class CoinMetricsService(BaseFinancialService):
         return self._validate_response(data, f"realized cap data for {asset}")
 
     def get_enhanced_bitcoin_cycle_metrics(
-        self, start_date: str = "2024-01-01", end_date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, start_date: str = "2024-01-01", end_date: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get enhanced Bitcoin cycle metrics (MVRV and NUPL acquired via web search)"""
 
         if not end_date:

@@ -11,14 +11,13 @@ Integration tests for template selection algorithms:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
 
 import pytest
+
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from errors import TemplateError
 from result_types import TemplateSelectionResult
 from twitter_template_selector import TwitterTemplateSelector
 
@@ -51,9 +50,7 @@ class TestTemplateSelection:
         # Run selection multiple times
         results = []
         for _ in range(5):
-            template, metadata = self.template_selector.select_optimal_template(
-                "fundamental", test_data
-            )
+            template, metadata = self.template_selector.select_optimal_template("fundamental", test_data)
             results.append((template, metadata["selection_score"]))
 
         # All results should be identical
@@ -85,9 +82,7 @@ class TestTemplateSelection:
             "competitive_advantages": ["ecosystem", "brand", "patents"],
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", complete_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", complete_data)
 
         # Score should be high for complete data
         assert metadata["selection_score"] >= 0.7
@@ -102,9 +97,7 @@ class TestTemplateSelection:
         # Test with minimal data
         minimal_data = {"ticker": "AAPL"}
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", minimal_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", minimal_data)
 
         # Should still select a template
         assert template is not None
@@ -130,9 +123,7 @@ class TestTemplateSelection:
             "dcf_value": 180,
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", valuation_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", valuation_data)
 
         # Should select valuation template
         assert template == "A_valuation"
@@ -149,9 +140,7 @@ class TestTemplateSelection:
             "upcoming_events": ["WWDC", "iPhone launch"],
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", catalyst_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", catalyst_data)
 
         # Should select catalyst template
         assert template == "B_catalyst"
@@ -167,9 +156,7 @@ class TestTemplateSelection:
             "valuation_methods": [{"method": "DCF", "confidence": 0.8}],
         }
 
-        validation_result = self.template_selector.validate_template_selection(
-            "fundamental", "A_valuation", valid_data
-        )
+        validation_result = self.template_selector.validate_template_selection("fundamental", "A_valuation", valid_data)
 
         assert validation_result["valid"] is True
         assert validation_result["confidence"] > 0.5
@@ -195,9 +182,7 @@ class TestTemplateSelection:
             "moat_strength": 8.5,
         }
 
-        recommendations = self.template_selector.get_template_recommendations(
-            "fundamental", test_data
-        )
+        recommendations = self.template_selector.get_template_recommendations("fundamental", test_data)
 
         # Should return recommendations
         assert len(recommendations) > 0
@@ -226,9 +211,7 @@ class TestTemplateSelection:
             "total_trades": 25,
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "strategy", strategy_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("strategy", strategy_data)
 
         assert template == "default"
         assert metadata["selection_score"] > 0.5
@@ -246,9 +229,7 @@ class TestTemplateSelection:
             "flow_data": "positive",
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "sector", rotation_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("sector", rotation_data)
 
         assert template == "rotation"
 
@@ -262,9 +243,7 @@ class TestTemplateSelection:
             "allocation_recommendation": "overweight",
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "sector", comparison_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("sector", comparison_data)
 
         assert template == "comparison"
 
@@ -280,9 +259,7 @@ class TestTemplateSelection:
             "transparency_level": "high",
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "trade_history", trade_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("trade_history", trade_data)
 
         assert template == "performance"
         assert metadata["selection_score"] > 0.5
@@ -298,9 +275,7 @@ class TestTemplateSelection:
             "moat_strength": 0,
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", zero_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", zero_data)
 
         # Should handle zero values gracefully
         assert template is not None
@@ -309,9 +284,7 @@ class TestTemplateSelection:
         # Test with negative values
         negative_data = {"ticker": "AAPL", "net_performance": -5.2, "reward_risk": -0.5}
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "strategy", negative_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("strategy", negative_data)
 
         # Should handle negative values gracefully
         assert template is not None
@@ -331,9 +304,7 @@ class TestTemplateSelection:
             "moat_strength": 8.5,
         }
 
-        recommendations = self.template_selector.get_template_recommendations(
-            "fundamental", test_data
-        )
+        recommendations = self.template_selector.get_template_recommendations("fundamental", test_data)
 
         # Each recommendation should have meaningful explanation
         for rec in recommendations:
@@ -374,9 +345,7 @@ class TestTemplateSelection:
             ],
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", high_confidence_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", high_confidence_data)
 
         # Should have high confidence
         assert metadata["selection_score"] > 0.8
@@ -388,9 +357,7 @@ class TestTemplateSelection:
             "fair_value": 152,  # Small gap
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", low_confidence_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", low_confidence_data)
 
         # Should have lower confidence
         assert metadata["selection_score"] < 0.6
@@ -406,9 +373,7 @@ class TestTemplateSelection:
             "user_preference": "detailed_analysis",
         }
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", test_data, context
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", test_data, context)
 
         # Should select template and include context in metadata
         assert template is not None
@@ -418,9 +383,7 @@ class TestTemplateSelection:
         """Test handling of invalid content types"""
 
         with pytest.raises(ValueError, match="Unknown content type"):
-            self.template_selector.select_optimal_template(
-                "invalid_type", {"ticker": "AAPL"}
-            )
+            self.template_selector.select_optimal_template("invalid_type", {"ticker": "AAPL"})
 
     def test_template_selection_performance(self):
         """Test template selection performance"""
@@ -442,9 +405,7 @@ class TestTemplateSelection:
         start_time = time.time()
 
         for _ in range(10):
-            template, metadata = self.template_selector.select_optimal_template(
-                "fundamental", test_data
-            )
+            template, metadata = self.template_selector.select_optimal_template("fundamental", test_data)
 
         end_time = time.time()
         avg_time = (end_time - start_time) / 10
@@ -457,9 +418,7 @@ class TestTemplateSelection:
 
         test_data = {"ticker": "AAPL", "fair_value": 185, "current_price": 150}
 
-        template, metadata = self.template_selector.select_optimal_template(
-            "fundamental", test_data
-        )
+        template, metadata = self.template_selector.select_optimal_template("fundamental", test_data)
 
         # Test that we can create a structured result
         result = TemplateSelectionResult(
@@ -494,16 +453,12 @@ class TestTemplateSelectionCriteria:
 
         # Test large gap
         large_gap_data = {"current_price": 100, "fair_value": 150}
-        score = self.template_selector._evaluate_criterion(
-            large_gap_data, "valuation_gap", 10
-        )
+        score = self.template_selector._evaluate_criterion(large_gap_data, "valuation_gap", 10)
         assert score == 1.0  # Should get full score
 
         # Test small gap
         small_gap_data = {"current_price": 100, "fair_value": 105}
-        score = self.template_selector._evaluate_criterion(
-            small_gap_data, "valuation_gap", 10
-        )
+        score = self.template_selector._evaluate_criterion(small_gap_data, "valuation_gap", 10)
         assert score < 1.0  # Should get partial score
 
     def test_catalyst_count_criterion(self):
@@ -516,16 +471,12 @@ class TestTemplateSelectionCriteria:
                 {"name": "AI integration", "probability": 0.7},
             ]
         }
-        score = self.template_selector._evaluate_criterion(
-            catalyst_data, "catalyst_count", 2
-        )
+        score = self.template_selector._evaluate_criterion(catalyst_data, "catalyst_count", 2)
         assert score == 1.0
 
         # Test with catalyst count field
         count_data = {"catalyst_count": 3}
-        score = self.template_selector._evaluate_criterion(
-            count_data, "catalyst_count", 2
-        )
+        score = self.template_selector._evaluate_criterion(count_data, "catalyst_count", 2)
         assert score == 1.0
 
     def test_moat_strength_criterion(self):
@@ -533,16 +484,12 @@ class TestTemplateSelectionCriteria:
 
         # Test high moat strength
         high_moat_data = {"moat_strength": 9.0}
-        score = self.template_selector._evaluate_criterion(
-            high_moat_data, "moat_strength", 7
-        )
+        score = self.template_selector._evaluate_criterion(high_moat_data, "moat_strength", 7)
         assert score == 1.0
 
         # Test low moat strength
         low_moat_data = {"moat_strength": 5.0}
-        score = self.template_selector._evaluate_criterion(
-            low_moat_data, "moat_strength", 7
-        )
+        score = self.template_selector._evaluate_criterion(low_moat_data, "moat_strength", 7)
         assert score < 1.0
 
     def test_default_criterion_evaluation(self):
@@ -550,9 +497,7 @@ class TestTemplateSelectionCriteria:
 
         # Test numeric value
         numeric_data = {"test_metric": 8.5}
-        score = self.template_selector._evaluate_criterion(
-            numeric_data, "test_metric", 7.0
-        )
+        score = self.template_selector._evaluate_criterion(numeric_data, "test_metric", 7.0)
         assert score == 1.0
 
         # Test list value

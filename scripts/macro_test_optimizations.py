@@ -4,8 +4,6 @@ Quick test of macro analysis optimizations
 """
 
 import json
-import sys
-from datetime import datetime
 from pathlib import Path
 
 
@@ -17,9 +15,9 @@ def test_quality_improvements():
 
     if not Path(original_file).exists():
         print("❌ Original analysis file not found: {original_file}")
-        return
+        return None
 
-    with open(original_file, "r") as f:
+    with open(original_file) as f:
         original_data = json.load(f)
 
     print("🔍 Analyzing Quality Improvements")
@@ -69,23 +67,13 @@ def test_quality_improvements():
     print("\n🎯 Analysis Quality Metrics:")
     for metric, value in quality_metrics.items():
         if isinstance(value, (int, float)):
-            status = (
-                "✅ GOOD"
-                if value >= 0.9
-                else "⚠️ NEEDS IMPROVEMENT"
-                if value >= 0.8
-                else "❌ POOR"
-            )
+            status = "✅ GOOD" if value >= 0.9 else "⚠️ NEEDS IMPROVEMENT" if value >= 0.8 else "❌ POOR"
             print("  {metric}: {value:.3f} {status}")
         else:
             print("  {metric}: {value}")
 
     # Calculate overall quality score
-    avg_confidence = (
-        sum(confidence_sections.values()) / len(confidence_sections)
-        if confidence_sections
-        else 0.0
-    )
+    avg_confidence = sum(confidence_sections.values()) / len(confidence_sections) if confidence_sections else 0.0
     overall_quality = (completion_rate + avg_confidence) / 2
 
     print("\n🏆 Overall Quality Assessment:")
@@ -122,7 +110,5 @@ if __name__ == "__main__":
 
     print("\n📋 Test Summary:")
     print("  Overall Quality Score: {results['overall_quality']:.3f}")
-    print(
-        f"  Confidence Threshold Met: {'✅' if results['avg_confidence'] >= 0.9 else '❌'}"
-    )
+    print(f"  Confidence Threshold Met: {'✅' if results['avg_confidence'] >= 0.9 else '❌'}")
     print("  Template Complete: {'✅' if results['completion_rate'] == 1.0 else '❌'}")

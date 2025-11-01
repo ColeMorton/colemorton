@@ -20,7 +20,8 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -57,8 +58,8 @@ class ComplianceViolation:
     severity: Severity
     message: str
     line_content: str
-    suggested_fix: Optional[str] = None
-    code: Optional[str] = None
+    suggested_fix: str | None = None
+    code: str | None = None
 
 
 class MCPComplianceChecker:
@@ -76,11 +77,11 @@ class MCPComplianceChecker:
     """
 
     def __init__(self):
-        self.violations: List[ComplianceViolation] = []
+        self.violations: list[ComplianceViolation] = []
         self.patterns = self._load_violation_patterns()
         self.context_patterns = self._load_context_patterns()
 
-    def _load_violation_patterns(self) -> Dict[ViolationType, List[Dict[str, Any]]]:
+    def _load_violation_patterns(self) -> dict[ViolationType, list[dict[str, Any]]]:
         """Load patterns that indicate violations"""
         return {
             ViolationType.DIRECT_SERVICE_IMPORT: [
@@ -157,7 +158,7 @@ class MCPComplianceChecker:
             ],
         }
 
-    def _load_context_patterns(self) -> Dict[str, List[str]]:
+    def _load_context_patterns(self) -> dict[str, list[str]]:
         """Load patterns that indicate proper context usage"""
         return {
             "good_patterns": [
@@ -174,7 +175,7 @@ class MCPComplianceChecker:
             "required_for_financial": [r"context", r"mcp.*provider|provider.*mcp"],
         }
 
-    def check_file(self, file_path: Path) -> List[ComplianceViolation]:
+    def check_file(self, file_path: Path) -> list[ComplianceViolation]:
         """
         Check single file for MCP compliance violations.
 
@@ -190,10 +191,10 @@ class MCPComplianceChecker:
         file_violations = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 lines = content.splitlines()
-        except (UnicodeDecodeError, IOError) as e:
+        except (OSError, UnicodeDecodeError) as e:
             logger.warning(f"Could not read {file_path}: {e}")
             return []
 
@@ -205,9 +206,7 @@ class MCPComplianceChecker:
 
         return file_violations
 
-    def _check_python_file(
-        self, file_path: Path, content: str, lines: List[str]
-    ) -> List[ComplianceViolation]:
+    def _check_python_file(self, file_path: Path, content: str, lines: list[str]) -> list[ComplianceViolation]:
         """Check Python file for violations"""
         violations = []
 
@@ -261,9 +260,7 @@ class MCPComplianceChecker:
 
         return violations
 
-    def _check_command_file(
-        self, file_path: Path, content: str, lines: List[str]
-    ) -> List[ComplianceViolation]:
+    def _check_command_file(self, file_path: Path, content: str, lines: list[str]) -> list[ComplianceViolation]:
         """Check command markdown file for violations"""
         violations = []
 
@@ -290,11 +287,11 @@ class MCPComplianceChecker:
     def _check_patterns(
         self,
         file_path: Path,
-        lines: List[str],
-        patterns: List[Dict[str, Any]],
+        lines: list[str],
+        patterns: list[dict[str, Any]],
         violation_type: ViolationType,
         severity: Severity,
-    ) -> List[ComplianceViolation]:
+    ) -> list[ComplianceViolation]:
         """Check file lines against violation patterns"""
         violations = []
 
@@ -345,9 +342,7 @@ class MCPComplianceChecker:
                 return True
         return False
 
-    def check_directory(
-        self, directory: Path, exclude_patterns: List[str] = None
-    ) -> List[ComplianceViolation]:
+    def check_directory(self, directory: Path, exclude_patterns: list[str] = None) -> list[ComplianceViolation]:
         """
         Check entire directory for violations.
 
@@ -394,12 +389,10 @@ class MCPComplianceChecker:
             violations = self.check_file(file_path)
             all_violations.extend(violations)
 
-        logger.info(
-            f"Checked {len(filtered_files)} files, found {len(all_violations)} violations"
-        )
+        logger.info(f"Checked {len(filtered_files)} files, found {len(all_violations)} violations")
         return all_violations
 
-    def generate_report(self, violations: List[ComplianceViolation]) -> Dict[str, Any]:
+    def generate_report(self, violations: list[ComplianceViolation]) -> dict[str, Any]:
         """Generate compliance report"""
         if not violations:
             return {
@@ -443,12 +436,9 @@ class MCPComplianceChecker:
             "status": status,
             "total_violations": len(violations),
             "summary": f"Found {len(violations)} violations across {len(by_file)} files",
-            "violations_by_type": {
-                type_name: len(violations) for type_name, violations in by_type.items()
-            },
+            "violations_by_type": {type_name: len(violations) for type_name, violations in by_type.items()},
             "violations_by_severity": {
-                severity_name: len(violations)
-                for severity_name, violations in by_severity.items()
+                severity_name: len(violations) for severity_name, violations in by_severity.items()
             },
             "files_affected": len(by_file),
             "most_problematic_files": sorted(
@@ -458,9 +448,7 @@ class MCPComplianceChecker:
             )[:10],
         }
 
-    def print_violations(
-        self, violations: List[ComplianceViolation], verbose: bool = False
-    ):
+    def print_violations(self, violations: list[ComplianceViolation], verbose: bool = False):
         """Print violations in human-readable format"""
         if not violations:
             print("✅ No MCP compliance violations found!")
@@ -486,9 +474,7 @@ class MCPComplianceChecker:
                     Severity.INFO: "🔵",
                 }[violation.severity]
 
-                print(
-                    f"  {severity_icon} Line {violation.line_number}: {violation.message}"
-                )
+                print(f"  {severity_icon} Line {violation.line_number}: {violation.message}")
 
                 if verbose:
                     print("     Code: {violation.line_content}")
@@ -497,7 +483,7 @@ class MCPComplianceChecker:
 
             print()
 
-    def auto_fix_violations(self, violations: List[ComplianceViolation]) -> int:
+    def auto_fix_violations(self, violations: list[ComplianceViolation]) -> int:
         """
         Attempt to automatically fix violations.
 
@@ -524,21 +510,15 @@ def main():
         help="Files or directories to check (default: current directory)",
     )
 
-    parser.add_argument(
-        "--report", action="store_true", help="Generate detailed compliance report"
-    )
+    parser.add_argument("--report", action="store_true", help="Generate detailed compliance report")
 
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
 
-    parser.add_argument(
-        "--fix", action="store_true", help="Attempt to auto-fix violations"
-    )
+    parser.add_argument("--fix", action="store_true", help="Attempt to auto-fix violations")
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
-    parser.add_argument(
-        "--exclude", nargs="*", default=[], help="Patterns to exclude from checking"
-    )
+    parser.add_argument("--exclude", nargs="*", default=[], help="Patterns to exclude from checking")
 
     args = parser.parse_args()
 

@@ -12,13 +12,14 @@ Production-grade CoinGecko cryptocurrency data integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
     ServiceConfig,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -44,8 +45,8 @@ class CoinGeckoService(BaseFinancialService):
             self.config.headers["X-Cg-Pro-Api-Key"] = config.api_key
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate CoinGecko response data"""
 
         # CoinGecko typically returns lists or dictionaries
@@ -53,8 +54,7 @@ class CoinGeckoService(BaseFinancialService):
             # For list responses, add timestamp to metadata if possible
             if data:  # Check if list is not empty
                 return data
-            else:
-                raise DataNotFoundError(f"No data found for {endpoint}")
+            raise DataNotFoundError(f"No data found for {endpoint}")
 
         # Handle dictionary responses
         if isinstance(data, dict):
@@ -69,7 +69,7 @@ class CoinGeckoService(BaseFinancialService):
 
         return data
 
-    def get_price(self, coin_ids: str, vs_currencies: str = "usd") -> Dict[str, Any]:
+    def get_price(self, coin_ids: str, vs_currencies: str = "usd") -> dict[str, Any]:
         """
         Get current price of cryptocurrencies
 
@@ -103,7 +103,7 @@ class CoinGeckoService(BaseFinancialService):
 
         return result
 
-    def get_coin_data(self, coin_id: str, localization: bool = False) -> Dict[str, Any]:
+    def get_coin_data(self, coin_id: str, localization: bool = False) -> dict[str, Any]:
         """
         Get detailed information about a specific cryptocurrency
 
@@ -122,9 +122,7 @@ class CoinGeckoService(BaseFinancialService):
             "developer_data": "true",
         }
 
-        result = self._make_request_with_retry(
-            f"coins/{coin_id.strip().lower()}", params
-        )
+        result = self._make_request_with_retry(f"coins/{coin_id.strip().lower()}", params)
 
         # Extract key information and simplify
         if isinstance(result, dict):
@@ -132,29 +130,15 @@ class CoinGeckoService(BaseFinancialService):
                 "id": result.get("id"),
                 "symbol": result.get("symbol"),
                 "name": result.get("name"),
-                "current_price": result.get("market_data", {})
-                .get("current_price", {})
-                .get("usd"),
-                "market_cap": result.get("market_data", {})
-                .get("market_cap", {})
-                .get("usd"),
+                "current_price": result.get("market_data", {}).get("current_price", {}).get("usd"),
+                "market_cap": result.get("market_data", {}).get("market_cap", {}).get("usd"),
                 "market_cap_rank": result.get("market_data", {}).get("market_cap_rank"),
-                "total_volume": result.get("market_data", {})
-                .get("total_volume", {})
-                .get("usd"),
-                "high_24h": result.get("market_data", {})
-                .get("high_24h", {})
-                .get("usd"),
+                "total_volume": result.get("market_data", {}).get("total_volume", {}).get("usd"),
+                "high_24h": result.get("market_data", {}).get("high_24h", {}).get("usd"),
                 "low_24h": result.get("market_data", {}).get("low_24h", {}).get("usd"),
-                "price_change_24h": result.get("market_data", {}).get(
-                    "price_change_24h"
-                ),
-                "price_change_percentage_24h": result.get("market_data", {}).get(
-                    "price_change_percentage_24h"
-                ),
-                "circulating_supply": result.get("market_data", {}).get(
-                    "circulating_supply"
-                ),
+                "price_change_24h": result.get("market_data", {}).get("price_change_24h"),
+                "price_change_percentage_24h": result.get("market_data", {}).get("price_change_percentage_24h"),
+                "circulating_supply": result.get("market_data", {}).get("circulating_supply"),
                 "total_supply": result.get("market_data", {}).get("total_supply"),
                 "max_supply": result.get("market_data", {}).get("max_supply"),
                 "description": result.get("description", {}).get("en", ""),
@@ -174,7 +158,7 @@ class CoinGeckoService(BaseFinancialService):
         order: str = "market_cap_desc",
         per_page: int = 100,
         page: int = 1,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get market data for cryptocurrencies
 
@@ -211,9 +195,7 @@ class CoinGeckoService(BaseFinancialService):
 
         return result
 
-    def get_historical_data(
-        self, coin_id: str, vs_currency: str = "usd", days: int = 30
-    ) -> Dict[str, Any]:
+    def get_historical_data(self, coin_id: str, vs_currency: str = "usd", days: int = 30) -> dict[str, Any]:
         """
         Get historical market data
 
@@ -231,9 +213,7 @@ class CoinGeckoService(BaseFinancialService):
             "interval": "daily" if days > 1 else "hourly",
         }
 
-        result = self._make_request_with_retry(
-            f"coins/{coin_id.strip().lower()}/market_chart", params
-        )
+        result = self._make_request_with_retry(f"coins/{coin_id.strip().lower()}/market_chart", params)
 
         # Add metadata
         if isinstance(result, dict):
@@ -249,7 +229,7 @@ class CoinGeckoService(BaseFinancialService):
 
         return result
 
-    def search_coins(self, query: str) -> Dict[str, Any]:
+    def search_coins(self, query: str) -> dict[str, Any]:
         """
         Search for cryptocurrencies by name or symbol
 
@@ -275,7 +255,7 @@ class CoinGeckoService(BaseFinancialService):
 
         return result
 
-    def get_trending(self) -> Dict[str, Any]:
+    def get_trending(self) -> dict[str, Any]:
         """
         Get trending cryptocurrencies
 
@@ -286,13 +266,11 @@ class CoinGeckoService(BaseFinancialService):
 
         # Add metadata
         if isinstance(result, dict):
-            result.update(
-                {"source": "coingecko", "timestamp": datetime.now().isoformat()}
-            )
+            result.update({"source": "coingecko", "timestamp": datetime.now().isoformat()})
 
         return result
 
-    def get_global_data(self) -> Dict[str, Any]:
+    def get_global_data(self) -> dict[str, Any]:
         """
         Get global cryptocurrency market statistics
 
@@ -303,13 +281,11 @@ class CoinGeckoService(BaseFinancialService):
 
         # Add metadata
         if isinstance(result, dict):
-            result.update(
-                {"source": "coingecko", "timestamp": datetime.now().isoformat()}
-            )
+            result.update({"source": "coingecko", "timestamp": datetime.now().isoformat()})
 
         return result
 
-    def get_bitcoin_sentiment(self) -> Dict[str, Any]:
+    def get_bitcoin_sentiment(self) -> dict[str, Any]:
         """
         Get Bitcoin price and sentiment for market analysis
 
@@ -324,9 +300,7 @@ class CoinGeckoService(BaseFinancialService):
             sentiment_data = {
                 "bitcoin_price": bitcoin_details.get("current_price", 0),
                 "price_change_24h": bitcoin_details.get("price_change_24h", 0),
-                "price_change_percentage_24h": bitcoin_details.get(
-                    "price_change_percentage_24h", 0
-                ),
+                "price_change_percentage_24h": bitcoin_details.get("price_change_percentage_24h", 0),
                 "market_cap": bitcoin_details.get("market_cap", 0),
                 "market_cap_rank": bitcoin_details.get("market_cap_rank", 1),
                 "volume_24h": bitcoin_details.get("total_volume", 0),
@@ -367,7 +341,7 @@ class CoinGeckoService(BaseFinancialService):
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with global data endpoint

@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from historical_data_manager import DataType, HistoricalDataManager
 
@@ -38,7 +38,7 @@ class QuarterlyCollectionTrigger:
 
     def __init__(
         self,
-        historical_manager: Optional[HistoricalDataManager] = None,
+        historical_manager: HistoricalDataManager | None = None,
         lookback_days: int = 7,  # Days before earnings to start watching
         lookahead_days: int = 30,  # Days after earnings to continue collection
     ):
@@ -69,19 +69,17 @@ class QuarterlyCollectionTrigger:
         logger = logging.getLogger("quarterly_collection_triggers")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
 
-    def _load_trigger_state(self) -> Dict[str, Any]:
+    def _load_trigger_state(self) -> dict[str, Any]:
         """Load trigger state for persistence"""
         if self.trigger_state_file.exists():
             try:
-                with open(self.trigger_state_file, "r") as f:
+                with open(self.trigger_state_file) as f:
                     return json.load(f)
             except Exception as e:
                 self.logger.warning(f"Failed to load trigger state: {e}")
@@ -102,7 +100,7 @@ class QuarterlyCollectionTrigger:
         except Exception as e:
             self.logger.error(f"Failed to save trigger state: {e}")
 
-    def _generate_quarterly_schedule(self) -> Dict[str, List[datetime]]:
+    def _generate_quarterly_schedule(self) -> dict[str, list[datetime]]:
         """Generate standard quarterly reporting schedule"""
         current_year = datetime.now().year
         quarters = {}
@@ -121,20 +119,16 @@ class QuarterlyCollectionTrigger:
                 datetime(year, 11, 15),  # Q3 earnings season end
                 # Q4 earnings typically released in January-March (of next year)
                 (
-                    datetime(year + 1, 1, 15)
-                    if year == current_year
-                    else datetime(year, 1, 15)
+                    datetime(year + 1, 1, 15) if year == current_year else datetime(year, 1, 15)
                 ),  # Q4 earnings season start
                 (
-                    datetime(year + 1, 3, 15)
-                    if year == current_year
-                    else datetime(year, 3, 15)
+                    datetime(year + 1, 3, 15) if year == current_year else datetime(year, 3, 15)
                 ),  # Q4 earnings season end
             ]
 
         return quarters
 
-    def get_current_earnings_season(self) -> Optional[str]:
+    def get_current_earnings_season(self) -> str | None:
         """Determine current earnings season"""
         now = datetime.now()
         current_year = str(now.year)
@@ -147,16 +141,16 @@ class QuarterlyCollectionTrigger:
         # Check which earnings season we're in
         if year_schedule[0] <= now <= year_schedule[1]:  # Q1 season
             return "Q1"
-        elif year_schedule[2] <= now <= year_schedule[3]:  # Q2 season
+        if year_schedule[2] <= now <= year_schedule[3]:  # Q2 season
             return "Q2"
-        elif year_schedule[4] <= now <= year_schedule[5]:  # Q3 season
+        if year_schedule[4] <= now <= year_schedule[5]:  # Q3 season
             return "Q3"
-        elif year_schedule[6] <= now <= year_schedule[7]:  # Q4 season
+        if year_schedule[6] <= now <= year_schedule[7]:  # Q4 season
             return "Q4"
 
         return None
 
-    def is_earnings_season(self, lookback_days: Optional[int] = None) -> bool:
+    def is_earnings_season(self, lookback_days: int | None = None) -> bool:
         """Check if we're currently in or approaching earnings season"""
         if lookback_days is None:
             lookback_days = self.lookback_days
@@ -180,9 +174,7 @@ class QuarterlyCollectionTrigger:
 
         return False
 
-    def should_trigger_collection(
-        self, symbol: str, trigger_type: QuarterlyTriggerType
-    ) -> bool:
+    def should_trigger_collection(self, symbol: str, trigger_type: QuarterlyTriggerType) -> bool:
         """
         Determine if quarterly collection should be triggered for a symbol
 
@@ -197,9 +189,7 @@ class QuarterlyCollectionTrigger:
 
         # Check if we've already triggered collection recently
         if trigger_key in self.trigger_state["completed_collections"]:
-            last_collection = datetime.fromisoformat(
-                self.trigger_state["completed_collections"][trigger_key]
-            )
+            last_collection = datetime.fromisoformat(self.trigger_state["completed_collections"][trigger_key])
 
             # Don't re-trigger within 60 days (roughly one quarter)
             if datetime.now() - last_collection < timedelta(days=60):
@@ -210,17 +200,15 @@ class QuarterlyCollectionTrigger:
             return self.is_earnings_season()
 
         # Scheduled quarterly trigger (every ~90 days)
-        elif trigger_type == QuarterlyTriggerType.SCHEDULED_QUARTERLY:
+        if trigger_type == QuarterlyTriggerType.SCHEDULED_QUARTERLY:
             if trigger_key not in self.trigger_state["completed_collections"]:
                 return True  # First time collection
 
-            last_collection = datetime.fromisoformat(
-                self.trigger_state["completed_collections"][trigger_key]
-            )
+            last_collection = datetime.fromisoformat(self.trigger_state["completed_collections"][trigger_key])
             return datetime.now() - last_collection >= timedelta(days=85)  # ~3 months
 
         # SEC filing triggers (would require SEC filing detection)
-        elif trigger_type in [
+        if trigger_type in [
             QuarterlyTriggerType.SEC_FILING_10Q,
             QuarterlyTriggerType.SEC_FILING_10K,
         ]:
@@ -235,7 +223,7 @@ class QuarterlyCollectionTrigger:
         symbol: str,
         trigger_type: QuarterlyTriggerType,
         service_name: str = "yahoo_finance",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Trigger quarterly financial statement collection for a symbol
 
@@ -253,9 +241,7 @@ class QuarterlyCollectionTrigger:
                 "reason": "Collection not needed or recently completed",
             }
 
-        self.logger.info(
-            f"Triggering quarterly collection for {symbol} ({trigger_type.value})"
-        )
+        self.logger.info(f"Triggering quarterly collection for {symbol} ({trigger_type.value})")
 
         try:
             # Import here to avoid circular imports
@@ -326,21 +312,17 @@ class QuarterlyCollectionTrigger:
 
             # Mark collection as completed
             trigger_key = f"{symbol}_{trigger_type.value}"
-            self.trigger_state["completed_collections"][
-                trigger_key
-            ] = datetime.now().isoformat()
+            self.trigger_state["completed_collections"][trigger_key] = datetime.now().isoformat()
             self._save_trigger_state()
 
-            self.logger.info(
-                f"Quarterly collection completed for {symbol}: {results['files_created']} files created"
-            )
+            self.logger.info(f"Quarterly collection completed for {symbol}: {results['files_created']} files created")
             return results
 
         except Exception as e:
             self.logger.error(f"Error during quarterly collection for {symbol}: {e}")
             return {"triggered": False, "error": str(e)}
 
-    def scan_for_triggers(self, symbols: Optional[List[str]] = None) -> Dict[str, Any]:
+    def scan_for_triggers(self, symbols: list[str] | None = None) -> dict[str, Any]:
         """
         Scan for symbols that need quarterly collection triggered
 
@@ -391,9 +373,7 @@ class QuarterlyCollectionTrigger:
         for symbol in symbols:
             try:
                 # Check for earnings announcement trigger
-                if self.should_trigger_collection(
-                    symbol, QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT
-                ):
+                if self.should_trigger_collection(symbol, QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT):
                     collection_result = self.trigger_quarterly_collection(
                         symbol, QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT
                     )
@@ -403,9 +383,7 @@ class QuarterlyCollectionTrigger:
                         results["symbols_triggered"].append(symbol)
 
                 # Check for scheduled quarterly trigger
-                elif self.should_trigger_collection(
-                    symbol, QuarterlyTriggerType.SCHEDULED_QUARTERLY
-                ):
+                elif self.should_trigger_collection(symbol, QuarterlyTriggerType.SCHEDULED_QUARTERLY):
                     collection_result = self.trigger_quarterly_collection(
                         symbol, QuarterlyTriggerType.SCHEDULED_QUARTERLY
                     )
@@ -419,26 +397,22 @@ class QuarterlyCollectionTrigger:
                 results["errors"].append(error_msg)
                 self.logger.error(f"Error checking triggers for {symbol}: {e}")
 
-        self.logger.info(
-            f"Quarterly trigger scan completed: {results['triggered_collections']} collections triggered"
-        )
+        self.logger.info(f"Quarterly trigger scan completed: {results['triggered_collections']} collections triggered")
         return results
 
-    def get_trigger_status(self) -> Dict[str, Any]:
+    def get_trigger_status(self) -> dict[str, Any]:
         """Get current trigger status and statistics"""
         return {
             "current_earnings_season": self.get_current_earnings_season(),
             "is_earnings_season": self.is_earnings_season(),
             "trigger_state": self.trigger_state,
             "quarterly_schedule": self.quarterly_schedule,
-            "total_completed_collections": len(
-                self.trigger_state["completed_collections"]
-            ),
+            "total_completed_collections": len(self.trigger_state["completed_collections"]),
         }
 
 
 def create_quarterly_trigger_manager(
-    base_path: Optional[Path] = None,
+    base_path: Path | None = None,
 ) -> QuarterlyCollectionTrigger:
     """Factory function to create quarterly trigger manager"""
     hdm = HistoricalDataManager(base_path=base_path)

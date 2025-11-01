@@ -6,7 +6,7 @@ Advanced currency-specific analysis including REER, PPP, carry trade dynamics
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -69,7 +69,7 @@ class CurrencyAnalyzer:
         self.ppp_reference_rates = self._initialize_ppp_references()
         self.reer_base_periods = self._initialize_reer_bases()
 
-    def _initialize_ppp_references(self) -> Dict[str, float]:
+    def _initialize_ppp_references(self) -> dict[str, float]:
         """Initialize PPP reference exchange rates (indicative)"""
         # These would typically come from OECD PPP data
         return {
@@ -81,7 +81,7 @@ class CurrencyAnalyzer:
             "USD/CNY": 6.2,  # USD PPP vs CNY
         }
 
-    def _initialize_reer_bases(self) -> Dict[str, float]:
+    def _initialize_reer_bases(self) -> dict[str, float]:
         """Initialize REER base period values (2010=100)"""
         return {
             "USD": 100,
@@ -96,11 +96,11 @@ class CurrencyAnalyzer:
     def analyze_currency(
         self,
         currency_code: str,
-        current_exchange_rate: Optional[float] = None,
+        current_exchange_rate: float | None = None,
         policy_rate: float = 2.0,
         us_policy_rate: float = 5.0,
-        volatility: Optional[float] = None,
-        market_data: Optional[Dict[str, Any]] = None,
+        volatility: float | None = None,
+        market_data: dict[str, Any] | None = None,
     ) -> CurrencyAnalysis:
         """
         Comprehensive currency analysis
@@ -121,27 +121,19 @@ class CurrencyAnalyzer:
         safe_haven_score = self._calculate_safe_haven_score(currency_code, volatility)
 
         # Assess carry trade attractiveness
-        carry_attractiveness = self._assess_carry_trade_appeal(
-            currency_code, policy_rate, us_policy_rate, volatility
-        )
+        carry_attractiveness = self._assess_carry_trade_appeal(currency_code, policy_rate, us_policy_rate, volatility)
 
         # Determine volatility regime
         vol_regime = self._classify_volatility_regime(currency_code, volatility)
 
         # Calculate PPP deviation
-        ppp_deviation = self._calculate_ppp_deviation(
-            currency_code, current_exchange_rate
-        )
+        ppp_deviation = self._calculate_ppp_deviation(currency_code, current_exchange_rate)
 
         # Estimate REER level
-        reer_level = self._estimate_reer_level(
-            currency_code, current_exchange_rate, market_data
-        )
+        reer_level = self._estimate_reer_level(currency_code, current_exchange_rate, market_data)
 
         # Assess intervention probability
-        intervention_prob = self._assess_intervention_probability(
-            currency_code, regime, ppp_deviation, volatility
-        )
+        intervention_prob = self._assess_intervention_probability(currency_code, regime, ppp_deviation, volatility)
 
         return CurrencyAnalysis(
             currency_code=currency_code,
@@ -176,9 +168,7 @@ class CurrencyAnalyzer:
 
         return regime_mapping.get(currency_code, CurrencyRegime.FLOATING)
 
-    def _calculate_safe_haven_score(
-        self, currency_code: str, volatility: Optional[float]
-    ) -> float:
+    def _calculate_safe_haven_score(self, currency_code: str, volatility: float | None) -> float:
         """Calculate safe haven attractiveness (0-1 scale)"""
         # Base safe haven scores
         base_scores = {
@@ -196,9 +186,7 @@ class CurrencyAnalyzer:
 
         # Adjust for volatility
         if volatility:
-            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(
-                currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"]
-            )
+            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"])
             if volatility < vol_benchmarks["low"]:
                 volatility_adjustment = 0.1  # Boost for low volatility
             elif volatility > vol_benchmarks["high"]:
@@ -215,7 +203,7 @@ class CurrencyAnalyzer:
         currency_code: str,
         policy_rate: float,
         us_policy_rate: float,
-        volatility: Optional[float],
+        volatility: float | None,
     ) -> float:
         """Assess carry trade attractiveness (-1 to 1 scale)"""
 
@@ -246,36 +234,27 @@ class CurrencyAnalyzer:
 
         # Volatility adjustment
         if volatility:
-            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(
-                currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"]
-            )
+            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"])
             if volatility > vol_benchmarks["high"]:
                 adjustment -= 0.2  # High volatility reduces appeal
 
         carry_appeal = base_appeal + adjustment
         return round(max(-1.0, min(1.0, carry_appeal)), 2)
 
-    def _classify_volatility_regime(
-        self, currency_code: str, volatility: Optional[float]
-    ) -> str:
+    def _classify_volatility_regime(self, currency_code: str, volatility: float | None) -> str:
         """Classify current volatility regime"""
         if not volatility:
             return "unknown"
 
-        benchmarks = self.VOLATILITY_BENCHMARKS.get(
-            currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"]
-        )
+        benchmarks = self.VOLATILITY_BENCHMARKS.get(currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"])
 
         if volatility < benchmarks["low"]:
             return "low"
-        elif volatility > benchmarks["high"]:
+        if volatility > benchmarks["high"]:
             return "high"
-        else:
-            return "normal"
+        return "normal"
 
-    def _calculate_ppp_deviation(
-        self, currency_code: str, current_rate: Optional[float]
-    ) -> float:
+    def _calculate_ppp_deviation(self, currency_code: str, current_rate: float | None) -> float:
         """Calculate deviation from PPP fair value (% over/undervalued)"""
         if not current_rate or currency_code == "USD":
             return 0.0
@@ -299,8 +278,8 @@ class CurrencyAnalyzer:
     def _estimate_reer_level(
         self,
         currency_code: str,
-        current_rate: Optional[float],
-        market_data: Optional[Dict[str, Any]],
+        current_rate: float | None,
+        market_data: dict[str, Any] | None,
     ) -> float:
         """Estimate Real Effective Exchange Rate level (base period = 100)"""
 
@@ -331,7 +310,7 @@ class CurrencyAnalyzer:
         currency_code: str,
         regime: CurrencyRegime,
         ppp_deviation: float,
-        volatility: Optional[float],
+        volatility: float | None,
     ) -> float:
         """Assess probability of central bank intervention (0-1 scale)"""
 
@@ -363,9 +342,7 @@ class CurrencyAnalyzer:
         # Volatility adjustment
         vol_factor = 0.0
         if volatility:
-            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(
-                currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"]
-            )
+            vol_benchmarks = self.VOLATILITY_BENCHMARKS.get(currency_code, self.VOLATILITY_BENCHMARKS["DEFAULT"])
             if volatility > vol_benchmarks["high"]:
                 vol_factor = 0.2  # High volatility increases intervention risk
 
@@ -373,8 +350,8 @@ class CurrencyAnalyzer:
         return round(total_prob, 2)
 
     def calculate_currency_correlations(
-        self, currencies: List[str], market_regime: str = "normal"
-    ) -> Dict[Tuple[str, str], float]:
+        self, currencies: list[str], market_regime: str = "normal"
+    ) -> dict[tuple[str, str], float]:
         """Calculate expected currency correlations based on regime"""
 
         # Base correlation matrices for different market regimes
@@ -400,9 +377,7 @@ class CurrencyAnalyzer:
             ("AUD", "NZD"): 0.95,
         }
 
-        correlation_matrix = (
-            normal_correlations if market_regime == "normal" else crisis_correlations
-        )
+        correlation_matrix = normal_correlations if market_regime == "normal" else crisis_correlations
 
         # Generate correlations for requested pairs
         result_correlations = {}
@@ -417,9 +392,7 @@ class CurrencyAnalyzer:
                     result_correlations[pair] = correlation_matrix[reverse_pair]
                 else:
                     # Default correlation based on currency characteristics
-                    result_correlations[pair] = self._estimate_default_correlation(
-                        curr1, curr2
-                    )
+                    result_correlations[pair] = self._estimate_default_correlation(curr1, curr2)
 
         return result_correlations
 
@@ -434,21 +407,18 @@ class CurrencyAnalyzer:
         # Same group correlations
         if curr1 in commodity_currencies and curr2 in commodity_currencies:
             return 0.6
-        elif curr1 in emerging_markets and curr2 in emerging_markets:
+        if curr1 in emerging_markets and curr2 in emerging_markets:
             return 0.4
-        elif curr1 in major_developed and curr2 in major_developed:
+        if curr1 in major_developed and curr2 in major_developed:
             return 0.2
         # Cross-group correlations
-        elif (curr1 in major_developed and curr2 in commodity_currencies) or (
+        if (curr1 in major_developed and curr2 in commodity_currencies) or (
             curr2 in major_developed and curr1 in commodity_currencies
         ):
             return -0.1
-        else:
-            return 0.1  # Default low positive correlation
+        return 0.1  # Default low positive correlation
 
-    def generate_currency_risk_assessment(
-        self, analysis: CurrencyAnalysis
-    ) -> Dict[str, Any]:
+    def generate_currency_risk_assessment(self, analysis: CurrencyAnalysis) -> dict[str, Any]:
         """Generate comprehensive currency risk assessment"""
 
         risk_factors = []

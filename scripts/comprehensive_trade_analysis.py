@@ -15,16 +15,15 @@ import argparse
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -72,21 +71,13 @@ class ComprehensiveTradeAnalyzer:
         self.open_df = self.df[self.df["Status"] == "Open"].copy()
 
         # Convert timestamps
-        self.df["Entry_Date"] = pd.to_datetime(
-            self.df["Entry_Timestamp"], format="mixed"
-        ).dt.date
-        self.closed_df["Entry_Date"] = pd.to_datetime(
-            self.closed_df["Entry_Timestamp"], format="mixed"
-        ).dt.date
-        self.open_df["Entry_Date"] = pd.to_datetime(
-            self.open_df["Entry_Timestamp"], format="mixed"
-        ).dt.date
+        self.df["Entry_Date"] = pd.to_datetime(self.df["Entry_Timestamp"], format="mixed").dt.date
+        self.closed_df["Entry_Date"] = pd.to_datetime(self.closed_df["Entry_Timestamp"], format="mixed").dt.date
+        self.open_df["Entry_Date"] = pd.to_datetime(self.open_df["Entry_Timestamp"], format="mixed").dt.date
 
-        logger.info(
-            f"Data prepared: {len(self.closed_df)} closed, {len(self.open_df)} open trades"
-        )
+        logger.info(f"Data prepared: {len(self.closed_df)} closed, {len(self.open_df)} open trades")
 
-    def calculate_performance_metrics(self) -> Dict[str, Any]:
+    def calculate_performance_metrics(self) -> dict[str, Any]:
         """Calculate comprehensive performance metrics."""
         metrics = {}
 
@@ -122,21 +113,13 @@ class ComprehensiveTradeAnalyzer:
             # Risk-adjusted performance
             returns = self.closed_df["Return"]
             metrics["std_return"] = returns.std()
-            metrics["sharpe_ratio"] = (
-                metrics["avg_return"] / metrics["std_return"]
-                if metrics["std_return"] != 0
-                else 0
-            )
+            metrics["sharpe_ratio"] = metrics["avg_return"] / metrics["std_return"] if metrics["std_return"] != 0 else 0
 
             # Sortino ratio (downside risk)
             negative_returns = returns[returns < 0]
-            metrics["downside_deviation"] = (
-                negative_returns.std() if len(negative_returns) > 0 else 0
-            )
+            metrics["downside_deviation"] = negative_returns.std() if len(negative_returns) > 0 else 0
             metrics["sortino_ratio"] = (
-                metrics["avg_return"] / metrics["downside_deviation"]
-                if metrics["downside_deviation"] != 0
-                else 0
+                metrics["avg_return"] / metrics["downside_deviation"] if metrics["downside_deviation"] != 0 else 0
             )
 
             # Calmar ratio (drawdown-adjusted)
@@ -145,9 +128,7 @@ class ComprehensiveTradeAnalyzer:
             drawdown = (cumulative_returns - running_max) / running_max
             metrics["max_drawdown"] = drawdown.min()
             metrics["calmar_ratio"] = (
-                metrics["avg_return"] / abs(metrics["max_drawdown"])
-                if metrics["max_drawdown"] != 0
-                else 0
+                metrics["avg_return"] / abs(metrics["max_drawdown"]) if metrics["max_drawdown"] != 0 else 0
             )
 
             # Recovery time analysis
@@ -164,28 +145,20 @@ class ComprehensiveTradeAnalyzer:
                     if drawdown_start is not None:
                         drawdown_periods.append(i - drawdown_start)
 
-            metrics["recovery_time"] = (
-                np.mean(drawdown_periods) if drawdown_periods else 0
-            )
+            metrics["recovery_time"] = np.mean(drawdown_periods) if drawdown_periods else 0
 
             # Duration analysis
             metrics["avg_duration"] = self.closed_df["Duration_Days"].mean()
 
             # Exit efficiency
-            metrics["avg_exit_efficiency"] = self.closed_df[
-                "Exit_Efficiency_Fixed"
-            ].mean()
+            metrics["avg_exit_efficiency"] = self.closed_df["Exit_Efficiency_Fixed"].mean()
             metrics["poor_exits"] = (self.closed_df["Exit_Efficiency_Fixed"] < 0).sum()
 
             # Statistical significance
-            metrics["win_rate_ci"] = self._calculate_confidence_interval(
-                metrics["win_rate"], len(self.closed_df)
-            )
+            metrics["win_rate_ci"] = self._calculate_confidence_interval(metrics["win_rate"], len(self.closed_df))
 
             # Statistical significance tests
-            metrics["returns_vs_zero_pvalue"] = self._calculate_t_test_pvalue(
-                returns, 0
-            )
+            metrics["returns_vs_zero_pvalue"] = self._calculate_t_test_pvalue(returns, 0)
             metrics["win_rate_vs_random_pvalue"] = self._calculate_binomial_test_pvalue(
                 (returns > 0).sum(), len(returns), 0.5
             )
@@ -200,7 +173,7 @@ class ComprehensiveTradeAnalyzer:
 
     def _calculate_confidence_interval(
         self, proportion: float, n: int, confidence: float = 0.95
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Calculate confidence interval for proportion."""
         z_score = stats.norm.ppf((1 + confidence) / 2)
         margin_error = z_score * np.sqrt((proportion * (1 - proportion)) / n)
@@ -214,9 +187,7 @@ class ComprehensiveTradeAnalyzer:
         except (ValueError, TypeError, RuntimeError):
             return 1.0  # Conservative approach if test fails
 
-    def _calculate_binomial_test_pvalue(
-        self, successes: int, trials: int, prob: float
-    ) -> float:
+    def _calculate_binomial_test_pvalue(self, successes: int, trials: int, prob: float) -> float:
         """Calculate p-value for binomial test."""
         try:
             p_value = stats.binom_test(successes, trials, prob, alternative="two-sided")
@@ -224,7 +195,7 @@ class ComprehensiveTradeAnalyzer:
         except (ValueError, TypeError, RuntimeError):
             return 1.0  # Conservative approach if test fails
 
-    def analyze_quality_distribution(self) -> Dict[str, Any]:
+    def analyze_quality_distribution(self) -> dict[str, Any]:
         """Analyze trade quality distribution."""
         if len(self.closed_df) == 0:
             return {}
@@ -236,22 +207,14 @@ class ComprehensiveTradeAnalyzer:
             quality_analysis[quality] = {
                 "count": len(quality_trades),
                 "percentage": len(quality_trades) / len(self.closed_df) * 100,
-                "win_rate": (
-                    (quality_trades["Return"] > 0).mean()
-                    if len(quality_trades) > 0
-                    else 0
-                ),
-                "avg_return": (
-                    quality_trades["Return"].mean() if len(quality_trades) > 0 else 0
-                ),
-                "total_return": (
-                    quality_trades["Return"].sum() if len(quality_trades) > 0 else 0
-                ),
+                "win_rate": ((quality_trades["Return"] > 0).mean() if len(quality_trades) > 0 else 0),
+                "avg_return": (quality_trades["Return"].mean() if len(quality_trades) > 0 else 0),
+                "total_return": (quality_trades["Return"].sum() if len(quality_trades) > 0 else 0),
             }
 
         return quality_analysis
 
-    def analyze_strategy_performance(self) -> Dict[str, Any]:
+    def analyze_strategy_performance(self) -> dict[str, Any]:
         """Analyze performance by strategy type."""
         if len(self.closed_df) == 0:
             return {}
@@ -259,9 +222,7 @@ class ComprehensiveTradeAnalyzer:
         strategy_analysis = {}
 
         for strategy in self.closed_df["Strategy_Type"].unique():
-            strategy_trades = self.closed_df[
-                self.closed_df["Strategy_Type"] == strategy
-            ]
+            strategy_trades = self.closed_df[self.closed_df["Strategy_Type"] == strategy]
             strategy_analysis[strategy] = {
                 "count": len(strategy_trades),
                 "win_rate": (strategy_trades["Return"] > 0).mean(),
@@ -272,7 +233,7 @@ class ComprehensiveTradeAnalyzer:
 
         return strategy_analysis
 
-    def analyze_market_regime_performance(self) -> Dict[str, Any]:
+    def analyze_market_regime_performance(self) -> dict[str, Any]:
         """Analyze performance across different market regimes."""
         if len(self.closed_df) == 0:
             return {}
@@ -306,18 +267,13 @@ class ComprehensiveTradeAnalyzer:
 
         # Volatility environment analysis (simulated based on trade characteristics)
         # High volatility trades: those with high MAE/MFE ratios
-        if (
-            "Max_Adverse_Excursion" in self.closed_df.columns
-            and "Max_Favourable_Excursion" in self.closed_df.columns
-        ):
+        if "Max_Adverse_Excursion" in self.closed_df.columns and "Max_Favourable_Excursion" in self.closed_df.columns:
             volatility_ratio = abs(self.closed_df["Max_Adverse_Excursion"]) / (
                 self.closed_df["Max_Favourable_Excursion"] + 0.001
             )
 
             low_vol_mask = volatility_ratio < 0.3  # Low volatility trades
-            med_vol_mask = (volatility_ratio >= 0.3) & (
-                volatility_ratio < 0.7
-            )  # Medium volatility
+            med_vol_mask = (volatility_ratio >= 0.3) & (volatility_ratio < 0.7)  # Medium volatility
             high_vol_mask = volatility_ratio >= 0.7  # High volatility trades
 
             vol_regimes = {
@@ -338,7 +294,7 @@ class ComprehensiveTradeAnalyzer:
 
         return regime_analysis
 
-    def analyze_strategy_performance_with_confidence(self) -> Dict[str, Any]:
+    def analyze_strategy_performance_with_confidence(self) -> dict[str, Any]:
         """Analyze strategy performance with confidence levels."""
         if len(self.closed_df) == 0:
             return {}
@@ -346,9 +302,7 @@ class ComprehensiveTradeAnalyzer:
         strategy_analysis = {}
 
         for strategy in self.closed_df["Strategy_Type"].unique():
-            strategy_trades = self.closed_df[
-                self.closed_df["Strategy_Type"] == strategy
-            ]
+            strategy_trades = self.closed_df[self.closed_df["Strategy_Type"] == strategy]
 
             # Basic performance metrics
             win_rate = (strategy_trades["Return"] > 0).mean()
@@ -389,7 +343,7 @@ class ComprehensiveTradeAnalyzer:
 
         return strategy_analysis
 
-    def analyze_open_positions(self) -> List[Dict[str, Any]]:
+    def analyze_open_positions(self) -> list[dict[str, Any]]:
         """Analyze current open positions."""
         if len(self.open_df) == 0:
             return []
@@ -425,7 +379,7 @@ class ComprehensiveTradeAnalyzer:
 
         report = f"""# Internal Trading System Analysis - YTD 2025
 **For: Trading Team & Internal Operations | Classification: Internal Use Only**
-*Generated: {datetime.now().strftime('%B %d, %Y')} | Next Review: {(datetime.now() + timedelta(days=19)).strftime('%B %d, %Y')}*
+*Generated: {datetime.now().strftime("%B %d, %Y")} | Next Review: {(datetime.now() + timedelta(days=19)).strftime("%B %d, %Y")}*
 
 ---
 
@@ -433,16 +387,16 @@ class ComprehensiveTradeAnalyzer:
 
 | **Key Metric** | **Current** | **Assessment** | **Action Required** |
 |----------------|-------------|----------------|-------------------|
-| **YTD Return** | +{metrics.get('total_return', 0):.2%} | {"Strong positive performance" if metrics.get('total_return', 0) > 0.05 else "Moderate performance"} | Maintain momentum |
+| **YTD Return** | +{metrics.get("total_return", 0):.2%} | {"Strong positive performance" if metrics.get("total_return", 0) > 0.05 else "Moderate performance"} | Maintain momentum |
 | **vs SPY Alpha** | +{alpha:.2%} | {"Exceptional outperformance" if alpha > 0.05 else "Market outperformance"} | Preserve edge |
-| **Win Rate** | {metrics.get('win_rate', 0):.1%} | {"Above breakeven" if metrics.get('win_rate', 0) > 0.5 else "Below optimal"} | Optimize signal quality |
-| **Exit Efficiency** | {metrics.get('avg_exit_efficiency', 0):.2f} | {"🔴 **CRITICAL FAILURE**" if metrics.get('avg_exit_efficiency', 0) < -0.5 else "🟡 Needs improvement"} | {"**Fix immediately**" if metrics.get('avg_exit_efficiency', 0) < -0.5 else "Optimize exits"} |
-| **Risk Exposure** | {metrics.get('open_positions', 0)} open positions | {"Elevated exposure" if metrics.get('open_positions', 0) > 15 else "Managed exposure"} | Assess correlation |
+| **Win Rate** | {metrics.get("win_rate", 0):.1%} | {"Above breakeven" if metrics.get("win_rate", 0) > 0.5 else "Below optimal"} | Optimize signal quality |
+| **Exit Efficiency** | {metrics.get("avg_exit_efficiency", 0):.2f} | {"🔴 **CRITICAL FAILURE**" if metrics.get("avg_exit_efficiency", 0) < -0.5 else "🟡 Needs improvement"} | {"**Fix immediately**" if metrics.get("avg_exit_efficiency", 0) < -0.5 else "Optimize exits"} |
+| **Risk Exposure** | {metrics.get("open_positions", 0)} open positions | {"Elevated exposure" if metrics.get("open_positions", 0) > 15 else "Managed exposure"} | Assess correlation |
 
 ### 🚨 Critical Issues Requiring Immediate Action
-1. **Exit timing crisis**: {metrics.get('poor_exits', 0)}/{metrics.get('total_trades', 0)} poor exits destroying potential returns
-2. **EMA strategy blind spot**: {len(self.open_df[self.open_df['Strategy_Type'] == 'EMA'])} open positions, {len(self.closed_df[self.closed_df['Strategy_Type'] == 'EMA'])} completions
-3. **Signal quality degradation**: {sum(1 for q in quality_analysis.keys() if 'Poor' in q or 'Failed' in q)} poor/failed trades out of {metrics.get('total_trades', 0)}
+1. **Exit timing crisis**: {metrics.get("poor_exits", 0)}/{metrics.get("total_trades", 0)} poor exits destroying potential returns
+2. **EMA strategy blind spot**: {len(self.open_df[self.open_df["Strategy_Type"] == "EMA"])} open positions, {len(self.closed_df[self.closed_df["Strategy_Type"] == "EMA"])} completions
+3. **Signal quality degradation**: {sum(1 for q in quality_analysis.keys() if "Poor" in q or "Failed" in q)} poor/failed trades out of {metrics.get("total_trades", 0)}
 
 ---
 
@@ -458,7 +412,7 @@ class ComprehensiveTradeAnalyzer:
 | **Risk Measure** | **Current** | **Benchmark** | **Assessment** |
 |------------------|-------------|---------------|----------------|
 | Portfolio Beta | 0.30 | 1.00 (SPY) | Low market risk |
-| Open Position Count | {metrics.get('open_positions', 0)} | Risk-based limit | {"**Requires assessment**" if metrics.get('open_positions', 0) > 15 else "Within limits"} |
+| Open Position Count | {metrics.get("open_positions", 0)} | Risk-based limit | {"**Requires assessment**" if metrics.get("open_positions", 0) > 15 else "Within limits"} |
 | Sector Concentration | Assessment needed | <25% per sector | **Need analysis** |
 | Single Position Max | Assessment needed | <5% portfolio | **Need monitoring** |
 
@@ -467,8 +421,8 @@ class ComprehensiveTradeAnalyzer:
 ## 🎯 Critical Execution Issues
 
 ### **Issue #1: Exit Timing Crisis (🔴 URGENT)**
-- **Impact**: {metrics.get('poor_exits', 0)}/{metrics.get('total_trades', 0)} poor exits destroying potential returns
-- **Current Status**: Average exit efficiency {metrics.get('avg_exit_efficiency', 0):.2f} ({"catastrophic" if metrics.get('avg_exit_efficiency', 0) < -0.5 else "poor"})
+- **Impact**: {metrics.get("poor_exits", 0)}/{metrics.get("total_trades", 0)} poor exits destroying potential returns
+- **Current Status**: Average exit efficiency {metrics.get("avg_exit_efficiency", 0):.2f} ({"catastrophic" if metrics.get("avg_exit_efficiency", 0) < -0.5 else "poor"})
 - **Root Cause**: Premature exits and MFE capture failure
 
 **Immediate Action Plan:**
@@ -482,14 +436,14 @@ class ComprehensiveTradeAnalyzer:
 ## 🔍 Strategy Performance Breakdown
 
 ### **SMA Strategy Analysis**
-- **Trades**: {strategy_analysis.get('SMA', {}).get('count', 0)} closed
-- **Win Rate**: {strategy_analysis.get('SMA', {}).get('win_rate', 0):.2%}
-- **Average Return**: {strategy_analysis.get('SMA', {}).get('avg_return', 0):.2%} per trade
-- **Total Return**: {strategy_analysis.get('SMA', {}).get('total_return', 0):.2%}
+- **Trades**: {strategy_analysis.get("SMA", {}).get("count", 0)} closed
+- **Win Rate**: {strategy_analysis.get("SMA", {}).get("win_rate", 0):.2%}
+- **Average Return**: {strategy_analysis.get("SMA", {}).get("avg_return", 0):.2%} per trade
+- **Total Return**: {strategy_analysis.get("SMA", {}).get("total_return", 0):.2%}
 
 ### **EMA Strategy (Limited Data)**
-- **Trades**: {strategy_analysis.get('EMA', {}).get('count', 0)} closed, {len(self.open_df[self.open_df['Strategy_Type'] == 'EMA'])} open
-- **Status**: {"No historical performance data" if strategy_analysis.get('EMA', {}).get('count', 0) == 0 else "Limited performance data"}
+- **Trades**: {strategy_analysis.get("EMA", {}).get("count", 0)} closed, {len(self.open_df[self.open_df["Strategy_Type"] == "EMA"])} open
+- **Status**: {"No historical performance data" if strategy_analysis.get("EMA", {}).get("count", 0) == 0 else "Limited performance data"}
 
 ### **Quality Distribution (Closed Trades)**
 | **Quality** | **Count** | **Win Rate** | **Avg Return** | **Characteristics** |
@@ -506,14 +460,14 @@ class ComprehensiveTradeAnalyzer:
 ## 📊 Statistical Validation
 
 ### Sample Size Assessment
-- **Total Closed Trades**: {metrics.get('total_trades', 0)} ({"adequate" if metrics.get('total_trades', 0) >= 15 else "limited"} for initial assessment)
-- **Win Rate Confidence**: {metrics.get('win_rate', 0):.2%} ± {(metrics.get('win_rate_ci', (0, 0))[1] - metrics.get('win_rate_ci', (0, 0))[0])/2:.2%} (95% CI)
-- **Statistical Power**: {"Sufficient" if metrics.get('total_trades', 0) >= 15 else "Limited"} for directional insights
-- **Recommendation**: {"Continue data collection" if metrics.get('total_trades', 0) < 30 else "Adequate sample size"} for precision
+- **Total Closed Trades**: {metrics.get("total_trades", 0)} ({"adequate" if metrics.get("total_trades", 0) >= 15 else "limited"} for initial assessment)
+- **Win Rate Confidence**: {metrics.get("win_rate", 0):.2%} ± {(metrics.get("win_rate_ci", (0, 0))[1] - metrics.get("win_rate_ci", (0, 0))[0]) / 2:.2%} (95% CI)
+- **Statistical Power**: {"Sufficient" if metrics.get("total_trades", 0) >= 15 else "Limited"} for directional insights
+- **Recommendation**: {"Continue data collection" if metrics.get("total_trades", 0) < 30 else "Adequate sample size"} for precision
 
 ### Performance Significance
-- **Return vs Zero**: {"Statistically significant positive returns" if metrics.get('total_return', 0) > 0.02 else "Positive but requires validation"}
-- **Win Rate vs Random**: {"Above random" if metrics.get('win_rate', 0) > 0.52 else "Marginally above random"} (needs improvement)
+- **Return vs Zero**: {"Statistically significant positive returns" if metrics.get("total_return", 0) > 0.02 else "Positive but requires validation"}
+- **Win Rate vs Random**: {"Above random" if metrics.get("win_rate", 0) > 0.52 else "Marginally above random"} (needs improvement)
 - **Alpha vs SPY**: {"Strong outperformance" if alpha > 0.05 else "Moderate outperformance"} with statistical confidence
 
 ---
@@ -521,12 +475,12 @@ class ComprehensiveTradeAnalyzer:
 ## 🔮 Strategic Optimization Roadmap
 
 ### Priority 1: Exit Efficiency Crisis Resolution
-- **Target**: Improve exit efficiency from {metrics.get('avg_exit_efficiency', 0):.2f} to +0.50
+- **Target**: Improve exit efficiency from {metrics.get("avg_exit_efficiency", 0):.2f} to +0.50
 - **Method**: MFE-based trailing stops and volatility-adjusted exits
 - **Expected Impact**: +3-5% annual return improvement
 
 ### Priority 2: Signal Quality Enhancement
-- **Target**: Reduce poor/failed trades from {sum(data['count'] for q, data in quality_analysis.items() if 'Poor' in q or 'Failed' in q)}/{metrics.get('total_trades', 0)} to <30%
+- **Target**: Reduce poor/failed trades from {sum(data["count"] for q, data in quality_analysis.items() if "Poor" in q or "Failed" in q)}/{metrics.get("total_trades", 0)} to <30%
 - **Method**: Enhanced entry filters and setup validation
 - **Expected Impact**: +2-3% improvement in profit factor
 
@@ -537,7 +491,7 @@ class ComprehensiveTradeAnalyzer:
 
 ---
 
-**Next Review: {(datetime.now() + timedelta(days=19)).strftime('%B %d, %Y')}**
+**Next Review: {(datetime.now() + timedelta(days=19)).strftime("%B %d, %Y")}**
 
 ---
 
@@ -553,22 +507,20 @@ class ComprehensiveTradeAnalyzer:
         open_positions = self.analyze_open_positions()
 
         # Get top performers
-        top_performers = (
-            open_positions[:3] if len(open_positions) >= 3 else open_positions
-        )
+        top_performers = open_positions[:3] if len(open_positions) >= 3 else open_positions
 
         report = f"""# Live Signals Monitor - Active Positions
-**Real-Time Performance Tracking | Updated: {datetime.now().strftime('%B %d, %Y')}**
+**Real-Time Performance Tracking | Updated: {datetime.now().strftime("%B %d, %Y")}**
 
 ---
 
 ## 📊 Portfolio Overview
 
 ### Current Status
-- **Active Positions**: {metrics.get('open_positions', 0)} signals
-- **Portfolio Performance**: +{metrics.get('total_return', 0):.2%} YTD vs SPY +1.38%
-- **Market Outperformance**: +{metrics.get('total_return', 0) - 0.0138:.2%}
-- **Average Hold Period**: {metrics.get('avg_days_held', 0):.0f} days
+- **Active Positions**: {metrics.get("open_positions", 0)} signals
+- **Portfolio Performance**: +{metrics.get("total_return", 0):.2%} YTD vs SPY +1.38%
+- **Market Outperformance**: +{metrics.get("total_return", 0) - 0.0138:.2%}
+- **Average Hold Period**: {metrics.get("avg_days_held", 0):.0f} days
 
 ---
 
@@ -581,9 +533,9 @@ class ComprehensiveTradeAnalyzer:
 - **Strategy Focus**: Multi-strategy approach with SMA and EMA signals
 
 ### **Portfolio vs Market Dynamics**
-- **Market Outperformance**: +{metrics.get('total_return', 0) - 0.0138:.2%} vs SPY (+1.38% YTD)
+- **Market Outperformance**: +{metrics.get("total_return", 0) - 0.0138:.2%} vs SPY (+1.38% YTD)
 - **Portfolio Beta**: ~0.30 (defensive characteristics with upside capture)
-- **Active Management**: {metrics.get('open_positions', 0)} positions under active monitoring
+- **Active Management**: {metrics.get("open_positions", 0)} positions under active monitoring
 
 ---
 
@@ -594,13 +546,13 @@ class ComprehensiveTradeAnalyzer:
         for i, position in enumerate(top_performers, 1):
             medal = ["🥇", "🥈", "🥉"][i - 1] if i <= 3 else f"{i}."
             report += f"""
-### {medal} {position['ticker']} - **+{position['mfe']:.1%} Unrealized MFE**
-- **Signal Type**: {position['strategy']} crossover
-- **Entry Date**: {position['entry_date']} ({position['days_held']} days ago)
-- **Entry Price**: ${position['entry_price']:.2f}
-- **Current Status**: {"Strong uptrend" if position['mfe'] > 0.15 else "Developing position"}
-- **Days Held**: {position['days_held']}
-- **MFE/MAE Ratio**: {position['mfe_mae_ratio']:.2f}
+### {medal} {position["ticker"]} - **+{position["mfe"]:.1%} Unrealized MFE**
+- **Signal Type**: {position["strategy"]} crossover
+- **Entry Date**: {position["entry_date"]} ({position["days_held"]} days ago)
+- **Entry Price**: ${position["entry_price"]:.2f}
+- **Current Status**: {"Strong uptrend" if position["mfe"] > 0.15 else "Developing position"}
+- **Days Held**: {position["days_held"]}
+- **MFE/MAE Ratio**: {position["mfe_mae_ratio"]:.2f}
 """
 
         report += """
@@ -613,26 +565,10 @@ class ComprehensiveTradeAnalyzer:
 
         # Add all positions
         for position in open_positions:
-            status_icon = (
-                "🟢"
-                if position["mfe"] > 0.10
-                else "🟡"
-                if position["mfe"] > 0.05
-                else "🔴"
-            )
-            status_text = (
-                "Strong"
-                if position["mfe"] > 0.10
-                else "Developing"
-                if position["mfe"] > 0.05
-                else "Watch"
-            )
+            status_icon = "🟢" if position["mfe"] > 0.10 else "🟡" if position["mfe"] > 0.05 else "🔴"
+            status_text = "Strong" if position["mfe"] > 0.10 else "Developing" if position["mfe"] > 0.05 else "Watch"
             watch_level = (
-                "🔥 Excellent"
-                if position["mfe"] > 0.15
-                else "📊 Developing"
-                if position["mfe"] > 0.05
-                else "⚠️ Monitor"
+                "🔥 Excellent" if position["mfe"] > 0.15 else "📊 Developing" if position["mfe"] > 0.05 else "⚠️ Monitor"
             )
 
             report += f"\n| **{position['ticker']}** | {position['strategy']} | {position['entry_date']} | {position['days_held']}d | {status_icon} {status_text} | +{position['mfe']:.1%} | -{position['mae']:.1%} | {watch_level} |"
@@ -643,13 +579,15 @@ class ComprehensiveTradeAnalyzer:
 
 ## 🎯 Signal Strength Analysis
 
-### Strong Momentum Signals ({len([p for p in open_positions if p['mfe'] > 0.10])} positions)
+### Strong Momentum Signals ({len([p for p in open_positions if p["mfe"] > 0.10])} positions)
 """
 
         # Add strong momentum signals
         for p in open_positions:
             if p["mfe"] > 0.10:
-                report += f"- **{p['ticker']}**: {p['mfe']:.1%} MFE - Strong momentum signal with sustained performance\n"
+                report += (
+                    f"- **{p['ticker']}**: {p['mfe']:.1%} MFE - Strong momentum signal with sustained performance\n"
+                )
 
         report += """
 
@@ -690,11 +628,9 @@ class ComprehensiveTradeAnalyzer:
 """
 
         # Add high priority monitoring positions
-        priority_positions = [
-            p for p in open_positions if p["mfe"] < 0 or p["mae"] > 0.08
-        ][:3]
+        priority_positions = [p for p in open_positions if p["mfe"] < 0 or p["mae"] > 0.08][:3]
         for i, p in enumerate(priority_positions):
-            report += f"{i+1}. **{p['ticker']}**: {p['mfe']:+.1%} MFE - Requires defensive evaluation\n"
+            report += f"{i + 1}. **{p['ticker']}**: {p['mfe']:+.1%} MFE - Requires defensive evaluation\n"
 
         report += """
 
@@ -735,7 +671,7 @@ class ComprehensiveTradeAnalyzer:
             ranked_trades = pd.DataFrame()
 
         report = f"""# Live Signals Historical Performance Report
-**Date:** {pd.to_datetime(date_str).strftime('%B %d, %Y')}
+**Date:** {pd.to_datetime(date_str).strftime("%B %d, %Y")}
 **Portfolio:** live_signals
 **Report Type:** Historical Analysis (Closed Trades Only)
 
@@ -746,35 +682,35 @@ class ComprehensiveTradeAnalyzer:
 
 ## 📊 Performance Summary
 
-### Overall Results ({metrics.get('total_trades', 0)} Closed Trades)
-- **Total Closed Trades**: {metrics.get('total_trades', 0)} completed positions
-- **Win Rate**: {metrics.get('win_rate', 0):.1%} ({(self.closed_df['Return'] > 0).sum()} winners, {(self.closed_df['Return'] <= 0).sum()} losers)
-- **Total Return**: ${metrics.get('total_return', 0)*1000:.2f} realized P&L
-- **Average Return**: {metrics.get('avg_return', 0):.2%} per trade
-- **Average Duration**: {metrics.get('avg_duration', 0):.1f} days
-- **Best Trade**: ${metrics.get('best_trade', 0)*1000:.2f} ({best_trade['Ticker'] if best_trade is not None else 'N/A'} - {metrics.get('best_trade', 0):.2%} return)
-- **Worst Trade**: ${metrics.get('worst_trade', 0)*1000:.2f} ({worst_trade['Ticker'] if worst_trade is not None else 'N/A'} - {metrics.get('worst_trade', 0):.2%} return)
+### Overall Results ({metrics.get("total_trades", 0)} Closed Trades)
+- **Total Closed Trades**: {metrics.get("total_trades", 0)} completed positions
+- **Win Rate**: {metrics.get("win_rate", 0):.1%} ({(self.closed_df["Return"] > 0).sum()} winners, {(self.closed_df["Return"] <= 0).sum()} losers)
+- **Total Return**: ${metrics.get("total_return", 0) * 1000:.2f} realized P&L
+- **Average Return**: {metrics.get("avg_return", 0):.2%} per trade
+- **Average Duration**: {metrics.get("avg_duration", 0):.1f} days
+- **Best Trade**: ${metrics.get("best_trade", 0) * 1000:.2f} ({best_trade["Ticker"] if best_trade is not None else "N/A"} - {metrics.get("best_trade", 0):.2%} return)
+- **Worst Trade**: ${metrics.get("worst_trade", 0) * 1000:.2f} ({worst_trade["Ticker"] if worst_trade is not None else "N/A"} - {metrics.get("worst_trade", 0):.2%} return)
 
 **Position Sizing Note**: All historical performance metrics are based on single unit position sizing per strategy, as posted on [@colemorton7](https://x.com/colemorton7). This provides consistent and comparable results across all live signals.
 
 ### Key Metrics
-- **Expectancy**: {metrics.get('expectancy', 0):.3f}¢ per $1 risk ({"strong positive expectancy" if metrics.get('expectancy', 0) > 0.5 else "positive expectancy" if metrics.get('expectancy', 0) > 0 else "negative expectancy"})
-- **Profit Factor**: {metrics.get('profit_factor', 0):.2f} ({"good efficiency" if metrics.get('profit_factor', 0) > 1.5 else "modest efficiency" if metrics.get('profit_factor', 0) > 1.0 else "needs improvement"})
-- **Win/Loss Ratio**: {abs(metrics.get('avg_winner', 0) / metrics.get('avg_loser', 0)) if metrics.get('avg_loser', 0) != 0 else 0:.2f}:1 ({"strong risk-reward" if abs(metrics.get('avg_winner', 0) / metrics.get('avg_loser', 0)) > 2.0 else "adequate risk-reward" if abs(metrics.get('avg_winner', 0) / metrics.get('avg_loser', 0)) > 1.5 else "poor risk-reward"})
+- **Expectancy**: {metrics.get("expectancy", 0):.3f}¢ per $1 risk ({"strong positive expectancy" if metrics.get("expectancy", 0) > 0.5 else "positive expectancy" if metrics.get("expectancy", 0) > 0 else "negative expectancy"})
+- **Profit Factor**: {metrics.get("profit_factor", 0):.2f} ({"good efficiency" if metrics.get("profit_factor", 0) > 1.5 else "modest efficiency" if metrics.get("profit_factor", 0) > 1.0 else "needs improvement"})
+- **Win/Loss Ratio**: {abs(metrics.get("avg_winner", 0) / metrics.get("avg_loser", 0)) if metrics.get("avg_loser", 0) != 0 else 0:.2f}:1 ({"strong risk-reward" if abs(metrics.get("avg_winner", 0) / metrics.get("avg_loser", 0)) > 2.0 else "adequate risk-reward" if abs(metrics.get("avg_winner", 0) / metrics.get("avg_loser", 0)) > 1.5 else "poor risk-reward"})
 
 ### Risk-Adjusted Performance
-- **Sharpe Ratio**: {metrics.get('sharpe_ratio', 0):.2f} ({"moderate risk adjustment" if metrics.get('sharpe_ratio', 0) > 0.5 else "low risk adjustment"})
-- **Sortino Ratio**: {metrics.get('sortino_ratio', 0):.2f} ({"superior downside risk management" if metrics.get('sortino_ratio', 0) > 1.0 else "adequate downside risk management"})
-- **Calmar Ratio**: {metrics.get('calmar_ratio', 0):.2f} ({"drawdown-adjusted returns" if metrics.get('calmar_ratio', 0) > 0.5 else "drawdown impact significant"})
-- **Max Drawdown**: {metrics.get('max_drawdown', 0):.2%} ({"at risk limits" if metrics.get('max_drawdown', 0) < -0.15 else "within acceptable range"})
-- **Downside Deviation**: {metrics.get('downside_deviation', 0):.2%} (downside volatility measure)
-- **Recovery Time**: {metrics.get('recovery_time', 0):.1f} days (drawdown recovery period)
-- **Average Win**: {metrics.get('avg_winner', 0):.2%} | **Average Loss**: {metrics.get('avg_loser', 0):+.2%}
+- **Sharpe Ratio**: {metrics.get("sharpe_ratio", 0):.2f} ({"moderate risk adjustment" if metrics.get("sharpe_ratio", 0) > 0.5 else "low risk adjustment"})
+- **Sortino Ratio**: {metrics.get("sortino_ratio", 0):.2f} ({"superior downside risk management" if metrics.get("sortino_ratio", 0) > 1.0 else "adequate downside risk management"})
+- **Calmar Ratio**: {metrics.get("calmar_ratio", 0):.2f} ({"drawdown-adjusted returns" if metrics.get("calmar_ratio", 0) > 0.5 else "drawdown impact significant"})
+- **Max Drawdown**: {metrics.get("max_drawdown", 0):.2%} ({"at risk limits" if metrics.get("max_drawdown", 0) < -0.15 else "within acceptable range"})
+- **Downside Deviation**: {metrics.get("downside_deviation", 0):.2%} (downside volatility measure)
+- **Recovery Time**: {metrics.get("recovery_time", 0):.1f} days (drawdown recovery period)
+- **Average Win**: {metrics.get("avg_winner", 0):.2%} | **Average Loss**: {metrics.get("avg_loser", 0):+.2%}
 
 ### Strategy Distribution
-- **SMA Trades**: {len(self.closed_df[self.closed_df['Strategy_Type'] == 'SMA'])} ({len(self.closed_df[self.closed_df['Strategy_Type'] == 'SMA'])/len(self.closed_df)*100:.1f}% of closed trades)
-- **EMA Trades**: {len(self.closed_df[self.closed_df['Strategy_Type'] == 'EMA'])} ({len(self.closed_df[self.closed_df['Strategy_Type'] == 'EMA'])/len(self.closed_df)*100:.1f}% of closed trades)
-- **Strategy Performance Gap**: EMA {"significantly outperformed" if len(self.closed_df[self.closed_df['Strategy_Type'] == 'EMA']) > 0 else "insufficient data for comparison"}
+- **SMA Trades**: {len(self.closed_df[self.closed_df["Strategy_Type"] == "SMA"])} ({len(self.closed_df[self.closed_df["Strategy_Type"] == "SMA"]) / len(self.closed_df) * 100:.1f}% of closed trades)
+- **EMA Trades**: {len(self.closed_df[self.closed_df["Strategy_Type"] == "EMA"])} ({len(self.closed_df[self.closed_df["Strategy_Type"] == "EMA"]) / len(self.closed_df) * 100:.1f}% of closed trades)
+- **Strategy Performance Gap**: EMA {"significantly outperformed" if len(self.closed_df[self.closed_df["Strategy_Type"] == "EMA"]) > 0 else "insufficient data for comparison"}
 
 ---
 
@@ -786,11 +722,11 @@ class ComprehensiveTradeAnalyzer:
             for i, (_, trade) in enumerate(ranked_trades.head(3).iterrows(), 1):
                 medal = ["🥇", "🥈", "🥉"][i - 1]
                 report += f"""
-### {medal} {trade['Ticker']} - {trade['Trade_Quality']}
-- **Signal Type**: {trade['Strategy_Type']} crossover ({trade['Short_Window']}/{trade['Long_Window']})
-- **Entry**: {trade['Entry_Timestamp'][:10]} @ ${trade['Avg_Entry_Price']:.2f} | **Exit**: {trade['Exit_Timestamp'][:10]} @ ${trade['Avg_Exit_Price']:.2f}
-- **Duration**: {trade['Duration_Days']:.0f} days | **Return**: {trade['Return']:.2%} | **P&L**: ${trade['Return']*1000:.2f}
-- **Analysis**: {"Perfect trend capture with optimal exit timing near peak" if trade['Trade_Quality'] == 'Excellent' else "Strong momentum trade with good execution"}
+### {medal} {trade["Ticker"]} - {trade["Trade_Quality"]}
+- **Signal Type**: {trade["Strategy_Type"]} crossover ({trade["Short_Window"]}/{trade["Long_Window"]})
+- **Entry**: {trade["Entry_Timestamp"][:10]} @ ${trade["Avg_Entry_Price"]:.2f} | **Exit**: {trade["Exit_Timestamp"][:10]} @ ${trade["Avg_Exit_Price"]:.2f}
+- **Duration**: {trade["Duration_Days"]:.0f} days | **Return**: {trade["Return"]:.2%} | **P&L**: ${trade["Return"] * 1000:.2f}
+- **Analysis**: {"Perfect trend capture with optimal exit timing near peak" if trade["Trade_Quality"] == "Excellent" else "Strong momentum trade with good execution"}
 """
 
         report += """
@@ -805,25 +741,15 @@ class ComprehensiveTradeAnalyzer:
         if len(ranked_trades) > 0:
             for i, (_, trade) in enumerate(ranked_trades.iterrows(), 1):
                 entry_date = trade["Entry_Timestamp"][:10]
-                exit_date = (
-                    trade["Exit_Timestamp"][:10]
-                    if pd.notna(trade["Exit_Timestamp"])
-                    else "Open"
-                )
+                exit_date = trade["Exit_Timestamp"][:10] if pd.notna(trade["Exit_Timestamp"]) else "Open"
                 strategy = f"{trade['Strategy_Type']} {trade['Short_Window']}/{trade['Long_Window']}"
-                return_str = (
-                    f"**{trade['Return']:+.2%}**"
-                    if i <= 3
-                    else f"{trade['Return']:+.2%}"
-                )
-                pnl_str = f"${trade['Return']*1000:.2f}"
+                return_str = f"**{trade['Return']:+.2%}**" if i <= 3 else f"{trade['Return']:+.2%}"
+                pnl_str = f"${trade['Return'] * 1000:.2f}"
 
                 # Generate X Post link
                 x_post_link = ""
                 if pd.notna(trade["X_Status"]) and trade["X_Status"]:
-                    x_post_link = (
-                        f"[📱](https://x.com/colemorton7/status/{trade['X_Status']})"
-                    )
+                    x_post_link = f"[📱](https://x.com/colemorton7/status/{trade['X_Status']})"
                 else:
                     x_post_link = "N/A"
 
@@ -836,36 +762,36 @@ class ComprehensiveTradeAnalyzer:
 ## 🔍 Performance Analysis
 
 ### Win Rate Breakdown
-- **Overall Win Rate**: {metrics.get('win_rate', 0):.1%} ({(self.closed_df['Return'] > 0).sum()} wins, {(self.closed_df['Return'] <= 0).sum()} losses)
-- **Winners Average**: {metrics.get('avg_winner', 0):.2%} return
-- **Losers Average**: {metrics.get('avg_loser', 0):+.2%} return
-- **Win/Loss Ratio**: {abs(metrics.get('avg_winner', 0) / metrics.get('avg_loser', 0)) if metrics.get('avg_loser', 0) != 0 else 0:.2f}:1 ({"strong risk-reward profile" if abs(metrics.get('avg_winner', 0) / metrics.get('avg_loser', 0)) > 2.0 else "adequate risk-reward profile"})
+- **Overall Win Rate**: {metrics.get("win_rate", 0):.1%} ({(self.closed_df["Return"] > 0).sum()} wins, {(self.closed_df["Return"] <= 0).sum()} losses)
+- **Winners Average**: {metrics.get("avg_winner", 0):.2%} return
+- **Losers Average**: {metrics.get("avg_loser", 0):+.2%} return
+- **Win/Loss Ratio**: {abs(metrics.get("avg_winner", 0) / metrics.get("avg_loser", 0)) if metrics.get("avg_loser", 0) != 0 else 0:.2f}:1 ({"strong risk-reward profile" if abs(metrics.get("avg_winner", 0) / metrics.get("avg_loser", 0)) > 2.0 else "adequate risk-reward profile"})
 
 ### Loss Analysis
-- **Total Losses**: {(self.closed_df['Return'] <= 0).sum()} trades (${(self.closed_df[self.closed_df['Return'] <= 0]['Return'].sum())*1000:.2f} combined)
-- **Largest Loss**: ${metrics.get('worst_trade', 0)*1000:.2f} ({worst_trade['Ticker'] if worst_trade is not None else 'N/A'} upside capture failure)
-- **Average Loss Duration**: {self.closed_df[self.closed_df['Return'] <= 0]['Duration_Days'].mean():.1f} days
-- **Loss Concentration**: {len(self.closed_df[self.closed_df['Return'] <= -0.025])} trades >-$25 ({len(self.closed_df[self.closed_df['Return'] <= -0.025])/max(1, (self.closed_df['Return'] <= 0).sum())*100:.0f}% of all losses)
+- **Total Losses**: {(self.closed_df["Return"] <= 0).sum()} trades (${(self.closed_df[self.closed_df["Return"] <= 0]["Return"].sum()) * 1000:.2f} combined)
+- **Largest Loss**: ${metrics.get("worst_trade", 0) * 1000:.2f} ({worst_trade["Ticker"] if worst_trade is not None else "N/A"} upside capture failure)
+- **Average Loss Duration**: {self.closed_df[self.closed_df["Return"] <= 0]["Duration_Days"].mean():.1f} days
+- **Loss Concentration**: {len(self.closed_df[self.closed_df["Return"] <= -0.025])} trades >-$25 ({len(self.closed_df[self.closed_df["Return"] <= -0.025]) / max(1, (self.closed_df["Return"] <= 0).sum()) * 100:.0f}% of all losses)
 
 ### Statistical Significance Assessment
-- **Sample Size**: {metrics.get('total_trades', 0)} closed trades ({"adequate for analysis" if metrics.get('total_trades', 0) >= 15 else "limited for analysis"})
-- **Overall Adequacy**: {min(100, metrics.get('total_trades', 0)/15*100):.0f}% statistical confidence threshold met
-- **Returns vs Zero**: p={metrics.get('returns_vs_zero_pvalue', 1.0):.3f} ({"⚠️ Not statistically significant at 95% level" if metrics.get('returns_vs_zero_pvalue', 1.0) > 0.05 else "✅ Statistically significant"})
-- **Win Rate vs Random**: p={metrics.get('win_rate_vs_random_pvalue', 1.0):.3f} ({"⚠️ Cannot reject random chance hypothesis" if metrics.get('win_rate_vs_random_pvalue', 1.0) > 0.05 else "✅ Significantly above random"})
+- **Sample Size**: {metrics.get("total_trades", 0)} closed trades ({"adequate for analysis" if metrics.get("total_trades", 0) >= 15 else "limited for analysis"})
+- **Overall Adequacy**: {min(100, metrics.get("total_trades", 0) / 15 * 100):.0f}% statistical confidence threshold met
+- **Returns vs Zero**: p={metrics.get("returns_vs_zero_pvalue", 1.0):.3f} ({"⚠️ Not statistically significant at 95% level" if metrics.get("returns_vs_zero_pvalue", 1.0) > 0.05 else "✅ Statistically significant"})
+- **Win Rate vs Random**: p={metrics.get("win_rate_vs_random_pvalue", 1.0):.3f} ({"⚠️ Cannot reject random chance hypothesis" if metrics.get("win_rate_vs_random_pvalue", 1.0) > 0.05 else "✅ Significantly above random"})
 
 ### Confidence Intervals (95% Level)
-- **Mean Return**: {metrics.get('win_rate_ci', (0, 0))[0]:.2%} to {metrics.get('win_rate_ci', (0, 0))[1]:.2%} per trade
-- **Win Rate**: {metrics.get('win_rate_ci', (0, 0))[0]:.0%} to {metrics.get('win_rate_ci', (0, 0))[1]:.0%} ({"wide range indicates uncertainty" if (metrics.get('win_rate_ci', (0, 0))[1] - metrics.get('win_rate_ci', (0, 0))[0]) > 0.3 else "reasonable confidence range"})
+- **Mean Return**: {metrics.get("win_rate_ci", (0, 0))[0]:.2%} to {metrics.get("win_rate_ci", (0, 0))[1]:.2%} per trade
+- **Win Rate**: {metrics.get("win_rate_ci", (0, 0))[0]:.0%} to {metrics.get("win_rate_ci", (0, 0))[1]:.0%} ({"wide range indicates uncertainty" if (metrics.get("win_rate_ci", (0, 0))[1] - metrics.get("win_rate_ci", (0, 0))[0]) > 0.3 else "reasonable confidence range"})
 
 ---
 
 ## 📊 Signal Quality & Predictive Characteristics
 
 ### Signal Strength Indicators (Predictive Analysis)
-- **High MFE Capture (>80%)**: {len(quality_analysis.get('excellent_trades', {}))} trades ({quality_analysis.get('excellent_trades', {}).get('percentage', 0)*100:.1f}%) - Strong momentum within first week
+- **High MFE Capture (>80%)**: {len(quality_analysis.get("excellent_trades", {}))} trades ({quality_analysis.get("excellent_trades", {}).get("percentage", 0) * 100:.1f}%) - Strong momentum within first week
 - **Optimal Timing Signals**: EMA crossovers with volume confirmation
 - **Trend Following Strength**: 30-45 day duration window optimal
-- **Market Regime Alignment**: {regime_analysis.get('low_vix', {}).get('win_rate', 0):.1%} win rate in low volatility environments
+- **Market Regime Alignment**: {regime_analysis.get("low_vix", {}).get("win_rate", 0):.1%} win rate in low volatility environments
 
 ### Entry Condition Quality Assessment
 - **Volume Confirmation**: Trades with >1.25x average volume showed 18% better performance
@@ -875,15 +801,15 @@ class ComprehensiveTradeAnalyzer:
 
 ### Predictive Failure Patterns
 - **Weak Initial Momentum**: <2% gain within first week predicts poor performance
-- **High Volatility Entry**: {regime_analysis.get('high_vix', {}).get('win_rate', 0):.1%} success rate in high VIX environments
+- **High Volatility Entry**: {regime_analysis.get("high_vix", {}).get("win_rate", 0):.1%} success rate in high VIX environments
 - **Sector Headwinds**: Rate-sensitive sectors underperformed in rising rate environment
-- **Poor Setup Quality**: SMA signals in choppy markets show {100 - strategy_analysis.get('SMA', {}).get('win_rate', 0)*100:.1f}% false positive rate
+- **Poor Setup Quality**: SMA signals in choppy markets show {100 - strategy_analysis.get("SMA", {}).get("win_rate", 0) * 100:.1f}% false positive rate
 
 ### Strategy-Specific Characteristics
-- **EMA Advantage**: {strategy_analysis.get('EMA', {}).get('win_rate', 0):.1%} win rate but small sample ({strategy_analysis.get('EMA', {}).get('count', 0)} trades, {strategy_analysis.get('EMA', {}).get('confidence_level', 0):.0%} confidence)
-- **SMA Reliability**: {strategy_analysis.get('SMA', {}).get('win_rate', 0):.1%} win rate with adequate sample ({strategy_analysis.get('SMA', {}).get('count', 0)} trades, {strategy_analysis.get('SMA', {}).get('confidence_level', 0):.0%} confidence)
-- **Duration Optimization**: >30 day holds show {(self.closed_df[self.closed_df['Duration_Days'] > 30]['Return'] > 0).mean():.1%} win rate vs {(self.closed_df[self.closed_df['Duration_Days'] <= 30]['Return'] > 0).mean():.1%} for shorter periods
-- **Exit Efficiency**: {metrics.get('avg_exit_efficiency', 0):.1%} MFE capture presents major optimization opportunity
+- **EMA Advantage**: {strategy_analysis.get("EMA", {}).get("win_rate", 0):.1%} win rate but small sample ({strategy_analysis.get("EMA", {}).get("count", 0)} trades, {strategy_analysis.get("EMA", {}).get("confidence_level", 0):.0%} confidence)
+- **SMA Reliability**: {strategy_analysis.get("SMA", {}).get("win_rate", 0):.1%} win rate with adequate sample ({strategy_analysis.get("SMA", {}).get("count", 0)} trades, {strategy_analysis.get("SMA", {}).get("confidence_level", 0):.0%} confidence)
+- **Duration Optimization**: >30 day holds show {(self.closed_df[self.closed_df["Duration_Days"] > 30]["Return"] > 0).mean():.1%} win rate vs {(self.closed_df[self.closed_df["Duration_Days"] <= 30]["Return"] > 0).mean():.1%} for shorter periods
+- **Exit Efficiency**: {metrics.get("avg_exit_efficiency", 0):.1%} MFE capture presents major optimization opportunity
 
 ---
 
@@ -892,16 +818,14 @@ class ComprehensiveTradeAnalyzer:
 
         # Add monthly performance (if available)
         if len(self.closed_df) > 0:
-            monthly_data = self.closed_df.groupby(
-                pd.to_datetime(self.closed_df["Entry_Timestamp"]).dt.to_period("M")
-            )
+            monthly_data = self.closed_df.groupby(pd.to_datetime(self.closed_df["Entry_Timestamp"]).dt.to_period("M"))
             if len(monthly_data) > 0:
                 for month, month_trades in monthly_data:
                     win_rate = (month_trades["Return"] > 0).mean()
                     avg_return = month_trades["Return"].mean()
                     report += f"""
-### {month.strftime('%B %Y')} ({len(month_trades)} trades)
-- **Win Rate**: {win_rate:.1%} ({(month_trades['Return'] > 0).sum()} wins, {(month_trades['Return'] <= 0).sum()} losses)
+### {month.strftime("%B %Y")} ({len(month_trades)} trades)
+- **Win Rate**: {win_rate:.1%} ({(month_trades["Return"] > 0).sum()} wins, {(month_trades["Return"] <= 0).sum()} losses)
 - **Average Return**: {avg_return:.2%}
 - **Market Context**: {"Strong momentum period" if avg_return > 0.05 else "Consolidation with selective opportunities" if avg_return > 0 else "Challenging market conditions"}
 - **Key Lesson**: {"Optimal market conditions for trend following" if win_rate > 0.7 else "Maintained performance despite market headwinds" if win_rate > 0.5 else "Mixed performance during market transition"}
@@ -942,19 +866,15 @@ class ComprehensiveTradeAnalyzer:
                 if len(sector_trades) > 0:
                     win_rate = (sector_trades["Return"] > 0).mean()
                     avg_return = sector_trades["Return"].mean()
-                    best_performer = sector_trades.loc[
-                        sector_trades["Return"].idxmax()
-                    ]["Ticker"]
-                    worst_performer = sector_trades.loc[
-                        sector_trades["Return"].idxmin()
-                    ]["Ticker"]
+                    best_performer = sector_trades.loc[sector_trades["Return"].idxmax()]["Ticker"]
+                    worst_performer = sector_trades.loc[sector_trades["Return"].idxmin()]["Ticker"]
 
                     report += f"""
 ### {sector} ({len(sector_trades)} closed trades)
-- **Win Rate**: {win_rate:.1%} ({(sector_trades['Return'] > 0).sum()} wins, {(sector_trades['Return'] <= 0).sum()} losses)
+- **Win Rate**: {win_rate:.1%} ({(sector_trades["Return"] > 0).sum()} wins, {(sector_trades["Return"] <= 0).sum()} losses)
 - **Average Return**: {avg_return:.2%}
-- **Best Performer**: {best_performer} (+{sector_trades['Return'].max():.2%})
-- **Worst Performer**: {worst_performer} ({sector_trades['Return'].min():+.2%})
+- **Best Performer**: {best_performer} (+{sector_trades["Return"].max():.2%})
+- **Worst Performer**: {worst_performer} ({sector_trades["Return"].min():+.2%})
 - **Characteristics**: {"Defensive strength, consistent performance" if win_rate > 0.7 else "Economic cycle correlation" if win_rate > 0.5 else "Underperformed in current environment"}
 """
 
@@ -964,20 +884,20 @@ class ComprehensiveTradeAnalyzer:
 ## 📈 Market Regime Analysis
 
 ### Market Condition Performance
-- **Bull Market**: {regime_analysis.get('bull_market', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('bull_market', {}).get('avg_return', 0):.2%} avg return ({regime_analysis.get('bull_market', {}).get('count', 0)} trades)
-- **Bear Market**: {regime_analysis.get('bear_market', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('bear_market', {}).get('avg_return', 0):+.2%} avg return ({regime_analysis.get('bear_market', {}).get('count', 0)} trades)
-- **Sideways Market**: {regime_analysis.get('sideways_market', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('sideways_market', {}).get('avg_return', 0):.2%} avg return ({regime_analysis.get('sideways_market', {}).get('count', 0)} trades)
+- **Bull Market**: {regime_analysis.get("bull_market", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("bull_market", {}).get("avg_return", 0):.2%} avg return ({regime_analysis.get("bull_market", {}).get("count", 0)} trades)
+- **Bear Market**: {regime_analysis.get("bear_market", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("bear_market", {}).get("avg_return", 0):+.2%} avg return ({regime_analysis.get("bear_market", {}).get("count", 0)} trades)
+- **Sideways Market**: {regime_analysis.get("sideways_market", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("sideways_market", {}).get("avg_return", 0):.2%} avg return ({regime_analysis.get("sideways_market", {}).get("count", 0)} trades)
 - **Regime Sensitivity**: Strategy performs best in trending markets
 
 ### Volatility Environment Impact
-- **Low VIX (<15)**: {regime_analysis.get('low_vix', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('low_vix', {}).get('avg_return', 0):.2%} avg return ({regime_analysis.get('low_vix', {}).get('count', 0)} trades)
-- **Medium VIX (15-25)**: {regime_analysis.get('medium_vix', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('medium_vix', {}).get('avg_return', 0):.2%} avg return ({regime_analysis.get('medium_vix', {}).get('count', 0)} trades)
-- **High VIX (>25)**: {regime_analysis.get('high_vix', {}).get('win_rate', 0):.1%} win rate, {regime_analysis.get('high_vix', {}).get('avg_return', 0):.2%} avg return ({regime_analysis.get('high_vix', {}).get('count', 0)} trades)
+- **Low VIX (<15)**: {regime_analysis.get("low_vix", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("low_vix", {}).get("avg_return", 0):.2%} avg return ({regime_analysis.get("low_vix", {}).get("count", 0)} trades)
+- **Medium VIX (15-25)**: {regime_analysis.get("medium_vix", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("medium_vix", {}).get("avg_return", 0):.2%} avg return ({regime_analysis.get("medium_vix", {}).get("count", 0)} trades)
+- **High VIX (>25)**: {regime_analysis.get("high_vix", {}).get("win_rate", 0):.1%} win rate, {regime_analysis.get("high_vix", {}).get("avg_return", 0):.2%} avg return ({regime_analysis.get("high_vix", {}).get("count", 0)} trades)
 - **Volatility Threshold**: Performance degrades significantly above VIX 25
 
 ### Market Regime Insights
 - **Optimal Conditions**: Low volatility bull markets (highest success rate)
-- **Risk Environment**: High volatility periods show {"complete failure" if regime_analysis.get('high_vix', {}).get('win_rate', 0) == 0 else "poor performance"}
+- **Risk Environment**: High volatility periods show {"complete failure" if regime_analysis.get("high_vix", {}).get("win_rate", 0) == 0 else "poor performance"}
 - **Defensive Positioning**: Strategy maintains positive expectancy in sideways markets
 - **Regime Adaptation**: Consider volatility filters for entry signals
 
@@ -985,24 +905,24 @@ class ComprehensiveTradeAnalyzer:
 
 ## ⚖️ Strategy Effectiveness & Statistical Confidence
 
-### SMA Strategy ({strategy_analysis.get('SMA', {}).get('count', 0)} closed trades)
-- **Win Rate**: {strategy_analysis.get('SMA', {}).get('win_rate', 0):.1%} ({strategy_analysis.get('SMA', {}).get('count', 0)} wins, {strategy_analysis.get('SMA', {}).get('count', 0) - int(strategy_analysis.get('SMA', {}).get('win_rate', 0) * strategy_analysis.get('SMA', {}).get('count', 0))} losses)
-- **Average Return**: {strategy_analysis.get('SMA', {}).get('avg_return', 0):.2%}
-- **Exit Efficiency**: {strategy_analysis.get('SMA', {}).get('exit_efficiency', 0):.1%}
-- **Statistical Confidence**: {strategy_analysis.get('SMA', {}).get('confidence_level', 0):.0%} ({"adequate sample size" if strategy_analysis.get('SMA', {}).get('count', 0) >= 15 else "limited sample size"})
-- **Reliability**: {strategy_analysis.get('SMA', {}).get('reliability', 'Low')} - {"sufficient data for conclusions" if strategy_analysis.get('SMA', {}).get('reliability', 'Low') == 'High' else "requires more data"}
+### SMA Strategy ({strategy_analysis.get("SMA", {}).get("count", 0)} closed trades)
+- **Win Rate**: {strategy_analysis.get("SMA", {}).get("win_rate", 0):.1%} ({strategy_analysis.get("SMA", {}).get("count", 0)} wins, {strategy_analysis.get("SMA", {}).get("count", 0) - int(strategy_analysis.get("SMA", {}).get("win_rate", 0) * strategy_analysis.get("SMA", {}).get("count", 0))} losses)
+- **Average Return**: {strategy_analysis.get("SMA", {}).get("avg_return", 0):.2%}
+- **Exit Efficiency**: {strategy_analysis.get("SMA", {}).get("exit_efficiency", 0):.1%}
+- **Statistical Confidence**: {strategy_analysis.get("SMA", {}).get("confidence_level", 0):.0%} ({"adequate sample size" if strategy_analysis.get("SMA", {}).get("count", 0) >= 15 else "limited sample size"})
+- **Reliability**: {strategy_analysis.get("SMA", {}).get("reliability", "Low")} - {"sufficient data for conclusions" if strategy_analysis.get("SMA", {}).get("reliability", "Low") == "High" else "requires more data"}
 
-### EMA Strategy ({strategy_analysis.get('EMA', {}).get('count', 0)} closed trades)
-- **Win Rate**: {strategy_analysis.get('EMA', {}).get('win_rate', 0):.1%} ({int(strategy_analysis.get('EMA', {}).get('win_rate', 0) * strategy_analysis.get('EMA', {}).get('count', 0))} wins, {strategy_analysis.get('EMA', {}).get('count', 0) - int(strategy_analysis.get('EMA', {}).get('win_rate', 0) * strategy_analysis.get('EMA', {}).get('count', 0))} losses) ⚠️
-- **Average Return**: {strategy_analysis.get('EMA', {}).get('avg_return', 0):.2%}
-- **Exit Efficiency**: {strategy_analysis.get('EMA', {}).get('exit_efficiency', 0):.1%}
-- **Statistical Confidence**: {strategy_analysis.get('EMA', {}).get('confidence_level', 0):.0%} ({"insufficient sample size" if strategy_analysis.get('EMA', {}).get('count', 0) < 15 else "adequate sample size"})
-- **Reliability**: {strategy_analysis.get('EMA', {}).get('reliability', 'Low')} - {"requires expansion to 15+ trades" if strategy_analysis.get('EMA', {}).get('count', 0) < 15 else "adequate for analysis"}
+### EMA Strategy ({strategy_analysis.get("EMA", {}).get("count", 0)} closed trades)
+- **Win Rate**: {strategy_analysis.get("EMA", {}).get("win_rate", 0):.1%} ({int(strategy_analysis.get("EMA", {}).get("win_rate", 0) * strategy_analysis.get("EMA", {}).get("count", 0))} wins, {strategy_analysis.get("EMA", {}).get("count", 0) - int(strategy_analysis.get("EMA", {}).get("win_rate", 0) * strategy_analysis.get("EMA", {}).get("count", 0))} losses) ⚠️
+- **Average Return**: {strategy_analysis.get("EMA", {}).get("avg_return", 0):.2%}
+- **Exit Efficiency**: {strategy_analysis.get("EMA", {}).get("exit_efficiency", 0):.1%}
+- **Statistical Confidence**: {strategy_analysis.get("EMA", {}).get("confidence_level", 0):.0%} ({"insufficient sample size" if strategy_analysis.get("EMA", {}).get("count", 0) < 15 else "adequate sample size"})
+- **Reliability**: {strategy_analysis.get("EMA", {}).get("reliability", "Low")} - {"requires expansion to 15+ trades" if strategy_analysis.get("EMA", {}).get("count", 0) < 15 else "adequate for analysis"}
 
 ### Performance Differential Analysis
-- **Win Rate Advantage**: {(strategy_analysis.get('EMA', {}).get('win_rate', 0) - strategy_analysis.get('SMA', {}).get('win_rate', 0))*100:+.1f}% for EMA ({strategy_analysis.get('EMA', {}).get('win_rate', 0):.1%} vs {strategy_analysis.get('SMA', {}).get('win_rate', 0):.1%})
-- **Return Advantage**: {(strategy_analysis.get('EMA', {}).get('avg_return', 0) - strategy_analysis.get('SMA', {}).get('avg_return', 0))*100:+.1f}% for EMA ({strategy_analysis.get('EMA', {}).get('avg_return', 0):.2%} vs {strategy_analysis.get('SMA', {}).get('avg_return', 0):.2%})
-- **Statistical Significance**: {"⚠️ Not statistically significant" if metrics.get('returns_vs_zero_pvalue', 1.0) > 0.05 else "✅ Statistically significant"}
+- **Win Rate Advantage**: {(strategy_analysis.get("EMA", {}).get("win_rate", 0) - strategy_analysis.get("SMA", {}).get("win_rate", 0)) * 100:+.1f}% for EMA ({strategy_analysis.get("EMA", {}).get("win_rate", 0):.1%} vs {strategy_analysis.get("SMA", {}).get("win_rate", 0):.1%})
+- **Return Advantage**: {(strategy_analysis.get("EMA", {}).get("avg_return", 0) - strategy_analysis.get("SMA", {}).get("avg_return", 0)) * 100:+.1f}% for EMA ({strategy_analysis.get("EMA", {}).get("avg_return", 0):.2%} vs {strategy_analysis.get("SMA", {}).get("avg_return", 0):.2%})
+- **Statistical Significance**: {"⚠️ Not statistically significant" if metrics.get("returns_vs_zero_pvalue", 1.0) > 0.05 else "✅ Statistically significant"}
 - **Confidence Assessment**: EMA appears superior but sample too small for certainty
 - **Risk**: EMA advantage may be due to selection bias or market conditions
 
@@ -1017,16 +937,16 @@ class ComprehensiveTradeAnalyzer:
 ## 💡 Key Learnings
 
 ### What Worked
-1. **EMA Strategies**: Superior performance with {strategy_analysis.get('EMA', {}).get('win_rate', 0):.1%} win rate
-2. **Healthcare Sector**: Defensive strength with {"high" if regime_analysis.get('low_vix', {}).get('win_rate', 0) > 0.7 else "moderate"} win rate
-3. **Long-Term Holds**: >30 days showed {(self.closed_df[self.closed_df['Duration_Days'] > 30]['Return'] > 0).mean():.1%} win rate
+1. **EMA Strategies**: Superior performance with {strategy_analysis.get("EMA", {}).get("win_rate", 0):.1%} win rate
+2. **Healthcare Sector**: Defensive strength with {"high" if regime_analysis.get("low_vix", {}).get("win_rate", 0) > 0.7 else "moderate"} win rate
+3. **Long-Term Holds**: >30 days showed {(self.closed_df[self.closed_df["Duration_Days"] > 30]["Return"] > 0).mean():.1%} win rate
 4. **Trend Following**: Excellent trades captured strong momentum
 
 ### What Failed
-1. **Short-Term Trades**: ≤7 days showed {(self.closed_df[self.closed_df['Duration_Days'] <= 7]['Return'] > 0).mean():.1%} win rate
+1. **Short-Term Trades**: ≤7 days showed {(self.closed_df[self.closed_df["Duration_Days"] <= 7]["Return"] > 0).mean():.1%} win rate
 2. **SMA Timing**: Lower efficiency compared to EMA
-3. **Poor Risk Management**: Failed trades averaged {quality_analysis.get('failed_trades', {}).get('avg_return', 0):.2%}
-4. **Exit Timing**: {metrics.get('avg_exit_efficiency', 0):.1%} efficiency leaving money on table
+3. **Poor Risk Management**: Failed trades averaged {quality_analysis.get("failed_trades", {}).get("avg_return", 0):.2%}
+4. **Exit Timing**: {metrics.get("avg_exit_efficiency", 0):.1%} efficiency leaving money on table
 
 ### Critical Insights
 1. **Sample Size Matters**: EMA needs expansion for statistical confidence
@@ -1058,9 +978,9 @@ class ComprehensiveTradeAnalyzer:
 
 ---
 
-**Historical Analysis Confidence**: {min(100, metrics.get('total_trades', 0)/25*100):.0f}% ({"strong sample size for closed trades" if metrics.get('total_trades', 0) >= 25 else "adequate sample size for operational insights"})
+**Historical Analysis Confidence**: {min(100, metrics.get("total_trades", 0) / 25 * 100):.0f}% ({"strong sample size for closed trades" if metrics.get("total_trades", 0) >= 25 else "adequate sample size for operational insights"})
 **Data Quality**: 100% completeness for all closed positions
-**Statistical Basis**: {metrics.get('total_trades', 0)} closed trades provide {"adequate sample for operational insights" if metrics.get('total_trades', 0) >= 15 else "limited sample requiring caution"}
+**Statistical Basis**: {metrics.get("total_trades", 0)} closed trades provide {"adequate sample for operational insights" if metrics.get("total_trades", 0) >= 15 else "limited sample requiring caution"}
 
 ---
 
@@ -1078,7 +998,7 @@ class ComprehensiveTradeAnalyzer:
 """
         return report
 
-    def generate_all_reports(self, date_str: str) -> Dict[str, str]:
+    def generate_all_reports(self, date_str: str) -> dict[str, str]:
         """Generate all three reports and save to files."""
         reports = {}
 
@@ -1136,18 +1056,14 @@ def main():
         # Generate all reports
         saved_files = analyzer.generate_all_reports(args.date)
 
-        print(
-            f"✅ Successfully generated {len(saved_files)} comprehensive trade analysis reports:"
-        )
+        print(f"✅ Successfully generated {len(saved_files)} comprehensive trade analysis reports:")
         for report_type, filepath in saved_files.items():
             print("   {report_type.title()}: {filepath}")
 
         # Generate summary statistics
         metrics = analyzer.calculate_performance_metrics()
         print("\n📊 Key Metrics Summary:")
-        print(
-            f"   Total Trades: {metrics.get('total_trades', 0)} closed, {metrics.get('open_positions', 0)} open"
-        )
+        print(f"   Total Trades: {metrics.get('total_trades', 0)} closed, {metrics.get('open_positions', 0)} open")
         print("   Win Rate: {metrics.get('win_rate', 0):.1%}")
         print("   Total Return: {metrics.get('total_return', 0):.2%}")
         print("   Profit Factor: {metrics.get('profit_factor', 0):.2f}")

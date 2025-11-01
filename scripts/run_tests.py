@@ -10,10 +10,9 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 
-def run_command(cmd: List[str], description: str) -> int:
+def run_command(cmd: list[str], description: str) -> int:
     """Run a command and return the exit code"""
     print("\n{'='*60}")
     print("🔄 {description}")
@@ -22,7 +21,7 @@ def run_command(cmd: List[str], description: str) -> int:
     try:
         result = subprocess.run(cmd, cwd=Path(__file__).parent)
         return result.returncode
-    except Exception as e:
+    except Exception:
         print("❌ Error running {description}: {e}")
         return 1
 
@@ -46,17 +45,11 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "test_type", choices=["unit", "integration", "all"], help="Type of tests to run"
-    )
+    parser.add_argument("test_type", choices=["unit", "integration", "all"], help="Type of tests to run")
 
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose test output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose test output")
 
-    parser.add_argument(
-        "--failfast", action="store_true", help="Stop on first test failure"
-    )
+    parser.add_argument("--failfast", action="store_true", help="Stop on first test failure")
 
     parser.add_argument("--pattern", help="Run tests matching this pattern")
 
@@ -96,9 +89,7 @@ Examples:
     if args.test_type in ["integration", "all"]:
         # Integration tests - real APIs, slower, requires network
         integration_cmd = pytest_args + ["tests/integration/"]
-        exit_code = run_command(
-            integration_cmd, "Running Integration Tests (Real APIs, Network Required)"
-        )
+        exit_code = run_command(integration_cmd, "Running Integration Tests (Real APIs, Network Required)")
         exit_codes.append(exit_code)
 
         if exit_code == 0:
@@ -128,9 +119,7 @@ Examples:
         if total_exit_code == 0:
             print("🎉 All integration tests passed! Services work with real APIs.")
         else:
-            print(
-                "⚠️ Integration tests failed! Check network connectivity and API status."
-            )
+            print("⚠️ Integration tests failed! Check network connectivity and API status.")
 
     elif args.test_type == "all":
         unit_code = exit_codes[0] if len(exit_codes) > 0 else 1

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/trade_history_discovery.json",
+  "$id": "https://colemorton.com/schemas/trade_history_discovery.json",
   "title": "Trade History Discovery Schema",
   "description": "JSON Schema for validating trade history discovery phase outputs from atomic discovery tool with unified calculation engine integration",
   "type": "object",

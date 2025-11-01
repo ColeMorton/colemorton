@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/sector_analysis_analysis.json",
+  "$id": "https://colemorton.com/schemas/sector_analysis_analysis.json",
   "title": "Sector Analysis Analysis Schema",
   "description": "Comprehensive schema for sector analysis JSON outputs from systematic sector evaluation framework",
   "type": "object",

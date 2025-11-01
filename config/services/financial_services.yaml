@@ -44,7 +44,7 @@ services:
     cache:
       ttl_seconds: 900  # 15 minutes (standardized)
     headers:
-      User-Agent: "Sensylate/1.0 (https://sensylate.com)"
+      User-Agent: "Colemorton/1.0 (https://colemorton.com)"
 
   alpha_vantage:
     name: "alpha_vantage"
@@ -77,7 +77,7 @@ services:
     cache:
       ttl_seconds: 3600  # 1 hour
     headers:
-      User-Agent: "Sensylate Trading Analysis Platform (contact@sensylate.com)"
+      User-Agent: "Colemorton Trading Analysis Platform (cole.morton@hotmail.com)"
       Accept: "application/json"
 
   fmp:

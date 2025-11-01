@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/macro_analysis_validation.json",
+  "$id": "https://colemorton.com/schemas/macro_analysis_validation.json",
   "title": "Macro-Economic Analysis Validation Schema",
   "description": "Comprehensive validation schema for macro-economic analysis validation JSON outputs from CLI-enhanced DASV framework",
   "type": "object",

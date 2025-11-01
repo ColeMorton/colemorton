@@ -19,15 +19,14 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # import numpy as np
 import pandas as pd
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +44,7 @@ class AtomicSynthesisTool:
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def load_phase_data(self) -> Dict[str, Any]:
+    def load_phase_data(self) -> dict[str, Any]:
         """
         Load discovery and analysis data from previous DASV phases
         """
@@ -55,9 +54,7 @@ class AtomicSynthesisTool:
         discovery_pattern = f"{self.portfolio_name}_*.json"
         discovery_files = list(self.discovery_dir.glob(discovery_pattern))
         if not discovery_files:
-            raise FileNotFoundError(
-                f"No discovery files found for portfolio '{self.portfolio_name}'"
-            )
+            raise FileNotFoundError(f"No discovery files found for portfolio '{self.portfolio_name}'")
 
         latest_discovery = max(discovery_files, key=lambda f: f.stat().st_mtime)
 
@@ -65,17 +62,15 @@ class AtomicSynthesisTool:
         analysis_pattern = f"{self.portfolio_name}_*.json"
         analysis_files = list(self.analysis_dir.glob(analysis_pattern))
         if not analysis_files:
-            raise FileNotFoundError(
-                f"No analysis files found for portfolio '{self.portfolio_name}'"
-            )
+            raise FileNotFoundError(f"No analysis files found for portfolio '{self.portfolio_name}'")
 
         latest_analysis = max(analysis_files, key=lambda f: f.stat().st_mtime)
 
         # Load JSON data
-        with open(latest_discovery, "r", encoding="utf-8") as f:
+        with open(latest_discovery, encoding="utf-8") as f:
             discovery_data = json.load(f)
 
-        with open(latest_analysis, "r", encoding="utf-8") as f:
+        with open(latest_analysis, encoding="utf-8") as f:
             analysis_data = json.load(f)
 
         logger.info(f"Loaded discovery data from: {latest_discovery}")
@@ -88,7 +83,7 @@ class AtomicSynthesisTool:
             "analysis_file": str(latest_analysis),
         }
 
-    def extract_key_metrics(self, phase_data: Dict[str, Any]) -> Dict[str, Any]:
+    def extract_key_metrics(self, phase_data: dict[str, Any]) -> dict[str, Any]:
         """
         Extract and transform key metrics for report generation
         """
@@ -111,29 +106,17 @@ class AtomicSynthesisTool:
                 "unique_tickers": portfolio_summary.get("unique_tickers", 0),
             },
             "performance_summary": {
-                "win_rate": analysis_performance.get(
-                    "win_rate", performance_metrics.get("win_rate", 0)
-                ),
-                "total_wins": analysis_performance.get(
-                    "total_wins", performance_metrics.get("total_wins", 0)
-                ),
-                "total_losses": analysis_performance.get(
-                    "total_losses", performance_metrics.get("total_losses", 0)
-                ),
-                "total_pnl": analysis_performance.get(
-                    "total_pnl", performance_metrics.get("total_pnl", 0)
-                ),
-                "profit_factor": analysis_performance.get(
-                    "profit_factor", performance_metrics.get("profit_factor", 0)
-                ),
+                "win_rate": analysis_performance.get("win_rate", performance_metrics.get("win_rate", 0)),
+                "total_wins": analysis_performance.get("total_wins", performance_metrics.get("total_wins", 0)),
+                "total_losses": analysis_performance.get("total_losses", performance_metrics.get("total_losses", 0)),
+                "total_pnl": analysis_performance.get("total_pnl", performance_metrics.get("total_pnl", 0)),
+                "profit_factor": analysis_performance.get("profit_factor", performance_metrics.get("profit_factor", 0)),
                 "expectancy": analysis_performance.get("expectancy", 0),
             },
             "statistical_analysis": analysis.get("statistical_analysis", {}),
             "signal_effectiveness": analysis.get("signal_effectiveness", {}),
             "confidence_assessment": {
-                "overall_confidence": analysis.get("analysis_metadata", {}).get(
-                    "confidence_score", 0
-                ),
+                "overall_confidence": analysis.get("analysis_metadata", {}).get("confidence_score", 0),
                 "sample_size_adequate": portfolio_summary.get("closed_trades", 0) >= 25,
                 "statistical_significance": analysis.get("statistical_analysis", {})
                 .get("statistical_significance", {})
@@ -145,8 +128,8 @@ class AtomicSynthesisTool:
         return key_metrics
 
     def generate_report_data_structures(
-        self, key_metrics: Dict[str, Any], phase_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, key_metrics: dict[str, Any], phase_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Generate data structures optimized for different report types
         """
@@ -157,59 +140,39 @@ class AtomicSynthesisTool:
 
         # Get detailed trades with X Links from unified calculation engine
         detailed_trades = discovery.get("detailed_trades", [])
-        closed_trades_with_xlinks = (
-            pd.DataFrame(detailed_trades) if detailed_trades else pd.DataFrame()
-        )
+        closed_trades_with_xlinks = pd.DataFrame(detailed_trades) if detailed_trades else pd.DataFrame()
 
         # Get active positions from discovery data
         active_positions = discovery.get("active_positions", [])
-        active_trades = (
-            pd.DataFrame(active_positions) if active_positions else pd.DataFrame()
-        )
+        active_trades = pd.DataFrame(active_positions) if active_positions else pd.DataFrame()
 
         # Generate report-specific data structures
         report_data = {
             "executive_dashboard": {
                 "key_metrics": key_metrics["performance_summary"],
                 "portfolio_health_score": self._calculate_health_score(key_metrics),
-                "critical_issues": self._identify_critical_issues(
-                    key_metrics, closed_trades_with_xlinks
-                ),
+                "critical_issues": self._identify_critical_issues(key_metrics, closed_trades_with_xlinks),
                 "trend_indicators": self._generate_trend_indicators(key_metrics),
             },
             "historical_analysis": {
                 "closed_trades_summary": {
                     "count": len(closed_trades_with_xlinks),
-                    "top_winners": self._get_top_trades(
-                        closed_trades_with_xlinks, "winners", 5
-                    ),
-                    "top_losers": self._get_top_trades(
-                        closed_trades_with_xlinks, "losers", 5
-                    ),
-                    "strategy_breakdown": self._analyze_strategy_performance(
-                        closed_trades_with_xlinks
-                    ),
-                    "monthly_performance": self._analyze_monthly_performance(
-                        closed_trades_with_xlinks
-                    ),
+                    "top_winners": self._get_top_trades(closed_trades_with_xlinks, "winners", 5),
+                    "top_losers": self._get_top_trades(closed_trades_with_xlinks, "losers", 5),
+                    "strategy_breakdown": self._analyze_strategy_performance(closed_trades_with_xlinks),
+                    "monthly_performance": self._analyze_monthly_performance(closed_trades_with_xlinks),
                 },
                 "statistical_summary": key_metrics["statistical_analysis"],
-                "confidence_disclosure": self._generate_confidence_disclosure(
-                    key_metrics
-                ),
+                "confidence_disclosure": self._generate_confidence_disclosure(key_metrics),
             },
             "live_monitoring": {
                 "active_positions": {
                     "count": len(active_trades),
-                    "positions_summary": self._summarize_active_positions(
-                        active_trades
-                    ),
+                    "positions_summary": self._summarize_active_positions(active_trades),
                     "risk_indicators": self._assess_portfolio_risk(active_trades),
                 },
                 "real_time_metrics": {
-                    "platform_status": (
-                        "ACTIVE" if self.portfolio_name == "live_signals" else "N/A"
-                    ),
+                    "platform_status": ("ACTIVE" if self.portfolio_name == "live_signals" else "N/A"),
                     "last_signal": self._get_last_signal_info(active_trades),
                     "market_context": self._get_market_context(),
                 },
@@ -218,7 +181,7 @@ class AtomicSynthesisTool:
 
         return report_data
 
-    def _calculate_health_score(self, key_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_health_score(self, key_metrics: dict[str, Any]) -> dict[str, Any]:
         """Calculate portfolio health score (0-100)"""
         performance = key_metrics["performance_summary"]
         win_rate = performance.get("win_rate", 0)
@@ -230,10 +193,7 @@ class AtomicSynthesisTool:
             100,
             max(
                 0,
-                50
-                + (total_pnl / 1000) * 10
-                + win_rate * 30
-                + min(profit_factor, 5) * 4,
+                50 + (total_pnl / 1000) * 10 + win_rate * 30 + min(profit_factor, 5) * 4,
             ),
         )
 
@@ -248,9 +208,7 @@ class AtomicSynthesisTool:
 
         return {"score": score, "interpretation": interpretation}
 
-    def _identify_critical_issues(
-        self, key_metrics: Dict[str, Any], trades_df: pd.DataFrame
-    ) -> List[Dict[str, Any]]:
+    def _identify_critical_issues(self, key_metrics: dict[str, Any], trades_df: pd.DataFrame) -> list[dict[str, Any]]:
         """Identify critical issues requiring attention"""
         issues = []
 
@@ -292,31 +250,19 @@ class AtomicSynthesisTool:
 
         return issues
 
-    def _generate_trend_indicators(self, key_metrics: Dict[str, Any]) -> Dict[str, str]:
+    def _generate_trend_indicators(self, key_metrics: dict[str, Any]) -> dict[str, str]:
         """Generate trend indicators for metrics"""
         # Simplified trend analysis (would be enhanced with historical comparison)
         win_rate = key_metrics["performance_summary"].get("win_rate", 0)
         total_pnl = key_metrics["performance_summary"].get("total_pnl", 0)
 
         return {
-            "win_rate_trend": "↗️"
-            if win_rate > 0.6
-            else "→"
-            if win_rate > 0.4
-            else "↘️",
+            "win_rate_trend": "↗️" if win_rate > 0.6 else "→" if win_rate > 0.4 else "↘️",
             "pnl_trend": "↗️" if total_pnl > 0 else "↘️",
-            "overall_trend": (
-                "↗️"
-                if win_rate > 0.5 and total_pnl > 0
-                else "→"
-                if total_pnl >= 0
-                else "↘️"
-            ),
+            "overall_trend": ("↗️" if win_rate > 0.5 and total_pnl > 0 else "→" if total_pnl >= 0 else "↘️"),
         }
 
-    def _get_top_trades(
-        self, trades_df: pd.DataFrame, trade_type: str, count: int
-    ) -> List[Dict[str, Any]]:
+    def _get_top_trades(self, trades_df: pd.DataFrame, trade_type: str, count: int) -> list[dict[str, Any]]:
         """Extract top performing trades with X Links"""
         if trades_df.empty or "pnl" not in trades_df.columns:
             return []
@@ -335,9 +281,7 @@ class AtomicSynthesisTool:
                     "pnl": float(trade.get("pnl", 0)),
                     "return_pct": float(trade.get("return_pct", 0)),
                     "duration_days": (
-                        float(trade.get("duration_days", 0))
-                        if pd.notna(trade.get("duration_days"))
-                        else 0
+                        float(trade.get("duration_days", 0)) if pd.notna(trade.get("duration_days")) else 0
                     ),
                     "quality": trade.get("quality", "N/A"),
                     "x_link": trade.get("x_link", "N/A"),
@@ -348,7 +292,7 @@ class AtomicSynthesisTool:
 
         return trades_list
 
-    def _analyze_strategy_performance(self, trades_df: pd.DataFrame) -> Dict[str, Any]:
+    def _analyze_strategy_performance(self, trades_df: pd.DataFrame) -> dict[str, Any]:
         """Analyze performance by strategy"""
         if trades_df.empty:
             return {}
@@ -374,14 +318,12 @@ class AtomicSynthesisTool:
 
         return strategy_performance
 
-    def _analyze_monthly_performance(self, trades_df: pd.DataFrame) -> Dict[str, Any]:
+    def _analyze_monthly_performance(self, trades_df: pd.DataFrame) -> dict[str, Any]:
         """Analyze performance by month (simplified)"""
         # Placeholder for monthly analysis
         return {"note": "Monthly analysis requires date parsing implementation"}
 
-    def _summarize_active_positions(
-        self, active_trades: pd.DataFrame
-    ) -> List[Dict[str, Any]]:
+    def _summarize_active_positions(self, active_trades: pd.DataFrame) -> list[dict[str, Any]]:
         """Summarize active positions"""
         positions = []
         if not active_trades.empty:
@@ -392,9 +334,7 @@ class AtomicSynthesisTool:
                         "strategy": trade.get("Strategy_Type", "N/A"),
                         "entry_date": str(trade.get("Entry_Timestamp", "N/A")),
                         "days_held": (
-                            float(trade.get("Days_Since_Entry", 0))
-                            if pd.notna(trade.get("Days_Since_Entry"))
-                            else 0
+                            float(trade.get("Days_Since_Entry", 0)) if pd.notna(trade.get("Days_Since_Entry")) else 0
                         ),
                         "unrealized_pnl": (
                             float(trade.get("Current_Unrealized_PnL", 0))
@@ -405,21 +345,15 @@ class AtomicSynthesisTool:
                 )
         return positions
 
-    def _assess_portfolio_risk(self, active_trades: pd.DataFrame) -> Dict[str, Any]:
+    def _assess_portfolio_risk(self, active_trades: pd.DataFrame) -> dict[str, Any]:
         """Assess current portfolio risk"""
         return {
             "position_count": len(active_trades),
-            "concentration_risk": (
-                "LOW"
-                if len(active_trades) > 5
-                else "MEDIUM"
-                if len(active_trades) > 2
-                else "HIGH"
-            ),
+            "concentration_risk": ("LOW" if len(active_trades) > 5 else "MEDIUM" if len(active_trades) > 2 else "HIGH"),
             "status": "ACTIVE" if len(active_trades) > 0 else "NO_POSITIONS",
         }
 
-    def _get_last_signal_info(self, active_trades: pd.DataFrame) -> Dict[str, Any]:
+    def _get_last_signal_info(self, active_trades: pd.DataFrame) -> dict[str, Any]:
         """Get information about the last signal"""
         if active_trades.empty:
             return {"status": "NO_ACTIVE_SIGNALS"}
@@ -435,7 +369,7 @@ class AtomicSynthesisTool:
 
         return {"status": "NO_RECENT_SIGNALS"}
 
-    def _get_market_context(self) -> Dict[str, Any]:
+    def _get_market_context(self) -> dict[str, Any]:
         """Get current market context (simplified)"""
         return {
             "market_regime": "ANALYSIS_PENDING",
@@ -443,9 +377,7 @@ class AtomicSynthesisTool:
             "last_updated": self.execution_date.isoformat(),
         }
 
-    def _generate_confidence_disclosure(
-        self, key_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_confidence_disclosure(self, key_metrics: dict[str, Any]) -> dict[str, Any]:
         """Generate confidence and limitation disclosures"""
         confidence = key_metrics["confidence_assessment"]
         sample_size = key_metrics["portfolio_overview"]["closed_trades"]
@@ -454,9 +386,7 @@ class AtomicSynthesisTool:
         if sample_size < 25:
             limitations.append("Sample size below recommended minimum of 25 trades")
         if not confidence["statistical_significance"]:
-            limitations.append(
-                "Returns lack statistical significance at 95% confidence level"
-            )
+            limitations.append("Returns lack statistical significance at 95% confidence level")
         if confidence["overall_confidence"] < 0.8:
             limitations.append("Overall analysis confidence below institutional grade")
 
@@ -467,7 +397,7 @@ class AtomicSynthesisTool:
             "limitations": limitations,
         }
 
-    def execute_synthesis(self) -> Dict[str, Any]:
+    def execute_synthesis(self) -> dict[str, Any]:
         """
         Execute atomic data synthesis
         """
@@ -488,9 +418,7 @@ class AtomicSynthesisTool:
                 "portfolio": self.portfolio_name,
                 "synthesis_metadata": {
                     "execution_timestamp": self.execution_date.isoformat(),
-                    "confidence_score": key_metrics["confidence_assessment"][
-                        "overall_confidence"
-                    ],
+                    "confidence_score": key_metrics["confidence_assessment"]["overall_confidence"],
                     "reports_ready": True,
                 },
                 "key_metrics": key_metrics,
@@ -498,23 +426,17 @@ class AtomicSynthesisTool:
                 "data_sources": {
                     "discovery_file": phase_data["discovery_file"],
                     "analysis_file": phase_data["analysis_file"],
-                    "csv_source": phase_data["discovery"]["discovery_metadata"][
-                        "data_source"
-                    ],
+                    "csv_source": phase_data["discovery"]["discovery_metadata"]["data_source"],
                 },
                 "next_phase_inputs": {
                     "validation_ready": True,
                     "reports_generated": 3,
-                    "synthesis_confidence": key_metrics["confidence_assessment"][
-                        "overall_confidence"
-                    ],
+                    "synthesis_confidence": key_metrics["confidence_assessment"]["overall_confidence"],
                 },
             }
 
             # Step 5: Save synthesis output
-            output_filename = (
-                f"{self.portfolio_name}_{self.execution_date.strftime('%Y%m%d')}.json"
-            )
+            output_filename = f"{self.portfolio_name}_{self.execution_date.strftime('%Y%m%d')}.json"
             output_file = self.output_dir / output_filename
 
             with open(output_file, "w", encoding="utf-8") as f:
@@ -569,9 +491,7 @@ def main():
         print("=" * 60)
         print("Portfolio: {result['portfolio']}")
         print("Execution: {result['synthesis_metadata']['execution_timestamp']}")
-        print(
-            f"Confidence Score: {result['synthesis_metadata']['confidence_score']:.3f}"
-        )
+        print(f"Confidence Score: {result['synthesis_metadata']['confidence_score']:.3f}")
 
         print("\nKEY METRICS:")
         metrics = result["key_metrics"]["performance_summary"]
@@ -585,9 +505,7 @@ def main():
         print(
             f"  Historical Analysis: {report_data['historical_analysis']['closed_trades_summary']['count']} closed trades"
         )
-        print(
-            f"  Live Monitoring: {report_data['live_monitoring']['active_positions']['count']} active positions"
-        )
+        print(f"  Live Monitoring: {report_data['live_monitoring']['active_positions']['count']} active positions")
 
         print("\nCONFIDENCE ASSESSMENT:")
         confidence = result["key_metrics"]["confidence_assessment"]

@@ -8,7 +8,7 @@ Detects and flags template artifacts that indicate insufficient industry-specifi
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class TemplateCustomizationValidator:
@@ -72,17 +72,16 @@ class TemplateCustomizationValidator:
             },
         }
 
-    def validate_file(self, file_path: str) -> Dict[str, Any]:
+    def validate_file(self, file_path: str) -> dict[str, Any]:
         """Validate a single industry analysis file for customization quality"""
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 if file_path.endswith(".json"):
                     data = json.load(f)
                     return self._validate_json_file(data, file_path)
-                else:
-                    content = f.read()
-                    return self._validate_markdown_file(content, file_path)
+                content = f.read()
+                return self._validate_markdown_file(content, file_path)
 
         except Exception as e:
             return {
@@ -92,9 +91,7 @@ class TemplateCustomizationValidator:
                 "customization_score": 0.0,
             }
 
-    def _validate_json_file(
-        self, data: Dict[str, Any], file_path: str
-    ) -> Dict[str, Any]:
+    def _validate_json_file(self, data: dict[str, Any], file_path: str) -> dict[str, Any]:
         """Validate JSON file for template customization"""
 
         # Extract industry from metadata or filename
@@ -128,7 +125,7 @@ class TemplateCustomizationValidator:
             ),
         }
 
-    def _validate_markdown_file(self, content: str, file_path: str) -> Dict[str, Any]:
+    def _validate_markdown_file(self, content: str, file_path: str) -> dict[str, Any]:
         """Validate Markdown file for template customization"""
 
         # Extract industry from filename
@@ -174,7 +171,7 @@ class TemplateCustomizationValidator:
             ],
         }
 
-    def _extract_industry(self, data: Dict[str, Any], file_path: str) -> str:
+    def _extract_industry(self, data: dict[str, Any], file_path: str) -> str:
         """Extract industry from data or filename"""
 
         # Try metadata first
@@ -196,20 +193,18 @@ class TemplateCustomizationValidator:
         # Common industry patterns in filenames
         if "software_infrastructure" in filename.lower():
             return "software_infrastructure"
-        elif "medical_devices" in filename.lower():
+        if "medical_devices" in filename.lower():
             return "medical_devices"
-        elif "internet_retail" in filename.lower():
+        if "internet_retail" in filename.lower():
             return "internet_retail"
-        elif "semiconductors" in filename.lower():
+        if "semiconductors" in filename.lower():
             return "semiconductors"
-        elif "internet_content" in filename.lower():
+        if "internet_content" in filename.lower():
             return "internet_content_and_information"
 
         return "unknown"
 
-    def _find_generic_placeholders(
-        self, data: Any, path: str = ""
-    ) -> List[Dict[str, str]]:
+    def _find_generic_placeholders(self, data: Any, path: str = "") -> list[dict[str, str]]:
         """Recursively find generic placeholders in data structure"""
 
         issues = []
@@ -247,20 +242,14 @@ class TemplateCustomizationValidator:
                             "type": "placeholder_value",
                             "path": path,
                             "issue": f"Generic placeholder in value: {data}",
-                            "severity": (
-                                "high"
-                                if "N/A" in data or "Representative" in data
-                                else "medium"
-                            ),
+                            "severity": ("high" if "N/A" in data or "Representative" in data else "medium"),
                         }
                     )
                     break
 
         return issues
 
-    def _validate_industry_specificity(
-        self, data: Dict[str, Any], industry: str
-    ) -> Dict[str, Any]:
+    def _validate_industry_specificity(self, data: dict[str, Any], industry: str) -> dict[str, Any]:
         """Validate that content is industry-specific"""
 
         if industry not in self.industry_requirements:
@@ -297,16 +286,12 @@ class TemplateCustomizationValidator:
             "status": "validated",
             "score": specificity_score,
             "technologies_found": tech_found,
-            "technologies_missing": [
-                t for t in requirements["required_technologies"] if t not in tech_found
-            ],
+            "technologies_missing": [t for t in requirements["required_technologies"] if t not in tech_found],
             "prohibited_terms_found": prohibited_found,
             "details": f"Found {len(tech_found)}/{len(requirements['required_technologies'])} required technologies",
         }
 
-    def _validate_representative_companies(
-        self, data: Dict[str, Any], industry: str
-    ) -> Dict[str, Any]:
+    def _validate_representative_companies(self, data: dict[str, Any], industry: str) -> dict[str, Any]:
         """Validate representative companies are industry-appropriate"""
 
         # Find representative companies in data
@@ -337,20 +322,14 @@ class TemplateCustomizationValidator:
             }
 
         # Check for placeholder companies
-        placeholder_companies = [
-            c for c in companies_found if "N/A" in c or "Representative" in c
-        ]
+        placeholder_companies = [c for c in companies_found if "N/A" in c or "Representative" in c]
         real_companies = [c for c in companies_found if c not in placeholder_companies]
 
         # Check industry appropriateness
         industry_appropriate = []
         if industry in self.industry_requirements:
-            expected_companies = self.industry_requirements[industry][
-                "required_companies"
-            ]
-            industry_appropriate = [
-                c for c in real_companies if c in expected_companies
-            ]
+            expected_companies = self.industry_requirements[industry]["required_companies"]
+            industry_appropriate = [c for c in real_companies if c in expected_companies]
 
         # Calculate score
         if placeholder_companies:
@@ -372,9 +351,9 @@ class TemplateCustomizationValidator:
 
     def _calculate_customization_score(
         self,
-        placeholder_issues: List[Dict],
-        industry_specificity: Dict,
-        company_validation: Dict,
+        placeholder_issues: list[dict],
+        industry_specificity: dict,
+        company_validation: dict,
     ) -> float:
         """Calculate overall customization score"""
 
@@ -382,16 +361,10 @@ class TemplateCustomizationValidator:
         score = 1.0
 
         # Placeholder penalty
-        high_severity_issues = [
-            i for i in placeholder_issues if i.get("severity") == "high"
-        ]
-        medium_severity_issues = [
-            i for i in placeholder_issues if i.get("severity") == "medium"
-        ]
+        high_severity_issues = [i for i in placeholder_issues if i.get("severity") == "high"]
+        medium_severity_issues = [i for i in placeholder_issues if i.get("severity") == "medium"]
 
-        placeholder_penalty = (
-            len(high_severity_issues) * 0.3 + len(medium_severity_issues) * 0.1
-        )
+        placeholder_penalty = len(high_severity_issues) * 0.3 + len(medium_severity_issues) * 0.1
         score -= min(0.8, placeholder_penalty)
 
         # Industry specificity bonus/penalty
@@ -412,69 +385,54 @@ class TemplateCustomizationValidator:
 
         if score >= 0.9:
             return "A"
-        elif score >= 0.8:
+        if score >= 0.8:
             return "B"
-        elif score >= 0.7:
+        if score >= 0.7:
             return "C"
-        elif score >= 0.6:
+        if score >= 0.6:
             return "D"
-        else:
-            return "F"
+        return "F"
 
     def _generate_recommendations(
         self,
-        placeholder_issues: List[Dict],
-        industry_specificity: Dict,
-        company_validation: Dict,
+        placeholder_issues: list[dict],
+        industry_specificity: dict,
+        company_validation: dict,
         industry: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate specific recommendations for improvement"""
 
         recommendations = []
 
         # Placeholder issues
         if placeholder_issues:
-            high_severity = [
-                i for i in placeholder_issues if i.get("severity") == "high"
-            ]
+            high_severity = [i for i in placeholder_issues if i.get("severity") == "high"]
             if high_severity:
-                recommendations.append(
-                    "CRITICAL: Remove placeholder companies and generic template content"
-                )
-            recommendations.append(
-                f"Fix {len(placeholder_issues)} placeholder issues in the analysis"
-            )
+                recommendations.append("CRITICAL: Remove placeholder companies and generic template content")
+            recommendations.append(f"Fix {len(placeholder_issues)} placeholder issues in the analysis")
 
         # Industry specificity
         if industry_specificity.get("score", 0) < 0.7:
             missing_techs = industry_specificity.get("technologies_missing", [])
             if missing_techs:
-                recommendations.append(
-                    f"Add {industry}-specific technologies: {', '.join(missing_techs[:3])}"
-                )
+                recommendations.append(f"Add {industry}-specific technologies: {', '.join(missing_techs[:3])}")
 
         # Company validation
         if company_validation.get("placeholder_companies"):
-            recommendations.append(
-                "Replace placeholder companies with real industry representatives"
-            )
+            recommendations.append("Replace placeholder companies with real industry representatives")
         elif company_validation.get("score", 0) < 0.7:
-            recommendations.append(
-                f"Add more industry-appropriate companies for {industry}"
-            )
+            recommendations.append(f"Add more industry-appropriate companies for {industry}")
 
         # Generic recommendations
         if not recommendations:
-            recommendations.append(
-                f"Enhance industry-specific analysis depth for {industry}"
-            )
+            recommendations.append(f"Enhance industry-specific analysis depth for {industry}")
 
         return recommendations
 
 
 def validate_industry_analysis_customization(
     directory: str = "./data/outputs/industry_analysis",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Validate template customization across all industry analysis files"""
 
     validator = TemplateCustomizationValidator()
@@ -505,7 +463,7 @@ def validate_industry_analysis_customization(
     # Summary statistics
     total_files = len(results)
     avg_score = sum(r["customization_score"] for r in results) / max(1, total_files)
-    grade_distribution: Dict[str, int] = {}
+    grade_distribution: dict[str, int] = {}
     for result in results:
         grade = result.get("customization_grade", "F")
         grade_distribution[grade] = grade_distribution.get(grade, 0) + 1

@@ -19,14 +19,13 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +37,7 @@ class DASVPhase2Analyzer:
         self.discovery_path = Path(discovery_path)
 
         # Load discovery data
-        with open(self.discovery_path, "r") as f:
+        with open(self.discovery_path) as f:
             self.discovery_data = json.load(f)
 
         # Extract closed and active trades from discovery
@@ -57,9 +56,7 @@ class DASVPhase2Analyzer:
         self.active_positions = self.discovery_data.get("active_positions", [])
 
         # Get strategy distribution (total counts)
-        self.strategy_distribution = self.discovery_data.get(
-            "strategy_distribution", {}
-        )
+        self.strategy_distribution = self.discovery_data.get("strategy_distribution", {})
 
         # Get ticker performance (contains closed trade data)
         self.ticker_performance = self.discovery_data.get("ticker_performance", {})
@@ -84,7 +81,7 @@ class DASVPhase2Analyzer:
                 f"!= reported({self.active_trades_count})"
             )
 
-    def calculate_strategy_performance(self) -> Dict[str, Any]:
+    def calculate_strategy_performance(self) -> dict[str, Any]:
         """Calculate performance metrics by strategy using ONLY closed trades."""
         strategy_analysis = {}
 
@@ -97,9 +94,7 @@ class DASVPhase2Analyzer:
             if ticker in [pos["ticker"] for pos in self.active_positions]:
                 # This ticker has active position, adjust the count
                 total_trades = perf.get("total_trades", 0)
-                active_count = len(
-                    [p for p in self.active_positions if p["ticker"] == ticker]
-                )
+                active_count = len([p for p in self.active_positions if p["ticker"] == ticker])
                 closed_count = total_trades - active_count
 
                 if closed_count > 0:
@@ -126,9 +121,7 @@ class DASVPhase2Analyzer:
 
             # Estimate closed trades for strategy
             # This is approximate since we don't have exact closed/active breakdown by strategy
-            active_strategy_count = len(
-                [p for p in self.active_positions if p["strategy"] == strategy]
-            )
+            active_strategy_count = len([p for p in self.active_positions if p["strategy"] == strategy])
             closed_strategy_count = total_strategy_trades - active_strategy_count
 
             if closed_strategy_count < 5:
@@ -179,14 +172,12 @@ class DASVPhase2Analyzer:
                     "profit_factor": perf_metrics.get("profit_factor", 0),
                     "confidence": base_confidence,
                     "win_rate_confidence_interval": [ci_lower, ci_upper],
-                    "sample_size_quality": (
-                        "MINIMAL" if closed_strategy_count < 10 else "ADEQUATE"
-                    ),
+                    "sample_size_quality": ("MINIMAL" if closed_strategy_count < 10 else "ADEQUATE"),
                 }
 
         return strategy_analysis
 
-    def analyze_active_portfolio(self) -> Dict[str, Any]:
+    def analyze_active_portfolio(self) -> dict[str, Any]:
         """Analyze current active positions separately from performance metrics."""
         if not self.active_positions:
             return {
@@ -196,8 +187,8 @@ class DASVPhase2Analyzer:
             }
 
         # Portfolio composition
-        strategy_composition: Dict[str, int] = {}
-        ticker_concentration: Dict[str, int] = {}
+        strategy_composition: dict[str, int] = {}
+        ticker_concentration: dict[str, int] = {}
         holding_periods = []
         current_returns = []
 
@@ -229,27 +220,21 @@ class DASVPhase2Analyzer:
             "average_unrealized_return": float(np.mean(current_returns)),
             "median_unrealized_return": float(np.median(current_returns)),
             "best_performer": {
-                "ticker": max(
-                    self.active_positions, key=lambda x: x.get("current_return", 0)
-                )["ticker"],
+                "ticker": max(self.active_positions, key=lambda x: x.get("current_return", 0))["ticker"],
                 "return": max(current_returns),
             },
             "worst_performer": {
-                "ticker": min(
-                    self.active_positions, key=lambda x: x.get("current_return", 0)
-                )["ticker"],
+                "ticker": min(self.active_positions, key=lambda x: x.get("current_return", 0))["ticker"],
                 "return": min(current_returns),
             },
             "unrealized_winners": len([r for r in current_returns if r > 0]),
             "unrealized_losers": len([r for r in current_returns if r < 0]),
-            "portfolio_health": (
-                "HEALTHY" if np.mean(current_returns) > 0 else "MONITOR"
-            ),
+            "portfolio_health": ("HEALTHY" if np.mean(current_returns) > 0 else "MONITOR"),
         }
 
         return portfolio_metrics
 
-    def calculate_risk_metrics(self) -> Dict[str, Any]:
+    def calculate_risk_metrics(self) -> dict[str, Any]:
         """Calculate risk metrics using closed trade data."""
         perf_metrics = self.discovery_data.get("performance_metrics", {})
 
@@ -267,9 +252,7 @@ class DASVPhase2Analyzer:
 
         # Kelly Criterion (simplified)
         if risk_reward_ratio > 0 and win_rate > 0:
-            kelly_fraction = (
-                win_rate * risk_reward_ratio - (1 - win_rate)
-            ) / risk_reward_ratio
+            kelly_fraction = (win_rate * risk_reward_ratio - (1 - win_rate)) / risk_reward_ratio
             kelly_fraction = max(0, min(kelly_fraction, 0.25))  # Cap at 25%
         else:
             kelly_fraction = 0
@@ -292,25 +275,20 @@ class DASVPhase2Analyzer:
                 "5_losses": (1 - win_rate) ** 5,
             },
             "estimated_max_drawdown": estimated_max_drawdown,
-            "risk_assessment": self._assess_risk_level(
-                win_rate, profit_factor, risk_reward_ratio
-            ),
+            "risk_assessment": self._assess_risk_level(win_rate, profit_factor, risk_reward_ratio),
         }
 
         return risk_metrics
 
-    def _assess_risk_level(
-        self, win_rate: float, profit_factor: float, rr_ratio: float
-    ) -> str:
+    def _assess_risk_level(self, win_rate: float, profit_factor: float, rr_ratio: float) -> str:
         """Assess overall risk level based on key metrics."""
         if win_rate < 0.4 or profit_factor < 1.2:
             return "HIGH_RISK"
-        elif win_rate > 0.6 and profit_factor > 2.0 and rr_ratio > 2.0:
+        if win_rate > 0.6 and profit_factor > 2.0 and rr_ratio > 2.0:
             return "LOW_RISK"
-        else:
-            return "MODERATE_RISK"
+        return "MODERATE_RISK"
 
-    def generate_optimization_recommendations(self) -> List[Dict[str, Any]]:
+    def generate_optimization_recommendations(self) -> list[dict[str, Any]]:
         """Generate actionable optimization recommendations."""
         recommendations = []
 
@@ -387,7 +365,7 @@ class DASVPhase2Analyzer:
 
         return recommendations
 
-    def generate_phase2_output(self) -> Dict[str, Any]:
+    def generate_phase2_output(self) -> dict[str, Any]:
         """Generate comprehensive Phase 2 analysis output."""
         # Calculate all analysis components
         strategy_performance = self.calculate_strategy_performance()
@@ -415,16 +393,12 @@ class DASVPhase2Analyzer:
             },
             "strategy_performance": strategy_performance,
             "overall_performance": {
-                "closed_trades_metrics": self.discovery_data.get(
-                    "performance_metrics", {}
-                ),
+                "closed_trades_metrics": self.discovery_data.get("performance_metrics", {}),
                 "confidence_note": "Metrics calculated from closed trades only",
                 "sample_size_validation": {
                     "total_closed": self.closed_trades_count,
                     "minimum_required": 5,
-                    "quality": (
-                        "ADEQUATE" if self.closed_trades_count >= 30 else "MINIMAL"
-                    ),
+                    "quality": ("ADEQUATE" if self.closed_trades_count >= 30 else "MINIMAL"),
                 },
             },
             "active_portfolio_analysis": active_portfolio,
@@ -443,7 +417,7 @@ class DASVPhase2Analyzer:
 
         return output
 
-    def _analyze_top_performers(self) -> Dict[str, Any]:
+    def _analyze_top_performers(self) -> dict[str, Any]:
         """Analyze top performing tickers."""
         # Sort tickers by total return
         ticker_list = []
@@ -463,14 +437,10 @@ class DASVPhase2Analyzer:
         return {
             "top_winners": ticker_list[:5] if len(ticker_list) >= 5 else ticker_list,
             "top_losers": ticker_list[-5:] if len(ticker_list) >= 5 else [],
-            "most_traded": sorted(
-                ticker_list, key=lambda x: x["total_trades"], reverse=True
-            )[:5],
+            "most_traded": sorted(ticker_list, key=lambda x: x["total_trades"], reverse=True)[:5],
         }
 
-    def _get_immediate_actions(
-        self, recommendations: List[Dict[str, Any]]
-    ) -> List[str]:
+    def _get_immediate_actions(self, recommendations: list[dict[str, Any]]) -> list[str]:
         """Extract immediate actions from recommendations."""
         actions = []
         high_priority = [r for r in recommendations if r["priority"] == "HIGH"]
@@ -493,9 +463,7 @@ def find_latest_discovery_file(portfolio_name: str) -> Path:
     discovery_files = list(discovery_dir.glob(pattern))
 
     if not discovery_files:
-        raise FileNotFoundError(
-            f"No discovery files found for portfolio '{portfolio_name}' in {discovery_dir}"
-        )
+        raise FileNotFoundError(f"No discovery files found for portfolio '{portfolio_name}' in {discovery_dir}")
 
     # Return the most recent file based on modification time
     latest_file = max(discovery_files, key=lambda f: f.stat().st_mtime)
@@ -506,9 +474,7 @@ def main():
     """Main execution function."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Execute DASV Phase 2 trade history analysis"
-    )
+    parser = argparse.ArgumentParser(description="Execute DASV Phase 2 trade history analysis")
     parser.add_argument("--portfolio", required=True, help="Portfolio name (required)")
     parser.add_argument(
         "--discovery-file",
@@ -533,9 +499,7 @@ def main():
         if args.discovery_file:
             discovery_file = Path(args.discovery_file)
             if not discovery_file.exists():
-                raise FileNotFoundError(
-                    f"Specified discovery file not found: {discovery_file}"
-                )
+                raise FileNotFoundError(f"Specified discovery file not found: {discovery_file}")
         else:
             discovery_file = find_latest_discovery_file(args.portfolio)
             logger.info(f"Using latest discovery file: {discovery_file}")
@@ -574,12 +538,8 @@ def main():
             print("Portfolio: {args.portfolio}")
             print("Discovery File: {discovery_file}")
             print("Total Trades: {output['data_summary']['total_trades']}")
-            print(
-                f"Closed Trades (for metrics): {output['data_summary']['closed_trades']}"
-            )
-            print(
-                f"Active Trades (portfolio): {output['data_summary']['active_trades']}"
-            )
+            print(f"Closed Trades (for metrics): {output['data_summary']['closed_trades']}")
+            print(f"Active Trades (portfolio): {output['data_summary']['active_trades']}")
             print("\nOverall Performance:")
             perf = output["overall_performance"]["closed_trades_metrics"]
             print("  Win Rate: {perf.get('win_rate', 0):.1%}")

@@ -30,9 +30,10 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
+
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -40,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     from scripts.utils.dasv_cross_validator import DASVCrossValidator
     from scripts.utils.fed_rate_validation import FedRateValidator
-except ImportError as e:
+except ImportError:
     print("Warning: Could not import validation components: {e}")
 
 
@@ -48,15 +49,13 @@ except ImportError as e:
 class QualityAlert:
     """Data quality alert container"""
 
-    alert_type: (
-        str  # 'staleness', 'variance', 'quality_degradation', 'validation_failure'
-    )
+    alert_type: str  # 'staleness', 'variance', 'quality_degradation', 'validation_failure'
     severity: str  # 'low', 'medium', 'high', 'critical'
     message: str
-    details: Dict[str, Any]
+    details: dict[str, Any]
     timestamp: str
-    region: Optional[str] = None
-    indicator: Optional[str] = None
+    region: str | None = None
+    indicator: str | None = None
 
 
 @dataclass
@@ -70,7 +69,7 @@ class QualityMetrics:
     validation_score: float
     alerts_count: int
     critical_alerts: int
-    region: Optional[str] = None
+    region: str | None = None
 
 
 class DataQualityMonitor:
@@ -78,7 +77,7 @@ class DataQualityMonitor:
     Data quality monitoring and alerting system
     """
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: str | None = None):
         self.config = self._load_config(config_file)
         self.alerts = []
         self.metrics_history = []
@@ -111,7 +110,7 @@ class DataQualityMonitor:
             self.cross_validator = None
             self.fed_validator = None
 
-    def _load_config(self, config_file: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_file: str | None) -> dict[str, Any]:
         """Load monitoring configuration"""
         default_config = {
             "email_notifications": {
@@ -141,10 +140,10 @@ class DataQualityMonitor:
 
         if config_file and os.path.exists(config_file):
             try:
-                with open(config_file, "r") as f:
+                with open(config_file) as f:
                     user_config = json.load(f)
                 default_config.update(user_config)
-            except Exception as e:
+            except Exception:
                 print("Warning: Could not load config file {config_file}: {e}")
 
         return default_config
@@ -165,7 +164,7 @@ class DataQualityMonitor:
 
         self.logger = logging.getLogger(__name__)
 
-    def start_monitoring(self, duration_hours: Optional[int] = None):
+    def start_monitoring(self, duration_hours: int | None = None):
         """Start continuous monitoring"""
         self.logger.info("Starting data quality monitoring...")
 
@@ -237,9 +236,7 @@ class DataQualityMonitor:
 
         self.logger.info(f"Monitoring cycle complete. Found {len(cycle_alerts)} alerts")
 
-    def _check_region_quality(
-        self, region: str
-    ) -> Tuple[Optional[QualityMetrics], List[QualityAlert]]:
+    def _check_region_quality(self, region: str) -> tuple[QualityMetrics | None, list[QualityAlert]]:
         """Check quality for a specific region"""
         alerts = []
 
@@ -298,15 +295,11 @@ class DataQualityMonitor:
                 validation_score = 0.5
 
         # Check data freshness
-        freshness_score, freshness_alerts = self._check_data_freshness(
-            latest_files, region
-        )
+        freshness_score, freshness_alerts = self._check_data_freshness(latest_files, region)
         alerts.extend(freshness_alerts)
 
         # Check variance compliance
-        variance_score, variance_alerts = self._check_variance_compliance(
-            latest_files, region
-        )
+        variance_score, variance_alerts = self._check_variance_compliance(latest_files, region)
         alerts.extend(variance_alerts)
 
         # Calculate overall score
@@ -356,15 +349,15 @@ class DataQualityMonitor:
 
         return metrics, alerts
 
-    def _find_latest_files(self, region: str) -> Dict[str, Optional[Dict[str, Any]]]:
+    def _find_latest_files(self, region: str) -> dict[str, dict[str, Any] | None]:
         """Find latest files for each data source"""
         latest_files = {}
 
         base_paths = {
-            "discovery": f"data/outputs/macro_analysis/discovery",
-            "analysis": f"data/outputs/macro_analysis/analysis",
-            "synthesis": f"data/outputs/macro_analysis",
-            "validation": f"data/outputs/macro_analysis/validation",
+            "discovery": "data/outputs/macro_analysis/discovery",
+            "analysis": "data/outputs/macro_analysis/analysis",
+            "synthesis": "data/outputs/macro_analysis",
+            "validation": "data/outputs/macro_analysis/validation",
         }
 
         for source, base_path in base_paths.items():
@@ -410,8 +403,8 @@ class DataQualityMonitor:
         return latest_files
 
     def _check_data_freshness(
-        self, files: Dict[str, Optional[Dict[str, Any]]], region: str
-    ) -> Tuple[float, List[QualityAlert]]:
+        self, files: dict[str, dict[str, Any] | None], region: str
+    ) -> tuple[float, list[QualityAlert]]:
         """Check data freshness and generate staleness alerts"""
         alerts = []
         freshness_scores = []
@@ -431,7 +424,7 @@ class DataQualityMonitor:
                     QualityAlert(
                         alert_type="staleness",
                         severity="high" if age > staleness_threshold * 2 else "medium",
-                        message=f"Stale data in {source} for {region}: {age.total_seconds()/3600:.1f}h old",
+                        message=f"Stale data in {source} for {region}: {age.total_seconds() / 3600:.1f}h old",
                         details={
                             "source": source,
                             "age_hours": age.total_seconds() / 3600,
@@ -444,17 +437,15 @@ class DataQualityMonitor:
                 freshness_scores.append(0.0)
             else:
                 # Score based on how fresh the data is
-                freshness_ratio = 1.0 - (
-                    age.total_seconds() / staleness_threshold.total_seconds()
-                )
+                freshness_ratio = 1.0 - (age.total_seconds() / staleness_threshold.total_seconds())
                 freshness_scores.append(max(0.0, freshness_ratio))
 
         overall_freshness = np.mean(freshness_scores) if freshness_scores else 1.0
         return overall_freshness, alerts
 
     def _check_variance_compliance(
-        self, files: Dict[str, Optional[Dict[str, Any]]], region: str
-    ) -> Tuple[float, List[QualityAlert]]:
+        self, files: dict[str, dict[str, Any] | None], region: str
+    ) -> tuple[float, list[QualityAlert]]:
         """Check variance compliance for key indicators"""
         alerts = []
         variance_scores = []
@@ -463,7 +454,7 @@ class DataQualityMonitor:
         discovery_info = files.get("discovery")
         if discovery_info and discovery_info["file_path"].endswith(".json"):
             try:
-                with open(discovery_info["file_path"], "r") as f:
+                with open(discovery_info["file_path"]) as f:
                     discovery_data = json.load(f)
 
                 # Check for variance analysis in CLI data quality
@@ -502,7 +493,7 @@ class DataQualityMonitor:
         analysis_info = files.get("analysis")
         if analysis_info and analysis_info["file_path"].endswith(".json"):
             try:
-                with open(analysis_info["file_path"], "r") as f:
+                with open(analysis_info["file_path"]) as f:
                     analysis_data = json.load(f)
 
                 # Check analysis quality metrics
@@ -568,7 +559,7 @@ class DataQualityMonitor:
         except Exception as e:
             self.logger.warning(f"Could not check hardcoded values: {e}")
 
-    def _process_alerts(self, alerts: List[QualityAlert]):
+    def _process_alerts(self, alerts: list[QualityAlert]):
         """Process and handle alerts"""
         self.alerts.extend(alerts)
 
@@ -590,7 +581,7 @@ class DataQualityMonitor:
         # Store alerts
         self._store_alerts(alerts)
 
-    def _store_alerts(self, alerts: List[QualityAlert]):
+    def _store_alerts(self, alerts: list[QualityAlert]):
         """Store alerts to file"""
         alerts_file = self.config["storage"]["alerts_file"]
         os.makedirs(os.path.dirname(alerts_file), exist_ok=True)
@@ -599,7 +590,7 @@ class DataQualityMonitor:
         existing_alerts = []
         if os.path.exists(alerts_file):
             try:
-                with open(alerts_file, "r") as f:
+                with open(alerts_file) as f:
                     existing_alerts = json.load(f)
             except Exception as e:
                 self.logger.warning(f"Could not load existing alerts: {e}")
@@ -610,11 +601,7 @@ class DataQualityMonitor:
 
         # Keep only recent alerts (last 7 days)
         cutoff_time = datetime.now() - timedelta(days=7)
-        recent_alerts = [
-            alert
-            for alert in existing_alerts
-            if datetime.fromisoformat(alert["timestamp"]) > cutoff_time
-        ]
+        recent_alerts = [alert for alert in existing_alerts if datetime.fromisoformat(alert["timestamp"]) > cutoff_time]
 
         # Save alerts
         try:
@@ -623,7 +610,7 @@ class DataQualityMonitor:
         except Exception as e:
             self.logger.error(f"Could not save alerts: {e}")
 
-    def _store_metrics(self, metrics: List[QualityMetrics]):
+    def _store_metrics(self, metrics: list[QualityMetrics]):
         """Store quality metrics"""
         metrics_file = self.config["storage"]["metrics_file"]
         os.makedirs(os.path.dirname(metrics_file), exist_ok=True)
@@ -632,7 +619,7 @@ class DataQualityMonitor:
         existing_metrics = []
         if os.path.exists(metrics_file):
             try:
-                with open(metrics_file, "r") as f:
+                with open(metrics_file) as f:
                     existing_metrics = json.load(f)
             except Exception as e:
                 self.logger.warning(f"Could not load existing metrics: {e}")
@@ -644,9 +631,7 @@ class DataQualityMonitor:
         # Keep only recent metrics (last 30 days)
         cutoff_time = datetime.now() - timedelta(days=30)
         recent_metrics = [
-            metric
-            for metric in existing_metrics
-            if datetime.fromisoformat(metric["timestamp"]) > cutoff_time
+            metric for metric in existing_metrics if datetime.fromisoformat(metric["timestamp"]) > cutoff_time
         ]
 
         # Save metrics
@@ -656,7 +641,7 @@ class DataQualityMonitor:
         except Exception as e:
             self.logger.error(f"Could not save metrics: {e}")
 
-    def _send_email_alerts(self, alerts: List[QualityAlert]):
+    def _send_email_alerts(self, alerts: list[QualityAlert]):
         """Send email notifications for alerts"""
         if not alerts:
             return
@@ -699,9 +684,7 @@ class DataQualityMonitor:
 
             msg.attach(MIMEText(body, "plain"))
 
-            server = smtplib.SMTP(
-                email_config["smtp_server"], email_config["smtp_port"]
-            )
+            server = smtplib.SMTP(email_config["smtp_server"], email_config["smtp_port"])
             server.starttls()
 
             if email_config.get("password"):
@@ -710,14 +693,12 @@ class DataQualityMonitor:
             server.send_message(msg)
             server.quit()
 
-            self.logger.info(
-                f"Email alert sent to {len(email_config['to_emails'])} recipients"
-            )
+            self.logger.info(f"Email alert sent to {len(email_config['to_emails'])} recipients")
 
         except Exception as e:
             self.logger.error(f"Could not send email alert: {e}")
 
-    def generate_quality_report(self, days: int = 7) -> Dict[str, Any]:
+    def generate_quality_report(self, days: int = 7) -> dict[str, Any]:
         """Generate quality report for specified number of days"""
         cutoff_time = datetime.now() - timedelta(days=days)
 
@@ -730,24 +711,18 @@ class DataQualityMonitor:
 
         if os.path.exists(alerts_file):
             try:
-                with open(alerts_file, "r") as f:
+                with open(alerts_file) as f:
                     all_alerts = json.load(f)
-                alerts = [
-                    alert
-                    for alert in all_alerts
-                    if datetime.fromisoformat(alert["timestamp"]) > cutoff_time
-                ]
+                alerts = [alert for alert in all_alerts if datetime.fromisoformat(alert["timestamp"]) > cutoff_time]
             except Exception as e:
                 self.logger.warning(f"Could not load alerts for report: {e}")
 
         if os.path.exists(metrics_file):
             try:
-                with open(metrics_file, "r") as f:
+                with open(metrics_file) as f:
                     all_metrics = json.load(f)
                 metrics = [
-                    metric
-                    for metric in all_metrics
-                    if datetime.fromisoformat(metric["timestamp"]) > cutoff_time
+                    metric for metric in all_metrics if datetime.fromisoformat(metric["timestamp"]) > cutoff_time
                 ]
             except Exception as e:
                 self.logger.warning(f"Could not load metrics for report: {e}")
@@ -758,9 +733,7 @@ class DataQualityMonitor:
             "report_timestamp": datetime.now().isoformat(),
             "summary": {
                 "total_alerts": len(alerts),
-                "critical_alerts": len(
-                    [a for a in alerts if a["severity"] == "critical"]
-                ),
+                "critical_alerts": len([a for a in alerts if a["severity"] == "critical"]),
                 "high_alerts": len([a for a in alerts if a["severity"] == "high"]),
                 "quality_checks": len(metrics),
             },
@@ -791,10 +764,7 @@ class DataQualityMonitor:
                 "average_freshness_score": np.mean(freshness_scores),
                 "average_variance_score": np.mean(variance_scores),
                 "quality_trend": (
-                    "improving"
-                    if len(overall_scores) > 1
-                    and overall_scores[-1] > overall_scores[0]
-                    else "stable"
+                    "improving" if len(overall_scores) > 1 and overall_scores[-1] > overall_scores[0] else "stable"
                 ),
                 "total_measurements": len(metrics),
             }
@@ -820,17 +790,13 @@ class DataQualityMonitor:
             report["recommendations"].append("Address critical alerts immediately")
 
         if report["quality_trends"].get("average_overall_score", 1.0) < 0.85:
-            report["recommendations"].append(
-                "Overall quality below threshold - investigate data sources"
-            )
+            report["recommendations"].append("Overall quality below threshold - investigate data sources")
 
         if alert_types.get("staleness", 0) > 0:
             report["recommendations"].append("Address data staleness issues")
 
         if alert_types.get("variance", 0) > 0:
-            report["recommendations"].append(
-                "Investigate variance threshold violations"
-            )
+            report["recommendations"].append("Investigate variance threshold violations")
 
         return report
 
@@ -839,19 +805,11 @@ def main():
     """Command-line interface for data quality monitoring"""
     parser = argparse.ArgumentParser(description="Data Quality Monitoring and Alerting")
 
-    parser.add_argument(
-        "--start-monitoring", action="store_true", help="Start continuous monitoring"
-    )
-    parser.add_argument(
-        "--duration-hours", type=int, help="Monitoring duration in hours"
-    )
-    parser.add_argument(
-        "--check-quality", action="store_true", help="Run single quality check"
-    )
+    parser.add_argument("--start-monitoring", action="store_true", help="Start continuous monitoring")
+    parser.add_argument("--duration-hours", type=int, help="Monitoring duration in hours")
+    parser.add_argument("--check-quality", action="store_true", help="Run single quality check")
     parser.add_argument("--region", help="Region to check (for single check)")
-    parser.add_argument(
-        "--generate-report", action="store_true", help="Generate quality report"
-    )
+    parser.add_argument("--generate-report", action="store_true", help="Generate quality report")
     parser.add_argument("--days", type=int, default=7, help="Report period in days")
     parser.add_argument("--config", help="Configuration file path")
     parser.add_argument("--output", help="Output file for reports")

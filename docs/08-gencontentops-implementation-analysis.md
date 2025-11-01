@@ -370,10 +370,10 @@ class ChartGeneratorFactory:
 # Target architecture: Container-based services
 services:
   discovery_service:
-    image: sensylate/discovery:latest
+    image: colemorton/discovery:latest
     environment: [API_KEYS, VALIDATION_THRESHOLDS]
   analysis_service:
-    image: sensylate/analysis:latest
+    image: colemorton/analysis:latest
     depends_on: [discovery_service]
 ```
 

@@ -8,9 +8,10 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
+
 
 # Import existing utilities
 sys.path.insert(0, str(Path(__file__).parent))
@@ -34,9 +35,7 @@ class EnhancedMacroAnalyzer:
         self.discovery_data = self._load_discovery_data()
 
         # Extract metadata
-        self.region = (
-            self.discovery_data.get("metadata", {}).get("region", "US").upper()
-        )
+        self.region = self.discovery_data.get("metadata", {}).get("region", "US").upper()
         self.analysis_date = datetime.now().strftime("%Y-%m-%d")
 
         # Initialize utilities
@@ -55,23 +54,19 @@ class EnhancedMacroAnalyzer:
         self.currency_info = self.regional_loader.get_currency_info(self.region)
 
         # Extract regional indicators from discovery data
-        self.regional_indicators = self.indicator_mapper.extract_regional_indicators(
-            self.discovery_data, self.region
-        )
+        self.regional_indicators = self.indicator_mapper.extract_regional_indicators(self.discovery_data, self.region)
 
         print("Initialized enhanced analyzer for {self.region}")
         print("Central Bank: {self.central_bank_info.name}")
         print("Currency: {self.currency_info.code} ({self.currency_info.name})")
         print("Extracted {len(self.regional_indicators)} regional indicators")
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load discovery JSON data"""
-        with open(self.discovery_file, "r") as f:
+        with open(self.discovery_file) as f:
             return json.load(f)
 
-    def _get_indicator_value(
-        self, indicator_code: str, default_value: float = 0.0
-    ) -> float:
+    def _get_indicator_value(self, indicator_code: str, default_value: float = 0.0) -> float:
         """Get value for specific indicator from regional indicators"""
         for indicator in self.regional_indicators:
             if indicator.code == indicator_code:
@@ -80,9 +75,7 @@ class EnhancedMacroAnalyzer:
         # Fallback to discovery data extraction
         return self._extract_from_discovery_fallback(indicator_code, default_value)
 
-    def _extract_from_discovery_fallback(
-        self, indicator_code: str, default_value: float
-    ) -> float:
+    def _extract_from_discovery_fallback(self, indicator_code: str, default_value: float) -> float:
         """Fallback extraction from discovery data"""
         # Common extraction paths
         extraction_paths = {
@@ -129,8 +122,8 @@ class EnhancedMacroAnalyzer:
 
     def _calculate_enhanced_confidence(
         self,
-        base_factors: List[float],
-        region_specific_factors: Optional[List[float]] = None,
+        base_factors: list[float],
+        region_specific_factors: list[float] | None = None,
     ) -> float:
         """Calculate enhanced confidence with regional adjustments"""
 
@@ -147,13 +140,9 @@ class EnhancedMacroAnalyzer:
 
         # Apply regional adjustments
         if region_specific_factors:
-            valid_regional_factors = [
-                f for f in region_specific_factors if f is not None and 0 <= f <= 1
-            ]
+            valid_regional_factors = [f for f in region_specific_factors if f is not None and 0 <= f <= 1]
             if valid_regional_factors:
-                regional_adjustment = (
-                    np.mean(valid_regional_factors) - 0.5
-                )  # Center around 0
+                regional_adjustment = np.mean(valid_regional_factors) - 0.5  # Center around 0
                 base_confidence += regional_adjustment * 0.1  # Max ±10% adjustment
 
         # Apply indicator coverage adjustment
@@ -168,7 +157,7 @@ class EnhancedMacroAnalyzer:
 
         return final_confidence
 
-    def analyze_business_cycle_modeling(self) -> Dict[str, Any]:
+    def analyze_business_cycle_modeling(self) -> dict[str, Any]:
         """Enhanced business cycle analysis with regional intelligence"""
 
         # Get regional business cycle characteristics
@@ -201,22 +190,14 @@ class EnhancedMacroAnalyzer:
         )
 
         # Enhanced interest rate sensitivity with regional transmission
-        transmission_channels = self.regional_loader.get_transmission_channels(
-            self.region
-        )
-        rate_sensitivity = self._analyze_regional_rate_sensitivity(
-            policy_rate, transmission_channels
-        )
+        transmission_channels = self.regional_loader.get_transmission_channels(self.region)
+        rate_sensitivity = self._analyze_regional_rate_sensitivity(policy_rate, transmission_channels)
 
         # Regional inflation assessment
-        inflation_dynamics = self._analyze_regional_inflation_dynamics(
-            inflation_rate, policy_rate, regional_specifics
-        )
+        inflation_dynamics = self._analyze_regional_inflation_dynamics(inflation_rate, policy_rate, regional_specifics)
 
         # Enhanced GDP correlation with regional characteristics
-        gdp_correlation = self._analyze_regional_gdp_correlation(
-            gdp_growth, regional_specifics
-        )
+        gdp_correlation = self._analyze_regional_gdp_correlation(gdp_growth, regional_specifics)
 
         # Calculate enhanced confidence
         confidence_factors = [
@@ -231,9 +212,7 @@ class EnhancedMacroAnalyzer:
             self._assess_transmission_channel_reliability(transmission_channels),
         ]
 
-        confidence = self._calculate_enhanced_confidence(
-            confidence_factors, regional_factors
-        )
+        confidence = self._calculate_enhanced_confidence(confidence_factors, regional_factors)
 
         return {
             "current_phase": current_phase,
@@ -243,15 +222,9 @@ class EnhancedMacroAnalyzer:
             "inflation_hedge_assessment": inflation_dynamics,
             "gdp_growth_correlation": gdp_correlation,
             "regional_business_cycle_characteristics": {
-                "average_cycle_length": regional_specifics.get(
-                    "business_cycle_length", 84
-                ),
-                "typical_recession_duration": regional_specifics.get(
-                    "typical_recession_duration", 12
-                ),
-                "recovery_pattern": regional_specifics.get(
-                    "recovery_characteristics", "V_shaped"
-                ),
+                "average_cycle_length": regional_specifics.get("business_cycle_length", 84),
+                "typical_recession_duration": regional_specifics.get("typical_recession_duration", 12),
+                "recovery_pattern": regional_specifics.get("recovery_characteristics", "V_shaped"),
             },
             "confidence": confidence,
         }
@@ -262,7 +235,7 @@ class EnhancedMacroAnalyzer:
         unemployment_rate: float,
         yield_curve_slope: float,
         pmi_manufacturing: float,
-        regional_specifics: Dict[str, Any],
+        regional_specifics: dict[str, Any],
     ) -> float:
         """Calculate recession probability with regional characteristics"""
 
@@ -311,9 +284,7 @@ class EnhancedMacroAnalyzer:
             regional_adjustment = -0.05  # More stable region
 
         base_probability = np.mean(risk_factors)
-        adjusted_probability = max(
-            0.05, min(0.95, base_probability + regional_adjustment)
-        )
+        adjusted_probability = max(0.05, min(0.95, base_probability + regional_adjustment))
 
         return adjusted_probability
 
@@ -321,8 +292,8 @@ class EnhancedMacroAnalyzer:
         self,
         current_phase: str,
         recession_prob: float,
-        regional_specifics: Dict[str, Any],
-    ) -> Dict[str, float]:
+        regional_specifics: dict[str, Any],
+    ) -> dict[str, float]:
         """Calculate phase transitions with regional cycle characteristics"""
 
         cycle_length = regional_specifics.get("business_cycle_length", 84)
@@ -336,24 +307,24 @@ class EnhancedMacroAnalyzer:
                 "contraction_to_trough": 0.05,
                 "trough_to_expansion": round(1 - peak_prob - 0.05, 3),
             }
-        elif current_phase == "peak":
+        if current_phase == "peak":
             return {
                 "expansion_to_peak": 0.1,
                 "peak_to_contraction": round(recession_prob, 3),
                 "contraction_to_trough": 0.2,
                 "trough_to_expansion": 0.05,
             }
-        else:  # contraction or trough
-            return {
-                "expansion_to_peak": 0.05,
-                "peak_to_contraction": 0.1,
-                "contraction_to_trough": 0.5 if current_phase == "contraction" else 0.2,
-                "trough_to_expansion": 0.6 if recession_prob < 0.3 else 0.4,
-            }
+        # contraction or trough
+        return {
+            "expansion_to_peak": 0.05,
+            "peak_to_contraction": 0.1,
+            "contraction_to_trough": 0.5 if current_phase == "contraction" else 0.2,
+            "trough_to_expansion": 0.6 if recession_prob < 0.3 else 0.4,
+        }
 
     def _analyze_regional_rate_sensitivity(
-        self, policy_rate: float, transmission_channels: Dict[str, Any]
-    ) -> Dict[str, str]:
+        self, policy_rate: float, transmission_channels: dict[str, Any]
+    ) -> dict[str, str]:
         """Analyze interest rate sensitivity with regional transmission mechanisms"""
 
         monetary_policy = transmission_channels.get("monetary_policy", {})
@@ -383,8 +354,8 @@ class EnhancedMacroAnalyzer:
         self,
         inflation_rate: float,
         policy_rate: float,
-        regional_specifics: Dict[str, Any],
-    ) -> Dict[str, str]:
+        regional_specifics: dict[str, Any],
+    ) -> dict[str, str]:
         """Analyze inflation dynamics with regional characteristics"""
 
         # Get regional inflation characteristics
@@ -392,11 +363,7 @@ class EnhancedMacroAnalyzer:
 
         real_rate = policy_rate - inflation_rate
 
-        pricing_power_desc = (
-            "limited"
-            if market_structure.get("banking_system") == "bank_based"
-            else "moderate"
-        )
+        pricing_power_desc = "limited" if market_structure.get("banking_system") == "bank_based" else "moderate"
         if self.region == "US":
             pricing_power_desc = "services_sector_maintaining_pricing_flexibility"
         elif self.region == "EUROPE":
@@ -422,12 +389,11 @@ class EnhancedMacroAnalyzer:
 
         if self.region == "EUROPE":
             return "labor_market_structural_reforms_supporting_flexibility"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "supply_chain_efficiency_and_input_cost_management"
-        elif self.region == "AMERICAS":
+        if self.region == "AMERICAS":
             return "commodity_price_sensitivity_and_currency_adjustment"
-        else:
-            return "labor_cost_moderation_wage_growth_decelerating"
+        return "labor_cost_moderation_wage_growth_decelerating"
 
     def _assess_central_bank_credibility(self) -> str:
         """Assess central bank credibility and inflation targeting"""
@@ -435,16 +401,15 @@ class EnhancedMacroAnalyzer:
 
         if framework == "dual_mandate":
             return "dual_mandate_framework_balancing_employment_and_price_stability"
-        elif framework == "inflation_targeting":
+        if framework == "inflation_targeting":
             return f"{self.central_bank_info.short_name}_inflation_targeting_framework_well_established"
-        elif framework == "yield_curve_control":
+        if framework == "yield_curve_control":
             return "yield_curve_control_mechanism_supporting_low_long_term_rates"
-        else:
-            return "monetary_policy_framework_supporting_price_stability"
+        return "monetary_policy_framework_supporting_price_stability"
 
     def _analyze_regional_gdp_correlation(
-        self, gdp_growth: float, regional_specifics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, gdp_growth: float, regional_specifics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze GDP correlation with regional economic characteristics"""
 
         # Get regional business cycle characteristics
@@ -476,7 +441,7 @@ class EnhancedMacroAnalyzer:
             "historical_correlation": round(historical_correlation, 2),
             "expansion_performance": f"current_{gdp_growth}_pct_{'acceleration' if gdp_growth > 2.5 else 'deceleration' if gdp_growth < 1.5 else 'moderate_growth'}_from_trend",
             "contraction_performance": f"estimated_negative_{round(1.2 + (3.0 - gdp_growth) * 0.4, 1)}_pct_sensitivity_in_recession",
-            "leading_lagging_relationship": f"{'leading' if cycle_length > 90 else 'coincident'}_indicator_with_{round(cycle_length/12, 0)}_year_average_cycle",
+            "leading_lagging_relationship": f"{'leading' if cycle_length > 90 else 'coincident'}_indicator_with_{round(cycle_length / 12, 0)}_year_average_cycle",
             "regional_growth_characteristics": {
                 "trend_growth_rate": regional_specifics.get("trend_growth", 2.5),
                 "volatility": "high" if cycle_length < 72 else "moderate",
@@ -496,37 +461,28 @@ class EnhancedMacroAnalyzer:
 
         if self.region == "ASIA":
             return "high_external_sensitivity_via_supply_chain_integration"
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return "moderate_external_sensitivity_via_trade_and_financial_linkages"
-        elif self.region == "AMERICAS":
+        if self.region == "AMERICAS":
             return "moderate_external_sensitivity_via_commodity_prices_and_us_demand"
-        else:
-            return "low_external_sensitivity_domestic_demand_driven"
+        return "low_external_sensitivity_domestic_demand_driven"
 
-    def analyze_liquidity_cycle_positioning(self) -> Dict[str, Any]:
+    def analyze_liquidity_cycle_positioning(self) -> dict[str, Any]:
         """Enhanced liquidity cycle analysis with regional characteristics"""
 
         # Get current policy rate and determine stance
         policy_rate = self._get_indicator_value("POLICY_RATE", 4.0)
 
         # Determine policy stance with regional context
-        transmission_channels = self.regional_loader.get_transmission_channels(
-            self.region
-        )
-        policy_stance = self._determine_regional_policy_stance(
-            policy_rate, transmission_channels
-        )
+        transmission_channels = self.regional_loader.get_transmission_channels(self.region)
+        policy_stance = self._determine_regional_policy_stance(policy_rate, transmission_channels)
 
         # Enhanced credit conditions with regional banking structure
         market_structure = self.regional_loader.get_market_structure(self.region)
-        credit_conditions = self._analyze_regional_credit_conditions(
-            policy_rate, market_structure
-        )
+        credit_conditions = self._analyze_regional_credit_conditions(policy_rate, market_structure)
 
         # Regional money supply impact
-        money_supply_impact = self._analyze_regional_money_supply_impact(
-            policy_rate, market_structure
-        )
+        money_supply_impact = self._analyze_regional_money_supply_impact(policy_rate, market_structure)
 
         # Liquidity preferences with regional characteristics
         liquidity_preferences = self._analyze_regional_liquidity_preferences()
@@ -547,9 +503,7 @@ class EnhancedMacroAnalyzer:
             self._assess_banking_system_health(market_structure),
         ]
 
-        confidence = self._calculate_enhanced_confidence(
-            confidence_factors, regional_factors
-        )
+        confidence = self._calculate_enhanced_confidence(confidence_factors, regional_factors)
 
         # Use appropriate policy stance key
         policy_key = f"{self.central_bank_info.short_name.lower().replace(' ', '_')}_policy_stance"
@@ -561,20 +515,16 @@ class EnhancedMacroAnalyzer:
             "liquidity_preferences": liquidity_preferences,
             "employment_sensitivity": employment_sensitivity,
             "regional_transmission_analysis": {
-                "primary_mechanism": transmission_channels.get(
-                    "monetary_policy", {}
-                ).get("primary", "interest_rate_channel"),
+                "primary_mechanism": transmission_channels.get("monetary_policy", {}).get(
+                    "primary", "interest_rate_channel"
+                ),
                 "banking_system_type": market_structure.get("banking_system", "mixed"),
-                "policy_effectiveness": transmission_channels.get(
-                    "monetary_policy", {}
-                ).get("effectiveness", 0.8),
+                "policy_effectiveness": transmission_channels.get("monetary_policy", {}).get("effectiveness", 0.8),
             },
             "confidence": confidence,
         }
 
-    def _determine_regional_policy_stance(
-        self, policy_rate: float, transmission_channels: Dict[str, Any]
-    ) -> str:
+    def _determine_regional_policy_stance(self, policy_rate: float, transmission_channels: dict[str, Any]) -> str:
         """Determine policy stance with regional context"""
 
         # Get regional neutral rate estimates (simplified)
@@ -590,14 +540,13 @@ class EnhancedMacroAnalyzer:
 
         if policy_rate > neutral_rate + 1.5:
             return "restrictive"
-        elif policy_rate < neutral_rate - 1.0:
+        if policy_rate < neutral_rate - 1.0:
             return "accommodative"
-        else:
-            return "neutral"
+        return "neutral"
 
     def _analyze_regional_credit_conditions(
-        self, policy_rate: float, market_structure: Dict[str, Any]
-    ) -> Dict[str, str]:
+        self, policy_rate: float, market_structure: dict[str, Any]
+    ) -> dict[str, str]:
         """Analyze credit conditions with regional banking characteristics"""
 
         credit_spreads = self._get_indicator_value("CREDIT_SPREADS", 100)
@@ -606,16 +555,10 @@ class EnhancedMacroAnalyzer:
 
         # Adjust analysis based on banking system type
         if banking_system == "bank_based":
-            issuance_desc = (
-                "bank_lending_conditions"
-                if credit_spreads < 150
-                else "tightening_bank_credit"
-            )
+            issuance_desc = "bank_lending_conditions" if credit_spreads < 150 else "tightening_bank_credit"
             spread_interpretation = "manageable" if credit_spreads < 200 else "elevated"
         else:
-            issuance_desc = (
-                "adequate_access" if credit_spreads < 150 else "constrained_access"
-            )
+            issuance_desc = "adequate_access" if credit_spreads < 150 else "constrained_access"
             spread_interpretation = "manageable" if credit_spreads < 200 else "stressed"
 
         refinancing_risk = "elevated" if policy_rate > 4.0 else "moderate"
@@ -640,16 +583,15 @@ class EnhancedMacroAnalyzer:
         """Assess regional banking regulatory framework"""
         if self.region == "US":
             return "federal_reserve_supervision"
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return "ecb_banking_supervision_mechanism"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "diverse_national_regulatory_frameworks"
-        else:
-            return "national_regulatory_oversight"
+        return "national_regulatory_oversight"
 
     def _analyze_regional_money_supply_impact(
-        self, policy_rate: float, market_structure: Dict[str, Any]
-    ) -> Dict[str, str]:
+        self, policy_rate: float, market_structure: dict[str, Any]
+    ) -> dict[str, str]:
         """Analyze money supply impact with regional monetary characteristics"""
 
         # Regional M2 growth sensitivity
@@ -672,15 +614,11 @@ class EnhancedMacroAnalyzer:
         # Asset price inflation with regional characteristics
         if market_structure.get("banking_system") == "market_based":
             asset_desc = (
-                "equity_valuations_supported_by_earnings"
-                if policy_rate < 4.0
-                else "equity_valuations_under_pressure"
+                "equity_valuations_supported_by_earnings" if policy_rate < 4.0 else "equity_valuations_under_pressure"
             )
         else:
             asset_desc = (
-                "property_valuations_supported_by_fundamentals"
-                if policy_rate < 4.0
-                else "property_market_cooling"
+                "property_valuations_supported_by_fundamentals" if policy_rate < 4.0 else "property_market_cooling"
             )
 
         return {
@@ -689,26 +627,20 @@ class EnhancedMacroAnalyzer:
             "asset_price_inflation": asset_desc,
             "regional_monetary_characteristics": {
                 "dominant_asset_class": (
-                    "equities"
-                    if market_structure.get("banking_system") == "market_based"
-                    else "real_estate"
+                    "equities" if market_structure.get("banking_system") == "market_based" else "real_estate"
                 ),
-                "policy_transmission_lag": (
-                    "2_3_quarters" if self.region == "US" else "3_4_quarters"
-                ),
+                "policy_transmission_lag": ("2_3_quarters" if self.region == "US" else "3_4_quarters"),
             },
         }
 
-    def _analyze_regional_liquidity_preferences(self) -> Dict[str, str]:
+    def _analyze_regional_liquidity_preferences(self) -> dict[str, str]:
         """Analyze liquidity preferences with regional risk appetite"""
 
         vix = self._get_indicator_value("VIX", 20)
         credit_spreads = self._get_indicator_value("CREDIT_SPREADS", 100)
 
         # Calculate regional risk appetite
-        risk_appetite_score = self._calculate_regional_risk_appetite(
-            vix, credit_spreads
-        )
+        risk_appetite_score = self._calculate_regional_risk_appetite(vix, credit_spreads)
 
         risk_sentiment = "risk_on" if risk_appetite_score > 0.6 else "risk_off"
         allocation_desc = "supporting" if risk_appetite_score > 0.6 else "challenging"
@@ -722,16 +654,12 @@ class EnhancedMacroAnalyzer:
             "regional_flow_patterns": self._assess_regional_capital_flows(),
         }
 
-    def _calculate_regional_risk_appetite(
-        self, vix: float, credit_spreads: float
-    ) -> float:
+    def _calculate_regional_risk_appetite(self, vix: float, credit_spreads: float) -> float:
         """Calculate regional risk appetite score"""
 
         # Base calculation
         vix_factor = max(0, 1 - (vix / 40))  # Higher VIX = lower risk appetite
-        spread_factor = max(
-            0, 1 - (credit_spreads / 300)
-        )  # Higher spreads = lower appetite
+        spread_factor = max(0, 1 - (credit_spreads / 300))  # Higher spreads = lower appetite
 
         base_score = (vix_factor + spread_factor) / 2
 
@@ -754,14 +682,13 @@ class EnhancedMacroAnalyzer:
 
         if self.region == "EUROPE" and "green_transition" in special_features:
             return "green_transition_theme_institutional_flows_positive"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "china_growth_expectations_driving_regional_flows"
-        elif self.region == "AMERICAS":
+        if self.region == "AMERICAS":
             return "commodity_cycle_and_us_demand_linkage_flows"
-        else:
-            return "diversification_seeking_institutional_flows"
+        return "diversification_seeking_institutional_flows"
 
-    def _analyze_regional_employment_sensitivity(self) -> Dict[str, Any]:
+    def _analyze_regional_employment_sensitivity(self) -> dict[str, Any]:
         """Analyze employment sensitivity with regional labor characteristics"""
 
         unemployment_rate = self._get_indicator_value("UNEMPLOYMENT", 3.7)
@@ -789,9 +716,7 @@ class EnhancedMacroAnalyzer:
 
         # Consumer spending linkage
         employment_trend = "strength" if employment_growth > 150000 else "moderation"
-        spending_impact_desc = (
-            "supporting" if employment_growth > 150000 else "constraining"
-        )
+        spending_impact_desc = "supporting" if employment_growth > 150000 else "constraining"
         spending_growth = 2.5 + (employment_growth - 150000) / 100000 * 0.5
 
         return {
@@ -800,14 +725,10 @@ class EnhancedMacroAnalyzer:
             "initial_claims_signaling": f"{claims_status}_correlation_with_claims_{claims_signal}",
             "employment_cycle_positioning": f"{cycle_position}_cycle_with_{employment_description}",
             "consumer_spending_linkage": f"employment_{employment_trend}_{spending_impact_desc}_{round(spending_growth, 1)}_pct_consumer_spending_growth",
-            "regional_labor_characteristics": self._assess_regional_labor_characteristics(
-                regional_specifics
-            ),
+            "regional_labor_characteristics": self._assess_regional_labor_characteristics(regional_specifics),
         }
 
-    def _assess_regional_labor_characteristics(
-        self, regional_specifics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_regional_labor_characteristics(self, regional_specifics: dict[str, Any]) -> dict[str, Any]:
         """Assess regional labor market characteristics"""
 
         characteristics = {
@@ -844,16 +765,14 @@ class EnhancedMacroAnalyzer:
 
         return characteristics
 
-    def analyze_industry_dynamics_scorecard(self) -> Dict[str, Any]:
+    def analyze_industry_dynamics_scorecard(self) -> dict[str, Any]:
         """Enhanced industry/economic dynamics scorecard with regional intelligence"""
 
         gdp_growth = self._get_indicator_value("GDP", 2.1)
         policy_rate = self._get_indicator_value("POLICY_RATE", 4.0)
 
         # Regional profitability assessment
-        profitability_score = self._assess_regional_profitability(
-            gdp_growth, policy_rate
-        )
+        profitability_score = self._assess_regional_profitability(gdp_growth, policy_rate)
 
         # Regional balance sheet analysis
         balance_sheet_score = self._assess_regional_balance_sheet_strength(policy_rate)
@@ -862,9 +781,7 @@ class EnhancedMacroAnalyzer:
         competitive_advantage_score = self._assess_regional_competitive_advantages()
 
         # Regional regulatory environment
-        regulatory_assessment = self._assess_regional_regulatory_environment(
-            policy_rate
-        )
+        regulatory_assessment = self._assess_regional_regulatory_environment(policy_rate)
 
         # Calculate enhanced confidence
         confidence_factors = [
@@ -885,9 +802,7 @@ class EnhancedMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def _assess_regional_profitability(
-        self, gdp_growth: float, policy_rate: float
-    ) -> Dict[str, Any]:
+    def _assess_regional_profitability(self, gdp_growth: float, policy_rate: float) -> dict[str, Any]:
         """Assess regional profitability trends"""
 
         # Determine grade based on growth and cost environment
@@ -913,16 +828,14 @@ class EnhancedMacroAnalyzer:
             key_metrics = "corporate_margins_resilient_despite_higher_financing_costs"
             evidence = f"productivity_growth_{round(1.5 + gdp_growth * 0.3, 1)}_pct_offsetting_wage_pressures"
         elif self.region == "EUROPE":
-            key_metrics = (
-                "energy_independence_margin_expansion_and_green_transition_premium"
-            )
-            evidence = f"renewable_energy_efficiency_gains_cost_advantage_building"
+            key_metrics = "energy_independence_margin_expansion_and_green_transition_premium"
+            evidence = "renewable_energy_efficiency_gains_cost_advantage_building"
         elif self.region == "ASIA":
             key_metrics = "manufacturing_efficiency_and_supply_chain_optimization"
             evidence = f"technology_adoption_productivity_gains_{round(gdp_growth * 0.4, 1)}_pct"
         else:
             key_metrics = "resource_sector_margins_and_commodity_price_sensitivity"
-            evidence = f"commodity_price_transmission_supporting_profitability_trends"
+            evidence = "commodity_price_transmission_supporting_profitability_trends"
 
         return {
             "grade": grade,
@@ -932,7 +845,7 @@ class EnhancedMacroAnalyzer:
             "regional_drivers": self._identify_regional_profitability_drivers(),
         }
 
-    def _identify_regional_profitability_drivers(self) -> List[str]:
+    def _identify_regional_profitability_drivers(self) -> list[str]:
         """Identify key regional profitability drivers"""
 
         regional_drivers = {
@@ -963,13 +876,9 @@ class EnhancedMacroAnalyzer:
             ],
         }
 
-        return regional_drivers.get(
-            self.region, ["economic_growth", "policy_support", "structural_factors"]
-        )
+        return regional_drivers.get(self.region, ["economic_growth", "policy_support", "structural_factors"])
 
-    def _assess_regional_balance_sheet_strength(
-        self, policy_rate: float
-    ) -> Dict[str, Any]:
+    def _assess_regional_balance_sheet_strength(self, policy_rate: float) -> dict[str, Any]:
         """Assess regional balance sheet strength"""
 
         # Grade based on policy rate environment and regional characteristics
@@ -978,15 +887,9 @@ class EnhancedMacroAnalyzer:
         if policy_rate < 2.0:
             grade = "A+"
         elif policy_rate < 4.0:
-            grade = (
-                "A" if market_structure.get("banking_system") != "bank_heavy" else "B+"
-            )
+            grade = "A" if market_structure.get("banking_system") != "bank_heavy" else "B+"
         elif policy_rate < 5.0:
-            grade = (
-                "B+"
-                if market_structure.get("banking_system") == "market_based"
-                else "B"
-            )
+            grade = "B+" if market_structure.get("banking_system") == "market_based" else "B"
         else:
             grade = "B"
 
@@ -1008,7 +911,7 @@ class EnhancedMacroAnalyzer:
             "regional_balance_sheet_factors": self._assess_regional_debt_dynamics(),
         }
 
-    def _assess_regional_debt_dynamics(self) -> Dict[str, Any]:
+    def _assess_regional_debt_dynamics(self) -> dict[str, Any]:
         """Assess regional debt dynamics and sustainability"""
 
         market_structure = self.regional_loader.get_market_structure(self.region)
@@ -1019,11 +922,7 @@ class EnhancedMacroAnalyzer:
         return {
             "household_debt_levels": f"{np.mean(household_debt):.0f}pct_gdp_{'sustainable' if np.mean(household_debt) < 80 else 'elevated'}",
             "corporate_debt_levels": f"{np.mean(corporate_debt):.0f}pct_gdp_{'manageable' if np.mean(corporate_debt) < 70 else 'elevated'}",
-            "debt_servicing_capacity": (
-                "adequate"
-                if self._get_indicator_value("POLICY_RATE", 4) < 6
-                else "stressed"
-            ),
+            "debt_servicing_capacity": ("adequate" if self._get_indicator_value("POLICY_RATE", 4) < 6 else "stressed"),
             "external_financing_needs": self._assess_external_financing_requirements(),
         }
 
@@ -1032,14 +931,13 @@ class EnhancedMacroAnalyzer:
 
         if self.currency_info.is_reserve_currency:
             return "privileged_position_low_external_financing_constraints"
-        elif self.region == "AMERICAS":
+        if self.region == "AMERICAS":
             return "commodity_revenues_supporting_external_balance"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "high_savings_rates_limiting_external_dependence"
-        else:
-            return "moderate_external_financing_needs_manageable_current_account"
+        return "moderate_external_financing_needs_manageable_current_account"
 
-    def _assess_regional_competitive_advantages(self) -> Dict[str, Any]:
+    def _assess_regional_competitive_advantages(self) -> dict[str, Any]:
         """Assess regional competitive advantages"""
 
         # Regional competitive advantage assessment
@@ -1094,13 +992,9 @@ class EnhancedMacroAnalyzer:
             "GLOBAL": "coordinated_framework_for_international_economic_cooperation",
         }
 
-        return position_mapping.get(
-            self.region, "developing_competitive_position_in_specialized_sectors"
-        )
+        return position_mapping.get(self.region, "developing_competitive_position_in_specialized_sectors")
 
-    def _assess_regional_regulatory_environment(
-        self, policy_rate: float
-    ) -> Dict[str, Any]:
+    def _assess_regional_regulatory_environment(self, policy_rate: float) -> dict[str, Any]:
         """Assess regional regulatory environment"""
 
         # Regional regulatory characteristics
@@ -1119,17 +1013,11 @@ class EnhancedMacroAnalyzer:
         policy_direction = "normalization" if policy_rate > 3.0 else "support"
 
         if self.region == "EUROPE":
-            timeline_desc = (
-                "green_deal_implementation_through_2030_with_regular_updates"
-            )
+            timeline_desc = "green_deal_implementation_through_2030_with_regular_updates"
         elif self.region == "ASIA":
-            timeline_desc = (
-                "diverse_national_policy_frameworks_with_regional_coordination"
-            )
+            timeline_desc = "diverse_national_policy_frameworks_with_regional_coordination"
         else:
-            timeline_desc = (
-                f"stable_regulatory_framework_with_{cb_name}_policy_{policy_direction}"
-            )
+            timeline_desc = f"stable_regulatory_framework_with_{cb_name}_policy_{policy_direction}"
 
         return {
             "rating": rating,
@@ -1139,7 +1027,7 @@ class EnhancedMacroAnalyzer:
             "regulatory_priorities": self._identify_regulatory_priorities(),
         }
 
-    def _identify_regulatory_priorities(self) -> List[str]:
+    def _identify_regulatory_priorities(self) -> list[str]:
         """Identify key regulatory priorities for region"""
 
         priorities_mapping = {
@@ -1190,9 +1078,7 @@ class EnhancedMacroAnalyzer:
             return 0.7
 
         avg_confidence = np.mean([ind.confidence for ind in self.regional_indicators])
-        coverage = len(self.regional_indicators) / max(
-            10, len(self.regional_indicators)
-        )  # Assume 10 target indicators
+        coverage = len(self.regional_indicators) / max(10, len(self.regional_indicators))  # Assume 10 target indicators
 
         return min(1.0, (avg_confidence + coverage) / 2)
 
@@ -1201,9 +1087,7 @@ class EnhancedMacroAnalyzer:
         quality_standards = self.regional_loader.get_quality_standards(self.region)
         return quality_standards.get("min_confidence_threshold", 0.85)
 
-    def _assess_transmission_channel_reliability(
-        self, transmission_channels: Dict[str, Any]
-    ) -> float:
+    def _assess_transmission_channel_reliability(self, transmission_channels: dict[str, Any]) -> float:
         """Assess reliability of transmission channel analysis"""
         monetary_policy = transmission_channels.get("monetary_policy", {})
         effectiveness = monetary_policy.get("effectiveness", 0.8)
@@ -1217,7 +1101,7 @@ class EnhancedMacroAnalyzer:
         """Assess transmission mechanism reliability"""
         return 0.88
 
-    def _assess_banking_system_health(self, market_structure: Dict[str, Any]) -> float:
+    def _assess_banking_system_health(self, market_structure: dict[str, Any]) -> float:
         """Assess banking system health"""
         banking_system = market_structure.get("banking_system", "mixed")
         health_mapping = {
@@ -1239,7 +1123,7 @@ class EnhancedMacroAnalyzer:
         }
         return institutional_quality.get(self.region, 0.85)
 
-    def _get_regional_economic_summary(self) -> Dict[str, Any]:
+    def _get_regional_economic_summary(self) -> dict[str, Any]:
         """Get summary of regional economic characteristics"""
 
         return {
@@ -1296,7 +1180,7 @@ class EnhancedMacroAnalyzer:
     # Continue with remaining analysis methods using similar enhanced patterns...
     # For brevity, I'll implement the key remaining methods
 
-    def analyze_multi_method_valuation(self) -> Dict[str, Any]:
+    def analyze_multi_method_valuation(self) -> dict[str, Any]:
         """Enhanced multi-method valuation with regional context"""
 
         gdp_growth = self._get_indicator_value("GDP", 2.1)
@@ -1332,13 +1216,11 @@ class EnhancedMacroAnalyzer:
         # Blended regional valuation
         blended_valuation = {
             "weighted_fair_value": "probability_weighted_regional_economic_value_assessment",
-            "confidence_intervals": f"valuation_range_accounting_for_regional_volatility_and_policy_uncertainty",
+            "confidence_intervals": "valuation_range_accounting_for_regional_volatility_and_policy_uncertainty",
             "scenario_weighting": "regional_economic_and_policy_scenario_weighted_analysis",
         }
 
-        confidence = self._calculate_enhanced_confidence(
-            [0.87, 1.0 if gdp_growth > 0 else 0.7]
-        )
+        confidence = self._calculate_enhanced_confidence([0.87, 1.0 if gdp_growth > 0 else 0.7])
 
         return {
             "dcf_analysis": dcf_analysis,
@@ -1349,7 +1231,7 @@ class EnhancedMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def _get_regional_valuation_drivers(self) -> Dict[str, Any]:
+    def _get_regional_valuation_drivers(self) -> dict[str, Any]:
         """Get regional-specific valuation drivers"""
 
         return {
@@ -1364,14 +1246,13 @@ class EnhancedMacroAnalyzer:
 
         if self.region == "AMERICAS":
             return "us_economic_performance_and_commodity_price_cycles"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "china_growth_expectations_and_global_supply_chain_dynamics"
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return "ecb_policy_coordination_and_energy_transition_investments"
-        else:
-            return "global_risk_appetite_and_cross_border_capital_flows"
+        return "global_risk_appetite_and_cross_border_capital_flows"
 
-    def analyze_quantified_risk_assessment(self) -> Dict[str, Any]:
+    def analyze_quantified_risk_assessment(self) -> dict[str, Any]:
         """Enhanced risk assessment with regional factors"""
 
         # Build regional risk matrix
@@ -1400,9 +1281,7 @@ class EnhancedMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def _build_enhanced_risk_matrix(
-        self, regional_risks: Dict[str, List[Dict[str, Any]]]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _build_enhanced_risk_matrix(self, regional_risks: dict[str, list[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
         """Build enhanced risk matrix with regional factors"""
 
         risk_matrix = {}
@@ -1435,7 +1314,7 @@ class EnhancedMacroAnalyzer:
 
         return risk_matrix
 
-    def _conduct_regional_stress_testing(self) -> Dict[str, Dict[str, str]]:
+    def _conduct_regional_stress_testing(self) -> dict[str, dict[str, str]]:
         """Conduct regional stress testing scenarios"""
 
         gdp_growth = self._get_indicator_value("GDP", 2.1)
@@ -1450,7 +1329,7 @@ class EnhancedMacroAnalyzer:
             "policy_error_scenario": {
                 "probability": "25",
                 "impact": f"{self.central_bank_info.short_name}_policy_overcorrection_risks",
-                "transmission": f"regional_policy_transmission_mechanism_strain",
+                "transmission": "regional_policy_transmission_mechanism_strain",
             },
             "external_shock_scenario": {
                 "probability": "20",
@@ -1470,9 +1349,7 @@ class EnhancedMacroAnalyzer:
             "GLOBAL": "synchronized_recession_and_financial_system_stress",
         }
 
-        return external_risks.get(
-            self.region, "external_demand_shock_and_capital_flow_reversal"
-        )
+        return external_risks.get(self.region, "external_demand_shock_and_capital_flow_reversal")
 
     def _assess_regional_shock_resilience(self) -> str:
         """Assess regional resilience to external shocks"""
@@ -1485,11 +1362,9 @@ class EnhancedMacroAnalyzer:
             "GLOBAL": "multilateral_coordination_mechanisms_and_policy_tool_availability",
         }
 
-        return resilience_factors.get(
-            self.region, "moderate_resilience_with_policy_support_capacity"
-        )
+        return resilience_factors.get(self.region, "moderate_resilience_with_policy_support_capacity")
 
-    def _conduct_regional_sensitivity_analysis(self) -> Dict[str, Any]:
+    def _conduct_regional_sensitivity_analysis(self) -> dict[str, Any]:
         """Conduct regional sensitivity analysis"""
 
         key_variables = self._identify_regional_sensitivity_variables()
@@ -1502,7 +1377,7 @@ class EnhancedMacroAnalyzer:
             "regional_sensitivity_factors": self._get_regional_sensitivity_profile(),
         }
 
-    def _identify_regional_sensitivity_variables(self) -> List[str]:
+    def _identify_regional_sensitivity_variables(self) -> list[str]:
         """Identify key sensitivity variables for region"""
 
         sensitivity_variables = {
@@ -1548,21 +1423,17 @@ class EnhancedMacroAnalyzer:
             ],
         )
 
-    def _get_regional_sensitivity_profile(self) -> Dict[str, str]:
+    def _get_regional_sensitivity_profile(self) -> dict[str, str]:
         """Get regional sensitivity profile"""
 
         return {
             "primary_sensitivity": self._identify_regional_sensitivity_variables()[0],
-            "sensitivity_level": (
-                "high" if self.region in ["AMERICAS", "ASIA"] else "moderate"
-            ),
+            "sensitivity_level": ("high" if self.region in ["AMERICAS", "ASIA"] else "moderate"),
             "transmission_speed": "fast" if self.region == "US" else "moderate",
-            "policy_response_capacity": (
-                "high" if self.region in ["US", "EUROPE"] else "moderate"
-            ),
+            "policy_response_capacity": ("high" if self.region in ["US", "EUROPE"] else "moderate"),
         }
 
-    def _get_regional_risk_profile(self) -> Dict[str, Any]:
+    def _get_regional_risk_profile(self) -> dict[str, Any]:
         """Get comprehensive regional risk profile"""
 
         return {
@@ -1583,19 +1454,16 @@ class EnhancedMacroAnalyzer:
             "GLOBAL": "synchronized_recession_and_policy_coordination_failure",
         }
 
-        return dominant_risks.get(
-            self.region, "economic_cycle_and_policy_coordination_risks"
-        )
+        return dominant_risks.get(self.region, "economic_cycle_and_policy_coordination_risks")
 
     def _assess_risk_concentration(self) -> str:
         """Assess risk concentration level"""
 
         if self.region in ["AMERICAS", "ASIA"]:
             return "high_concentration_in_external_factors"
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return "moderate_concentration_with_diversified_risk_sources"
-        else:
-            return "balanced_risk_distribution_across_factors"
+        return "balanced_risk_distribution_across_factors"
 
     def _assess_risk_mitigation_capacity(self) -> str:
         """Assess risk mitigation capacity"""
@@ -1613,7 +1481,7 @@ class EnhancedMacroAnalyzer:
             "moderate_policy_response_capacity_and_institutional_frameworks",
         )
 
-    def _get_regional_monitoring_priorities(self) -> List[str]:
+    def _get_regional_monitoring_priorities(self) -> list[str]:
         """Get regional monitoring priorities"""
 
         monitoring_priorities = {
@@ -1652,7 +1520,7 @@ class EnhancedMacroAnalyzer:
     # Additional analysis methods would follow similar patterns...
     # For brevity, I'll complete with the main analyze method
 
-    def analyze(self) -> Dict[str, Any]:
+    def analyze(self) -> dict[str, Any]:
         """Main enhanced analysis method with regional intelligence integration"""
 
         print("Executing enhanced macro-economic analysis for {self.region}...")
@@ -1712,14 +1580,10 @@ class EnhancedMacroAnalyzer:
             }
 
         # Add enhanced analysis quality metrics
-        analysis_output[
-            "analysis_quality_metrics"
-        ] = self._calculate_enhanced_quality_metrics(analysis_output)
+        analysis_output["analysis_quality_metrics"] = self._calculate_enhanced_quality_metrics(analysis_output)
 
         # Enhanced CLI service attribution
-        analysis_output[
-            "cli_service_attribution"
-        ] = self._get_enhanced_cli_service_attribution()
+        analysis_output["cli_service_attribution"] = self._get_enhanced_cli_service_attribution()
 
         return analysis_output
 
@@ -1741,9 +1605,7 @@ class EnhancedMacroAnalyzer:
 
         return round(final_score, 3)
 
-    def _calculate_enhanced_quality_metrics(
-        self, analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_enhanced_quality_metrics(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Calculate enhanced quality metrics with regional intelligence"""
 
         # Collect all confidence scores
@@ -1759,20 +1621,16 @@ class EnhancedMacroAnalyzer:
 
         return {
             "gap_coverage": 1.0,  # Enhanced coverage
-            "confidence_propagation": round(
-                np.mean(confidence_scores) if confidence_scores else 0.90, 3
-            ),
+            "confidence_propagation": round(np.mean(confidence_scores) if confidence_scores else 0.90, 3),
             "analytical_rigor": round(0.92 + np.random.normal(0, 0.03), 3),
             "evidence_strength": round(0.90 + np.random.normal(0, 0.03), 3),
             "regional_specificity": regional_intelligence_score,
             "data_driven_score": round(indicator_quality, 3),
             "regional_intelligence_integration": 0.95,
-            "currency_analysis_depth": (
-                0.90 if self.currency_info.code != "MULTI" else 0.75
-            ),
+            "currency_analysis_depth": (0.90 if self.currency_info.code != "MULTI" else 0.75),
         }
 
-    def _get_enhanced_cli_service_attribution(self) -> Dict[str, Any]:
+    def _get_enhanced_cli_service_attribution(self) -> dict[str, Any]:
         """Get enhanced CLI service attribution"""
 
         # Get data sources from regional config
@@ -1787,8 +1645,7 @@ class EnhancedMacroAnalyzer:
             "data_quality_score": 0.95,
             "service_health": "all_operational",
             "regional_data_sources": data_sources,
-            "indicator_extraction_success_rate": len(self.regional_indicators)
-            / 10,  # Assume 10 target indicators
+            "indicator_extraction_success_rate": len(self.regional_indicators) / 10,  # Assume 10 target indicators
             "last_updated": self.analysis_date,
         }
 
@@ -1796,9 +1653,7 @@ class EnhancedMacroAnalyzer:
 def main():
     """Main execution function for enhanced analyzer"""
     if len(sys.argv) < 2:
-        print(
-            "Usage: macro_analyze_enhanced.py <discovery_file> [confidence_threshold]"
-        )
+        print("Usage: macro_analyze_enhanced.py <discovery_file> [confidence_threshold]")
         sys.exit(1)
 
     discovery_file = sys.argv[1]
@@ -1841,11 +1696,9 @@ def main():
         print("- Indicators Extracted: {ri_summary['indicators_extracted']}")
         print("- Regional Specificity: {ri_summary['regional_specificity_score']:.3f}")
         print("- Overall Confidence: {quality_metrics['confidence_propagation']:.3f}")
-        print(
-            f"- Regional Intelligence Integration: {quality_metrics['regional_intelligence_integration']:.3f}"
-        )
+        print(f"- Regional Intelligence Integration: {quality_metrics['regional_intelligence_integration']:.3f}")
 
-    except Exception as e:
+    except Exception:
         print("Error in enhanced analysis: {e}")
         import traceback
 

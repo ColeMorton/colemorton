@@ -13,9 +13,10 @@ Command-line interface for Yahoo Finance data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -28,9 +29,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
     """CLI for Yahoo Finance service"""
 
     def __init__(self):
-        super().__init__(
-            service_name="yahoo_finance", description="Yahoo Finance data service CLI"
-        )
+        super().__init__(service_name="yahoo_finance", description="Yahoo Finance data service CLI")
         self.service = None
         self._add_service_commands()
 
@@ -70,9 +69,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
             ),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
-            summary: bool = typer.Option(
-                False, "--summary", help="Return summary instead of full data"
-            ),
+            summary: bool = typer.Option(False, "--summary", help="Return summary instead of full data"),
         ):
             """Get historical price data - defaults to comprehensive collection (max daily only)"""
             try:
@@ -80,17 +77,13 @@ class YahooFinanceCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 if summary:
-                    result = service.get_market_data_summary(
-                        ticker, period if period != "comprehensive" else "max"
-                    )
+                    result = service.get_market_data_summary(ticker, period if period != "comprehensive" else "max")
                     title = f"Market Summary: {ticker} ({period})"
                 elif period == "comprehensive":
                     # Trigger comprehensive collection: daily (max) only - weekly disabled by default
                     print("🔄 Initiating comprehensive data collection for {ticker}")
                     print("   - Daily data: Maximum available history")
-                    print(
-                        "   - Weekly data: Disabled by default (use explicit weekly command if needed)"
-                    )
+                    print("   - Weekly data: Disabled by default (use explicit weekly command if needed)")
 
                     # Fetch daily data (max) - this will trigger comprehensive collection
                     daily_result = service.get_historical_data(ticker, "max")
@@ -128,9 +121,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_financial_statements(ticker)
-                self._output_result(
-                    result, output_format, f"Financial Statements: {ticker}"
-                )
+                self._output_result(result, output_format, f"Financial Statements: {ticker}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get financials for {ticker}")
@@ -172,9 +163,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
                     },
                 }
 
-                self._output_result(
-                    analysis, output_format, f"Stock Analysis: {ticker}"
-                )
+                self._output_result(analysis, output_format, f"Stock Analysis: {ticker}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to analyze {ticker}")
@@ -200,9 +189,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
 
                 status = {
                     "ticker": ticker,
-                    "collection_enabled": service_info.get(
-                        "historical_storage", {}
-                    ).get("enabled", False),
+                    "collection_enabled": service_info.get("historical_storage", {}).get("enabled", False),
                     "files_exist": base_path.exists(),
                     "data_types": [],
                     "file_counts": {},
@@ -241,9 +228,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
                                         "total_dates": len(dates),
                                     }
 
-                self._output_result(
-                    status, output_format, f"Collection Status: {ticker}"
-                )
+                self._output_result(status, output_format, f"Collection Status: {ticker}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get collection status for {ticker}")
@@ -278,7 +263,7 @@ class YahooFinanceCLI(BaseFinancialCLI):
 
                     except Exception as e:
                         # Add error row
-                        row = {field: "ERROR" for field in field_list}
+                        row = dict.fromkeys(field_list, "ERROR")
                         row["symbol"] = ticker
                         row["error"] = str(e)
                         results.append(row)
@@ -288,33 +273,32 @@ class YahooFinanceCLI(BaseFinancialCLI):
             except Exception as e:
                 self._handle_error(e, "Batch quote operation failed")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Yahoo Finance service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

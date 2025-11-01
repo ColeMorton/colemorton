@@ -192,22 +192,22 @@ strict_equality = True
 
 **Custom Exception Hierarchy:**
 ```python
-class SensylateError(Exception):
-    """Base exception for Sensylate-specific errors."""
+class ColemortonError(Exception):
+    """Base exception for Colemorton-specific errors."""
 
     def __init__(self, message: str, context: Optional[Dict[str, Any]] = None):
         super().__init__(message)
         self.context = context or {}
 
-class ValidationError(SensylateError):
+class ValidationError(ColemortonError):
     """Schema validation errors with detailed feedback."""
     pass
 
-class DataProviderError(SensylateError):
+class DataProviderError(ColemortonError):
     """Data provider service errors."""
     pass
 
-class AnalysisError(SensylateError):
+class AnalysisError(ColemortonError):
     """Analysis computation errors."""
     pass
 ```

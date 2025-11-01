@@ -9,7 +9,7 @@ and JavaScript frontend.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class JSONSchemaGenerator:
@@ -30,15 +30,11 @@ class JSONSchemaGenerator:
         """Generate all JSON schemas for chart types and data structures."""
         # Data structure schemas
         self.schemas["MonthlyPerformance"] = self._generate_monthly_performance_schema()
-        self.schemas[
-            "QualityDistribution"
-        ] = self._generate_quality_distribution_schema()
+        self.schemas["QualityDistribution"] = self._generate_quality_distribution_schema()
         self.schemas["TradeData"] = self._generate_trade_data_schema()
 
         # Chart configuration schemas
-        self.schemas[
-            "EnhancedMonthlyBars"
-        ] = self._generate_monthly_bars_config_schema()
+        self.schemas["EnhancedMonthlyBars"] = self._generate_monthly_bars_config_schema()
         self.schemas["EnhancedDonutChart"] = self._generate_donut_chart_config_schema()
         self.schemas["WaterfallChart"] = self._generate_waterfall_chart_config_schema()
         self.schemas["EnhancedScatter"] = self._generate_scatter_chart_config_schema()
@@ -48,7 +44,7 @@ class JSONSchemaGenerator:
         self.schemas["ThemeConfiguration"] = self._generate_theme_config_schema()
         self.schemas["ExportConfiguration"] = self._generate_export_config_schema()
 
-    def _generate_monthly_performance_schema(self) -> Dict[str, Any]:
+    def _generate_monthly_performance_schema(self) -> dict[str, Any]:
         """Generate schema for MonthlyPerformance data structure."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -92,7 +88,7 @@ class JSONSchemaGenerator:
             "additionalProperties": False,
         }
 
-    def _generate_quality_distribution_schema(self) -> Dict[str, Any]:
+    def _generate_quality_distribution_schema(self) -> dict[str, Any]:
         """Generate schema for QualityDistribution data structure."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -130,7 +126,7 @@ class JSONSchemaGenerator:
             "additionalProperties": False,
         }
 
-    def _generate_trade_data_schema(self) -> Dict[str, Any]:
+    def _generate_trade_data_schema(self) -> dict[str, Any]:
         """Generate schema for TradeData structure."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -189,7 +185,7 @@ class JSONSchemaGenerator:
             "additionalProperties": False,
         }
 
-    def _generate_monthly_bars_config_schema(self) -> Dict[str, Any]:
+    def _generate_monthly_bars_config_schema(self) -> dict[str, Any]:
         """Generate schema for enhanced monthly bars chart configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -249,7 +245,7 @@ class JSONSchemaGenerator:
             },
         }
 
-    def _generate_donut_chart_config_schema(self) -> Dict[str, Any]:
+    def _generate_donut_chart_config_schema(self) -> dict[str, Any]:
         """Generate schema for enhanced donut chart configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -308,7 +304,7 @@ class JSONSchemaGenerator:
             },
         }
 
-    def _generate_waterfall_chart_config_schema(self) -> Dict[str, Any]:
+    def _generate_waterfall_chart_config_schema(self) -> dict[str, Any]:
         """Generate schema for waterfall chart configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -370,7 +366,7 @@ class JSONSchemaGenerator:
             },
         }
 
-    def _generate_scatter_chart_config_schema(self) -> Dict[str, Any]:
+    def _generate_scatter_chart_config_schema(self) -> dict[str, Any]:
         """Generate schema for enhanced scatter chart configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -446,7 +442,7 @@ class JSONSchemaGenerator:
             },
         }
 
-    def _generate_dashboard_layout_schema(self) -> Dict[str, Any]:
+    def _generate_dashboard_layout_schema(self) -> dict[str, Any]:
         """Generate schema for dashboard layout configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -539,7 +535,7 @@ class JSONSchemaGenerator:
             "required": ["layout_type", "grid"],
         }
 
-    def _generate_theme_config_schema(self) -> Dict[str, Any]:
+    def _generate_theme_config_schema(self) -> dict[str, Any]:
         """Generate schema for theme configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -555,10 +551,10 @@ class JSONSchemaGenerator:
                 "template": {
                     "type": "string",
                     "enum": [
-                        "sensylate_light",
-                        "sensylate_dark",
-                        "sensylate_light_hd",
-                        "sensylate_dark_hd",
+                        "colemorton_light",
+                        "colemorton_dark",
+                        "colemorton_light_hd",
+                        "colemorton_dark_hd",
                         "sensylate_dashboard",
                     ],
                     "description": "Plotly template name",
@@ -616,7 +612,7 @@ class JSONSchemaGenerator:
             "required": ["mode"],
         }
 
-    def _generate_export_config_schema(self) -> Dict[str, Any]:
+    def _generate_export_config_schema(self) -> dict[str, Any]:
         """Generate schema for export configuration."""
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -667,15 +663,15 @@ class JSONSchemaGenerator:
             },
         }
 
-    def _get_theme_config_def(self) -> Dict[str, Any]:
+    def _get_theme_config_def(self) -> dict[str, Any]:
         """Get theme configuration definition for schema references."""
         return self.schemas.get("ThemeConfiguration", {})
 
-    def _get_export_config_def(self) -> Dict[str, Any]:
+    def _get_export_config_def(self) -> dict[str, Any]:
         """Get export configuration definition for schema references."""
         return self.schemas.get("ExportConfiguration", {})
 
-    def get_schema(self, schema_name: str) -> Dict[str, Any]:
+    def get_schema(self, schema_name: str) -> dict[str, Any]:
         """
         Get a specific schema by name.
 
@@ -687,7 +683,7 @@ class JSONSchemaGenerator:
         """
         return self.schemas.get(schema_name, {})
 
-    def get_all_schemas(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_schemas(self) -> dict[str, dict[str, Any]]:
         """
         Get all generated schemas.
 
@@ -696,9 +692,7 @@ class JSONSchemaGenerator:
         """
         return self.schemas.copy()
 
-    def export_schemas(
-        self, output_dir: str = "data/outputs/schemas"
-    ) -> Dict[str, str]:
+    def export_schemas(self, output_dir: str = "data/outputs/schemas") -> dict[str, str]:
         """
         Export all schemas to JSON files.
 
@@ -724,9 +718,7 @@ class JSONSchemaGenerator:
 
         return exported_files
 
-    def validate_chart_config(
-        self, config: Dict[str, Any], chart_type: str
-    ) -> tuple[bool, List[str]]:
+    def validate_chart_config(self, config: dict[str, Any], chart_type: str) -> tuple[bool, list[str]]:
         """
         Validate a chart configuration against its schema.
 
@@ -754,7 +746,7 @@ class JSONSchemaGenerator:
         except Exception as e:
             return False, [f"Validation error: {str(e)}"]
 
-    def generate_example_configs(self) -> Dict[str, Dict[str, Any]]:
+    def generate_example_configs(self) -> dict[str, dict[str, Any]]:
         """
         Generate example configurations for all chart types.
 

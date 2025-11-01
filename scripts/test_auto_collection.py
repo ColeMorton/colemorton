@@ -9,8 +9,8 @@ historical data collection (365 days daily + 5 years weekly) as required.
 import json
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -51,13 +51,11 @@ def test_auto_collection_on_api_calls():
         print("   📁 Files found: {files_created}")
 
         if files_created > 0:
-            print(
-                "   🎉 AUTO-COLLECTION SUCCESS: Comprehensive data collection was triggered!"
-            )
+            print("   🎉 AUTO-COLLECTION SUCCESS: Comprehensive data collection was triggered!")
         else:
             print("   ⚠️  No comprehensive files created yet (may still be processing)")
 
-    except Exception as e:
+    except Exception:
         print("   ❌ Yahoo Finance test failed: {e}")
 
     # Test 2: Historical data call
@@ -75,13 +73,11 @@ def test_auto_collection_on_api_calls():
         print("   📁 Files found: {files_created}")
 
         if files_created > 0:
-            print(
-                "   🎉 AUTO-COLLECTION SUCCESS: Historical call triggered comprehensive collection!"
-            )
+            print("   🎉 AUTO-COLLECTION SUCCESS: Historical call triggered comprehensive collection!")
         else:
             print("   ⚠️  No comprehensive files created yet (may still be processing)")
 
-    except Exception as e:
+    except Exception:
         print("   ❌ Historical data test failed: {e}")
 
     return True
@@ -132,7 +128,7 @@ def test_caching_behavior():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("   ❌ Caching test failed: {e}")
         return False
 
@@ -197,7 +193,7 @@ def test_collection_throttling():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("   ❌ Throttling test failed: {e}")
         return False
 
@@ -217,7 +213,7 @@ def show_final_summary():
     metadata_file = data_path / "metadata.json"
     if metadata_file.exists():
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata = json.load(f)
 
             print("📈 Total files created: {metadata.get('total_files', 0)}")
@@ -235,7 +231,7 @@ def show_final_summary():
                 print("   First date: {symbol_data.get('first_date', 'N/A')}")
                 print("   Last date: {symbol_data.get('last_date', 'N/A')}")
 
-        except Exception as e:
+        except Exception:
             print("⚠️  Failed to read metadata: {e}")
 
     # Count all files
@@ -257,9 +253,7 @@ def show_final_summary():
             if weekly_files:
                 print("   ✅ Weekly data (5 years): CREATED")
         else:
-            print(
-                "\n⚠️  No daily/weekly files found - collection may still be in progress"
-            )
+            print("\n⚠️  No daily/weekly files found - collection may still be in progress")
 
 
 def run_all_tests():
@@ -279,7 +273,7 @@ def run_all_tests():
     try:
         result = test_auto_collection_on_api_calls()
         test_results.append(("Auto-Collection on API Calls", result))
-    except Exception as e:
+    except Exception:
         print("❌ Auto-collection test failed: {e}")
         test_results.append(("Auto-Collection on API Calls", False))
 
@@ -287,7 +281,7 @@ def run_all_tests():
     try:
         result = test_caching_behavior()
         test_results.append(("Caching + Auto-Collection", result))
-    except Exception as e:
+    except Exception:
         print("❌ Caching test failed: {e}")
         test_results.append(("Caching + Auto-Collection", False))
 
@@ -295,7 +289,7 @@ def run_all_tests():
     try:
         result = test_collection_throttling()
         test_results.append(("Collection Throttling", result))
-    except Exception as e:
+    except Exception:
         print("❌ Throttling test failed: {e}")
         test_results.append(("Collection Throttling", False))
 

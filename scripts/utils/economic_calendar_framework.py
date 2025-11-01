@@ -12,15 +12,13 @@ Advanced forward-looking economic calendar with policy impact modeling:
 Provides institutional-grade economic calendar intelligence for macro-economic analysis.
 """
 
-import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
-from scipy import stats
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -36,7 +34,7 @@ class PolicyEvent:
     probability_score: float  # Probability of policy change (0-1)
     market_impact_score: float  # Expected market impact (0-1)
     policy_direction: str  # 'tightening', 'easing', 'neutral', 'data_dependent'
-    confidence_interval: Tuple[float, float]  # (lower, upper) bounds
+    confidence_interval: tuple[float, float]  # (lower, upper) bounds
 
 
 @dataclass
@@ -46,9 +44,9 @@ class DataRelease:
     release_date: str
     indicator_name: str
     indicator_importance: str  # 'tier_1', 'tier_2', 'tier_3'
-    expected_value: Optional[float]
-    previous_value: Optional[float]
-    market_consensus: Optional[float]
+    expected_value: float | None
+    previous_value: float | None
+    market_consensus: float | None
     surprise_potential: float  # Probability of significant surprise
     policy_relevance_score: float  # Relevance to central bank policy
 
@@ -62,7 +60,7 @@ class ForwardGuidance:
     guidance_tone: str  # 'hawkish', 'dovish', 'neutral', 'data_dependent'
     policy_shift_probability: float
     time_horizon: str  # '3m', '6m', '12m'
-    key_phrases: List[str]
+    key_phrases: list[str]
     market_interpretation: str
 
 
@@ -224,10 +222,10 @@ class EconomicCalendarEngine:
 
     def generate_forward_economic_calendar(
         self,
-        discovery_data: Dict[str, Any],
-        analysis_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
+        analysis_data: dict[str, Any],
         forecast_horizon_months: int = 12,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate comprehensive forward-looking economic calendar with policy impact modeling
 
@@ -241,34 +239,22 @@ class EconomicCalendarEngine:
         """
         try:
             # Generate policy meeting calendar with probability modeling
-            policy_calendar = self._generate_policy_meeting_calendar(
-                discovery_data, forecast_horizon_months
-            )
+            policy_calendar = self._generate_policy_meeting_calendar(discovery_data, forecast_horizon_months)
 
             # Generate economic data release calendar
-            data_release_calendar = self._generate_data_release_calendar(
-                discovery_data, forecast_horizon_months
-            )
+            data_release_calendar = self._generate_data_release_calendar(discovery_data, forecast_horizon_months)
 
             # Analyze policy transmission timing
-            transmission_analysis = self._analyze_policy_transmission_timing(
-                discovery_data, analysis_data
-            )
+            transmission_analysis = self._analyze_policy_transmission_timing(discovery_data, analysis_data)
 
             # Generate forward guidance analysis
-            forward_guidance = self._analyze_forward_guidance(
-                discovery_data, analysis_data
-            )
+            forward_guidance = self._analyze_forward_guidance(discovery_data, analysis_data)
 
             # Cross-regional policy coordination analysis
-            coordination_analysis = self._analyze_cross_regional_coordination(
-                discovery_data, analysis_data
-            )
+            coordination_analysis = self._analyze_cross_regional_coordination(discovery_data, analysis_data)
 
             # Policy shift probability modeling
-            policy_shift_analysis = self._model_policy_shift_probabilities(
-                discovery_data, analysis_data
-            )
+            policy_shift_analysis = self._model_policy_shift_probabilities(discovery_data, analysis_data)
 
             # Generate integrated calendar insights
             calendar_insights = self._generate_calendar_insights(
@@ -286,12 +272,8 @@ class EconomicCalendarEngine:
                     "integrated_calendar_insights": calendar_insights,
                 },
                 "forecast_horizon": f"{forecast_horizon_months}_months",
-                "calendar_confidence": self._calculate_calendar_confidence(
-                    policy_calendar, data_release_calendar
-                ),
-                "next_critical_events": self._identify_next_critical_events(
-                    policy_calendar, data_release_calendar
-                ),
+                "calendar_confidence": self._calculate_calendar_confidence(policy_calendar, data_release_calendar),
+                "next_critical_events": self._identify_next_critical_events(policy_calendar, data_release_calendar),
                 "analysis_timestamp": datetime.now().isoformat(),
                 "model_version": "1.0",
             }
@@ -304,8 +286,8 @@ class EconomicCalendarEngine:
             }
 
     def _generate_policy_meeting_calendar(
-        self, discovery_data: Dict[str, Any], forecast_horizon_months: int
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], forecast_horizon_months: int
+    ) -> dict[str, Any]:
         """Generate policy meeting calendar with probability modeling"""
 
         try:
@@ -326,14 +308,10 @@ class EconomicCalendarEngine:
 
             for meeting_date in meeting_dates[:forecast_horizon_months]:
                 # Model probability of policy change
-                change_probability = self._calculate_policy_change_probability(
-                    economic_context, meeting_date
-                )
+                change_probability = self._calculate_policy_change_probability(economic_context, meeting_date)
 
                 # Determine policy direction
-                policy_direction = self._determine_policy_direction(
-                    economic_context, change_probability
-                )
+                policy_direction = self._determine_policy_direction(economic_context, change_probability)
 
                 # Calculate market impact
                 market_impact = self._calculate_meeting_market_impact(
@@ -347,9 +325,7 @@ class EconomicCalendarEngine:
                     probability_score=float(change_probability),
                     market_impact_score=float(market_impact),
                     policy_direction=policy_direction,
-                    confidence_interval=self._calculate_probability_confidence_interval(
-                        change_probability
-                    ),
+                    confidence_interval=self._calculate_probability_confidence_interval(change_probability),
                 )
 
                 policy_events.append(
@@ -370,12 +346,8 @@ class EconomicCalendarEngine:
                 "current_rate": current_rate,
                 "policy_events": policy_events,
                 "total_meetings": len(policy_events),
-                "high_probability_changes": len(
-                    [e for e in policy_events if e["change_probability"] > 0.7]
-                ),
-                "policy_path_scenario": self._generate_policy_path_scenario(
-                    policy_events, economic_context
-                ),
+                "high_probability_changes": len([e for e in policy_events if e["change_probability"] > 0.7]),
+                "policy_path_scenario": self._generate_policy_path_scenario(policy_events, economic_context),
             }
 
         except Exception as e:
@@ -386,8 +358,8 @@ class EconomicCalendarEngine:
             }
 
     def _generate_data_release_calendar(
-        self, discovery_data: Dict[str, Any], forecast_horizon_months: int
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], forecast_horizon_months: int
+    ) -> dict[str, Any]:
         """Generate economic data release calendar with impact scoring"""
 
         try:
@@ -404,13 +376,9 @@ class EconomicCalendarEngine:
                     release_date = future_month.replace(day=min(data_info["day"], 28))
 
                     # Generate data release with impact modeling
-                    surprise_potential = self._calculate_surprise_potential(
-                        data_info["indicator"], discovery_data
-                    )
+                    surprise_potential = self._calculate_surprise_potential(data_info["indicator"], discovery_data)
 
-                    policy_relevance = self._calculate_policy_relevance(
-                        data_info["indicator"], data_info["importance"]
-                    )
+                    policy_relevance = self._calculate_policy_relevance(data_info["indicator"], data_info["importance"])
 
                     data_release = DataRelease(
                         release_date=release_date.strftime("%Y-%m-%d"),
@@ -430,9 +398,7 @@ class EconomicCalendarEngine:
                             "importance": data_release.indicator_importance,
                             "surprise_potential": data_release.surprise_potential,
                             "policy_relevance": data_release.policy_relevance_score,
-                            "market_moving_probability": min(
-                                surprise_potential + policy_relevance, 1.0
-                            ),
+                            "market_moving_probability": min(surprise_potential + policy_relevance, 1.0),
                         }
                     )
 
@@ -443,12 +409,8 @@ class EconomicCalendarEngine:
                 "region": self.region,
                 "data_releases": data_releases,
                 "total_releases": len(data_releases),
-                "high_impact_releases": len(
-                    [r for r in data_releases if r["market_moving_probability"] > 0.7]
-                ),
-                "tier_1_indicators": len(
-                    [r for r in data_releases if r["importance"] == "tier_1"]
-                ),
+                "high_impact_releases": len([r for r in data_releases if r["market_moving_probability"] > 0.7]),
+                "tier_1_indicators": len([r for r in data_releases if r["importance"] == "tier_1"]),
             }
 
         except Exception as e:
@@ -459,8 +421,8 @@ class EconomicCalendarEngine:
             }
 
     def _analyze_policy_transmission_timing(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze policy transmission channel timing and effectiveness"""
 
         try:
@@ -474,14 +436,10 @@ class EconomicCalendarEngine:
                 economic_context = self._extract_economic_context(discovery_data)
 
                 # Adjust lag based on economic conditions
-                adjusted_lag = self._adjust_transmission_lag(
-                    lag_quarters, economic_context, channel
-                )
+                adjusted_lag = self._adjust_transmission_lag(lag_quarters, economic_context, channel)
 
                 # Calculate effectiveness under current conditions
-                current_effectiveness = self._calculate_current_effectiveness(
-                    effectiveness, economic_context, channel
-                )
+                current_effectiveness = self._calculate_current_effectiveness(effectiveness, economic_context, channel)
 
                 transmission_analysis[channel] = {
                     "base_lag_quarters": lag_quarters,
@@ -491,36 +449,22 @@ class EconomicCalendarEngine:
                     "transmission_strength": self._assess_transmission_strength(
                         current_effectiveness, economic_context
                     ),
-                    "bottlenecks": self._identify_transmission_bottlenecks(
-                        channel, economic_context
-                    ),
+                    "bottlenecks": self._identify_transmission_bottlenecks(channel, economic_context),
                 }
 
             # Overall transmission assessment
             overall_effectiveness = np.mean(
-                [
-                    analysis["current_effectiveness"]
-                    for analysis in transmission_analysis.values()
-                ]
+                [analysis["current_effectiveness"] for analysis in transmission_analysis.values()]
             )
 
-            average_lag = np.mean(
-                [
-                    analysis["adjusted_lag_quarters"]
-                    for analysis in transmission_analysis.values()
-                ]
-            )
+            average_lag = np.mean([analysis["adjusted_lag_quarters"] for analysis in transmission_analysis.values()])
 
             return {
                 "transmission_channels": transmission_analysis,
                 "overall_effectiveness": float(overall_effectiveness),
                 "average_transmission_lag": float(average_lag),
-                "policy_impact_timeline": self._generate_policy_impact_timeline(
-                    transmission_analysis
-                ),
-                "transmission_risks": self._identify_transmission_risks(
-                    transmission_analysis, economic_context
-                ),
+                "policy_impact_timeline": self._generate_policy_impact_timeline(transmission_analysis),
+                "transmission_risks": self._identify_transmission_risks(transmission_analysis, economic_context),
             }
 
         except Exception as e:
@@ -530,8 +474,8 @@ class EconomicCalendarEngine:
             }
 
     def _analyze_forward_guidance(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze central bank forward guidance and policy communication"""
 
         try:
@@ -539,30 +483,20 @@ class EconomicCalendarEngine:
             economic_context = self._extract_economic_context(discovery_data)
 
             # Generate forward guidance interpretation
-            current_guidance = self._interpret_current_guidance(
-                economic_context, analysis_data
-            )
+            current_guidance = self._interpret_current_guidance(economic_context, analysis_data)
 
             # Model policy shift probabilities based on guidance
-            guidance_based_probabilities = self._model_guidance_policy_shifts(
-                current_guidance, economic_context
-            )
+            guidance_based_probabilities = self._model_guidance_policy_shifts(current_guidance, economic_context)
 
             # Analyze communication consistency
-            communication_analysis = self._analyze_communication_consistency(
-                current_guidance, economic_context
-            )
+            communication_analysis = self._analyze_communication_consistency(current_guidance, economic_context)
 
             return {
                 "current_forward_guidance": current_guidance,
                 "policy_shift_probabilities": guidance_based_probabilities,
                 "communication_analysis": communication_analysis,
-                "guidance_credibility_score": self._calculate_guidance_credibility(
-                    current_guidance, economic_context
-                ),
-                "market_alignment_score": self._calculate_market_alignment(
-                    current_guidance, economic_context
-                ),
+                "guidance_credibility_score": self._calculate_guidance_credibility(current_guidance, economic_context),
+                "market_alignment_score": self._calculate_market_alignment(current_guidance, economic_context),
             }
 
         except Exception as e:
@@ -572,8 +506,8 @@ class EconomicCalendarEngine:
             }
 
     def _analyze_cross_regional_coordination(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze cross-regional central bank policy coordination"""
 
         try:
@@ -585,36 +519,23 @@ class EconomicCalendarEngine:
 
             for region in major_regions:
                 if region != self.region:
-                    coordination_score = self._calculate_coordination_score(
-                        self.region, region, economic_context
-                    )
+                    coordination_score = self._calculate_coordination_score(self.region, region, economic_context)
 
                     coordination_scores[f"{self.region}_{region}"] = {
                         "coordination_score": float(coordination_score),
                         "policy_divergence_risk": self._calculate_divergence_risk(
                             self.region, region, economic_context
                         ),
-                        "spillover_effects": self._model_policy_spillovers(
-                            self.region, region, economic_context
-                        ),
+                        "spillover_effects": self._model_policy_spillovers(self.region, region, economic_context),
                     }
 
             return {
                 "regional_coordination": coordination_scores,
                 "overall_coordination_level": float(
-                    np.mean(
-                        [
-                            scores["coordination_score"]
-                            for scores in coordination_scores.values()
-                        ]
-                    )
+                    np.mean([scores["coordination_score"] for scores in coordination_scores.values()])
                 ),
-                "coordination_risks": self._identify_coordination_risks(
-                    coordination_scores, economic_context
-                ),
-                "synchronized_policy_probability": self._calculate_sync_probability(
-                    coordination_scores
-                ),
+                "coordination_risks": self._identify_coordination_risks(coordination_scores, economic_context),
+                "synchronized_policy_probability": self._calculate_sync_probability(coordination_scores),
             }
 
         except Exception as e:
@@ -624,8 +545,8 @@ class EconomicCalendarEngine:
             }
 
     def _model_policy_shift_probabilities(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Model probabilities of policy shifts across time horizons"""
 
         try:
@@ -636,12 +557,8 @@ class EconomicCalendarEngine:
 
             for horizon in time_horizons:
                 # Calculate shift probabilities for different policy directions
-                tightening_prob = self._calculate_tightening_probability(
-                    economic_context, horizon
-                )
-                easing_prob = self._calculate_easing_probability(
-                    economic_context, horizon
-                )
+                tightening_prob = self._calculate_tightening_probability(economic_context, horizon)
+                easing_prob = self._calculate_easing_probability(economic_context, horizon)
                 neutral_prob = max(0.0, 1.0 - tightening_prob - easing_prob)
 
                 policy_shift_probabilities[horizon] = {
@@ -674,22 +591,18 @@ class EconomicCalendarEngine:
 
     def _generate_calendar_insights(
         self,
-        policy_calendar: Dict[str, Any],
-        data_release_calendar: Dict[str, Any],
-        transmission_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        policy_calendar: dict[str, Any],
+        data_release_calendar: dict[str, Any],
+        transmission_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate integrated calendar insights and strategic implications"""
 
         try:
             # Identify critical decision windows
-            critical_windows = self._identify_critical_decision_windows(
-                policy_calendar, data_release_calendar
-            )
+            critical_windows = self._identify_critical_decision_windows(policy_calendar, data_release_calendar)
 
             # Analyze data-policy interaction timing
-            interaction_analysis = self._analyze_data_policy_interactions(
-                policy_calendar, data_release_calendar
-            )
+            interaction_analysis = self._analyze_data_policy_interactions(policy_calendar, data_release_calendar)
 
             # Generate strategic calendar observations
             strategic_insights = self._generate_strategic_insights(
@@ -700,9 +613,7 @@ class EconomicCalendarEngine:
                 "critical_decision_windows": critical_windows,
                 "data_policy_interactions": interaction_analysis,
                 "strategic_insights": strategic_insights,
-                "calendar_risk_events": self._identify_calendar_risk_events(
-                    policy_calendar, data_release_calendar
-                ),
+                "calendar_risk_events": self._identify_calendar_risk_events(policy_calendar, data_release_calendar),
                 "optimal_positioning_windows": self._identify_positioning_windows(
                     policy_calendar, data_release_calendar, transmission_analysis
                 ),
@@ -716,9 +627,7 @@ class EconomicCalendarEngine:
             }
 
     # Helper methods for internal calculations
-    def _extract_economic_context(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_economic_context(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant economic context from discovery data"""
 
         # Extract key economic indicators
@@ -726,24 +635,14 @@ class EconomicCalendarEngine:
 
         return {
             "gdp_growth": self._safe_extract_value(indicators, "gdp_growth", 2.0),
-            "inflation_rate": self._safe_extract_value(
-                indicators, "inflation_rate", 3.0
-            ),
-            "unemployment_rate": self._safe_extract_value(
-                indicators, "unemployment_rate", 4.0
-            ),
+            "inflation_rate": self._safe_extract_value(indicators, "inflation_rate", 3.0),
+            "unemployment_rate": self._safe_extract_value(indicators, "unemployment_rate", 4.0),
             "policy_rate": self._safe_extract_value(indicators, "policy_rate", 5.0),
-            "yield_curve_spread": self._safe_extract_value(
-                indicators, "yield_curve_spread", 0.5
-            ),
-            "economic_phase": discovery_data.get("business_cycle_data", {}).get(
-                "current_phase", "expansion"
-            ),
+            "yield_curve_spread": self._safe_extract_value(indicators, "yield_curve_spread", 0.5),
+            "economic_phase": discovery_data.get("business_cycle_data", {}).get("current_phase", "expansion"),
         }
 
-    def _safe_extract_value(
-        self, data: Dict[str, Any], key: str, default: float
-    ) -> float:
+    def _safe_extract_value(self, data: dict[str, Any], key: str, default: float) -> float:
         """Safely extract numeric value from nested dictionary"""
         try:
             value = data.get(key, default)
@@ -753,9 +652,7 @@ class EconomicCalendarEngine:
         except (ValueError, TypeError):
             return default
 
-    def _calculate_policy_change_probability(
-        self, economic_context: Dict[str, Any], meeting_date: str
-    ) -> float:
+    def _calculate_policy_change_probability(self, economic_context: dict[str, Any], meeting_date: str) -> float:
         """Calculate probability of policy change at a specific meeting"""
 
         # Base probability calculation based on economic conditions
@@ -770,26 +667,18 @@ class EconomicCalendarEngine:
         unemployment_pressure = max(0, (unemployment_rate - 4.0) / 2.0)  # Target ~4%
 
         # Combine factors
-        change_pressure = (
-            0.4 * inflation_pressure
-            + 0.3 * growth_weakness
-            + 0.3 * unemployment_pressure
-        )
+        change_pressure = 0.4 * inflation_pressure + 0.3 * growth_weakness + 0.3 * unemployment_pressure
 
         # Apply time decay (closer meetings more uncertain)
         meeting_datetime = datetime.strptime(meeting_date, "%Y-%m-%d")
         days_to_meeting = (meeting_datetime - datetime.now()).days
-        time_decay = min(
-            1.0, max(0.1, days_to_meeting / 180)
-        )  # 6-month full uncertainty
+        time_decay = min(1.0, max(0.1, days_to_meeting / 180))  # 6-month full uncertainty
 
         probability = min(0.8, change_pressure * time_decay)
 
         return float(np.clip(probability, 0.05, 0.8))
 
-    def _determine_policy_direction(
-        self, economic_context: Dict[str, Any], change_probability: float
-    ) -> str:
+    def _determine_policy_direction(self, economic_context: dict[str, Any], change_probability: float) -> str:
         """Determine most likely policy direction"""
 
         if change_probability < 0.3:
@@ -805,19 +694,16 @@ class EconomicCalendarEngine:
 
         if tightening_signal and not easing_signal:
             return "tightening"
-        elif easing_signal and not tightening_signal:
+        if easing_signal and not tightening_signal:
             return "easing"
-        else:
-            return "data_dependent"
+        return "data_dependent"
 
     def _calculate_meeting_market_impact(
         self, change_probability: float, policy_direction: str, meeting_date: str
     ) -> float:
         """Calculate expected market impact of policy meeting"""
 
-        base_impact = (
-            change_probability * 0.7
-        )  # Higher change probability = higher impact
+        base_impact = change_probability * 0.7  # Higher change probability = higher impact
 
         # Direction multiplier
         direction_multiplier = {
@@ -838,7 +724,7 @@ class EconomicCalendarEngine:
 
     def _calculate_probability_confidence_interval(
         self, probability: float, confidence_level: float = 0.95
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Calculate confidence interval for probability estimate"""
 
         # Use binomial confidence interval approximation
@@ -853,20 +739,16 @@ class EconomicCalendarEngine:
         return (float(lower_bound), float(upper_bound))
 
     def _generate_policy_path_scenario(
-        self, policy_events: List[Dict], economic_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, policy_events: list[dict], economic_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate policy path scenario based on meeting probabilities"""
 
         # Count expected policy changes
         expected_changes = sum(e["change_probability"] for e in policy_events)
 
         # Determine overall policy trajectory
-        tightening_events = len(
-            [e for e in policy_events if e["policy_direction"] == "tightening"]
-        )
-        easing_events = len(
-            [e for e in policy_events if e["policy_direction"] == "easing"]
-        )
+        tightening_events = len([e for e in policy_events if e["policy_direction"] == "tightening"])
+        easing_events = len([e for e in policy_events if e["policy_direction"] == "easing"])
 
         if tightening_events > easing_events:
             overall_direction = "tightening_cycle"
@@ -878,17 +760,11 @@ class EconomicCalendarEngine:
         return {
             "overall_policy_direction": overall_direction,
             "expected_total_changes": float(expected_changes),
-            "policy_cycle_phase": self._determine_policy_cycle_phase(
-                overall_direction, economic_context
-            ),
-            "terminal_rate_estimate": self._estimate_terminal_rate(
-                overall_direction, economic_context
-            ),
+            "policy_cycle_phase": self._determine_policy_cycle_phase(overall_direction, economic_context),
+            "terminal_rate_estimate": self._estimate_terminal_rate(overall_direction, economic_context),
         }
 
-    def _calculate_surprise_potential(
-        self, indicator_name: str, discovery_data: Dict[str, Any]
-    ) -> float:
+    def _calculate_surprise_potential(self, indicator_name: str, discovery_data: dict[str, Any]) -> float:
         """Calculate surprise potential for economic data release"""
 
         # Base surprise potential by indicator type
@@ -914,9 +790,7 @@ class EconomicCalendarEngine:
 
         return float(np.clip(surprise_potential, 0.1, 0.9))
 
-    def _calculate_policy_relevance(
-        self, indicator_name: str, importance: str
-    ) -> float:
+    def _calculate_policy_relevance(self, indicator_name: str, importance: str) -> float:
         """Calculate policy relevance score for economic indicator"""
 
         # Base policy relevance by indicator
@@ -935,9 +809,7 @@ class EconomicCalendarEngine:
         }.get(indicator_name, 0.5)
 
         # Adjust based on tier importance
-        importance_multiplier = {"tier_1": 1.0, "tier_2": 0.8, "tier_3": 0.6}.get(
-            importance, 0.7
-        )
+        importance_multiplier = {"tier_1": 1.0, "tier_2": 0.8, "tier_3": 0.6}.get(importance, 0.7)
 
         return float(relevance_base * importance_multiplier)
 
@@ -945,7 +817,7 @@ class EconomicCalendarEngine:
     # [Truncated for brevity - the full implementation would include all remaining helper methods]
 
     def _calculate_calendar_confidence(
-        self, policy_calendar: Dict[str, Any], data_release_calendar: Dict[str, Any]
+        self, policy_calendar: dict[str, Any], data_release_calendar: dict[str, Any]
     ) -> float:
         """Calculate overall confidence in calendar analysis"""
 
@@ -958,8 +830,8 @@ class EconomicCalendarEngine:
         return float(np.clip(overall_confidence, 0.3, 0.9))
 
     def _identify_next_critical_events(
-        self, policy_calendar: Dict[str, Any], data_release_calendar: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, policy_calendar: dict[str, Any], data_release_calendar: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Identify next critical events in the economic calendar"""
 
         critical_events = []
@@ -995,163 +867,100 @@ class EconomicCalendarEngine:
         return critical_events[:5]
 
     # Placeholder implementations for remaining helper methods
-    def _adjust_transmission_lag(
-        self, base_lag: float, economic_context: Dict, channel: str
-    ) -> float:
+    def _adjust_transmission_lag(self, base_lag: float, economic_context: dict, channel: str) -> float:
         return base_lag * (1.0 + np.random.normal(0, 0.1))
 
     def _calculate_current_effectiveness(
-        self, base_effectiveness: float, economic_context: Dict, channel: str
+        self, base_effectiveness: float, economic_context: dict, channel: str
     ) -> float:
         return base_effectiveness * (1.0 + np.random.normal(0, 0.05))
 
-    def _assess_transmission_strength(
-        self, effectiveness: float, economic_context: Dict
-    ) -> str:
+    def _assess_transmission_strength(self, effectiveness: float, economic_context: dict) -> str:
         if effectiveness > 0.7:
             return "strong"
-        elif effectiveness > 0.5:
+        if effectiveness > 0.5:
             return "moderate"
-        else:
-            return "weak"
+        return "weak"
 
-    def _identify_transmission_bottlenecks(
-        self, channel: str, economic_context: Dict
-    ) -> List[str]:
-        return (
-            ["financial_conditions", "market_functioning"]
-            if economic_context.get("policy_rate", 5) > 5
-            else []
-        )
+    def _identify_transmission_bottlenecks(self, channel: str, economic_context: dict) -> list[str]:
+        return ["financial_conditions", "market_functioning"] if economic_context.get("policy_rate", 5) > 5 else []
 
-    def _generate_policy_impact_timeline(
-        self, transmission_analysis: Dict
-    ) -> Dict[str, str]:
+    def _generate_policy_impact_timeline(self, transmission_analysis: dict) -> dict[str, str]:
         return {
             "immediate": "expectations_channel",
             "3_months": "asset_price_channel",
             "6_months": "credit_channel",
         }
 
-    def _identify_transmission_risks(
-        self, transmission_analysis: Dict, economic_context: Dict
-    ) -> List[str]:
-        return (
-            ["financial_stress", "credit_tightening"]
-            if economic_context.get("yield_curve_spread", 0.5) < 0
-            else []
-        )
+    def _identify_transmission_risks(self, transmission_analysis: dict, economic_context: dict) -> list[str]:
+        return ["financial_stress", "credit_tightening"] if economic_context.get("yield_curve_spread", 0.5) < 0 else []
 
     # Additional placeholder methods...
-    def _interpret_current_guidance(
-        self, economic_context: Dict, analysis_data: Dict
-    ) -> Dict:
+    def _interpret_current_guidance(self, economic_context: dict, analysis_data: dict) -> dict:
         return {}
 
-    def _model_guidance_policy_shifts(
-        self, guidance: Dict, economic_context: Dict
-    ) -> Dict:
+    def _model_guidance_policy_shifts(self, guidance: dict, economic_context: dict) -> dict:
         return {}
 
-    def _analyze_communication_consistency(
-        self, guidance: Dict, economic_context: Dict
-    ) -> Dict:
+    def _analyze_communication_consistency(self, guidance: dict, economic_context: dict) -> dict:
         return {}
 
-    def _calculate_guidance_credibility(
-        self, guidance: Dict, economic_context: Dict
-    ) -> float:
+    def _calculate_guidance_credibility(self, guidance: dict, economic_context: dict) -> float:
         return 0.7
 
-    def _calculate_market_alignment(
-        self, guidance: Dict, economic_context: Dict
-    ) -> float:
+    def _calculate_market_alignment(self, guidance: dict, economic_context: dict) -> float:
         return 0.6
 
-    def _calculate_coordination_score(
-        self, region1: str, region2: str, economic_context: Dict
-    ) -> float:
+    def _calculate_coordination_score(self, region1: str, region2: str, economic_context: dict) -> float:
         return 0.5
 
-    def _calculate_divergence_risk(
-        self, region1: str, region2: str, economic_context: Dict
-    ) -> float:
+    def _calculate_divergence_risk(self, region1: str, region2: str, economic_context: dict) -> float:
         return 0.3
 
-    def _model_policy_spillovers(
-        self, region1: str, region2: str, economic_context: Dict
-    ) -> Dict:
+    def _model_policy_spillovers(self, region1: str, region2: str, economic_context: dict) -> dict:
         return {}
 
-    def _identify_coordination_risks(
-        self, coordination_scores: Dict, economic_context: Dict
-    ) -> List[str]:
+    def _identify_coordination_risks(self, coordination_scores: dict, economic_context: dict) -> list[str]:
         return []
 
-    def _calculate_sync_probability(self, coordination_scores: Dict) -> float:
+    def _calculate_sync_probability(self, coordination_scores: dict) -> float:
         return 0.4
 
-    def _calculate_tightening_probability(
-        self, economic_context: Dict, horizon: str
-    ) -> float:
+    def _calculate_tightening_probability(self, economic_context: dict, horizon: str) -> float:
         return 0.3
 
-    def _calculate_easing_probability(
-        self, economic_context: Dict, horizon: str
-    ) -> float:
+    def _calculate_easing_probability(self, economic_context: dict, horizon: str) -> float:
         return 0.2
 
-    def _determine_most_likely_direction(
-        self, tight: float, ease: float, neutral: float
-    ) -> str:
-        return (
-            "neutral"
-            if neutral > max(tight, ease)
-            else ("tightening" if tight > ease else "easing")
-        )
+    def _determine_most_likely_direction(self, tight: float, ease: float, neutral: float) -> str:
+        return "neutral" if neutral > max(tight, ease) else ("tightening" if tight > ease else "easing")
 
-    def _calculate_direction_confidence(
-        self, tight: float, ease: float, neutral: float
-    ) -> float:
+    def _calculate_direction_confidence(self, tight: float, ease: float, neutral: float) -> float:
         return 0.6
 
-    def _generate_policy_path_scenarios(
-        self, probabilities: Dict, economic_context: Dict
-    ) -> Dict:
+    def _generate_policy_path_scenarios(self, probabilities: dict, economic_context: dict) -> dict:
         return {}
 
-    def _calculate_conditional_probabilities(
-        self, probabilities: Dict, economic_context: Dict
-    ) -> Dict:
+    def _calculate_conditional_probabilities(self, probabilities: dict, economic_context: dict) -> dict:
         return {}
 
-    def _identify_critical_decision_windows(
-        self, policy_cal: Dict, data_cal: Dict
-    ) -> List:
+    def _identify_critical_decision_windows(self, policy_cal: dict, data_cal: dict) -> list:
         return []
 
-    def _analyze_data_policy_interactions(
-        self, policy_cal: Dict, data_cal: Dict
-    ) -> Dict:
+    def _analyze_data_policy_interactions(self, policy_cal: dict, data_cal: dict) -> dict:
         return {}
 
-    def _generate_strategic_insights(
-        self, policy_cal: Dict, data_cal: Dict, transmission: Dict
-    ) -> Dict:
+    def _generate_strategic_insights(self, policy_cal: dict, data_cal: dict, transmission: dict) -> dict:
         return {}
 
-    def _identify_calendar_risk_events(self, policy_cal: Dict, data_cal: Dict) -> List:
+    def _identify_calendar_risk_events(self, policy_cal: dict, data_cal: dict) -> list:
         return []
 
-    def _identify_positioning_windows(
-        self, policy_cal: Dict, data_cal: Dict, transmission: Dict
-    ) -> List:
+    def _identify_positioning_windows(self, policy_cal: dict, data_cal: dict, transmission: dict) -> list:
         return []
 
-    def _determine_policy_cycle_phase(
-        self, direction: str, economic_context: Dict
-    ) -> str:
+    def _determine_policy_cycle_phase(self, direction: str, economic_context: dict) -> str:
         return "mid_cycle"
 
-    def _estimate_terminal_rate(self, direction: str, economic_context: Dict) -> float:
+    def _estimate_terminal_rate(self, direction: str, economic_context: dict) -> float:
         return 4.5

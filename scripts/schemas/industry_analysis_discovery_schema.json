@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/industry_analysis_discovery.json",
+  "$id": "https://colemorton.com/schemas/industry_analysis_discovery.json",
   "title": "Industry Analysis Discovery Schema",
   "description": "Comprehensive validation schema for industry analysis discovery JSON outputs from DASV framework",
   "type": "object",

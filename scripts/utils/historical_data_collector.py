@@ -10,13 +10,12 @@ Comprehensive historical data collection service that automatically collects:
 - Integration with existing financial services
 """
 
-import asyncio
 import json
 import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from historical_data_manager import DataType, HistoricalDataManager, Timeframe
 
@@ -35,7 +34,7 @@ class HistoricalDataCollector:
 
     def __init__(
         self,
-        historical_manager: Optional[HistoricalDataManager] = None,
+        historical_manager: HistoricalDataManager | None = None,
         rate_limit_delay: float = 0.5,  # Seconds between API calls
         batch_size: int = 10,  # Symbols per batch
         max_retries: int = 3,
@@ -68,19 +67,17 @@ class HistoricalDataCollector:
         logger = logging.getLogger("historical_data_collector")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
 
-    def _load_collection_state(self) -> Dict[str, Any]:
+    def _load_collection_state(self) -> dict[str, Any]:
         """Load collection state for resuming interrupted collections"""
         if self.collection_state_file.exists():
             try:
-                with open(self.collection_state_file, "r") as f:
+                with open(self.collection_state_file) as f:
                     return json.load(f)
             except Exception as e:
                 self.logger.warning(f"Failed to load collection state: {e}")
@@ -132,9 +129,7 @@ class HistoricalDataCollector:
 
         return self._services[service_name]
 
-    def get_target_symbols(
-        self, custom_symbols: Optional[List[str]] = None
-    ) -> List[str]:
+    def get_target_symbols(self, custom_symbols: list[str] | None = None) -> list[str]:
         """
         Get list of symbols to collect data for
 
@@ -195,7 +190,7 @@ class HistoricalDataCollector:
         data_type: DataType,
         target_days: int,
         timeframe: Timeframe = Timeframe.DAILY,
-    ) -> List[datetime]:
+    ) -> list[datetime]:
         """
         Detect gaps in historical data for a symbol
 
@@ -225,9 +220,7 @@ class HistoricalDataCollector:
         for record in existing_data:
             if "date" in record:
                 try:
-                    date_obj = datetime.fromisoformat(
-                        record["date"].replace("Z", "+00:00")
-                    )
+                    date_obj = datetime.fromisoformat(record["date"].replace("Z", "+00:00"))
                     existing_dates.add(date_obj.date())
                 except Exception:
                     continue
@@ -256,8 +249,8 @@ class HistoricalDataCollector:
         return missing_dates
 
     def collect_daily_prices(
-        self, symbols: List[str], days: int = 365, service_name: str = "yahoo_finance"
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], days: int = 365, service_name: str = "yahoo_finance"
+    ) -> dict[str, Any]:
         """
         Collect daily price data for symbols
 
@@ -269,9 +262,7 @@ class HistoricalDataCollector:
         Returns:
             Collection results summary
         """
-        self.logger.info(
-            f"Starting daily price collection for {len(symbols)} symbols ({days} days)"
-        )
+        self.logger.info(f"Starting daily price collection for {len(symbols)} symbols ({days} days)")
 
         service = self._get_service(service_name)
         if not service:
@@ -287,7 +278,7 @@ class HistoricalDataCollector:
 
         for i, symbol in enumerate(symbols):
             try:
-                self.logger.info(f"Processing {symbol} ({i+1}/{len(symbols)})")
+                self.logger.info(f"Processing {symbol} ({i + 1}/{len(symbols)})")
 
                 # Detect gaps in daily data
                 gaps = self.detect_data_gaps(
@@ -338,9 +329,7 @@ class HistoricalDataCollector:
 
                         results["files_created"] += 1
                         results["symbols_successful"].append(symbol)
-                        self.logger.info(
-                            f"  {symbol}: Successfully collected {period} data"
-                        )
+                        self.logger.info(f"  {symbol}: Successfully collected {period} data")
                     else:
                         results["symbols_failed"].append(symbol)
                         results["errors"].append(f"{symbol}: No data returned")
@@ -359,8 +348,8 @@ class HistoricalDataCollector:
         return results
 
     def collect_weekly_prices(
-        self, symbols: List[str], years: int = 5, service_name: str = "yahoo_finance"
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], years: int = 5, service_name: str = "yahoo_finance"
+    ) -> dict[str, Any]:
         """
         Collect weekly price data for symbols
 
@@ -372,9 +361,7 @@ class HistoricalDataCollector:
         Returns:
             Collection results summary
         """
-        self.logger.info(
-            f"Starting weekly price collection for {len(symbols)} symbols ({years} years)"
-        )
+        self.logger.info(f"Starting weekly price collection for {len(symbols)} symbols ({years} years)")
 
         service = self._get_service(service_name)
         if not service:
@@ -390,9 +377,7 @@ class HistoricalDataCollector:
 
         for i, symbol in enumerate(symbols):
             try:
-                self.logger.info(
-                    f"Processing weekly data for {symbol} ({i+1}/{len(symbols)})"
-                )
+                self.logger.info(f"Processing weekly data for {symbol} ({i + 1}/{len(symbols)})")
 
                 # For weekly data, we'll get longer historical data and aggregate to weekly
                 period = "5y" if years <= 5 else "max"
@@ -430,19 +415,13 @@ class HistoricalDataCollector:
 
                             results["files_created"] += 1
                             results["symbols_successful"].append(symbol)
-                            self.logger.info(
-                                f"  {symbol}: Successfully aggregated and stored weekly data"
-                            )
+                            self.logger.info(f"  {symbol}: Successfully aggregated and stored weekly data")
                         else:
                             results["symbols_failed"].append(symbol)
-                            results["errors"].append(
-                                f"{symbol}: Failed to aggregate weekly data"
-                            )
+                            results["errors"].append(f"{symbol}: Failed to aggregate weekly data")
                     else:
                         results["symbols_failed"].append(symbol)
-                        results["errors"].append(
-                            f"{symbol}: No daily data for weekly aggregation"
-                        )
+                        results["errors"].append(f"{symbol}: No daily data for weekly aggregation")
 
                 # Rate limiting
                 time.sleep(self.rate_limit_delay)
@@ -457,9 +436,7 @@ class HistoricalDataCollector:
 
         return results
 
-    def _aggregate_to_weekly(
-        self, daily_data: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _aggregate_to_weekly(self, daily_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Aggregate daily price data to weekly data
 
@@ -490,9 +467,7 @@ class HistoricalDataCollector:
                     date_obj = date_str
                 else:
                     date_obj = datetime.strptime(str(date_str)[:10], "%Y-%m-%d")
-                week_start = date_obj - timedelta(
-                    days=date_obj.weekday()
-                )  # Monday of the week
+                week_start = date_obj - timedelta(days=date_obj.weekday())  # Monday of the week
 
                 if current_week_start is None or week_start != current_week_start:
                     # Process previous week
@@ -508,9 +483,7 @@ class HistoricalDataCollector:
                     current_week.append(record)
 
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to process daily record for weekly aggregation: {e}"
-                )
+                self.logger.warning(f"Failed to process daily record for weekly aggregation: {e}")
                 continue
 
         # Process final week
@@ -521,9 +494,7 @@ class HistoricalDataCollector:
 
         return weekly_data
 
-    def _create_weekly_record(
-        self, week_data: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+    def _create_weekly_record(self, week_data: list[dict[str, Any]]) -> dict[str, Any] | None:
         """
         Create a weekly aggregated record from daily data
 
@@ -571,11 +542,11 @@ class HistoricalDataCollector:
 
     def collect_comprehensive_data(
         self,
-        symbols: Optional[List[str]] = None,
+        symbols: list[str] | None = None,
         daily_days: int = 365,
         weekly_years: int = 0,
         service_name: str = "yahoo_finance",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Collect comprehensive historical data (daily only by default, weekly disabled)
 
@@ -591,7 +562,7 @@ class HistoricalDataCollector:
         if symbols is None:
             symbols = self.get_target_symbols()
 
-        self.logger.info(f"Starting comprehensive data collection")
+        self.logger.info("Starting comprehensive data collection")
         self.logger.info(f"  Symbols: {len(symbols)}")
         self.logger.info(f"  Daily: {daily_days} days")
         self.logger.info(f"  Weekly: {weekly_years} years")
@@ -621,9 +592,7 @@ class HistoricalDataCollector:
         try:
             # Collect daily data
             self.logger.info("🔄 Phase 1: Collecting daily price data")
-            daily_results = self.collect_daily_prices(
-                symbols=symbols, days=daily_days, service_name=service_name
-            )
+            daily_results = self.collect_daily_prices(symbols=symbols, days=daily_days, service_name=service_name)
             results["daily_collection"] = daily_results
 
             # Collect weekly data only if enabled (weekly_years > 0)
@@ -634,9 +603,7 @@ class HistoricalDataCollector:
                 )
                 results["weekly_collection"] = weekly_results
             else:
-                self.logger.info(
-                    "📋 Phase 2: Weekly data collection disabled (weekly_years=0)"
-                )
+                self.logger.info("📋 Phase 2: Weekly data collection disabled (weekly_years=0)")
                 weekly_results = {
                     "symbols_processed": 0,
                     "symbols_successful": [],
@@ -647,28 +614,20 @@ class HistoricalDataCollector:
                 results["weekly_collection"] = weekly_results
 
             # Calculate overall results
-            total_files = daily_results.get("files_created", 0) + weekly_results.get(
-                "files_created", 0
-            )
+            total_files = daily_results.get("files_created", 0) + weekly_results.get("files_created", 0)
             results["total_files_created"] = total_files
             results["overall_success"] = total_files > 0
 
             # Update collection state
             self.collection_state["last_collection"] = session_id
-            self.collection_state["symbols_completed"].extend(
-                daily_results.get("symbols_successful", [])
-            )
+            self.collection_state["symbols_completed"].extend(daily_results.get("symbols_successful", []))
 
             self._save_collection_state()
 
-            self.logger.info(f"✅ Comprehensive collection completed")
+            self.logger.info("✅ Comprehensive collection completed")
             self.logger.info(f"   Total files created: {total_files}")
-            self.logger.info(
-                f"   Daily successful: {len(daily_results.get('symbols_successful', []))}"
-            )
-            self.logger.info(
-                f"   Weekly successful: {len(weekly_results.get('symbols_successful', []))}"
-            )
+            self.logger.info(f"   Daily successful: {len(daily_results.get('symbols_successful', []))}")
+            self.logger.info(f"   Weekly successful: {len(weekly_results.get('symbols_successful', []))}")
 
             return results
 
@@ -677,7 +636,7 @@ class HistoricalDataCollector:
             results["error"] = str(e)
             return results
 
-    def get_collection_status(self) -> Dict[str, Any]:
+    def get_collection_status(self) -> dict[str, Any]:
         """Get current collection status and statistics"""
         return {
             "collection_state": self.collection_state,
@@ -688,13 +647,11 @@ class HistoricalDataCollector:
 
 
 def create_historical_data_collector(
-    base_path: Optional[Path] = None, rate_limit_delay: float = 0.5
+    base_path: Path | None = None, rate_limit_delay: float = 0.5
 ) -> HistoricalDataCollector:
     """Factory function to create historical data collector"""
     hdm = HistoricalDataManager(base_path=base_path)
-    return HistoricalDataCollector(
-        historical_manager=hdm, rate_limit_delay=rate_limit_delay
-    )
+    return HistoricalDataCollector(historical_manager=hdm, rate_limit_delay=rate_limit_delay)
 
 
 if __name__ == "__main__":

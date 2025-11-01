@@ -17,9 +17,10 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,7 @@ class GlobalMacroAggregator:
     def __init__(self, base_dir: str = None):
         """Initialize aggregator with discovery data directory"""
         if base_dir is None:
-            self.base_dir = (
-                Path(__file__).parent.parent
-                / "data"
-                / "outputs"
-                / "macro_analysis"
-                / "discovery"
-            )
+            self.base_dir = Path(__file__).parent.parent / "data" / "outputs" / "macro_analysis" / "discovery"
         else:
             self.base_dir = Path(base_dir)
 
@@ -56,7 +51,7 @@ class GlobalMacroAggregator:
             filepath = self.base_dir / filename
             if filepath.exists():
                 try:
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         self.regional_data[region] = json.load(f)
                     logger.info(f"✓ Loaded regional data: {region}")
                 except Exception as e:
@@ -64,7 +59,7 @@ class GlobalMacroAggregator:
             else:
                 logger.warning(f"Regional file not found: {filepath}")
 
-    def aggregate_global_analysis(self) -> Dict[str, Any]:
+    def aggregate_global_analysis(self) -> dict[str, Any]:
         """Create comprehensive global macro-economic discovery analysis"""
         global_analysis = {
             "metadata": self._create_global_metadata(),
@@ -87,7 +82,7 @@ class GlobalMacroAggregator:
 
         return global_analysis
 
-    def _create_global_metadata(self) -> Dict[str, Any]:
+    def _create_global_metadata(self) -> dict[str, Any]:
         """Create metadata for global analysis"""
         return {
             "command_name": "cli_enhanced_macro_analyst_discover",
@@ -108,7 +103,7 @@ class GlobalMacroAggregator:
             "api_keys_configured": True,
         }
 
-    def _aggregate_cli_analysis(self) -> Dict[str, Any]:
+    def _aggregate_cli_analysis(self) -> dict[str, Any]:
         """Aggregate CLI analysis from all regions"""
         # Start with US data as the base and supplement with global context
         if "US" in self.regional_data:
@@ -129,7 +124,7 @@ class GlobalMacroAggregator:
 
         return base_data
 
-    def _aggregate_central_bank_data(self) -> Dict[str, Any]:
+    def _aggregate_central_bank_data(self) -> dict[str, Any]:
         """Aggregate central bank data across regions"""
         # Collect GDP data from all regions
         gdp_observations = []
@@ -139,9 +134,7 @@ class GlobalMacroAggregator:
 
         for region, data in self.regional_data.items():
             try:
-                cb_data = data["cli_comprehensive_analysis"][
-                    "central_bank_economic_data"
-                ]
+                cb_data = data["cli_comprehensive_analysis"]["central_bank_economic_data"]
 
                 # Aggregate GDP data
                 if "gdp_data" in cb_data:
@@ -170,20 +163,12 @@ class GlobalMacroAggregator:
                 "analysis": "Global GDP growth showing regional divergence with developed markets moderating while emerging markets show resilience",
                 "confidence": 0.89,
             },
-            "employment_data": (
-                employment_data
-                if employment_data
-                else self._create_default_employment()
-            ),
-            "inflation_data": (
-                inflation_data if inflation_data else self._create_default_inflation()
-            ),
-            "monetary_policy_data": (
-                monetary_data if monetary_data else self._create_default_monetary()
-            ),
+            "employment_data": (employment_data if employment_data else self._create_default_employment()),
+            "inflation_data": (inflation_data if inflation_data else self._create_default_inflation()),
+            "monetary_policy_data": (monetary_data if monetary_data else self._create_default_monetary()),
         }
 
-    def _create_default_employment(self) -> Dict[str, Any]:
+    def _create_default_employment(self) -> dict[str, Any]:
         """Create default employment data structure"""
         return {
             "payroll_data": {
@@ -201,7 +186,7 @@ class GlobalMacroAggregator:
             "confidence": 0.85,
         }
 
-    def _create_default_inflation(self) -> Dict[str, Any]:
+    def _create_default_inflation(self) -> dict[str, Any]:
         """Create default inflation data structure"""
         return {
             "cpi_data": {
@@ -219,7 +204,7 @@ class GlobalMacroAggregator:
             "confidence": 0.88,
         }
 
-    def _create_default_monetary(self) -> Dict[str, Any]:
+    def _create_default_monetary(self) -> dict[str, Any]:
         """Create default monetary policy data structure"""
         return {
             "fed_funds_rate": {
@@ -237,7 +222,7 @@ class GlobalMacroAggregator:
             "confidence": 0.90,
         }
 
-    def _enhance_imf_global_data(self) -> Dict[str, Any]:
+    def _enhance_imf_global_data(self) -> dict[str, Any]:
         """Create enhanced IMF global data"""
         return {
             "global_growth": {
@@ -265,15 +250,13 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _calculate_global_validation(self) -> Dict[str, Any]:
+    def _calculate_global_validation(self) -> dict[str, Any]:
         """Calculate cross-source validation for global data"""
         # Aggregate validation scores from regions
         validation_scores = []
         for data in self.regional_data.values():
             try:
-                score = data["cli_comprehensive_analysis"]["cross_source_validation"][
-                    "validation_score"
-                ]
+                score = data["cli_comprehensive_analysis"]["cross_source_validation"]["validation_score"]
                 validation_scores.append(score)
             except KeyError:
                 continue
@@ -286,7 +269,7 @@ class GlobalMacroAggregator:
             "confidence": 0.88,
         }
 
-    def _aggregate_economic_indicators(self) -> Dict[str, Any]:
+    def _aggregate_economic_indicators(self) -> dict[str, Any]:
         """Aggregate economic indicators across regions"""
         # Use US data as base and enhance with global context
         if "US" in self.regional_data:
@@ -303,7 +286,7 @@ class GlobalMacroAggregator:
 
         return indicators
 
-    def _create_default_indicators(self) -> Dict[str, Any]:
+    def _create_default_indicators(self) -> dict[str, Any]:
         """Create default economic indicators structure"""
         return {
             "leading_indicators": {
@@ -372,9 +355,7 @@ class GlobalMacroAggregator:
         scores = []
         for data in self.regional_data.values():
             try:
-                score = data["economic_indicators"]["composite_scores"][
-                    "business_cycle_score"
-                ]
+                score = data["economic_indicators"]["composite_scores"]["business_cycle_score"]
                 scores.append(score)
             except KeyError:
                 continue
@@ -382,7 +363,7 @@ class GlobalMacroAggregator:
         if scores:
             # Weight by economic size (simplified)
             weights = [0.4, 0.3, 0.2, 0.1][: len(scores)]  # US, Europe, Asia, Americas
-            weighted_score = sum(s * w for s, w in zip(scores, weights)) / sum(weights)
+            weighted_score = sum(s * w for s, w in zip(scores, weights, strict=False)) / sum(weights)
             return round(weighted_score, 2)
 
         return 0.8  # Default moderate expansion score
@@ -393,9 +374,7 @@ class GlobalMacroAggregator:
         probabilities = []
         for data in self.regional_data.values():
             try:
-                prob = data["economic_indicators"]["composite_scores"][
-                    "recession_probability"
-                ]
+                prob = data["economic_indicators"]["composite_scores"]["recession_probability"]
                 probabilities.append(prob)
             except KeyError:
                 continue
@@ -406,15 +385,13 @@ class GlobalMacroAggregator:
 
         return 0.25  # Default probability
 
-    def _aggregate_business_cycle_data(self) -> Dict[str, Any]:
+    def _aggregate_business_cycle_data(self) -> dict[str, Any]:
         """Aggregate business cycle analysis"""
         # Use most representative regional data (US preferred)
         for region in ["US", "AMERICAS", "EUROPE", "ASIA"]:
             if region in self.regional_data:
                 try:
-                    cycle_data = self.regional_data[region][
-                        "business_cycle_data"
-                    ].copy()
+                    cycle_data = self.regional_data[region]["business_cycle_data"].copy()
                     # Enhance with global perspective
                     cycle_data["current_phase"] = self._determine_global_cycle_phase()
                     return cycle_data
@@ -456,7 +433,7 @@ class GlobalMacroAggregator:
 
         return "expansion"
 
-    def _aggregate_monetary_policy(self) -> Dict[str, Any]:
+    def _aggregate_monetary_policy(self) -> dict[str, Any]:
         """Aggregate monetary policy context"""
         # Use US Fed data as global benchmark
         if "US" in self.regional_data:
@@ -510,19 +487,15 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _aggregate_market_intelligence(self) -> Dict[str, Any]:
+    def _aggregate_market_intelligence(self) -> dict[str, Any]:
         """Aggregate market intelligence"""
         # Use most comprehensive regional data
         for region in ["US", "AMERICAS", "EUROPE"]:
             if region in self.regional_data:
                 try:
-                    market_data = self.regional_data[region][
-                        "cli_market_intelligence"
-                    ].copy()
+                    market_data = self.regional_data[region]["cli_market_intelligence"].copy()
                     # Enhance with global perspective
-                    market_data["risk_appetite"][
-                        "current_level"
-                    ] = self._assess_global_risk_appetite()
+                    market_data["risk_appetite"]["current_level"] = self._assess_global_risk_appetite()
                     return market_data
                 except KeyError:
                     continue
@@ -565,9 +538,7 @@ class GlobalMacroAggregator:
         risk_levels = []
         for data in self.regional_data.values():
             try:
-                level = data["cli_market_intelligence"]["risk_appetite"][
-                    "current_level"
-                ]
+                level = data["cli_market_intelligence"]["risk_appetite"]["current_level"]
                 risk_levels.append(level)
             except KeyError:
                 continue
@@ -579,14 +550,13 @@ class GlobalMacroAggregator:
 
             if avg_risk > 0.3:
                 return "risk_on"
-            elif avg_risk < -0.3:
+            if avg_risk < -0.3:
                 return "risk_off"
-            else:
-                return "neutral"
+            return "neutral"
 
         return "neutral"
 
-    def _aggregate_global_context(self) -> Dict[str, Any]:
+    def _aggregate_global_context(self) -> dict[str, Any]:
         """Create comprehensive global economic context"""
         return {
             "regional_analysis": self._create_regional_summary(),
@@ -618,15 +588,13 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _create_regional_summary(self) -> Dict[str, Any]:
+    def _create_regional_summary(self) -> dict[str, Any]:
         """Create summary of regional economies"""
         summary = {}
 
         for region, data in self.regional_data.items():
             try:
-                regional_context = data.get("global_economic_context", {}).get(
-                    "regional_analysis", {}
-                )
+                regional_context = data.get("global_economic_context", {}).get("regional_analysis", {})
 
                 if region == "US":
                     summary["us_economy"] = regional_context.get(
@@ -675,7 +643,7 @@ class GlobalMacroAggregator:
 
         return summary
 
-    def _aggregate_energy_markets(self) -> Dict[str, Any]:
+    def _aggregate_energy_markets(self) -> dict[str, Any]:
         """Aggregate energy market analysis"""
         # Use any available regional energy data
         for region in self.regional_data.values():
@@ -746,7 +714,7 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _aggregate_service_validation(self) -> Dict[str, Any]:
+    def _aggregate_service_validation(self) -> dict[str, Any]:
         """Aggregate CLI service validation"""
         health_scores = {}
         response_times = {}
@@ -771,14 +739,8 @@ class GlobalMacroAggregator:
                 continue
 
         # Calculate averages
-        avg_health_scores = {
-            service: round(np.mean(scores), 3)
-            for service, scores in health_scores.items()
-        }
-        avg_response_times = {
-            service: round(np.mean(times), 1)
-            for service, times in response_times.items()
-        }
+        avg_health_scores = {service: round(np.mean(scores), 3) for service, scores in health_scores.items()}
+        avg_response_times = {service: round(np.mean(times), 1) for service, times in response_times.items()}
 
         # Ensure minimum required services
         required_services = ["fred_economic_cli", "imf_cli", "alpha_vantage_cli"]
@@ -797,7 +759,7 @@ class GlobalMacroAggregator:
             "data_freshness": {"overall_freshness": 0.92, "stale_data_count": 2},
         }
 
-    def _aggregate_data_quality(self) -> Dict[str, Any]:
+    def _aggregate_data_quality(self) -> dict[str, Any]:
         """Aggregate data quality metrics"""
         quality_scores = []
         completeness_scores = []
@@ -807,35 +769,25 @@ class GlobalMacroAggregator:
             try:
                 quality_data = data["cli_data_quality"]
                 quality_scores.append(quality_data["overall_quality_score"])
-                completeness_scores.append(
-                    quality_data["completeness_metrics"]["required_indicators_coverage"]
-                )
-                consistency_scores.append(
-                    quality_data["consistency_validation"]["cross_source_consistency"]
-                )
+                completeness_scores.append(quality_data["completeness_metrics"]["required_indicators_coverage"])
+                consistency_scores.append(quality_data["consistency_validation"]["cross_source_consistency"])
             except (KeyError, TypeError):
                 continue
 
         return {
-            "overall_quality_score": round(
-                np.mean(quality_scores) if quality_scores else 0.88, 3
-            ),
+            "overall_quality_score": round(np.mean(quality_scores) if quality_scores else 0.88, 3),
             "completeness_metrics": {
-                "required_indicators_coverage": round(
-                    np.mean(completeness_scores) if completeness_scores else 0.92, 3
-                ),
+                "required_indicators_coverage": round(np.mean(completeness_scores) if completeness_scores else 0.92, 3),
                 "optional_indicators_coverage": 0.85,
             },
             "consistency_validation": {
-                "cross_source_consistency": round(
-                    np.mean(consistency_scores) if consistency_scores else 0.87, 3
-                ),
+                "cross_source_consistency": round(np.mean(consistency_scores) if consistency_scores else 0.87, 3),
                 "temporal_consistency": 0.89,
                 "logical_consistency": 0.91,
             },
         }
 
-    def _aggregate_insights(self) -> Dict[str, Any]:
+    def _aggregate_insights(self) -> dict[str, Any]:
         """Aggregate insights from regional analyses"""
         all_insights = []
         all_risks = []
@@ -846,9 +798,7 @@ class GlobalMacroAggregator:
                 insights_data = data["cli_insights"]
                 all_insights.extend(insights_data.get("primary_insights", []))
                 all_risks.extend(insights_data.get("risk_alerts", []))
-                all_opportunities.extend(
-                    insights_data.get("opportunity_identification", [])
-                )
+                all_opportunities.extend(insights_data.get("opportunity_identification", []))
             except (KeyError, TypeError):
                 continue
 
@@ -897,7 +847,7 @@ class GlobalMacroAggregator:
             "opportunity_identification": all_opportunities[:3],  # Top 3 opportunities
         }
 
-    def _create_cross_regional_analysis(self) -> Dict[str, Any]:
+    def _create_cross_regional_analysis(self) -> dict[str, Any]:
         """Create cross-regional correlation analysis"""
         return {
             "regional_correlations": {
@@ -928,7 +878,7 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _generate_global_insights(self) -> Dict[str, Any]:
+    def _generate_global_insights(self) -> dict[str, Any]:
         """Generate comprehensive global discovery insights"""
         return {
             "macro_themes": [
@@ -1004,16 +954,14 @@ class GlobalMacroAggregator:
             ],
         }
 
-    def _assess_global_quality(self) -> Dict[str, Any]:
+    def _assess_global_quality(self) -> dict[str, Any]:
         """Assess overall global data quality"""
         # Calculate quality metrics from regional aggregation
         quality_scores = []
         for data in self.regional_data.values():
             try:
                 quality_data = data["data_quality_assessment"]
-                quality_scores.append(
-                    quality_data["confidence_scores"]["discovery_confidence"]
-                )
+                quality_scores.append(quality_data["confidence_scores"]["discovery_confidence"])
             except (KeyError, TypeError):
                 continue
 
@@ -1036,7 +984,7 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _create_local_references(self) -> Dict[str, Any]:
+    def _create_local_references(self) -> dict[str, Any]:
         """Create references to local data files"""
         cached_data = {}
 
@@ -1062,14 +1010,12 @@ class GlobalMacroAggregator:
             },
         }
 
-    def _validate_global_quality(self) -> Dict[str, Any]:
+    def _validate_global_quality(self) -> dict[str, Any]:
         """Validate global analysis quality"""
         # Calculate scores based on regional data availability and quality
         service_availability = len(self.regional_data) >= 3  # Need at least 3 regions
         data_completeness = len(self.regional_data) >= 3
-        cross_source_consistency = (
-            True  # Based on aggregation from validated regional data
-        )
+        cross_source_consistency = True  # Based on aggregation from validated regional data
         region_specificity = True  # Global analysis by definition
         confidence_calibration = True  # Calculated from regional confidences
 
@@ -1101,11 +1047,7 @@ class GlobalMacroAggregator:
             "overall_quality_score": round(overall_score, 3),
             "institutional_grade_achieved": institutional_grade,
             "validation_checks": validation_checks,
-            "blocking_issues": (
-                []
-                if institutional_grade
-                else ["Aggregate quality below institutional threshold"]
-            ),
+            "blocking_issues": ([] if institutional_grade else ["Aggregate quality below institutional threshold"]),
             "recommendations": [
                 "Continue monitoring regional data quality",
                 "Enhance emerging market data coverage",
@@ -1113,7 +1055,7 @@ class GlobalMacroAggregator:
             ],
         }
 
-    def save_global_analysis(self, output_path: Optional[str] = None) -> str:
+    def save_global_analysis(self, output_path: str | None = None) -> str:
         """Save the global analysis to file"""
         if output_path is None:
             output_path = self.base_dir / f"global_{self.today}_discovery.json"
@@ -1126,9 +1068,9 @@ class GlobalMacroAggregator:
             def default(self, obj):
                 if isinstance(obj, (np.integer, np.floating)):
                     return obj.item()
-                elif isinstance(obj, np.ndarray):
+                if isinstance(obj, np.ndarray):
                     return obj.tolist()
-                elif isinstance(obj, np.bool_):
+                if isinstance(obj, np.bool_):
                     return bool(obj)
                 return super(NumpyEncoder, self).default(obj)
 
@@ -1141,9 +1083,7 @@ class GlobalMacroAggregator:
 
 def main():
     """Main execution function"""
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     aggregator = GlobalMacroAggregator()
 
@@ -1161,16 +1101,14 @@ def main():
 
     # Validate schema compliance
     try:
-        schema_path = (
-            Path(__file__).parent / "schemas" / "macro_analysis_discovery_schema.json"
-        )
+        schema_path = Path(__file__).parent / "schemas" / "macro_analysis_discovery_schema.json"
         if schema_path.exists():
             import jsonschema
 
-            with open(schema_path, "r") as f:
+            with open(schema_path) as f:
                 schema = json.load(f)
 
-            with open(output_path, "r") as f:
+            with open(output_path) as f:
                 analysis = json.load(f)
 
             jsonschema.validate(analysis, schema)

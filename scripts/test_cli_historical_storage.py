@@ -9,6 +9,7 @@ This demonstrates file creation in ./data/raw/ through API calls.
 import sys
 from pathlib import Path
 
+
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent / "services"))
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -24,9 +25,7 @@ def test_yahoo_finance_storage():
         # Create service with historical storage enabled
         service = create_yahoo_finance_service(env="dev")
 
-        print(
-            f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}"
-        )
+        print(f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}")
 
         # Get stock data - this should trigger historical storage
         print("📈 Getting AAPL stock data...")
@@ -41,13 +40,11 @@ def test_yahoo_finance_storage():
         # Get historical data
         print("📈 Getting MSFT historical data...")
         msft_historical = service.get_historical_data("MSFT", "1mo")
-        print(
-            f"✅ MSFT historical data retrieved: {len(msft_historical.get('data', []))} records"
-        )
+        print(f"✅ MSFT historical data retrieved: {len(msft_historical.get('data', []))} records")
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Yahoo Finance test failed: {e}")
         return False
 
@@ -62,9 +59,7 @@ def test_fmp_storage():
         # Create service
         service = create_fmp_service(env="dev")
 
-        print(
-            f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}"
-        )
+        print(f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}")
 
         # Get stock quote - this should trigger historical storage
         print("📈 Getting TSLA quote...")
@@ -78,7 +73,7 @@ def test_fmp_storage():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ FMP test failed: {e}")
         return False
 
@@ -93,9 +88,7 @@ def test_alpha_vantage_storage():
         # Create service
         service = create_alpha_vantage_service(env="dev")
 
-        print(
-            f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}"
-        )
+        print(f"📊 Service info: {service.get_service_info()['historical_storage']['enabled']}")
 
         # Get stock quote - this should trigger historical storage
         print("📈 Getting META quote...")
@@ -104,7 +97,7 @@ def test_alpha_vantage_storage():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Alpha Vantage test failed: {e}")
         return False
 
@@ -134,14 +127,14 @@ def check_created_files():
 
         # Show a snippet of the file content
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 import json
 
                 data = json.load(f)
                 symbol = data.get("symbol", "unknown")
                 data_type = data.get("data_type", "unknown")
                 print("      Symbol: {symbol}, Type: {data_type}")
-        except Exception as e:
+        except Exception:
             print("      (Could not read file: {e})")
 
     return json_files
@@ -155,7 +148,7 @@ def test_metadata_file():
 
     if metadata_path.exists():
         try:
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 import json
 
                 metadata = json.load(f)
@@ -170,7 +163,7 @@ def test_metadata_file():
             if symbols:
                 print("  📋 Symbol list: {', '.join(symbols[:10])}")
 
-        except Exception as e:
+        except Exception:
             print("❌ Could not read metadata: {e}")
     else:
         print("📝 No metadata file found")

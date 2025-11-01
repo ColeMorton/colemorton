@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -25,19 +25,17 @@ class EnhancedMacroGapAnalyzer:
         # Extract region from discovery data
         self.region = self.discovery_data.get("metadata", {}).get("region", "ASIA")
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load discovery JSON data"""
-        with open(self.discovery_file, "r") as f:
+        with open(self.discovery_file) as f:
             return json.load(f)
 
-    def _load_analysis_data(self) -> Dict[str, Any]:
+    def _load_analysis_data(self) -> dict[str, Any]:
         """Load analysis JSON data"""
-        with open(self.analysis_file, "r") as f:
+        with open(self.analysis_file) as f:
             return json.load(f)
 
-    def _calculate_correlation_matrix(
-        self, variables: list, base_value: float = 0.5
-    ) -> Dict[str, Dict[str, float]]:
+    def _calculate_correlation_matrix(self, variables: list, base_value: float = 0.5) -> dict[str, dict[str, float]]:
         """Calculate correlation matrix for variables"""
         matrix = {}
         for i, var1 in enumerate(variables):
@@ -47,17 +45,13 @@ class EnhancedMacroGapAnalyzer:
                     matrix[var1][var2] = 1.0
                 else:
                     # Use discovered correlations or calculate based on economic relationships
-                    matrix[var1][var2] = self._get_economic_correlation(
-                        var1, var2, base_value
-                    )
+                    matrix[var1][var2] = self._get_economic_correlation(var1, var2, base_value)
         return matrix
 
     def _get_economic_correlation(self, var1: str, var2: str, base: float) -> float:
         """Get economic correlation between variables"""
         # Use discovery data correlations where available
-        self.discovery_data.get("cli_market_intelligence", {}).get(
-            "cross_asset_correlations", {}
-        )
+        self.discovery_data.get("cli_market_intelligence", {}).get("cross_asset_correlations", {})
 
         # Define known economic relationships
         relationships = {
@@ -75,14 +69,11 @@ class EnhancedMacroGapAnalyzer:
 
         if key in relationships:
             return relationships[key]
-        elif reverse_key in relationships:
+        if reverse_key in relationships:
             return relationships[reverse_key]
-        else:
-            return base * (
-                0.8 + np.random.random() * 0.4
-            )  # Random correlation in realistic range
+        return base * (0.8 + np.random.random() * 0.4)  # Random correlation in realistic range
 
-    def advanced_business_cycle_modeling(self) -> Dict[str, Any]:
+    def advanced_business_cycle_modeling(self) -> dict[str, Any]:
         """Component 1: Advanced Business Cycle Modeling"""
         existing_cycle = self.analysis_data.get("business_cycle_modeling", {})
 
@@ -154,33 +145,23 @@ class EnhancedMacroGapAnalyzer:
         macro_indicators = self._calculate_macro_momentum_indicators()
 
         transition_probabilities = {
-            "expansion_to_peak": self._calculate_transition_prob(
-                "expansion_to_peak", macro_indicators
-            ),
-            "peak_to_contraction": self._calculate_transition_prob(
-                "peak_to_contraction", macro_indicators
-            ),
-            "contraction_to_trough": self._calculate_transition_prob(
-                "contraction_to_trough", macro_indicators
-            ),
-            "trough_to_expansion": self._calculate_transition_prob(
-                "trough_to_expansion", macro_indicators
-            ),
+            "expansion_to_peak": self._calculate_transition_prob("expansion_to_peak", macro_indicators),
+            "peak_to_contraction": self._calculate_transition_prob("peak_to_contraction", macro_indicators),
+            "contraction_to_trough": self._calculate_transition_prob("contraction_to_trough", macro_indicators),
+            "trough_to_expansion": self._calculate_transition_prob("trough_to_expansion", macro_indicators),
         }
 
         return {
             "current_phase": current_phase,
             "recession_probability_models": recession_models,
-            "ensemble_recession_probability": np.mean(
-                [m["probability"] for m in recession_models.values()]
-            ),
+            "ensemble_recession_probability": np.mean([m["probability"] for m in recession_models.values()]),
             "monetary_policy_transmission_analysis": monetary_transmission,
             "enhanced_phase_transitions": transition_probabilities,
             "business_cycle_momentum_indicators": macro_indicators,
             "cycle_maturity_assessment": {
-                "months_in_current_phase": existing_cycle.get(
-                    "expansion_longevity_assessment", {}
-                ).get("months_in_expansion", 22),
+                "months_in_current_phase": existing_cycle.get("expansion_longevity_assessment", {}).get(
+                    "months_in_expansion", 22
+                ),
                 "historical_phase_duration": 24,
                 "maturity_score": 0.75,
                 "probability_of_phase_end_6m": 0.28,
@@ -189,7 +170,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.87,
         }
 
-    def _calculate_macro_momentum_indicators(self) -> Dict[str, Any]:
+    def _calculate_macro_momentum_indicators(self) -> dict[str, Any]:
         """Calculate comprehensive macro momentum indicators"""
         self.discovery_data.get("cli_comprehensive_analysis", {})
 
@@ -220,9 +201,7 @@ class EnhancedMacroGapAnalyzer:
             },
         }
 
-    def _calculate_transition_prob(
-        self, transition: str, indicators: Dict[str, Any]
-    ) -> float:
+    def _calculate_transition_prob(self, transition: str, indicators: dict[str, Any]) -> float:
         """Calculate business cycle transition probability"""
         base_probs = {
             "expansion_to_peak": 0.15,
@@ -236,13 +215,11 @@ class EnhancedMacroGapAnalyzer:
         if transition == "expansion_to_peak":
             momentum_adjustment = indicators["gdp_momentum"]["acceleration"] * -2.0
         elif transition == "peak_to_contraction":
-            momentum_adjustment = (
-                1 - indicators["financial_conditions"]["credit_availability"]
-            ) * 0.3
+            momentum_adjustment = (1 - indicators["financial_conditions"]["credit_availability"]) * 0.3
 
         return max(0.05, min(0.80, base_probs[transition] + momentum_adjustment))
 
-    def global_liquidity_monetary_policy_analysis(self) -> Dict[str, Any]:
+    def global_liquidity_monetary_policy_analysis(self) -> dict[str, Any]:
         """Component 2: Global Liquidity and Monetary Policy Analysis"""
         existing_liquidity = self.analysis_data.get("liquidity_cycle_positioning", {})
 
@@ -307,9 +284,7 @@ class EnhancedMacroGapAnalyzer:
         # Enhanced money supply analysis with velocity decomposition
         money_supply_analysis = {
             "broad_money_aggregates": {
-                "m2_growth_rate": existing_liquidity["money_supply_analysis"][
-                    "m2_growth_rate"
-                ],
+                "m2_growth_rate": existing_liquidity["money_supply_analysis"]["m2_growth_rate"],
                 "m3_growth_rate": 4.2,
                 "central_bank_reserves": 12.5,  # % growth
                 "commercial_bank_deposits": 3.8,
@@ -354,7 +329,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.85,
         }
 
-    def market_regime_classification_enhanced(self) -> Dict[str, Any]:
+    def market_regime_classification_enhanced(self) -> dict[str, Any]:
         """Component 3: Enhanced Market Regime Classification"""
         self.analysis_data.get("market_regime_classification", {})
 
@@ -445,7 +420,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.84,
         }
 
-    def _build_regime_transition_matrix(self) -> Dict[str, Dict[str, float]]:
+    def _build_regime_transition_matrix(self) -> dict[str, dict[str, float]]:
         """Build market regime transition probability matrix"""
         ["risk_on", "risk_off", "consolidation", "crisis"]
 
@@ -479,7 +454,7 @@ class EnhancedMacroGapAnalyzer:
 
         return transitions
 
-    def economic_scenario_analysis_comprehensive(self) -> Dict[str, Any]:
+    def economic_scenario_analysis_comprehensive(self) -> dict[str, Any]:
         """Component 4: Comprehensive Economic Scenario Analysis"""
         self.analysis_data.get("economic_scenario_analysis", {})
 
@@ -594,9 +569,7 @@ class EnhancedMacroGapAnalyzer:
 
         # Probability weighting with confidence intervals
         probability_weighted_analysis = {
-            "expected_outcomes": self._calculate_weighted_expectations(
-                enhanced_scenarios
-            ),
+            "expected_outcomes": self._calculate_weighted_expectations(enhanced_scenarios),
             "confidence_intervals": {
                 "gdp_growth_range": [2.1, 6.8],
                 "inflation_range": [1.5, 4.8],
@@ -638,25 +611,21 @@ class EnhancedMacroGapAnalyzer:
             "scenario_confidence": 0.81,
         }
 
-    def _calculate_weighted_expectations(
-        self, scenarios: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_weighted_expectations(self, scenarios: dict[str, Any]) -> dict[str, Any]:
         """Calculate probability-weighted economic expectations"""
         weighted_gdp = {}
         weighted_inflation = {}
 
         for country in ["china", "japan", "india", "asean"]:
             gdp_sum = sum(
-                scenario["macro_variables"]["gdp_growth"][country]
-                * scenario["probability"]
+                scenario["macro_variables"]["gdp_growth"][country] * scenario["probability"]
                 for scenario in scenarios.values()
                 if country in scenario["macro_variables"]["gdp_growth"]
             )
             weighted_gdp[country] = gdp_sum
 
             inflation_sum = sum(
-                scenario["macro_variables"]["inflation"][country]
-                * scenario["probability"]
+                scenario["macro_variables"]["inflation"][country] * scenario["probability"]
                 for scenario in scenarios.values()
                 if country in scenario["macro_variables"]["inflation"]
             )
@@ -669,7 +638,7 @@ class EnhancedMacroGapAnalyzer:
             "regional_inflation_average": np.mean(list(weighted_inflation.values())),
         }
 
-    def _build_policy_response_matrix(self) -> Dict[str, Any]:
+    def _build_policy_response_matrix(self) -> dict[str, Any]:
         """Build comprehensive policy response matrix"""
         return {
             "monetary_policy_responses": {
@@ -698,7 +667,7 @@ class EnhancedMacroGapAnalyzer:
             },
         }
 
-    def quantified_risk_assessment_matrix_enhanced(self) -> Dict[str, Any]:
+    def quantified_risk_assessment_matrix_enhanced(self) -> dict[str, Any]:
         """Component 5: Enhanced Quantified Risk Assessment Matrix"""
         self.analysis_data.get("quantified_risk_assessment", {})
 
@@ -881,7 +850,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.83,
         }
 
-    def cross_asset_transmission_analysis(self) -> Dict[str, Any]:
+    def cross_asset_transmission_analysis(self) -> dict[str, Any]:
         """Component 6: Cross-Asset Transmission Analysis"""
         # Interest rate transmission mechanisms
         interest_rate_transmission = {
@@ -1018,7 +987,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.86,
         }
 
-    def integrated_macroeconomic_risk_scoring(self) -> Dict[str, Any]:
+    def integrated_macroeconomic_risk_scoring(self) -> dict[str, Any]:
         """Component 7: Integrated Macroeconomic Risk Scoring"""
         # GDP-based risk assessment
         gdp_risk_scoring = {
@@ -1201,7 +1170,7 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.84,
         }
 
-    def economic_policy_assessment_outlook(self) -> Dict[str, Any]:
+    def economic_policy_assessment_outlook(self) -> dict[str, Any]:
         """Component 8: Economic Policy Assessment and Outlook"""
         # Monetary policy effectiveness analysis
         monetary_policy_assessment = {
@@ -1405,11 +1374,9 @@ class EnhancedMacroGapAnalyzer:
             "confidence": 0.81,
         }
 
-    def generate_comprehensive_analysis(self) -> Dict[str, Any]:
+    def generate_comprehensive_analysis(self) -> dict[str, Any]:
         """Generate the complete comprehensive macro-economic analysis"""
-        print(
-            f"🔄 Generating comprehensive macro-economic template gap analysis for {self.region}..."
-        )
+        print(f"🔄 Generating comprehensive macro-economic template gap analysis for {self.region}...")
 
         # Execute all 8 analysis components
         component_1 = self.advanced_business_cycle_modeling()
@@ -1488,12 +1455,8 @@ def main():
     date_str = "20250806"  # Match discovery file date
 
     # File paths
-    discovery_file = (
-        f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
-    )
-    analysis_file = (
-        f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
-    )
+    discovery_file = f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
+    analysis_file = f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
     output_file = f"data/outputs/macro_analysis/enhanced/{region}_{date_str}_enhanced_analysis.json"
 
     # Check if required files exist
@@ -1517,15 +1480,11 @@ def main():
         json.dump(comprehensive_output, f, indent=2)
 
     print("✅ Enhanced comprehensive analysis complete. Output saved to: {output_file}")
-    print(
-        f"📊 Analysis components: {comprehensive_output['metadata']['components_analyzed']}"
-    )
+    print(f"📊 Analysis components: {comprehensive_output['metadata']['components_analyzed']}")
     print(
         f"🎯 Synthesis readiness: {comprehensive_output['synthesis_readiness_metrics']['overall_synthesis_readiness']:.2f}"
     )
-    print(
-        f"🔍 Overall risk level: {comprehensive_output['comprehensive_analysis_summary']['overall_risk_level']}"
-    )
+    print(f"🔍 Overall risk level: {comprehensive_output['comprehensive_analysis_summary']['overall_risk_level']}")
 
 
 if __name__ == "__main__":

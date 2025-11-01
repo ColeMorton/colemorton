@@ -12,9 +12,10 @@ Command-line interface for Alternative.me Crypto Fear & Greed Index with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,7 +41,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
             self.service = create_alternative_me_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Alternative.me service health check"""
         try:
             service = self._get_service(env)
@@ -54,7 +55,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -97,18 +98,14 @@ class AlternativeMeCLI(BaseFinancialCLI):
                     limit = 1
 
                 result = service.get_historical_fear_greed(limit)
-                self._output_result(
-                    result, output_format, f"Historical Fear & Greed ({limit} days)"
-                )
+                self._output_result(result, output_format, f"Historical Fear & Greed ({limit} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get historical Fear & Greed data")
 
         @self.app.command("date")
         def get_fear_greed_by_date(
-            date: str = typer.Argument(
-                ..., help="Date in DD-MM-YYYY or YYYY-MM-DD format"
-            ),
+            date: str = typer.Argument(..., help="Date in DD-MM-YYYY or YYYY-MM-DD format"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -117,21 +114,15 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_fear_greed_by_date(date)
-                self._output_result(
-                    result, output_format, f"Fear & Greed Index for {date}"
-                )
+                self._output_result(result, output_format, f"Fear & Greed Index for {date}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get Fear & Greed data for {date}")
 
         @self.app.command("range")
         def get_fear_greed_range(
-            start_date: str = typer.Argument(
-                ..., help="Start date (DD-MM-YYYY or YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Argument(
-                ..., help="End date (DD-MM-YYYY or YYYY-MM-DD)"
-            ),
+            start_date: str = typer.Argument(..., help="Start date (DD-MM-YYYY or YYYY-MM-DD)"),
+            end_date: str = typer.Argument(..., help="End date (DD-MM-YYYY or YYYY-MM-DD)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
         ):
@@ -140,9 +131,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_fear_greed_range(start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Fear & Greed ({start_date} to {end_date})"
-                )
+                self._output_result(result, output_format, f"Fear & Greed ({start_date} to {end_date})")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get Fear & Greed range data")
@@ -158,9 +147,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_sentiment_analysis(days)
-                self._output_result(
-                    result, output_format, f"Sentiment Analysis ({days} days)"
-                )
+                self._output_result(result, output_format, f"Sentiment Analysis ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get sentiment analysis")
@@ -176,9 +163,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_extreme_values(days)
-                self._output_result(
-                    result, output_format, f"Extreme Values ({days} days)"
-                )
+                self._output_result(result, output_format, f"Extreme Values ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get extreme values")
@@ -194,9 +179,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_bitcoin_correlation(days)
-                self._output_result(
-                    result, output_format, f"Bitcoin Correlation ({days} days)"
-                )
+                self._output_result(result, output_format, f"Bitcoin Correlation ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get Bitcoin correlation analysis")
@@ -212,9 +195,7 @@ class AlternativeMeCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_zone_distribution(days)
-                self._output_result(
-                    result, output_format, f"Zone Distribution ({days} days)"
-                )
+                self._output_result(result, output_format, f"Zone Distribution ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get zone distribution")

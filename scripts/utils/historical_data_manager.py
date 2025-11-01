@@ -14,7 +14,7 @@ import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -64,9 +64,7 @@ class HistoricalDataManager:
     - Integration with existing cache systems
     """
 
-    def __init__(
-        self, base_path: Optional[Path] = None, config_path: Optional[str] = None
-    ):
+    def __init__(self, base_path: Path | None = None, config_path: str | None = None):
         """
         Initialize Historical Data Manager
 
@@ -74,9 +72,7 @@ class HistoricalDataManager:
             base_path: Base directory for raw data storage (defaults to ./data/raw/)
             config_path: Path to historical data configuration file
         """
-        self.base_path = (
-            base_path or Path(__file__).parent.parent.parent / "data" / "raw"
-        )
+        self.base_path = base_path or Path(__file__).parent.parent.parent / "data" / "raw"
         self.base_path.mkdir(parents=True, exist_ok=True)
 
         self.config = self._load_config(config_path)
@@ -89,29 +85,22 @@ class HistoricalDataManager:
         self.metadata_file = self.base_path / "metadata.json"
         self.metadata = self._load_metadata()
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
         """Load historical data configuration"""
         if config_path is None:
-            config_path = (
-                Path(__file__).parent.parent.parent
-                / "config"
-                / "services"
-                / "cache_config.yaml"
-            )
+            config_path = Path(__file__).parent.parent.parent / "config" / "services" / "cache_config.yaml"
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 full_config = yaml.safe_load(f)
                 # Extract historical data config or use defaults
                 return full_config.get("historical_storage", self._default_config())
         except (FileNotFoundError, Exception) as e:
             if hasattr(self, "logger"):
-                self.logger.warning(
-                    f"Config not found at {config_path}, using defaults: {e}"
-                )
+                self.logger.warning(f"Config not found at {config_path}, using defaults: {e}")
             return self._default_config()
 
-    def _default_config(self) -> Dict[str, Any]:
+    def _default_config(self) -> dict[str, Any]:
         """Default configuration for historical data storage"""
         return {
             "enabled": True,
@@ -134,9 +123,7 @@ class HistoricalDataManager:
         logger = logging.getLogger("historical_data_manager")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
@@ -158,11 +145,11 @@ class HistoricalDataManager:
         for directory in directories:
             (self.base_path / directory).mkdir(parents=True, exist_ok=True)
 
-    def _load_metadata(self) -> Dict[str, Any]:
+    def _load_metadata(self) -> dict[str, Any]:
         """Load metadata tracking file"""
         if self.metadata_file.exists():
             try:
-                with open(self.metadata_file, "r") as f:
+                with open(self.metadata_file) as f:
                     return json.load(f)
             except (json.JSONDecodeError, Exception):
                 self.logger.warning("Corrupted metadata file, creating new one")
@@ -189,7 +176,7 @@ class HistoricalDataManager:
         self,
         symbol: str,
         data_type: DataType,
-        date: Union[str, datetime] = None,
+        date: str | datetime = None,
         timeframe: Timeframe = Timeframe.DAILY,
         file_type: str = "data",  # "data" for CSV, "meta" for JSON metadata
     ) -> Path:
@@ -257,18 +244,14 @@ class HistoricalDataManager:
 
         return self.base_path / category / symbol.upper() / filename
 
-    def _generate_data_hash(self, data: Dict[str, Any]) -> str:
+    def _generate_data_hash(self, data: dict[str, Any]) -> str:
         """Generate hash for deduplication"""
         # Remove metadata fields that shouldn't affect deduplication
-        clean_data = {
-            k: v
-            for k, v in data.items()
-            if k not in ["timestamp", "stored_at", "source_request_id"]
-        }
+        clean_data = {k: v for k, v in data.items() if k not in ["timestamp", "stored_at", "source_request_id"]}
         data_str = json.dumps(clean_data, sort_keys=True, default=str)
         return hashlib.md5(data_str.encode()).hexdigest()
 
-    def _validate_data(self, data: Dict[str, Any], data_type: DataType) -> bool:
+    def _validate_data(self, data: dict[str, Any], data_type: DataType) -> bool:
         """Validate data quality before storage"""
         data_quality_config = self.config.get("data_quality", {})
         if not data_quality_config.get("validate_on_store", True):
@@ -311,10 +294,8 @@ class HistoricalDataManager:
                 "Close",
                 "Volume",
             ]
-            return all(field in data for field in required_fields) and any(
-                field in data for field in price_fields
-            )
-        elif data_type == DataType.STOCK_FUNDAMENTALS:
+            return all(field in data for field in required_fields) and any(field in data for field in price_fields)
+        if data_type == DataType.STOCK_FUNDAMENTALS:
             # Handle stock info/quote data with fundamental information
             fundamental_fields = [
                 "market_cap",
@@ -324,10 +305,8 @@ class HistoricalDataManager:
                 "current_price",
                 "name",
             ]
-            return "symbol" in data and any(
-                field in data for field in fundamental_fields
-            )
-        elif data_type == DataType.STOCK_FINANCIALS:
+            return "symbol" in data and any(field in data for field in fundamental_fields)
+        if data_type == DataType.STOCK_FINANCIALS:
             return "symbol" in data and (
                 "revenue" in data
                 or "net_income" in data
@@ -336,7 +315,7 @@ class HistoricalDataManager:
                 or "balance_sheet" in data
                 or "cash_flow" in data
             )
-        elif data_type == DataType.STOCK_OPTIONS:
+        if data_type == DataType.STOCK_OPTIONS:
             # Options data should have strike, expiry, option type, and pricing info
             options_fields = [
                 "strike",
@@ -347,24 +326,14 @@ class HistoricalDataManager:
                 "last_price",
                 "implied_volatility",
             ]
-            return (
-                "symbol" in data
-                and "date" in data
-                and any(field in data for field in options_fields)
-            )
-        elif data_type == DataType.ETF_HOLDINGS:
+            return "symbol" in data and "date" in data and any(field in data for field in options_fields)
+        if data_type == DataType.ETF_HOLDINGS:
             # ETF holdings should have holdings list or constituent information
-            return "symbol" in data and (
-                "holdings" in data or "constituents" in data or "top_holdings" in data
-            )
-        elif data_type == DataType.ETF_FLOWS:
+            return "symbol" in data and ("holdings" in data or "constituents" in data or "top_holdings" in data)
+        if data_type == DataType.ETF_FLOWS:
             # ETF flows should have flow amounts and dates
-            return (
-                "symbol" in data
-                and "date" in data
-                and ("net_flow" in data or "inflow" in data or "outflow" in data)
-            )
-        elif data_type == DataType.INSIDER_TRANSACTIONS:
+            return "symbol" in data and "date" in data and ("net_flow" in data or "inflow" in data or "outflow" in data)
+        if data_type == DataType.INSIDER_TRANSACTIONS:
             # Insider transactions should have transaction details
             insider_fields = [
                 "insider_name",
@@ -374,19 +343,14 @@ class HistoricalDataManager:
                 "transaction_date",
             ]
             return "symbol" in data and any(field in data for field in insider_fields)
-        elif data_type == DataType.TECHNICAL_INDICATORS:
+        if data_type == DataType.TECHNICAL_INDICATORS:
             # Technical indicators should have indicator name and value
             return (
                 "symbol" in data
                 and "date" in data
-                and (
-                    "indicator_name" in data
-                    or "sma" in data
-                    or "rsi" in data
-                    or "macd" in data
-                )
+                and ("indicator_name" in data or "sma" in data or "rsi" in data or "macd" in data)
             )
-        elif data_type == DataType.CORPORATE_ACTIONS:
+        if data_type == DataType.CORPORATE_ACTIONS:
             # Corporate actions should have action type and details
             action_fields = [
                 "action_type",
@@ -396,14 +360,12 @@ class HistoricalDataManager:
                 "dividend_amount",
             ]
             return "symbol" in data and any(field in data for field in action_fields)
-        elif data_type in [DataType.ECONOMIC_INDICATORS, DataType.ECONOMIC_REPORTS]:
+        if data_type in [DataType.ECONOMIC_INDICATORS, DataType.ECONOMIC_REPORTS]:
             return "date" in data and "value" in data
 
         return True  # Default validation passes
 
-    def _serialize_to_csv(
-        self, data_records: List[Dict[str, Any]], file_path: Path
-    ) -> bool:
+    def _serialize_to_csv(self, data_records: list[dict[str, Any]], file_path: Path) -> bool:
         """
         Serialize time series data to CSV format for optimal performance
 
@@ -426,11 +388,7 @@ class HistoricalDataManager:
             fieldnames = ["date", "open", "high", "low", "close", "volume"]
 
             # Add any additional fields that exist (like adjusted_close)
-            additional_fields = [
-                key
-                for key in first_record.keys()
-                if key not in fieldnames and key not in ["symbol"]
-            ]
+            additional_fields = [key for key in first_record.keys() if key not in fieldnames and key not in ["symbol"]]
             fieldnames.extend(sorted(additional_fields))
 
             with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
@@ -449,7 +407,7 @@ class HistoricalDataManager:
             self.logger.error(f"Failed to write CSV file {file_path}: {e}")
             return False
 
-    def _deserialize_from_csv(self, file_path: Path) -> List[Dict[str, Any]]:
+    def _deserialize_from_csv(self, file_path: Path) -> list[dict[str, Any]]:
         """
         Deserialize time series data from CSV format
 
@@ -464,7 +422,7 @@ class HistoricalDataManager:
 
         try:
             records = []
-            with open(file_path, "r", encoding="utf-8") as csvfile:
+            with open(file_path, encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
 
                 for row in reader:
@@ -495,7 +453,7 @@ class HistoricalDataManager:
             self.logger.error(f"Failed to read CSV file {file_path}: {e}")
             return []
 
-    def _save_metadata(self, metadata: Dict[str, Any], file_path: Path) -> bool:
+    def _save_metadata(self, metadata: dict[str, Any], file_path: Path) -> bool:
         """
         Save metadata to JSON file
 
@@ -521,11 +479,11 @@ class HistoricalDataManager:
     def store_data(
         self,
         symbol: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         data_type: DataType,
-        date: Optional[Union[str, datetime]] = None,
+        date: str | datetime | None = None,
         timeframe: Timeframe = Timeframe.DAILY,
-        source: Optional[str] = None,
+        source: str | None = None,
     ) -> bool:
         """
         Store historical data using hybrid CSV+JSON format for optimal performance
@@ -546,20 +504,12 @@ class HistoricalDataManager:
 
         # Validate data quality first
         if not self._validate_data(data, data_type):
-            self.logger.warning(
-                f"Data validation failed for {symbol} {data_type.value}"
-            )
+            self.logger.warning(f"Data validation failed for {symbol} {data_type.value}")
             return False
 
         # Handle nested data format with multiple records (Yahoo Finance format)
-        if (
-            "data" in data
-            and isinstance(data["data"], list)
-            and data_type == DataType.STOCK_DAILY_PRICES
-        ):
-            return self._store_time_series_data(
-                symbol, data, data_type, timeframe, source
-            )
+        if "data" in data and isinstance(data["data"], list) and data_type == DataType.STOCK_DAILY_PRICES:
+            return self._store_time_series_data(symbol, data, data_type, timeframe, source)
 
         # Handle single record or other data types
         if date is None:
@@ -567,17 +517,15 @@ class HistoricalDataManager:
         elif isinstance(date, str):
             date = datetime.fromisoformat(date.replace("Z", "+00:00"))
 
-        return self._store_single_record(
-            symbol, data, data_type, date, timeframe, source
-        )
+        return self._store_single_record(symbol, data, data_type, date, timeframe, source)
 
     def _store_time_series_data(
         self,
         symbol: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         data_type: DataType,
         timeframe: Timeframe,
-        source: Optional[str],
+        source: str | None,
     ) -> bool:
         """
         Store time series data using consolidated CSV format with deduplication
@@ -619,9 +567,7 @@ class HistoricalDataManager:
                     if hasattr(date_value, "strftime"):
                         record_date = date_value
                     else:
-                        record_date = datetime.strptime(
-                            str(date_value)[:10], "%Y-%m-%d"
-                        )
+                        record_date = datetime.strptime(str(date_value)[:10], "%Y-%m-%d")
                 elif "date" in record:
                     record_date = datetime.strptime(record["date"], "%Y-%m-%d")
 
@@ -671,11 +617,11 @@ class HistoricalDataManager:
         self,
         data_file_path: Path,
         meta_file_path: Path,
-        new_records: List[Dict[str, Any]],
+        new_records: list[dict[str, Any]],
         symbol: str,
         data_type: DataType,
         timeframe: Timeframe,
-        source: Optional[str],
+        source: str | None,
     ) -> bool:
         """
         Append new records to consolidated CSV file with efficient deduplication
@@ -709,9 +655,7 @@ class HistoricalDataManager:
                     existing_dates.add(record["date"])
 
             if not unique_new_records:
-                self.logger.debug(
-                    f"No new records to append for {symbol} {timeframe.value}"
-                )
+                self.logger.debug(f"No new records to append for {symbol} {timeframe.value}")
                 return True
 
             # Combine and sort all records
@@ -732,18 +676,11 @@ class HistoricalDataManager:
                     )
 
                     # Update global metadata
-                    self._update_metadata(
-                        symbol, data_type, datetime.now(), data_file_path
-                    )
+                    self._update_metadata(symbol, data_type, datetime.now(), data_file_path)
                     return True
-                else:
-                    self.logger.error(
-                        f"Failed to save metadata for {symbol} {timeframe.value}"
-                    )
+                self.logger.error(f"Failed to save metadata for {symbol} {timeframe.value}")
             else:
-                self.logger.error(
-                    f"Failed to write consolidated CSV for {symbol} {timeframe.value}"
-                )
+                self.logger.error(f"Failed to write consolidated CSV for {symbol} {timeframe.value}")
 
             return False
 
@@ -758,8 +695,8 @@ class HistoricalDataManager:
         timeframe: Timeframe,
         record_count: int,
         data_hash: str,
-        source: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        source: str | None = None,
+    ) -> dict[str, Any]:
         """
         Create metadata for consolidated CSV files
 
@@ -795,21 +732,17 @@ class HistoricalDataManager:
     def _store_single_record(
         self,
         symbol: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         data_type: DataType,
         date: datetime,
         timeframe: Timeframe,
-        source: Optional[str],
+        source: str | None,
     ) -> bool:
         """Store a single data record using consolidated file approach"""
         try:
             # Generate consolidated file paths
-            data_file_path = self._get_file_path(
-                symbol, data_type, None, timeframe, "data"
-            )
-            meta_file_path = self._get_file_path(
-                symbol, data_type, None, timeframe, "meta"
-            )
+            data_file_path = self._get_file_path(symbol, data_type, None, timeframe, "data")
+            meta_file_path = self._get_file_path(symbol, data_type, None, timeframe, "meta")
 
             # Ensure directories exist
             data_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -835,9 +768,7 @@ class HistoricalDataManager:
             # Update global metadata
             self._update_metadata(symbol, data_type, date, data_file_path)
 
-            self.logger.debug(
-                f"Stored {data_type.value} record for {symbol} at {data_file_path}"
-            )
+            self.logger.debug(f"Stored {data_type.value} record for {symbol} at {data_file_path}")
             return True
 
         except Exception as e:
@@ -848,10 +779,10 @@ class HistoricalDataManager:
         self,
         symbol: str,
         data_type: DataType,
-        date_start: Union[str, datetime],
-        date_end: Optional[Union[str, datetime]] = None,
+        date_start: str | datetime,
+        date_end: str | datetime | None = None,
         timeframe: Timeframe = Timeframe.DAILY,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve historical data from hybrid CSV+JSON format
 
@@ -872,9 +803,7 @@ class HistoricalDataManager:
         elif not date_end:
             date_end = date_start
 
-        return self._retrieve_hybrid_format(
-            symbol, data_type, date_start, date_end, timeframe
-        )
+        return self._retrieve_hybrid_format(symbol, data_type, date_start, date_end, timeframe)
 
     def _retrieve_hybrid_format(
         self,
@@ -883,19 +812,15 @@ class HistoricalDataManager:
         date_start: datetime,
         date_end: datetime,
         timeframe: Timeframe,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Retrieve data from consolidated CSV+JSON format - optimized single-file access"""
         results = []
 
         try:
             if data_type == DataType.STOCK_DAILY_PRICES:
                 # Single consolidated CSV file approach
-                csv_path = self._get_file_path(
-                    symbol, data_type, None, timeframe, "data"
-                )
-                meta_path = self._get_file_path(
-                    symbol, data_type, None, timeframe, "meta"
-                )
+                csv_path = self._get_file_path(symbol, data_type, None, timeframe, "data")
+                meta_path = self._get_file_path(symbol, data_type, None, timeframe, "meta")
 
                 if csv_path.exists():
                     # Read all data from consolidated CSV file
@@ -905,12 +830,10 @@ class HistoricalDataManager:
                     metadata = {}
                     if meta_path.exists():
                         try:
-                            with open(meta_path, "r") as f:
+                            with open(meta_path) as f:
                                 metadata = json.load(f)
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to read metadata for {symbol}: {e}"
-                            )
+                            self.logger.warning(f"Failed to read metadata for {symbol}: {e}")
 
                     # Filter records within date range (in-memory filtering - efficient for CSV)
                     for record in csv_records:
@@ -922,14 +845,10 @@ class HistoricalDataManager:
                                 enhanced_record["symbol"] = symbol
                                 enhanced_record["data_type"] = data_type.value
                                 enhanced_record["timeframe"] = timeframe.value
-                                enhanced_record["source"] = metadata.get(
-                                    "source", "unknown"
-                                )
+                                enhanced_record["source"] = metadata.get("source", "unknown")
                                 results.append(enhanced_record)
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to process record for {symbol}: {e}"
-                            )
+                            self.logger.warning(f"Failed to process record for {symbol}: {e}")
                             continue
 
                     self.logger.debug(
@@ -938,33 +857,25 @@ class HistoricalDataManager:
 
             else:
                 # For non-time-series data, read from consolidated JSON file
-                data_path = self._get_file_path(
-                    symbol, data_type, None, timeframe, "data"
-                )
-                meta_path = self._get_file_path(
-                    symbol, data_type, None, timeframe, "meta"
-                )
+                data_path = self._get_file_path(symbol, data_type, None, timeframe, "data")
+                meta_path = self._get_file_path(symbol, data_type, None, timeframe, "meta")
 
                 if data_path.exists():
                     # Read JSON data
-                    with open(data_path, "r") as f:
+                    with open(data_path) as f:
                         data = json.load(f)
 
                     # Read metadata if available
                     metadata = {}
                     if meta_path.exists():
                         try:
-                            with open(meta_path, "r") as f:
+                            with open(meta_path) as f:
                                 metadata = json.load(f)
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to read metadata for {symbol}: {e}"
-                            )
+                            self.logger.warning(f"Failed to read metadata for {symbol}: {e}")
 
                     # Return direct data format with metadata fields
-                    enhanced_data = (
-                        data.copy() if isinstance(data, dict) else {"data": data}
-                    )
+                    enhanced_data = data.copy() if isinstance(data, dict) else {"data": data}
                     enhanced_data["symbol"] = symbol
                     enhanced_data["data_type"] = data_type.value
                     enhanced_data["timeframe"] = timeframe.value
@@ -972,18 +883,14 @@ class HistoricalDataManager:
                     enhanced_data["date"] = date_start.isoformat()
                     results.append(enhanced_data)
 
-                    self.logger.debug(
-                        f"Retrieved consolidated data for {symbol} {data_type.value}"
-                    )
+                    self.logger.debug(f"Retrieved consolidated data for {symbol} {data_type.value}")
 
         except Exception as e:
             self.logger.warning(f"Failed to retrieve hybrid format data: {e}")
 
         return results
 
-    def _update_metadata(
-        self, symbol: str, data_type: DataType, date: datetime, file_path: Path
-    ) -> None:
+    def _update_metadata(self, symbol: str, data_type: DataType, date: datetime, file_path: Path) -> None:
         """Update metadata tracking"""
         self.metadata["total_files"] += 1
 
@@ -1007,7 +914,7 @@ class HistoricalDataManager:
 
         self._save_global_metadata()
 
-    def get_available_data(self, symbol: Optional[str] = None) -> Dict[str, Any]:
+    def get_available_data(self, symbol: str | None = None) -> dict[str, Any]:
         """Get summary of available historical data"""
         if symbol:
             return self.metadata["symbols"].get(symbol.upper(), {})
@@ -1025,14 +932,12 @@ class HistoricalDataManager:
 
         # This would implement cleanup logic based on data type and retention
         # For now, return 0 as a placeholder
-        self.logger.info(
-            f"Cleanup for {data_type.value} with {retention_days} day retention"
-        )
+        self.logger.info(f"Cleanup for {data_type.value} with {retention_days} day retention")
         return deleted_count
 
 
 def create_historical_data_manager(
-    config_path: Optional[str] = None,
+    config_path: str | None = None,
 ) -> HistoricalDataManager:
     """Factory function to create historical data manager"""
     return HistoricalDataManager(config_path=config_path)

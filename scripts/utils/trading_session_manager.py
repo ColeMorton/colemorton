@@ -11,10 +11,7 @@ Provides accurate trading session timing for US stock markets with:
 
 import logging
 from datetime import datetime, time, timedelta
-from typing import Dict, Optional, Tuple
 from zoneinfo import ZoneInfo
-
-import pytz
 
 
 class USMarketHolidays:
@@ -166,9 +163,9 @@ class TradingSessionManager:
         self.cache_buffer_minutes = 5
 
         # Holiday cache
-        self._holiday_cache: Dict[int, set] = {}
+        self._holiday_cache: dict[int, set] = {}
 
-    def is_trading_day(self, dt: Optional[datetime] = None) -> bool:
+    def is_trading_day(self, dt: datetime | None = None) -> bool:
         """
         Check if a given date is a trading day
 
@@ -212,7 +209,7 @@ class TradingSessionManager:
 
         return date_obj in self._holiday_cache[year]
 
-    def is_market_open(self, dt: Optional[datetime] = None) -> bool:
+    def is_market_open(self, dt: datetime | None = None) -> bool:
         """
         Check if the market is currently open
 
@@ -243,7 +240,7 @@ class TradingSessionManager:
         """Get current time in Eastern Time"""
         return datetime.now(self.eastern_tz)
 
-    def get_next_market_close(self, dt: Optional[datetime] = None) -> datetime:
+    def get_next_market_close(self, dt: datetime | None = None) -> datetime:
         """
         Get the next market close time
 
@@ -286,7 +283,7 @@ class TradingSessionManager:
             microsecond=0,
         )
 
-    def get_cache_ttl_seconds(self, dt: Optional[datetime] = None) -> int:
+    def get_cache_ttl_seconds(self, dt: datetime | None = None) -> int:
         """
         Calculate cache TTL in seconds until next market close + buffer
 
@@ -314,13 +311,12 @@ class TradingSessionManager:
         ttl_seconds = max(60, int(time_diff.total_seconds()))
 
         self.logger.debug(
-            f"Market close TTL calculated: {ttl_seconds}s "
-            f"(expires at {cache_expiry.strftime('%Y-%m-%d %H:%M:%S %Z')})"
+            f"Market close TTL calculated: {ttl_seconds}s (expires at {cache_expiry.strftime('%Y-%m-%d %H:%M:%S %Z')})"
         )
 
         return ttl_seconds
 
-    def get_market_status(self, dt: Optional[datetime] = None) -> Dict[str, any]:
+    def get_market_status(self, dt: datetime | None = None) -> dict[str, any]:
         """
         Get comprehensive market status information
 
@@ -347,17 +343,13 @@ class TradingSessionManager:
         return {
             "current_time_et": dt.strftime("%Y-%m-%d %H:%M:%S %Z"),
             "is_trading_day": is_trading_day,
-            "is_market_holiday": (
-                self.is_market_holiday(dt.date()) if is_trading_day else None
-            ),
+            "is_market_holiday": (self.is_market_holiday(dt.date()) if is_trading_day else None),
             "is_market_open": is_open,
             "market_open_time": f"{self.market_open.strftime('%H:%M')} ET",
             "market_close_time": f"{self.market_close.strftime('%H:%M')} ET",
             "next_market_close": next_close.strftime("%Y-%m-%d %H:%M:%S %Z"),
             "cache_ttl_seconds": cache_ttl,
-            "cache_expires_at": (dt + timedelta(seconds=cache_ttl)).strftime(
-                "%Y-%m-%d %H:%M:%S %Z"
-            ),
+            "cache_expires_at": (dt + timedelta(seconds=cache_ttl)).strftime("%Y-%m-%d %H:%M:%S %Z"),
         }
 
 

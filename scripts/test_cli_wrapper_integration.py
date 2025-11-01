@@ -8,6 +8,7 @@ Test the integrated CLI wrapper with new architectural components.
 import sys
 from pathlib import Path
 
+
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -93,13 +94,13 @@ def test_cli_wrapper_integration():
     try:
         # This should fail with proper error handling
         manager.get_service("non_existent_service")
-    except Exception as e:
+    except Exception:
         print("Expected error caught: {type(e).__name__}: {e}")
 
     try:
         # This should fail with proper error handling
         wrapper.execute_command("")
-    except Exception as e:
+    except Exception:
         print("Expected error caught: {type(e).__name__}: {e}")
 
     print()

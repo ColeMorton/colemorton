@@ -28,11 +28,12 @@ Usage:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
+
 
 # Import configuration and real-time data services
 try:
@@ -77,15 +78,13 @@ class VolatilityAlert:
 class VolatilityAnalysisService:
     """Advanced volatility analysis service with dynamic percentile ranking"""
 
-    def __init__(self, config_manager: Optional[ConfigManager] = None):
+    def __init__(self, config_manager: ConfigManager | None = None):
         self.config = config_manager or ConfigManager()
 
         # Initialize real-time data service for volatility data
         if SERVICES_AVAILABLE:
             try:
-                self.real_time_service = create_real_time_market_data_service(
-                    self.config
-                )
+                self.real_time_service = create_real_time_market_data_service(self.config)
                 logger.info("Real-time volatility data service initialized")
             except Exception as e:
                 logger.warning(f"Real-time service unavailable: {e}")
@@ -138,24 +137,20 @@ class VolatilityAnalysisService:
 
         logger.info("Historical volatility distributions loaded")
 
-    def _generate_mock_historical_data(
-        self, mean: float, std: float, periods: int
-    ) -> List[float]:
+    def _generate_mock_historical_data(self, mean: float, std: float, periods: int) -> list[float]:
         """Generate realistic mock historical volatility data"""
         np.random.seed(42)  # For consistent results
         log_returns = np.random.normal(np.log(mean) - 0.5 * std**2, std, periods)
         volatility_data = np.exp(log_returns)
 
         # Add some regime switches for realism
-        regime_switches = np.random.choice(
-            periods, size=max(1, periods // 50), replace=False
-        )
+        regime_switches = np.random.choice(periods, size=max(1, periods // 50), replace=False)
         for switch in regime_switches:
             volatility_data[switch : switch + 5] *= np.random.uniform(1.5, 2.5)
 
         return volatility_data.tolist()
 
-    def analyze_volatility_regime(self, region: str) -> Dict[str, Any]:
+    def analyze_volatility_regime(self, region: str) -> dict[str, Any]:
         """Comprehensive volatility regime analysis for a specific region"""
         logger.info(f"Analyzing volatility regime for region: {region}")
 
@@ -185,22 +180,16 @@ class VolatilityAnalysisService:
             regime_analysis = self._classify_volatility_regime(percentiles["1y"])
 
             # Calculate mean reversion metrics
-            reversion_analysis = self._calculate_mean_reversion_metrics(
-                vol_index, current_level
-            )
+            reversion_analysis = self._calculate_mean_reversion_metrics(vol_index, current_level)
 
             # Generate volatility trend analysis
             trend_analysis = self._analyze_volatility_trend(vol_index)
 
             # Calculate regime duration and transition probabilities
-            regime_dynamics = self._analyze_regime_dynamics(
-                vol_index, regime_analysis["regime"]
-            )
+            regime_dynamics = self._analyze_regime_dynamics(vol_index, regime_analysis["regime"])
 
             # Generate volatility alerts
-            alerts = self._generate_volatility_alerts(
-                vol_index, current_level, percentiles, regime_analysis
-            )
+            alerts = self._generate_volatility_alerts(vol_index, current_level, percentiles, regime_analysis)
 
             # Comprehensive analysis result
             analysis_result = {
@@ -211,25 +200,17 @@ class VolatilityAnalysisService:
                     "percentile_rankings": percentiles,
                     "regime": regime_analysis["regime"].value,
                     "regime_probability": regime_analysis["probability"],
-                    "regime_description": self._get_regime_description(
-                        regime_analysis["regime"]
-                    ),
+                    "regime_description": self._get_regime_description(regime_analysis["regime"]),
                 },
                 "mean_reversion": reversion_analysis,
                 "trend_analysis": trend_analysis,
                 "regime_dynamics": regime_dynamics,
                 "volatility_alerts": alerts,
                 "cross_regional_analysis": self._analyze_cross_regional_volatility(),
-                "risk_assessment": self._assess_volatility_risk(
-                    current_level, percentiles, regime_analysis
-                ),
-                "forecast": self._generate_volatility_forecast(
-                    vol_index, current_level, reversion_analysis
-                ),
+                "risk_assessment": self._assess_volatility_risk(current_level, percentiles, regime_analysis),
+                "forecast": self._generate_volatility_forecast(vol_index, current_level, reversion_analysis),
                 "analysis_timestamp": datetime.now().isoformat(),
-                "confidence_score": self._calculate_analysis_confidence(
-                    volatility_data
-                ),
+                "confidence_score": self._calculate_analysis_confidence(volatility_data),
             }
 
             return analysis_result
@@ -242,42 +223,33 @@ class VolatilityAnalysisService:
                 "analysis_timestamp": datetime.now().isoformat(),
             }
 
-    def calculate_dynamic_percentile(
-        self, volatility_index: str, current_level: float
-    ) -> Dict[str, float]:
+    def calculate_dynamic_percentile(self, volatility_index: str, current_level: float) -> dict[str, float]:
         """Calculate dynamic percentile rankings across multiple time windows"""
         percentiles = {}
         time_windows = ["1m", "3m", "6m", "1y", "2y"]
 
         for window in time_windows:
             try:
-                historical_data = self._historical_data_cache.get(
-                    volatility_index, {}
-                ).get(window, [])
+                historical_data = self._historical_data_cache.get(volatility_index, {}).get(window, [])
 
                 if historical_data:
                     # Calculate percentile rank
-                    percentile = (
-                        np.sum(np.array(historical_data) <= current_level)
-                        / len(historical_data)
-                    ) * 100
+                    percentile = (np.sum(np.array(historical_data) <= current_level) / len(historical_data)) * 100
                     percentiles[window] = float(np.clip(percentile, 0, 100))
                 else:
                     # Fallback to configuration-based percentile
                     config_key = f"{volatility_index.lower()}_percentile_rank"
-                    percentiles[window] = self.config.get_market_data_fallback(
-                        "volatility_parameters", {}
-                    ).get(config_key, 50.0)
+                    percentiles[window] = self.config.get_market_data_fallback("volatility_parameters", {}).get(
+                        config_key, 50.0
+                    )
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to calculate {window} percentile for {volatility_index}: {e}"
-                )
+                logger.warning(f"Failed to calculate {window} percentile for {volatility_index}: {e}")
                 percentiles[window] = 50.0  # Neutral percentile
 
         return percentiles
 
-    def _get_regional_volatility_data(self, region: str) -> Dict[str, float]:
+    def _get_regional_volatility_data(self, region: str) -> dict[str, float]:
         """Get current volatility data for all regional indices"""
         volatility_data = {}
 
@@ -292,18 +264,13 @@ class VolatilityAnalysisService:
                     "vix_level": vix_data.value,
                     "vstoxx_level": vstoxx_data.value,
                     "nikkei_volatility": nikkei_data.value,
-                    "global_composite": (
-                        vix_data.value + vstoxx_data.value + nikkei_data.value
-                    )
-                    / 3,
+                    "global_composite": (vix_data.value + vstoxx_data.value + nikkei_data.value) / 3,
                     "data_sources": {
                         "vix": vix_data.source,
                         "vstoxx": vstoxx_data.source,
                         "nikkei": nikkei_data.source,
                     },
-                    "is_real_time": vix_data.is_real_time
-                    or vstoxx_data.is_real_time
-                    or nikkei_data.is_real_time,
+                    "is_real_time": vix_data.is_real_time or vstoxx_data.is_real_time or nikkei_data.is_real_time,
                 }
 
             except Exception as e:
@@ -313,12 +280,8 @@ class VolatilityAnalysisService:
         if not volatility_data:
             volatility_data = {
                 "vix_level": self.config.get_market_data_fallback("vix_level", 15.5),
-                "vstoxx_level": self.config.get_market_data_fallback(
-                    "vstoxx_level", 18.2
-                ),
-                "nikkei_volatility": self.config.get_market_data_fallback(
-                    "nikkei_volatility", 20.1
-                ),
+                "vstoxx_level": self.config.get_market_data_fallback("vstoxx_level", 18.2),
+                "nikkei_volatility": self.config.get_market_data_fallback("nikkei_volatility", 20.1),
                 "global_composite": 17.9,
                 "data_sources": {"fallback": "configuration"},
                 "is_real_time": False,
@@ -326,7 +289,7 @@ class VolatilityAnalysisService:
 
         return volatility_data
 
-    def _classify_volatility_regime(self, percentile_1y: float) -> Dict[str, Any]:
+    def _classify_volatility_regime(self, percentile_1y: float) -> dict[str, Any]:
         """Classify volatility regime based on 1-year percentile ranking"""
         for regime, (lower, upper) in self.regime_thresholds.items():
             if lower <= percentile_1y < upper:
@@ -334,9 +297,7 @@ class VolatilityAnalysisService:
                 mid_point = (lower + upper) / 2
                 distance_from_center = abs(percentile_1y - mid_point)
                 max_distance = (upper - lower) / 2
-                probability = (
-                    1.0 - (distance_from_center / max_distance) * 0.3
-                )  # 70-100% confidence
+                probability = 1.0 - (distance_from_center / max_distance) * 0.3  # 70-100% confidence
 
                 return {
                     "regime": regime,
@@ -353,30 +314,20 @@ class VolatilityAnalysisService:
             "regime_bounds": (25, 75),
         }
 
-    def _calculate_mean_reversion_metrics(
-        self, vol_index: str, current_level: float
-    ) -> Dict[str, Any]:
+    def _calculate_mean_reversion_metrics(self, vol_index: str, current_level: float) -> dict[str, Any]:
         """Calculate mean reversion speed and target levels"""
         # Get long-term mean from configuration
         config_key = f"{vol_index.lower()}_long_term_mean"
-        long_term_mean = self.config.get_market_data_fallback(
-            "volatility_parameters", {}
-        ).get(config_key, 20.0)
+        long_term_mean = self.config.get_market_data_fallback("volatility_parameters", {}).get(config_key, 20.0)
 
         # Get mean reversion speed from configuration
         speed_key = f"{vol_index.lower()}_mean_reversion_speed"
-        reversion_speed = self.config.get_market_data_fallback(
-            "volatility_parameters", {}
-        ).get(speed_key, 0.015)
+        reversion_speed = self.config.get_market_data_fallback("volatility_parameters", {}).get(speed_key, 0.015)
 
         # Calculate mean reversion metrics
         deviation = current_level - long_term_mean
-        half_life_days = (
-            int(np.log(2) / reversion_speed) if reversion_speed > 0 else None
-        )
-        days_to_80pct_reversion = (
-            int(-np.log(0.2) / reversion_speed) if reversion_speed > 0 else None
-        )
+        half_life_days = int(np.log(2) / reversion_speed) if reversion_speed > 0 else None
+        days_to_80pct_reversion = int(-np.log(0.2) / reversion_speed) if reversion_speed > 0 else None
 
         return {
             "long_term_mean": float(long_term_mean),
@@ -385,13 +336,7 @@ class VolatilityAnalysisService:
             "reversion_speed": float(reversion_speed),
             "half_life_days": half_life_days,
             "days_to_80pct_reversion": days_to_80pct_reversion,
-            "reversion_direction": (
-                "downward"
-                if deviation > 0
-                else "upward"
-                if deviation < 0
-                else "at_equilibrium"
-            ),
+            "reversion_direction": ("downward" if deviation > 0 else "upward" if deviation < 0 else "at_equilibrium"),
             "reversion_strength": (
                 "strong"
                 if abs(deviation) > long_term_mean * 0.3
@@ -401,7 +346,7 @@ class VolatilityAnalysisService:
             ),
         }
 
-    def _analyze_volatility_trend(self, vol_index: str) -> Dict[str, Any]:
+    def _analyze_volatility_trend(self, vol_index: str) -> dict[str, Any]:
         """Analyze short-term volatility trend"""
         return {
             "short_term_trend": "stable",
@@ -412,9 +357,7 @@ class VolatilityAnalysisService:
             "trend_sustainability": "medium",
         }
 
-    def _analyze_regime_dynamics(
-        self, vol_index: str, current_regime: VolatilityRegime
-    ) -> Dict[str, Any]:
+    def _analyze_regime_dynamics(self, vol_index: str, current_regime: VolatilityRegime) -> dict[str, Any]:
         """Analyze volatility regime dynamics and transition probabilities"""
         transition_probabilities = {
             VolatilityRegime.EXTREMELY_LOW: {
@@ -433,17 +376,13 @@ class VolatilityAnalysisService:
             VolatilityRegime.EXTREME: {"high": 0.6, "extreme": 0.3, "elevated": 0.1},
         }
 
-        next_regime_probs = transition_probabilities.get(
-            current_regime, {"normal": 1.0}
-        )
+        next_regime_probs = transition_probabilities.get(current_regime, {"normal": 1.0})
 
         return {
             "current_regime_duration_estimate": 15,
             "regime_stability": 0.75,
             "next_regime_probabilities": next_regime_probs,
-            "most_likely_next_regime": max(
-                next_regime_probs.items(), key=lambda x: x[1]
-            )[0],
+            "most_likely_next_regime": max(next_regime_probs.items(), key=lambda x: x[1])[0],
             "regime_persistence_score": 0.68,
         }
 
@@ -451,9 +390,9 @@ class VolatilityAnalysisService:
         self,
         vol_index: str,
         current_level: float,
-        percentiles: Dict[str, float],
-        regime_analysis: Dict[str, Any],
-    ) -> List[VolatilityAlert]:
+        percentiles: dict[str, float],
+        regime_analysis: dict[str, Any],
+    ) -> list[VolatilityAlert]:
         """Generate volatility-based alerts and warnings"""
         alerts = []
 
@@ -487,7 +426,7 @@ class VolatilityAnalysisService:
 
         return alerts
 
-    def _analyze_cross_regional_volatility(self) -> Dict[str, Any]:
+    def _analyze_cross_regional_volatility(self) -> dict[str, Any]:
         """Analyze cross-regional volatility correlations and spreads"""
         return {
             "regional_spreads": {
@@ -508,9 +447,9 @@ class VolatilityAnalysisService:
     def _assess_volatility_risk(
         self,
         current_level: float,
-        percentiles: Dict[str, float],
-        regime_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        percentiles: dict[str, float],
+        regime_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Assess overall volatility risk for portfolio and economic implications"""
         regime_risk = {
             VolatilityRegime.EXTREMELY_LOW: 0.2,
@@ -525,54 +464,28 @@ class VolatilityAnalysisService:
 
         return {
             "overall_risk_score": risk_score,
-            "risk_level": (
-                "low"
-                if risk_score < 0.4
-                else "moderate"
-                if risk_score < 0.7
-                else "high"
-            ),
+            "risk_level": ("low" if risk_score < 0.4 else "moderate" if risk_score < 0.7 else "high"),
             "portfolio_implications": {
                 "recommended_hedging": (
-                    "increase"
-                    if risk_score > 0.7
-                    else "maintain"
-                    if risk_score > 0.4
-                    else "reduce"
+                    "increase" if risk_score > 0.7 else "maintain" if risk_score > 0.4 else "reduce"
                 ),
-                "asset_allocation_impact": (
-                    "defensive" if risk_score > 0.7 else "balanced"
-                ),
+                "asset_allocation_impact": ("defensive" if risk_score > 0.7 else "balanced"),
                 "options_positioning": (
-                    "long_vol"
-                    if percentiles["1y"] < 25
-                    else "short_vol"
-                    if percentiles["1y"] > 75
-                    else "neutral"
+                    "long_vol" if percentiles["1y"] < 25 else "short_vol" if percentiles["1y"] > 75 else "neutral"
                 ),
             },
             "economic_implications": {
-                "financial_stress": (
-                    "elevated"
-                    if risk_score > 0.8
-                    else "moderate"
-                    if risk_score > 0.6
-                    else "low"
-                ),
+                "financial_stress": ("elevated" if risk_score > 0.8 else "moderate" if risk_score > 0.6 else "low"),
                 "credit_conditions": "tightening" if risk_score > 0.7 else "stable",
                 "policy_response_likelihood": (
-                    "high"
-                    if risk_score > 0.85
-                    else "moderate"
-                    if risk_score > 0.65
-                    else "low"
+                    "high" if risk_score > 0.85 else "moderate" if risk_score > 0.65 else "low"
                 ),
             },
         }
 
     def _generate_volatility_forecast(
-        self, vol_index: str, current_level: float, reversion_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, vol_index: str, current_level: float, reversion_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate volatility forecast with confidence intervals"""
         long_term_mean = reversion_analysis["long_term_mean"]
         reversion_speed = reversion_analysis["reversion_speed"]
@@ -581,9 +494,7 @@ class VolatilityAnalysisService:
         horizons = [7, 30, 90, 180, 365]  # days
 
         for horizon in horizons:
-            expected_level = long_term_mean + (current_level - long_term_mean) * np.exp(
-                -reversion_speed * horizon
-            )
+            expected_level = long_term_mean + (current_level - long_term_mean) * np.exp(-reversion_speed * horizon)
             volatility_std = 0.2 * expected_level
             lower_ci = max(5.0, expected_level - 1.96 * volatility_std)
             upper_ci = expected_level + 1.96 * volatility_std
@@ -604,7 +515,7 @@ class VolatilityAnalysisService:
             },
         }
 
-    def _calculate_analysis_confidence(self, volatility_data: Dict[str, Any]) -> float:
+    def _calculate_analysis_confidence(self, volatility_data: dict[str, Any]) -> float:
         """Calculate overall confidence in the volatility analysis"""
         confidence_factors = []
 
@@ -637,9 +548,7 @@ class VolatilityAnalysisService:
 
         return descriptions.get(regime, "Unknown volatility regime")
 
-    def calculate_real_time_volatility_parameters(
-        self, region: str, historical_days: int = 504
-    ) -> Dict[str, Any]:
+    def calculate_real_time_volatility_parameters(self, region: str, historical_days: int = 504) -> dict[str, Any]:
         """
         Calculate real-time volatility parameters for a specific region
 
@@ -658,17 +567,10 @@ class VolatilityAnalysisService:
             vol_index = vol_params["volatility_index"]
 
             # Get historical volatility data
-            if (
-                vol_index in self._historical_data_cache
-                and "2y" in self._historical_data_cache[vol_index]
-            ):
-                historical_data = self._historical_data_cache[vol_index]["2y"][
-                    -historical_days:
-                ]
+            if vol_index in self._historical_data_cache and "2y" in self._historical_data_cache[vol_index]:
+                historical_data = self._historical_data_cache[vol_index]["2y"][-historical_days:]
             else:
-                logger.warning(
-                    f"No historical data available for {vol_index}, using fallback calculation"
-                )
+                logger.warning(f"No historical data available for {vol_index}, using fallback calculation")
                 # Fallback to configured parameters
                 return {
                     "region": region,
@@ -684,17 +586,13 @@ class VolatilityAnalysisService:
             long_term_mean = np.mean(historical_data)
 
             # Calculate mean reversion speed using Ornstein-Uhlenbeck estimation
-            reversion_speed = self._estimate_mean_reversion_speed(
-                historical_data, long_term_mean
-            )
+            reversion_speed = self._estimate_mean_reversion_speed(historical_data, long_term_mean)
 
             # Calculate volatility of volatility
             vol_of_vol = np.std(np.diff(historical_data)) / np.mean(historical_data)
 
             # Calculate confidence based on data quality and statistical significance
-            confidence = self._calculate_parameter_confidence(
-                historical_data, long_term_mean, reversion_speed
-            )
+            confidence = self._calculate_parameter_confidence(historical_data, long_term_mean, reversion_speed)
 
             return {
                 "region": region,
@@ -708,9 +606,7 @@ class VolatilityAnalysisService:
                 "sample_size": len(historical_data),
                 "calculation_date": datetime.now().isoformat(),
                 "parameter_ranges": {
-                    "long_term_mean_ci": self._calculate_confidence_interval(
-                        historical_data
-                    ),
+                    "long_term_mean_ci": self._calculate_confidence_interval(historical_data),
                     "reversion_speed_range": [
                         max(0.05, reversion_speed * 0.7),
                         min(0.5, reversion_speed * 1.3),
@@ -733,9 +629,7 @@ class VolatilityAnalysisService:
                 "error": str(e),
             }
 
-    def _estimate_mean_reversion_speed(
-        self, data: List[float], long_term_mean: float
-    ) -> float:
+    def _estimate_mean_reversion_speed(self, data: list[float], long_term_mean: float) -> float:
         """
         Estimate mean reversion speed using Ornstein-Uhlenbeck process
 
@@ -771,9 +665,7 @@ class VolatilityAnalysisService:
         # Ensure reasonable bounds
         return max(0.05, min(0.5, reversion_speed))
 
-    def _calculate_confidence_interval(
-        self, data: List[float], confidence_level: float = 0.95
-    ) -> List[float]:
+    def _calculate_confidence_interval(self, data: list[float], confidence_level: float = 0.95) -> list[float]:
         """Calculate confidence interval for long-term mean"""
         mean = np.mean(data)
         std_error = np.std(data) / np.sqrt(len(data))
@@ -786,9 +678,7 @@ class VolatilityAnalysisService:
         margin_error = t_score * std_error
         return [float(mean - margin_error), float(mean + margin_error)]
 
-    def _calculate_parameter_confidence(
-        self, data: List[float], mean: float, reversion_speed: float
-    ) -> float:
+    def _calculate_parameter_confidence(self, data: list[float], mean: float, reversion_speed: float) -> float:
         """Calculate overall confidence in parameter estimates"""
         confidence_factors = []
 
@@ -820,9 +710,7 @@ class VolatilityAnalysisService:
 
         return float(np.mean(confidence_factors))
 
-    def get_template_artifact_free_parameters(
-        self, regions: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    def get_template_artifact_free_parameters(self, regions: list[str]) -> dict[str, dict[str, Any]]:
         """
         Get volatility parameters for multiple regions ensuring no template artifacts
 
@@ -843,9 +731,7 @@ class VolatilityAnalysisService:
                 logger.warning(f"Failed to get real-time parameters for {region}: {e}")
                 # Get configured parameters as fallback
                 try:
-                    config_params = self.config.get_regional_volatility_parameters(
-                        region
-                    )
+                    config_params = self.config.get_regional_volatility_parameters(region)
                     parameters[region] = {
                         "region": region,
                         "volatility_index": config_params["volatility_index"],
@@ -856,27 +742,21 @@ class VolatilityAnalysisService:
                         "data_source": "configuration",
                     }
                 except Exception as config_e:
-                    logger.error(
-                        f"Failed to get configured parameters for {region}: {config_e}"
-                    )
+                    logger.error(f"Failed to get configured parameters for {region}: {config_e}")
                     continue
 
         # Validate and adjust for template artifacts
         validation_result = self.config.validate_cross_regional_volatility_uniqueness()
 
         if validation_result["template_artifacts_detected"]:
-            logger.warning(
-                "Template artifacts detected in volatility parameters, applying adjustments"
-            )
-            parameters = self._adjust_parameters_for_uniqueness(
-                parameters, validation_result
-            )
+            logger.warning("Template artifacts detected in volatility parameters, applying adjustments")
+            parameters = self._adjust_parameters_for_uniqueness(parameters, validation_result)
 
         return parameters
 
     def _adjust_parameters_for_uniqueness(
-        self, parameters: Dict[str, Dict[str, Any]], validation_result: Dict[str, Any]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, parameters: dict[str, dict[str, Any]], validation_result: dict[str, Any]
+    ) -> dict[str, dict[str, Any]]:
         """
         Adjust parameters to ensure regional uniqueness and prevent template artifacts
 
@@ -905,26 +785,20 @@ class VolatilityAnalysisService:
                         if base_value is not None:
                             # Add small region-specific adjustment (±2%)
                             region_hash = hash(region) % 1000
-                            adjustment_factor = 1.0 + (
-                                region_hash / 10000 - 0.05
-                            )  # -0.05 to +0.05
+                            adjustment_factor = 1.0 + (region_hash / 10000 - 0.05)  # -0.05 to +0.05
                             adjusted_value = base_value * adjustment_factor
 
                             adjusted_params[region][parameter] = adjusted_value
                             adjusted_params[region]["adjustment_applied"] = True
-                            adjusted_params[region][
-                                "adjustment_reason"
-                            ] = "template_artifact_prevention"
+                            adjusted_params[region]["adjustment_reason"] = "template_artifact_prevention"
 
-                            logger.info(
-                                f"Adjusted {parameter} for {region}: {base_value} → {adjusted_value}"
-                            )
+                            logger.info(f"Adjusted {parameter} for {region}: {base_value} → {adjusted_value}")
 
         return adjusted_params
 
 
 def create_volatility_analysis_service(
-    config_manager: Optional[ConfigManager] = None,
+    config_manager: ConfigManager | None = None,
 ) -> VolatilityAnalysisService:
     """Factory function to create volatility analysis service"""
     return VolatilityAnalysisService(config_manager)
@@ -946,12 +820,8 @@ if __name__ == "__main__":
             print(
                 f"  Regime: {analysis['current_metrics']['regime']} ({analysis['current_metrics']['regime_probability']:.1%} confidence)"
             )
-            print(
-                f"  1Y Percentile: {analysis['current_metrics']['percentile_rankings']['1y']:.0f}th"
-            )
-            print(
-                f"  Mean Reversion Target: {analysis['mean_reversion']['long_term_mean']:.2f}"
-            )
+            print(f"  1Y Percentile: {analysis['current_metrics']['percentile_rankings']['1y']:.0f}th")
+            print(f"  Mean Reversion Target: {analysis['mean_reversion']['long_term_mean']:.2f}")
             print("  Analysis Confidence: {analysis['confidence_score']:.1%}")
 
             if analysis.get("volatility_alerts"):
@@ -961,7 +831,7 @@ if __name__ == "__main__":
 
         print("\n✅ Volatility analysis service test completed successfully!")
 
-    except Exception as e:
+    except Exception:
         print("❌ Volatility analysis test failed: {e}")
         import traceback
 

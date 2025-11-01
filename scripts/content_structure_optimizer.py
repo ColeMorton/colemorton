@@ -41,7 +41,7 @@ class ContentStructureOptimizer:
 
     def _optimize_file(self, file_path: str) -> int:
         """Optimize a single file's content structure"""
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         original_lines = content.split("\n")
@@ -93,7 +93,7 @@ class ContentStructureOptimizer:
         for file_path in published_files:
             filename = os.path.basename(file_path)
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Split into frontmatter and body
@@ -167,11 +167,11 @@ def main():
     print("\n📈 Current Performance Metrics:")
     for metric in metrics:
         print(
-            f'{metric["filename"]:35} | '
-            f'Empty Ratio: {metric["empty_ratio"]:.1%} | '
-            f'Words: {metric["word_count"]:5} | '
-            f'Size: {metric["file_size_kb"]:.1f}KB | '
-            f'Perf Score: {metric["performance_score"]:.2f}/1.0'
+            f"{metric['filename']:35} | "
+            f"Empty Ratio: {metric['empty_ratio']:.1%} | "
+            f"Words: {metric['word_count']:5} | "
+            f"Size: {metric['file_size_kb']:.1f}KB | "
+            f"Perf Score: {metric['performance_score']:.2f}/1.0"
         )
 
     # Optimize structure
@@ -185,26 +185,24 @@ def main():
     print("\n📈 Optimized Performance Metrics:")
     for metric in metrics_after:
         print(
-            f'{metric["filename"]:35} | '
-            f'Empty Ratio: {metric["empty_ratio"]:.1%} | '
-            f'Words: {metric["word_count"]:5} | '
-            f'Size: {metric["file_size_kb"]:.1f}KB | '
-            f'Perf Score: {metric["performance_score"]:.2f}/1.0'
+            f"{metric['filename']:35} | "
+            f"Empty Ratio: {metric['empty_ratio']:.1%} | "
+            f"Words: {metric['word_count']:5} | "
+            f"Size: {metric['file_size_kb']:.1f}KB | "
+            f"Perf Score: {metric['performance_score']:.2f}/1.0"
         )
 
     print("\n✅ Content Structure Optimization Complete!")
-    print(f'📊 Files Processed: {results["files_processed"]}')
-    print(f'🔧 Files Optimized: {results["files_optimized"]}')
-    print(f'📉 Empty Lines Removed: {results["empty_lines_removed"]}')
+    print(f"📊 Files Processed: {results['files_processed']}")
+    print(f"🔧 Files Optimized: {results['files_optimized']}")
+    print(f"📉 Empty Lines Removed: {results['empty_lines_removed']}")
 
     # Calculate average performance improvement
     avg_before = sum(m["performance_score"] for m in metrics) / len(metrics)
     avg_after = sum(m["performance_score"] for m in metrics_after) / len(metrics_after)
     improvement = (avg_after - avg_before) * 100
 
-    print(
-        f"📈 Average Performance Score: {avg_before:.3f} → {avg_after:.3f} (+{improvement:.1f}%)"
-    )
+    print(f"📈 Average Performance Score: {avg_before:.3f} → {avg_after:.3f} (+{improvement:.1f}%)")
 
     return results
 

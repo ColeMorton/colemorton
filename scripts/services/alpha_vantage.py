@@ -12,7 +12,7 @@ Production-grade Alpha Vantage data integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -21,6 +21,7 @@ from .base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -51,15 +52,13 @@ class AlphaVantageService(BaseFinancialService):
             if api_key and api_key != "not_required":
                 config.api_key = api_key
             else:
-                raise ValidationError(
-                    "Alpha Vantage API key is required but not configured"
-                )
+                raise ValidationError("Alpha Vantage API key is required but not configured")
         except ImportError:
             # Fallback to original validation if ConfigManager not available
             if not config.api_key:
                 raise ValidationError("Alpha Vantage API key is required")
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate Alpha Vantage response data"""
 
         if not isinstance(data, dict):
@@ -68,12 +67,9 @@ class AlphaVantageService(BaseFinancialService):
         # Check for API errors
         if "Error Message" in data:
             raise DataNotFoundError(data["Error Message"])
-        elif "Note" in data and "API call frequency" in data["Note"]:
+        if "Note" in data and "API call frequency" in data["Note"]:
             raise RateLimitError(data["Note"])
-        elif (
-            "Information" in data
-            and "Thank you for using Alpha Vantage" in data["Information"]
-        ):
+        if "Information" in data and "Thank you for using Alpha Vantage" in data["Information"]:
             raise RateLimitError("API call frequency exceeded")
 
         # Add timestamp if not present
@@ -82,7 +78,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return data
 
-    def get_stock_quote(self, symbol: str) -> Dict[str, Any]:
+    def get_stock_quote(self, symbol: str) -> dict[str, Any]:
         """
         Get real-time stock quote with comprehensive market data
 
@@ -114,12 +110,9 @@ class AlphaVantageService(BaseFinancialService):
                 "timestamp": datetime.now().isoformat(),
             }
             return standardized_result
-        else:
-            raise DataNotFoundError("Invalid response from Alpha Vantage")
+        raise DataNotFoundError("Invalid response from Alpha Vantage")
 
-    def get_daily_data(
-        self, symbol: str, outputsize: str = "compact"
-    ) -> Dict[str, Any]:
+    def get_daily_data(self, symbol: str, outputsize: str = "compact") -> dict[str, Any]:
         """
         Get daily stock price data
 
@@ -150,7 +143,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_intraday_data(self, symbol: str, interval: str = "5min") -> Dict[str, Any]:
+    def get_intraday_data(self, symbol: str, interval: str = "5min") -> dict[str, Any]:
         """
         Get intraday stock data
 
@@ -163,9 +156,7 @@ class AlphaVantageService(BaseFinancialService):
         """
         valid_intervals = ["1min", "5min", "15min", "30min", "60min"]
         if interval not in valid_intervals:
-            raise ValidationError(
-                f"Invalid interval. Must be one of: {valid_intervals}"
-            )
+            raise ValidationError(f"Invalid interval. Must be one of: {valid_intervals}")
 
         params = {
             "function": "TIME_SERIES_INTRADAY",
@@ -194,7 +185,7 @@ class AlphaVantageService(BaseFinancialService):
         interval: str = "daily",
         time_period: int = 20,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get technical indicator data
 
@@ -232,7 +223,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_company_overview(self, symbol: str) -> Dict[str, Any]:
+    def get_company_overview(self, symbol: str) -> dict[str, Any]:
         """
         Get company overview and fundamental data
 
@@ -257,9 +248,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_financial_statements(
-        self, symbol: str, statement_type: str = "income"
-    ) -> Dict[str, Any]:
+    def get_financial_statements(self, symbol: str, statement_type: str = "income") -> dict[str, Any]:
         """
         Get company financial statements
 
@@ -277,9 +266,7 @@ class AlphaVantageService(BaseFinancialService):
         }
 
         if statement_type not in function_map:
-            raise ValidationError(
-                f"Invalid statement type. Must be one of: {list(function_map.keys())}"
-            )
+            raise ValidationError(f"Invalid statement type. Must be one of: {list(function_map.keys())}")
 
         params = {"function": function_map[statement_type], "symbol": symbol.upper()}
 
@@ -297,7 +284,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_earnings(self, symbol: str) -> Dict[str, Any]:
+    def get_earnings(self, symbol: str) -> dict[str, Any]:
         """
         Get company earnings data
 
@@ -322,9 +309,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_news_sentiment(
-        self, tickers: str = None, topics: str = None, limit: int = 50
-    ) -> Dict[str, Any]:
+    def get_news_sentiment(self, tickers: str = None, topics: str = None, limit: int = 50) -> dict[str, Any]:
         """
         Get AI-powered news sentiment analysis
 
@@ -358,9 +343,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_economic_indicator(
-        self, function: str, interval: str = "monthly"
-    ) -> Dict[str, Any]:
+    def get_economic_indicator(self, function: str, interval: str = "monthly") -> dict[str, Any]:
         """
         Get economic indicator data
 
@@ -387,7 +370,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_forex_rate(self, from_currency: str, to_currency: str) -> Dict[str, Any]:
+    def get_forex_rate(self, from_currency: str, to_currency: str) -> dict[str, Any]:
         """
         Get foreign exchange rate
 
@@ -418,7 +401,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def get_crypto_daily(self, symbol: str, market: str = "USD") -> Dict[str, Any]:
+    def get_crypto_daily(self, symbol: str, market: str = "USD") -> dict[str, Any]:
         """
         Get daily cryptocurrency data
 
@@ -449,7 +432,7 @@ class AlphaVantageService(BaseFinancialService):
 
         return result
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with a simple quote request

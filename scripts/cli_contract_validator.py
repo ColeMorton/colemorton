@@ -9,7 +9,7 @@ This prevents runtime failures due to missing commands or method mismatches.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class CLIContractValidator:
@@ -19,9 +19,7 @@ class CLIContractValidator:
         self.scripts_dir = Path(__file__).parent
         self.validation_cache = {}
 
-    def validate_service_command(
-        self, service_name: str, command: str
-    ) -> Dict[str, Any]:
+    def validate_service_command(self, service_name: str, command: str) -> dict[str, Any]:
         """
         Validate that a specific command exists for a service
 
@@ -36,7 +34,7 @@ class CLIContractValidator:
         if cache_key in self.validation_cache:
             return self.validation_cache[cache_key]
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "valid": False,
             "service_name": service_name,
             "command": command,
@@ -71,14 +69,12 @@ class CLIContractValidator:
                 )
 
         except Exception as e:
-            result["errors"].append(
-                f"Error validating {service_name}:{command}: {str(e)}"
-            )
+            result["errors"].append(f"Error validating {service_name}:{command}: {str(e)}")
 
         self.validation_cache[cache_key] = result
         return result
 
-    def _get_cli_commands(self, cli_file: Path, service_name: str) -> List[str]:
+    def _get_cli_commands(self, cli_file: Path, service_name: str) -> list[str]:
         """
         Extract available commands from a CLI file
 
@@ -92,7 +88,7 @@ class CLIContractValidator:
         commands = []
 
         try:
-            with open(cli_file, "r") as f:
+            with open(cli_file) as f:
                 content = f.read()
 
             # Look for @self.app.command() decorators
@@ -106,9 +102,7 @@ class CLIContractValidator:
 
             # Also look for @self.app.command without explicit name (uses function name)
             # Pattern: @self.app.command() followed by def function_name(
-            pattern_bare = (
-                r"@self\.app\.command\(\)\s*\n\s*def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\("
-            )
+            pattern_bare = r"@self\.app\.command\(\)\s*\n\s*def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\("
             bare_matches = re.findall(pattern_bare, content, re.MULTILINE)
 
             # Convert function names to command names (remove get_ prefix if present)
@@ -118,14 +112,12 @@ class CLIContractValidator:
                     command_name = func_name[4:]  # Remove 'get_' prefix
                 commands.append(command_name)
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not extract commands from {cli_file}: {e}")
 
         return sorted(list(set(commands)))  # Remove duplicates and sort
 
-    def validate_class_method(
-        self, module_name: str, class_name: str, method_name: str
-    ) -> Dict[str, Any]:
+    def validate_class_method(self, module_name: str, class_name: str, method_name: str) -> dict[str, Any]:
         """
         Validate that a specific method exists in a class
 
@@ -141,7 +133,7 @@ class CLIContractValidator:
         if cache_key in self.validation_cache:
             return self.validation_cache[cache_key]
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "valid": False,
             "module_name": module_name,
             "class_name": class_name,
@@ -179,21 +171,15 @@ class CLIContractValidator:
                         f"Available methods: {', '.join(available_methods[class_name])}"
                     )
             else:
-                result["errors"].append(
-                    f"Class '{class_name}' not found in module '{module_name}'"
-                )
+                result["errors"].append(f"Class '{class_name}' not found in module '{module_name}'")
 
         except Exception as e:
-            result["errors"].append(
-                f"Error validating {module_name}:{class_name}:{method_name}: {str(e)}"
-            )
+            result["errors"].append(f"Error validating {module_name}:{class_name}:{method_name}: {str(e)}")
 
         self.validation_cache[cache_key] = result
         return result
 
-    def _get_class_methods(
-        self, module_file: Path, class_name: str
-    ) -> Dict[str, List[str]]:
+    def _get_class_methods(self, module_file: Path, class_name: str) -> dict[str, list[str]]:
         """
         Extract available methods from a class in a module
 
@@ -207,7 +193,7 @@ class CLIContractValidator:
         classes = {}
 
         try:
-            with open(module_file, "r") as f:
+            with open(module_file) as f:
                 content = f.read()
 
             # Find class definitions and their methods
@@ -238,16 +224,12 @@ class CLIContractValidator:
                     if in_class:
                         # Check if we've left the class (next class or function at same/higher level)
                         if stripped and not line.startswith(" " * (indent_level + 1)):
-                            if stripped.startswith("class ") or stripped.startswith(
-                                "def "
-                            ):
+                            if stripped.startswith("class ") or stripped.startswith("def "):
                                 break
 
                         # Look for method definitions
                         if re.match(r"\s+def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line):
-                            method_match = re.match(
-                                r"\s+def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
-                            )
+                            method_match = re.match(r"\s+def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line)
                             if method_match:
                                 method_name = method_match.group(1)
                                 # Skip private methods (starting with _)
@@ -256,12 +238,12 @@ class CLIContractValidator:
 
                 classes[found_class] = sorted(methods)
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not extract methods from {module_file}: {e}")
 
         return classes
 
-    def validate_batch(self, validations: List[Dict[str, str]]) -> Dict[str, Any]:
+    def validate_batch(self, validations: list[dict[str, str]]) -> dict[str, Any]:
         """
         Validate multiple CLI contracts in batch
 
@@ -273,7 +255,7 @@ class CLIContractValidator:
         Returns:
             Dictionary with batch validation results
         """
-        results: Dict[str, Any] = {
+        results: dict[str, Any] = {
             "overall_valid": True,
             "total_validations": len(validations),
             "passed": 0,
@@ -283,13 +265,9 @@ class CLIContractValidator:
 
         for validation in validations:
             if validation.get("type") == "cli":
-                result = self.validate_service_command(
-                    validation["service"], validation["command"]
-                )
+                result = self.validate_service_command(validation["service"], validation["command"])
             elif validation.get("type") == "method":
-                result = self.validate_class_method(
-                    validation["module"], validation["class"], validation["method"]
-                )
+                result = self.validate_class_method(validation["module"], validation["class"], validation["method"])
             else:
                 result = {
                     "valid": False,
@@ -351,9 +329,7 @@ def main():
         if "service_name" in detail:
             print("{status} CLI Command: {detail['service_name']}.{detail['command']}")
         elif "class_name" in detail:
-            print(
-                f"{status} Class Method: {detail['class_name']}.{detail['method_name']}"
-            )
+            print(f"{status} Class Method: {detail['class_name']}.{detail['method_name']}")
 
         if detail.get("errors"):
             for error in detail["errors"]:

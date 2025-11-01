@@ -10,17 +10,16 @@ Production-grade International Monetary Fund (IMF) Data Portal integration with:
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
-    FinancialServiceError,
     ServiceConfig,
-    ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -90,8 +89,8 @@ class IMFService(BaseFinancialService):
         }
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate IMF response data"""
 
         # IMF typically returns dictionaries
@@ -118,7 +117,7 @@ class IMFService(BaseFinancialService):
         country_code: str,
         start_year: int = None,
         end_year: int = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get economic data for a specific country
 
@@ -142,9 +141,7 @@ class IMFService(BaseFinancialService):
             result.update(
                 {
                     "indicator": indicator.upper(),
-                    "indicator_description": self.datasets.get(
-                        indicator.upper(), "Unknown"
-                    ),
+                    "indicator_description": self.datasets.get(indicator.upper(), "Unknown"),
                     "country_code": country_code.upper(),
                     "start_year": start_year,
                     "end_year": end_year,
@@ -155,9 +152,7 @@ class IMFService(BaseFinancialService):
 
         return result
 
-    def get_global_data(
-        self, indicator: str, start_year: int = None, end_year: int = None
-    ) -> Dict[str, Any]:
+    def get_global_data(self, indicator: str, start_year: int = None, end_year: int = None) -> dict[str, Any]:
         """
         Get global economic data for an indicator
 
@@ -180,9 +175,7 @@ class IMFService(BaseFinancialService):
             result.update(
                 {
                     "indicator": indicator.upper(),
-                    "indicator_description": self.datasets.get(
-                        indicator.upper(), "Unknown"
-                    ),
+                    "indicator_description": self.datasets.get(indicator.upper(), "Unknown"),
                     "scope": "global",
                     "start_year": start_year,
                     "end_year": end_year,
@@ -195,7 +188,7 @@ class IMFService(BaseFinancialService):
 
     def get_regional_data(
         self, indicator: str, region: str, start_year: int = None, end_year: int = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get regional economic data
 
@@ -219,9 +212,7 @@ class IMFService(BaseFinancialService):
             result.update(
                 {
                     "indicator": indicator.upper(),
-                    "indicator_description": self.datasets.get(
-                        indicator.upper(), "Unknown"
-                    ),
+                    "indicator_description": self.datasets.get(indicator.upper(), "Unknown"),
                     "region": region.upper(),
                     "region_description": self.regions.get(region.upper(), "Unknown"),
                     "start_year": start_year,
@@ -236,10 +227,10 @@ class IMFService(BaseFinancialService):
     def get_multiple_countries(
         self,
         indicator: str,
-        country_codes: List[str],
+        country_codes: list[str],
         start_year: int = None,
         end_year: int = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get economic data for multiple countries
 
@@ -264,9 +255,7 @@ class IMFService(BaseFinancialService):
             result.update(
                 {
                     "indicator": indicator.upper(),
-                    "indicator_description": self.datasets.get(
-                        indicator.upper(), "Unknown"
-                    ),
+                    "indicator_description": self.datasets.get(indicator.upper(), "Unknown"),
                     "countries": [code.upper() for code in country_codes],
                     "start_year": start_year,
                     "end_year": end_year,
@@ -277,7 +266,7 @@ class IMFService(BaseFinancialService):
 
         return result
 
-    def get_available_datasets(self) -> Dict[str, Any]:
+    def get_available_datasets(self) -> dict[str, Any]:
         """
         Get available economic indicators
 
@@ -291,7 +280,7 @@ class IMFService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_country_codes(self) -> Dict[str, Any]:
+    def get_country_codes(self) -> dict[str, Any]:
         """
         Get major country codes
 
@@ -306,7 +295,7 @@ class IMFService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_region_codes(self) -> Dict[str, Any]:
+    def get_region_codes(self) -> dict[str, Any]:
         """
         Get available region codes
 
@@ -321,8 +310,8 @@ class IMFService(BaseFinancialService):
         }
 
     def get_gdp_growth_comparison(
-        self, country_codes: List[str], start_year: int = None, end_year: int = None
-    ) -> Dict[str, Any]:
+        self, country_codes: list[str], start_year: int = None, end_year: int = None
+    ) -> dict[str, Any]:
         """
         Get GDP growth comparison for multiple countries
 
@@ -334,9 +323,7 @@ class IMFService(BaseFinancialService):
         Returns:
             Dictionary containing GDP growth comparison data
         """
-        result = self.get_multiple_countries(
-            "NGDP_RPCH", country_codes, start_year, end_year
-        )
+        result = self.get_multiple_countries("NGDP_RPCH", country_codes, start_year, end_year)
 
         # Add specific metadata for GDP growth
         if isinstance(result, dict):
@@ -350,8 +337,8 @@ class IMFService(BaseFinancialService):
         return result
 
     def get_inflation_comparison(
-        self, country_codes: List[str], start_year: int = None, end_year: int = None
-    ) -> Dict[str, Any]:
+        self, country_codes: list[str], start_year: int = None, end_year: int = None
+    ) -> dict[str, Any]:
         """
         Get inflation rate comparison for multiple countries
 
@@ -363,9 +350,7 @@ class IMFService(BaseFinancialService):
         Returns:
             Dictionary containing inflation rate comparison data
         """
-        result = self.get_multiple_countries(
-            "PCPIPCH", country_codes, start_year, end_year
-        )
+        result = self.get_multiple_countries("PCPIPCH", country_codes, start_year, end_year)
 
         # Add specific metadata for inflation
         if isinstance(result, dict):
@@ -379,8 +364,8 @@ class IMFService(BaseFinancialService):
         return result
 
     def get_unemployment_comparison(
-        self, country_codes: List[str], start_year: int = None, end_year: int = None
-    ) -> Dict[str, Any]:
+        self, country_codes: list[str], start_year: int = None, end_year: int = None
+    ) -> dict[str, Any]:
         """
         Get unemployment rate comparison for multiple countries
 
@@ -405,7 +390,7 @@ class IMFService(BaseFinancialService):
 
         return result
 
-    def get_global_economic_overview(self, year: int = None) -> Dict[str, Any]:
+    def get_global_economic_overview(self, year: int = None) -> dict[str, Any]:
         """
         Get comprehensive global economic overview
 
@@ -417,18 +402,10 @@ class IMFService(BaseFinancialService):
         """
         try:
             overview = {
-                "global_gdp_growth": self.get_regional_data(
-                    "NGDP_RPCH", "WEO", year, year
-                ),
-                "global_inflation": self.get_regional_data(
-                    "PCPIPCH", "WEO", year, year
-                ),
-                "advanced_economies_gdp": self.get_regional_data(
-                    "NGDP_RPCH", "AE", year, year
-                ),
-                "emerging_markets_gdp": self.get_regional_data(
-                    "NGDP_RPCH", "EMD", year, year
-                ),
+                "global_gdp_growth": self.get_regional_data("NGDP_RPCH", "WEO", year, year),
+                "global_inflation": self.get_regional_data("PCPIPCH", "WEO", year, year),
+                "advanced_economies_gdp": self.get_regional_data("NGDP_RPCH", "AE", year, year),
+                "emerging_markets_gdp": self.get_regional_data("NGDP_RPCH", "EMD", year, year),
                 "analysis_year": year,
                 "analysis_type": "global_economic_overview",
                 "source": "imf",
@@ -445,7 +422,7 @@ class IMFService(BaseFinancialService):
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with a simple request for US GDP growth

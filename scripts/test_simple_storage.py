@@ -9,6 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 
@@ -18,7 +19,7 @@ def test_direct_storage():
     print("🔄 Testing direct HistoricalDataManager storage...")
 
     try:
-        from historical_data_manager import DataType, HistoricalDataManager, Timeframe
+        from historical_data_manager import DataType, HistoricalDataManager
 
         # Create manager
         hdm = HistoricalDataManager()
@@ -83,7 +84,7 @@ def test_direct_storage():
 
         return success and success2 and success3
 
-    except Exception as e:
+    except Exception:
         print("❌ Direct storage test failed: {e}")
         import traceback
 

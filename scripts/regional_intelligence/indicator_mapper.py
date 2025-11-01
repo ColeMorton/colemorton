@@ -5,7 +5,7 @@ Intelligent mapping of discovery data to region-specific economic indicators
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -44,7 +44,7 @@ class IndicatorMapper:
         self.regional_loader = RegionalIntelligenceLoader()
         self.indicator_mappings = self._build_indicator_mappings()
 
-    def _build_indicator_mappings(self) -> Dict[str, List[IndicatorMapping]]:
+    def _build_indicator_mappings(self) -> dict[str, list[IndicatorMapping]]:
         """Build comprehensive mapping between discovery data and regional indicators"""
 
         mappings = {}
@@ -55,14 +55,10 @@ class IndicatorMapper:
 
             for indicator in indicators:
                 # Map to discovery data paths based on indicator codes and names
-                discovery_path = self._map_indicator_to_discovery_path(
-                    indicator, region
-                )
+                discovery_path = self._map_indicator_to_discovery_path(indicator, region)
                 if discovery_path:
                     extraction_method = self._determine_extraction_method(indicator)
-                    confidence_adj = self._calculate_confidence_adjustment(
-                        indicator, region
-                    )
+                    confidence_adj = self._calculate_confidence_adjustment(indicator, region)
                     regional_weight = self._calculate_regional_weight(indicator, region)
 
                     mapping = IndicatorMapping(
@@ -78,9 +74,7 @@ class IndicatorMapper:
 
         return mappings
 
-    def _map_indicator_to_discovery_path(
-        self, indicator: EconomicIndicator, region: str
-    ) -> Optional[str]:
+    def _map_indicator_to_discovery_path(self, indicator: EconomicIndicator, region: str) -> str | None:
         """Map regional indicator to discovery data path"""
 
         # Common discovery paths for different indicator types
@@ -124,15 +118,15 @@ class IndicatorMapper:
         name_lower = indicator.name.lower()
         if "inflation" in name_lower or "cpi" in name_lower:
             return mapping_rules["CPI"]
-        elif "employment" in name_lower or "jobless" in name_lower:
+        if "employment" in name_lower or "jobless" in name_lower:
             return mapping_rules["INITIAL_CLAIMS"]
-        elif "pmi" in name_lower and "manufacturing" in name_lower:
+        if "pmi" in name_lower and "manufacturing" in name_lower:
             return mapping_rules["PMI_MFG"]
-        elif "pmi" in name_lower and "services" in name_lower:
+        if "pmi" in name_lower and "services" in name_lower:
             return mapping_rules["PMI_SERVICES"]
-        elif "confidence" in name_lower:
+        if "confidence" in name_lower:
             return mapping_rules["CONSUMER_CONFIDENCE"]
-        elif "gdp" in name_lower:
+        if "gdp" in name_lower:
             return mapping_rules["GDP"]
 
         return None
@@ -143,18 +137,15 @@ class IndicatorMapper:
         # Different extraction methods based on data structure
         if indicator.frequency == "quarterly":
             return "quarterly_latest"
-        elif indicator.frequency == "monthly":
+        if indicator.frequency == "monthly":
             return "monthly_latest"
-        elif indicator.frequency == "weekly":
+        if indicator.frequency == "weekly":
             return "weekly_average"
-        elif "index" in indicator.name.lower():
+        if "index" in indicator.name.lower():
             return "index_current"
-        else:
-            return "direct_value"
+        return "direct_value"
 
-    def _calculate_confidence_adjustment(
-        self, indicator: EconomicIndicator, region: str
-    ) -> float:
+    def _calculate_confidence_adjustment(self, indicator: EconomicIndicator, region: str) -> float:
         """Calculate confidence adjustment based on indicator and region"""
 
         # Base confidence adjustments
@@ -180,9 +171,7 @@ class IndicatorMapper:
 
         return base_adjustment + regional_adjustment
 
-    def _calculate_regional_weight(
-        self, indicator: EconomicIndicator, region: str
-    ) -> float:
+    def _calculate_regional_weight(self, indicator: EconomicIndicator, region: str) -> float:
         """Calculate how important this indicator is for the specific region"""
 
         # Base weights by importance
@@ -191,9 +180,7 @@ class IndicatorMapper:
         base_weight = base_weights.get(indicator.importance, 0.6)
 
         # Regional priority adjustments
-        regional_priorities = self.regional_loader.get_regional_analysis_priorities(
-            region
-        )
+        regional_priorities = self.regional_loader.get_regional_analysis_priorities(region)
 
         # Map indicator types to analysis priorities
         if "inflation" in indicator.name.lower() or "cpi" in indicator.code.lower():
@@ -209,9 +196,7 @@ class IndicatorMapper:
 
         return min(1.0, base_weight + adjustment)
 
-    def extract_regional_indicators(
-        self, discovery_data: Dict[str, Any], region: str
-    ) -> List[ExtractedIndicator]:
+    def extract_regional_indicators(self, discovery_data: dict[str, Any], region: str) -> list[ExtractedIndicator]:
         """Extract and process regional indicators from discovery data"""
 
         if region not in self.indicator_mappings:
@@ -223,26 +208,20 @@ class IndicatorMapper:
         for mapping in mappings:
             try:
                 # Extract value from discovery data
-                value = self._extract_value_from_path(
-                    discovery_data, mapping.discovery_path
-                )
+                value = self._extract_value_from_path(discovery_data, mapping.discovery_path)
 
                 if value is not None:
                     # Process the extracted value
-                    processed_indicator = self._process_extracted_value(
-                        mapping, value, discovery_data, region
-                    )
+                    processed_indicator = self._process_extracted_value(mapping, value, discovery_data, region)
                     extracted_indicators.append(processed_indicator)
 
-            except Exception as e:
+            except Exception:
                 print("Error extracting {mapping.regional_indicator.name}: {e}")
                 continue
 
         return extracted_indicators
 
-    def _extract_value_from_path(
-        self, data: Dict[str, Any], path: str
-    ) -> Optional[float]:
+    def _extract_value_from_path(self, data: dict[str, Any], path: str) -> float | None:
         """Extract value from nested dictionary using dot notation path"""
 
         try:
@@ -258,14 +237,13 @@ class IndicatorMapper:
             # Handle different value formats
             if isinstance(current, (int, float)):
                 return float(current)
-            elif isinstance(current, dict) and "value" in current:
+            if isinstance(current, dict) and "value" in current:
                 return float(current["value"])
-            elif isinstance(current, dict) and "current_value" in current:
+            if isinstance(current, dict) and "current_value" in current:
                 return float(current["current_value"])
-            elif isinstance(current, dict) and "latest" in current:
+            if isinstance(current, dict) and "latest" in current:
                 return float(current["latest"])
-            else:
-                return None
+            return None
 
         except (KeyError, TypeError, ValueError):
             return None
@@ -274,7 +252,7 @@ class IndicatorMapper:
         self,
         mapping: IndicatorMapping,
         raw_value: float,
-        discovery_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
         region: str,
     ) -> ExtractedIndicator:
         """Process extracted value into structured indicator data"""
@@ -291,9 +269,7 @@ class IndicatorMapper:
         target_deviation = self._calculate_target_deviation(raw_value, indicator)
 
         # Calculate confidence score
-        confidence = self._calculate_indicator_confidence(
-            mapping, raw_value, discovery_data, region
-        )
+        confidence = self._calculate_indicator_confidence(mapping, raw_value, discovery_data, region)
 
         return ExtractedIndicator(
             name=indicator.name,
@@ -310,7 +286,7 @@ class IndicatorMapper:
         self,
         current_value: float,
         indicator: EconomicIndicator,
-        discovery_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
     ) -> str:
         """Analyze trend direction for the indicator"""
 
@@ -320,28 +296,21 @@ class IndicatorMapper:
         mid_point = sum(indicator.typical_range) / 2
 
         if hasattr(indicator, "target_level") and indicator.target_level:
-            if abs(current_value - indicator.target_level) < abs(
-                mid_point - indicator.target_level
-            ):
+            if abs(current_value - indicator.target_level) < abs(mid_point - indicator.target_level):
                 return "improving"
-            else:
-                return "deteriorating"
-        else:
-            # Use typical range positioning
-            range_position = (current_value - indicator.typical_range[0]) / (
-                indicator.typical_range[1] - indicator.typical_range[0]
-            )
+            return "deteriorating"
+        # Use typical range positioning
+        range_position = (current_value - indicator.typical_range[0]) / (
+            indicator.typical_range[1] - indicator.typical_range[0]
+        )
 
-            if range_position > 0.6:
-                return "elevated"
-            elif range_position < 0.4:
-                return "subdued"
-            else:
-                return "stable"
+        if range_position > 0.6:
+            return "elevated"
+        if range_position < 0.4:
+            return "subdued"
+        return "stable"
 
-    def _calculate_percentile_rank(
-        self, value: float, typical_range: List[float]
-    ) -> float:
+    def _calculate_percentile_rank(self, value: float, typical_range: list[float]) -> float:
         """Calculate percentile rank within typical range"""
 
         if len(typical_range) >= 2:
@@ -352,9 +321,7 @@ class IndicatorMapper:
 
         return 0.5  # Default to median if can't calculate
 
-    def _calculate_target_deviation(
-        self, value: float, indicator: EconomicIndicator
-    ) -> float:
+    def _calculate_target_deviation(self, value: float, indicator: EconomicIndicator) -> float:
         """Calculate deviation from target level (if available)"""
 
         if hasattr(indicator, "target_level") and indicator.target_level:
@@ -366,7 +333,7 @@ class IndicatorMapper:
         self,
         mapping: IndicatorMapping,
         value: float,
-        discovery_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
         region: str,
     ) -> float:
         """Calculate confidence score for extracted indicator"""
@@ -383,9 +350,7 @@ class IndicatorMapper:
                 range_adjustment = 0.05  # Boost for reasonable values
             else:
                 # Penalize values outside typical range
-                deviation = min(
-                    abs(value - typical_range[0]), abs(value - typical_range[1])
-                )
+                deviation = min(abs(value - typical_range[0]), abs(value - typical_range[1]))
                 max_deviation = abs(typical_range[1] - typical_range[0])
                 if max_deviation > 0:
                     range_adjustment = -0.1 * (deviation / max_deviation)
@@ -402,8 +367,8 @@ class IndicatorMapper:
         return max(0.0, min(1.0, confidence))  # Clamp to valid range
 
     def generate_regional_indicator_summary(
-        self, extracted_indicators: List[ExtractedIndicator], region: str
-    ) -> Dict[str, Any]:
+        self, extracted_indicators: list[ExtractedIndicator], region: str
+    ) -> dict[str, Any]:
         """Generate summary of regional indicators"""
 
         if not extracted_indicators:
@@ -426,18 +391,13 @@ class IndicatorMapper:
 
         # Calculate coverage score
         total_expected = sum(importance_counts.values())
-        coverage_score = (
-            len(extracted_indicators) / total_expected if total_expected > 0 else 0.0
-        )
+        coverage_score = len(extracted_indicators) / total_expected if total_expected > 0 else 0.0
 
         # Identify key signals
         key_signals = []
         for indicator in extracted_indicators:
             if indicator.regional_significance > 0.8:  # High significance
-                if (
-                    indicator.target_deviation != 0
-                    and abs(indicator.target_deviation) > 25
-                ):
+                if indicator.target_deviation != 0 and abs(indicator.target_deviation) > 25:
                     direction = "above" if indicator.target_deviation > 0 else "below"
                     key_signals.append(
                         {
@@ -448,9 +408,7 @@ class IndicatorMapper:
                         }
                     )
                 elif indicator.percentile_rank > 0.8 or indicator.percentile_rank < 0.2:
-                    level = (
-                        "elevated" if indicator.percentile_rank > 0.8 else "depressed"
-                    )
+                    level = "elevated" if indicator.percentile_rank > 0.8 else "depressed"
                     key_signals.append(
                         {
                             "indicator": indicator.name,
@@ -468,17 +426,11 @@ class IndicatorMapper:
             "key_signals": key_signals[:5],  # Top 5 signals
             "indicator_breakdown": {
                 "by_importance": importance_counts,
-                "high_significance": len(
-                    [
-                        ind
-                        for ind in extracted_indicators
-                        if ind.regional_significance > 0.8
-                    ]
-                ),
+                "high_significance": len([ind for ind in extracted_indicators if ind.regional_significance > 0.8]),
             },
         }
 
-    def get_indicator_priorities_for_region(self, region: str) -> Dict[str, float]:
+    def get_indicator_priorities_for_region(self, region: str) -> dict[str, float]:
         """Get indicator priorities for analysis focus"""
 
         if region not in self.indicator_mappings:
@@ -514,9 +466,7 @@ def main():
                 },
             }
         },
-        "business_cycle_data": {
-            "pmi_analysis": {"manufacturing_pmi": 52.3, "services_pmi": 54.1}
-        },
+        "business_cycle_data": {"pmi_analysis": {"manufacturing_pmi": 52.3, "services_pmi": 54.1}},
         "cli_market_intelligence": {
             "sentiment_analysis": {"consumer_confidence": 102.5},
             "volatility_indices": {"vix": 17.5},
@@ -538,9 +488,7 @@ def main():
                 print("  {indicator.name}: {indicator.current_value}")
                 print("    Trend: {indicator.trend_direction}")
                 print("    Confidence: {indicator.confidence:.3f}")
-                print(
-                    f"    Regional Significance: {indicator.regional_significance:.2f}"
-                )
+                print(f"    Regional Significance: {indicator.regional_significance:.2f}")
 
         # Generate summary
         summary = mapper.generate_regional_indicator_summary(extracted, region)

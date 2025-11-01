@@ -8,6 +8,7 @@ This script validates that the photo booth page is properly restricted based on 
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -144,9 +145,7 @@ def test_environment_logic():
             return False
 
     # Check photoBooth uses environment detection
-    photobooth_section = content[
-        content.find("photoBooth:") : content.find("photoBooth:") + 300
-    ]
+    photobooth_section = content[content.find("photoBooth:") : content.find("photoBooth:") + 300]
 
     if "isDevelopment() || isStaging()" not in photobooth_section:
         print("❌ photoBooth doesn't use proper environment detection")
@@ -165,9 +164,7 @@ def test_feature_consistency():
         content = f.read()
 
     # Check that chartsPage uses similar logic
-    charts_section = content[
-        content.find("chartsPage:") : content.find("chartsPage:") + 300
-    ]
+    charts_section = content[content.find("chartsPage:") : content.find("chartsPage:") + 300]
 
     if "(isDevelopment() || isStaging())" not in charts_section:
         print("⚠️ chartsPage doesn't use the same pattern")
@@ -200,7 +197,7 @@ def main():
                 passed += 1
             else:
                 failed += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -212,9 +209,7 @@ def main():
         print("🎉 Photo booth access restrictions are properly implemented!")
         print("\n📋 Implementation Summary:")
         print("1. Feature flag 'photoBooth' added to FeatureFlags interface ✅")
-        print(
-            "2. Configuration logic: enabled in dev/staging, disabled in production ✅"
-        )
+        print("2. Configuration logic: enabled in dev/staging, disabled in production ✅")
         print("3. Netlify environments properly configured ✅")
         print("4. Photo booth page protected with feature flag check ✅")
         print("5. 404 redirect when feature is disabled ✅")
@@ -226,9 +221,8 @@ def main():
         print("- Production Environment: ❌ Blocked (redirects to 404)")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

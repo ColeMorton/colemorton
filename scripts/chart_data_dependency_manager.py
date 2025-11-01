@@ -13,7 +13,8 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
+
 
 # Global module-level caches to prevent repeated operations across instances
 _GLOBAL_CONFIG_CACHE = None
@@ -35,10 +36,10 @@ class ChartStatusInfo:
 
     chart_type: str
     status: ChartStatus
-    frozen_date: Optional[str] = None
-    frozen_by: Optional[str] = None
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
+    frozen_date: str | None = None
+    frozen_by: str | None = None
+    file_path: str | None = None
+    line_number: int | None = None
     config_source: str = "chart-data-dependencies.json"
 
 
@@ -47,7 +48,7 @@ class ChartDataDependencyManager:
     Manages chart status by reading from chart-data-dependencies.json
     """
 
-    def __init__(self, frontend_src_path: Optional[Path] = None):
+    def __init__(self, frontend_src_path: Path | None = None):
         """Initialize chart data dependency manager"""
         self.logger = logging.getLogger("chart_data_dependency_manager")
 
@@ -60,22 +61,14 @@ class ChartDataDependencyManager:
             self.frontend_src_path = Path(frontend_src_path).resolve()
 
         # Path to chart data dependencies configuration
-        self.config_path = (
-            self.frontend_src_path / "config" / "chart-data-dependencies.json"
-        )
+        self.config_path = self.frontend_src_path / "config" / "chart-data-dependencies.json"
 
         # Validate that the config file exists
         if not self.config_path.exists():
-            self.logger.error(
-                f"Chart data dependencies config not found: {self.config_path}"
-            )
-            raise FileNotFoundError(
-                f"Chart data dependencies config not found: {self.config_path}"
-            )
+            self.logger.error(f"Chart data dependencies config not found: {self.config_path}")
+            raise FileNotFoundError(f"Chart data dependencies config not found: {self.config_path}")
 
-        self.logger.debug(
-            f"Chart data dependency manager initialized with config: {self.config_path}"
-        )
+        self.logger.debug(f"Chart data dependency manager initialized with config: {self.config_path}")
 
         # Data source mappings for chart types
         self.chart_data_source_mapping = {
@@ -94,7 +87,7 @@ class ChartDataDependencyManager:
             "live-signals-weekly-candlestick": "trade-history/live_signals.csv",
         }
 
-    def load_chart_dependencies_config(self) -> Dict[str, Any]:
+    def load_chart_dependencies_config(self) -> dict[str, Any]:
         """
         Load chart data dependencies configuration from JSON file
 
@@ -107,7 +100,7 @@ class ChartDataDependencyManager:
             return _GLOBAL_CONFIG_CACHE
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
             # Cache the results globally
@@ -115,9 +108,7 @@ class ChartDataDependencyManager:
 
             # Only log loading once globally
             if not _GLOBAL_CONFIG_LOGGED:
-                self.logger.info(
-                    f"Loaded chart data dependencies configuration from {self.config_path}"
-                )
+                self.logger.info(f"Loaded chart data dependencies configuration from {self.config_path}")
                 _GLOBAL_CONFIG_LOGGED = True
 
             return config
@@ -126,7 +117,7 @@ class ChartDataDependencyManager:
             self.logger.error(f"Failed to load chart dependencies config: {e}")
             raise
 
-    def get_chart_statuses(self) -> List[ChartStatusInfo]:
+    def get_chart_statuses(self) -> list[ChartStatusInfo]:
         """
         Extract chart status information from JSON configuration
 
@@ -145,9 +136,7 @@ class ChartDataDependencyManager:
             try:
                 status_enum = ChartStatus(chart_status)
             except ValueError:
-                self.logger.warning(
-                    f"Unknown chart status '{chart_status}' for {chart_type}, defaulting to active"
-                )
+                self.logger.warning(f"Unknown chart status '{chart_status}' for {chart_type}, defaulting to active")
                 status_enum = ChartStatus.ACTIVE
 
             # Extract frozen metadata if available
@@ -172,12 +161,10 @@ class ChartDataDependencyManager:
 
             chart_statuses.append(chart_info)
 
-        self.logger.debug(
-            f"Extracted {len(chart_statuses)} chart configurations from JSON"
-        )
+        self.logger.debug(f"Extracted {len(chart_statuses)} chart configurations from JSON")
         return chart_statuses
 
-    def get_data_source_status_mapping(self) -> Dict[str, ChartStatus]:
+    def get_data_source_status_mapping(self) -> dict[str, ChartStatus]:
         """
         Build mapping of data source files to their aggregated chart status
 
@@ -190,15 +177,13 @@ class ChartDataDependencyManager:
             return _GLOBAL_CHART_STATUS_MAPPING_CACHE
 
         chart_statuses = self.get_chart_statuses()
-        data_source_status: Dict[str, ChartStatus] = {}
+        data_source_status: dict[str, ChartStatus] = {}
 
         for chart_info in chart_statuses:
             # Get data source for this chart type
             data_source = self.chart_data_source_mapping.get(chart_info.chart_type)
             if not data_source:
-                self.logger.debug(
-                    f"No data source mapping for chart type: {chart_info.chart_type}"
-                )
+                self.logger.debug(f"No data source mapping for chart type: {chart_info.chart_type}")
                 continue
 
             # Track the most restrictive status for each data source
@@ -207,22 +192,17 @@ class ChartDataDependencyManager:
             # Priority: static > frozen > active
             if chart_info.status == ChartStatus.STATIC:
                 data_source_status[data_source] = ChartStatus.STATIC
-            elif (
-                chart_info.status == ChartStatus.FROZEN
-                and current_status != ChartStatus.STATIC
-            ):
+            elif chart_info.status == ChartStatus.FROZEN and current_status != ChartStatus.STATIC:
                 data_source_status[data_source] = ChartStatus.FROZEN
 
         # Cache the results globally
         _GLOBAL_CHART_STATUS_MAPPING_CACHE = data_source_status
 
-        self.logger.debug(
-            f"Generated status mapping for {len(data_source_status)} data sources"
-        )
+        self.logger.debug(f"Generated status mapping for {len(data_source_status)} data sources")
 
         return data_source_status
 
-    def get_frozen_data_sources(self) -> Set[str]:
+    def get_frozen_data_sources(self) -> set[str]:
         """Get set of data source paths that should be skipped in pipeline"""
         status_mapping = self.get_data_source_status_mapping()
         return {
@@ -273,13 +253,11 @@ class ChartDataDependencyManager:
             # Check if any frozen source ends with this filename
             for frozen_source in frozen_sources:
                 if frozen_source.endswith(filename):
-                    self.logger.info(
-                        f"Blocking update to potentially frozen file: {filename}"
-                    )
+                    self.logger.info(f"Blocking update to potentially frozen file: {filename}")
                     return True
             return False
 
-    def get_status_summary(self) -> Dict[str, Any]:
+    def get_status_summary(self) -> dict[str, Any]:
         """Get summary of chart status information"""
         chart_statuses = self.get_chart_statuses()
         status_counts = {}
@@ -310,26 +288,22 @@ class ChartDataDependencyManager:
         }
 
     # Legacy compatibility methods for seamless replacement of ChartStatusManager
-    def scan_mdx_files(self) -> List[ChartStatusInfo]:
+    def scan_mdx_files(self) -> list[ChartStatusInfo]:
         """
         Legacy compatibility method - redirects to JSON-based status extraction
 
         Returns:
             List of chart status information from JSON configuration
         """
-        self.logger.debug(
-            "Legacy scan_mdx_files() called - redirecting to JSON configuration"
-        )
+        self.logger.debug("Legacy scan_mdx_files() called - redirecting to JSON configuration")
         return self.get_chart_statuses()
 
 
 def create_chart_data_dependency_manager(
-    frontend_src_path: Optional[str] = None,
+    frontend_src_path: str | None = None,
 ) -> ChartDataDependencyManager:
     """Factory function to create chart data dependency manager"""
-    return ChartDataDependencyManager(
-        Path(frontend_src_path) if frontend_src_path else None
-    )
+    return ChartDataDependencyManager(Path(frontend_src_path) if frontend_src_path else None)
 
 
 if __name__ == "__main__":

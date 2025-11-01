@@ -16,7 +16,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -26,6 +26,7 @@ from .base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -40,7 +41,7 @@ class MarketRegime:
     volatility_environment: str  # 'low', 'normal', 'elevated', 'extreme'
     confidence_score: float
     regime_duration_days: int
-    key_indicators: Dict[str, Any]
+    key_indicators: dict[str, Any]
 
 
 @dataclass
@@ -50,9 +51,9 @@ class BusinessCyclePhase:
     phase: str  # 'expansion', 'peak', 'contraction', 'trough'
     phase_probability: float
     months_in_phase: int
-    leading_indicators: Dict[str, Any]
-    coincident_indicators: Dict[str, Any]
-    lagging_indicators: Dict[str, Any]
+    leading_indicators: dict[str, Any]
+    coincident_indicators: dict[str, Any]
+    lagging_indicators: dict[str, Any]
 
 
 @dataclass
@@ -63,7 +64,7 @@ class EconomicCalendarEvent:
     event_date: datetime
     importance: str  # 'low', 'medium', 'high'
     expected_impact: str  # 'positive', 'negative', 'neutral'
-    historical_market_reaction: Optional[Dict[str, float]]
+    historical_market_reaction: dict[str, float] | None
 
 
 class MacroEconomicService(BaseFinancialService):
@@ -146,7 +147,7 @@ class MacroEconomicService(BaseFinancialService):
             },
         }
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate macro-economic response data"""
         if not isinstance(data, dict):
             raise ValidationError(f"Invalid response format for {endpoint}")
@@ -157,7 +158,7 @@ class MacroEconomicService(BaseFinancialService):
 
         return data
 
-    def _calculate_statistics(self, values: List[float]) -> Dict[str, float]:
+    def _calculate_statistics(self, values: list[float]) -> dict[str, float]:
         """Calculate statistical measures for time series data"""
         if not values:
             return {"trend": "no_data", "volatility": 0.0}
@@ -168,9 +169,7 @@ class MacroEconomicService(BaseFinancialService):
         x = np.arange(len(values))
         if len(values) >= 2:
             slope = np.polyfit(x, values_array, 1)[0]
-            trend = (
-                "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
-            )
+            trend = "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
         else:
             trend = "insufficient_data"
 
@@ -188,7 +187,7 @@ class MacroEconomicService(BaseFinancialService):
             "observations": len(values),
         }
 
-    def get_market_regime_analysis(self, lookback_days: int = 252) -> Dict[str, Any]:
+    def get_market_regime_analysis(self, lookback_days: int = 252) -> dict[str, Any]:
         """
         Comprehensive market regime analysis
 
@@ -199,9 +198,7 @@ class MacroEconomicService(BaseFinancialService):
             Dictionary containing market regime classification and analysis
         """
         end_date = datetime.now()
-        start_date = end_date - timedelta(
-            days=lookback_days + 30
-        )  # Buffer for calculations
+        start_date = end_date - timedelta(days=lookback_days + 30)  # Buffer for calculations
 
         try:
             # Get VIX data for volatility environment
@@ -225,11 +222,9 @@ class MacroEconomicService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform market regime analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to perform market regime analysis: {str(e)}")
 
-    def get_business_cycle_analysis(self) -> Dict[str, Any]:
+    def get_business_cycle_analysis(self) -> dict[str, Any]:
         """
         Comprehensive business cycle phase identification
 
@@ -241,20 +236,14 @@ class MacroEconomicService(BaseFinancialService):
 
         try:
             # Collect all business cycle indicators
-            leading_data = self._collect_indicator_data(
-                self.business_cycle_indicators["leading"], start_date, end_date
-            )
+            leading_data = self._collect_indicator_data(self.business_cycle_indicators["leading"], start_date, end_date)
             coincident_data = self._collect_indicator_data(
                 self.business_cycle_indicators["coincident"], start_date, end_date
             )
-            lagging_data = self._collect_indicator_data(
-                self.business_cycle_indicators["lagging"], start_date, end_date
-            )
+            lagging_data = self._collect_indicator_data(self.business_cycle_indicators["lagging"], start_date, end_date)
 
             # Classify business cycle phase
-            cycle_phase = self._classify_business_cycle_phase(
-                leading_data, coincident_data, lagging_data
-            )
+            cycle_phase = self._classify_business_cycle_phase(leading_data, coincident_data, lagging_data)
 
             return {
                 "business_cycle_phase": cycle_phase.phase,
@@ -263,11 +252,7 @@ class MacroEconomicService(BaseFinancialService):
                 "leading_indicators": {
                     "data": leading_data,
                     "composite_score": self._calculate_composite_score(leading_data),
-                    "trend_analysis": (
-                        "positive"
-                        if self._calculate_composite_score(leading_data) > 0
-                        else "negative"
-                    ),
+                    "trend_analysis": ("positive" if self._calculate_composite_score(leading_data) > 0 else "negative"),
                 },
                 "coincident_indicators": {
                     "data": coincident_data,
@@ -278,20 +263,16 @@ class MacroEconomicService(BaseFinancialService):
                     "data": lagging_data,
                     "confirmation_score": self._calculate_composite_score(lagging_data),
                 },
-                "recession_probability": self._calculate_recession_probability(
-                    leading_data, coincident_data
-                ),
+                "recession_probability": self._calculate_recession_probability(leading_data, coincident_data),
                 "analysis_period": f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}",
                 "data_source": "FRED/Business Cycle Analysis",
                 "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform business cycle analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to perform business cycle analysis: {str(e)}")
 
-    def get_global_liquidity_analysis(self, period: str = "2y") -> Dict[str, Any]:
+    def get_global_liquidity_analysis(self, period: str = "2y") -> dict[str, Any]:
         """
         Global liquidity conditions analysis
 
@@ -325,37 +306,27 @@ class MacroEconomicService(BaseFinancialService):
             )
 
             # Analyze liquidity conditions
-            liquidity_analysis = self._analyze_liquidity_conditions(
-                money_supply_data, interest_rate_data, credit_data
-            )
+            liquidity_analysis = self._analyze_liquidity_conditions(money_supply_data, interest_rate_data, credit_data)
 
             return {
                 "global_liquidity_assessment": liquidity_analysis,
                 "money_supply_analysis": {
                     "data": money_supply_data,
                     "growth_rates": self._calculate_growth_rates(money_supply_data),
-                    "regional_comparison": self._compare_regional_liquidity(
-                        money_supply_data
-                    ),
+                    "regional_comparison": self._compare_regional_liquidity(money_supply_data),
                 },
                 "interest_rate_environment": {
                     "data": interest_rate_data,
                     "policy_stance": self._assess_policy_stance(interest_rate_data),
-                    "yield_curve_analysis": self._analyze_yield_curves(
-                        interest_rate_data
-                    ),
+                    "yield_curve_analysis": self._analyze_yield_curves(interest_rate_data),
                 },
                 "credit_conditions": {
                     "data": credit_data,
-                    "credit_availability": self._assess_credit_availability(
-                        credit_data
-                    ),
+                    "credit_availability": self._assess_credit_availability(credit_data),
                     "risk_appetite": self._measure_risk_appetite(credit_data),
                 },
                 "liquidity_score": liquidity_analysis["composite_score"],
-                "market_implications": self._derive_market_implications(
-                    liquidity_analysis
-                ),
+                "market_implications": self._derive_market_implications(liquidity_analysis),
                 "analysis_period": f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}",
                 "period": period,
                 "data_source": "FRED/Global Central Banks",
@@ -363,11 +334,9 @@ class MacroEconomicService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform global liquidity analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to perform global liquidity analysis: {str(e)}")
 
-    def get_economic_calendar_analysis(self, days_ahead: int = 30) -> Dict[str, Any]:
+    def get_economic_calendar_analysis(self, days_ahead: int = 30) -> dict[str, Any]:
         """
         Economic calendar analysis with market impact assessment
 
@@ -386,18 +355,10 @@ class MacroEconomicService(BaseFinancialService):
 
             return {
                 "upcoming_events": upcoming_events,
-                "high_impact_events": [
-                    event for event in upcoming_events if event.importance == "high"
-                ],
+                "high_impact_events": [event for event in upcoming_events if event.importance == "high"],
                 "market_impact_analysis": impact_analysis,
-                "trading_implications": self._derive_trading_implications(
-                    upcoming_events
-                ),
-                "risk_events": [
-                    event
-                    for event in upcoming_events
-                    if event.expected_impact == "negative"
-                ],
+                "trading_implications": self._derive_trading_implications(upcoming_events),
+                "risk_events": [event for event in upcoming_events if event.expected_impact == "negative"],
                 "calendar_period": f"Next {days_ahead} days",
                 "events_count": len(upcoming_events),
                 "data_source": "Economic Calendar Analysis",
@@ -405,11 +366,9 @@ class MacroEconomicService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to generate economic calendar analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to generate economic calendar analysis: {str(e)}")
 
-    def get_comprehensive_macro_analysis(self) -> Dict[str, Any]:
+    def get_comprehensive_macro_analysis(self) -> dict[str, Any]:
         """
         Comprehensive macro-economic analysis combining all components
 
@@ -434,9 +393,7 @@ class MacroEconomicService(BaseFinancialService):
                 "business_cycle_analysis": business_cycle,
                 "global_liquidity_analysis": liquidity_analysis,
                 "economic_calendar_analysis": calendar_analysis,
-                "investment_implications": self._derive_investment_implications(
-                    macro_synthesis
-                ),
+                "investment_implications": self._derive_investment_implications(macro_synthesis),
                 "risk_assessment": self._assess_macro_risks(macro_synthesis),
                 "confidence_score": macro_synthesis["overall_confidence"],
                 "analysis_timestamp": datetime.now().isoformat(),
@@ -445,14 +402,10 @@ class MacroEconomicService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform comprehensive macro analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to perform comprehensive macro analysis: {str(e)}")
 
     # Helper methods for internal calculations
-    def _get_fred_series(
-        self, series_id: str, start_date: datetime, end_date: datetime
-    ) -> Dict[str, Any]:
+    def _get_fred_series(self, series_id: str, start_date: datetime, end_date: datetime) -> dict[str, Any]:
         """Get FRED series data with error handling"""
         # This would integrate with the existing FRED service
         # For now, return mock structure
@@ -464,8 +417,8 @@ class MacroEconomicService(BaseFinancialService):
         }
 
     def _collect_indicator_data(
-        self, indicators: Dict[str, str], start_date: datetime, end_date: datetime
-    ) -> Dict[str, Any]:
+        self, indicators: dict[str, str], start_date: datetime, end_date: datetime
+    ) -> dict[str, Any]:
         """Collect data for multiple economic indicators"""
         collected_data = {}
 
@@ -478,9 +431,7 @@ class MacroEconomicService(BaseFinancialService):
 
         return collected_data
 
-    def _classify_market_regime(
-        self, vix_data: Dict[str, Any], sp500_data: Dict[str, Any]
-    ) -> MarketRegime:
+    def _classify_market_regime(self, vix_data: dict[str, Any], sp500_data: dict[str, Any]) -> MarketRegime:
         """Classify current market regime based on volatility and momentum"""
         # Simplified regime classification logic
         # In production, this would use more sophisticated ML models
@@ -493,9 +444,7 @@ class MacroEconomicService(BaseFinancialService):
             key_indicators={"vix_level": 15.0, "momentum": "neutral"},
         )
 
-    def _assess_volatility_environment(
-        self, vix_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_volatility_environment(self, vix_data: dict[str, Any]) -> dict[str, Any]:
         """Assess current volatility environment"""
         return {
             "current_vix": 15.0,  # Placeholder
@@ -504,7 +453,7 @@ class MacroEconomicService(BaseFinancialService):
             "trend": "stable",
         }
 
-    def _analyze_market_momentum(self, sp500_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_market_momentum(self, sp500_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze market momentum trends"""
         return {
             "short_term_momentum": "neutral",
@@ -515,9 +464,9 @@ class MacroEconomicService(BaseFinancialService):
 
     def _classify_business_cycle_phase(
         self,
-        leading_data: Dict[str, Any],
-        coincident_data: Dict[str, Any],
-        lagging_data: Dict[str, Any],
+        leading_data: dict[str, Any],
+        coincident_data: dict[str, Any],
+        lagging_data: dict[str, Any],
     ) -> BusinessCyclePhase:
         """Classify current business cycle phase"""
         return BusinessCyclePhase(
@@ -529,27 +478,25 @@ class MacroEconomicService(BaseFinancialService):
             lagging_indicators=lagging_data,
         )
 
-    def _calculate_composite_score(self, indicator_data: Dict[str, Any]) -> float:
+    def _calculate_composite_score(self, indicator_data: dict[str, Any]) -> float:
         """Calculate composite score for indicator set"""
         # Simplified scoring logic
         return 0.65  # Placeholder
 
-    def _assess_current_momentum(self, coincident_data: Dict[str, Any]) -> str:
+    def _assess_current_momentum(self, coincident_data: dict[str, Any]) -> str:
         """Assess current economic momentum"""
         return "positive"  # Placeholder
 
-    def _calculate_recession_probability(
-        self, leading_data: Dict[str, Any], coincident_data: Dict[str, Any]
-    ) -> float:
+    def _calculate_recession_probability(self, leading_data: dict[str, Any], coincident_data: dict[str, Any]) -> float:
         """Calculate recession probability based on indicators"""
         return 0.15  # Placeholder (15% probability)
 
     def _analyze_liquidity_conditions(
         self,
-        money_supply: Dict[str, Any],
-        rates: Dict[str, Any],
-        credit: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        money_supply: dict[str, Any],
+        rates: dict[str, Any],
+        credit: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze global liquidity conditions"""
         return {
             "liquidity_environment": "accommodative",
@@ -562,11 +509,11 @@ class MacroEconomicService(BaseFinancialService):
             },
         }
 
-    def _calculate_growth_rates(self, data: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_growth_rates(self, data: dict[str, Any]) -> dict[str, float]:
         """Calculate year-over-year growth rates"""
         return {"m2_us_yoy": 6.2, "m2_euro_yoy": 4.1, "m2_japan_yoy": 2.8}
 
-    def _compare_regional_liquidity(self, data: Dict[str, Any]) -> Dict[str, str]:
+    def _compare_regional_liquidity(self, data: dict[str, Any]) -> dict[str, str]:
         """Compare liquidity conditions across regions"""
         return {
             "most_expansive": "US",
@@ -574,25 +521,23 @@ class MacroEconomicService(BaseFinancialService):
             "divergence_level": "moderate",
         }
 
-    def _assess_policy_stance(self, rate_data: Dict[str, Any]) -> Dict[str, str]:
+    def _assess_policy_stance(self, rate_data: dict[str, Any]) -> dict[str, str]:
         """Assess central bank policy stances"""
         return {"fed": "neutral", "ecb": "accommodative", "boj": "ultra_accommodative"}
 
-    def _analyze_yield_curves(self, rate_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_yield_curves(self, rate_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze yield curve shapes and implications"""
         return {"us_curve": "normal", "inversion_risk": "low", "steepness": "moderate"}
 
-    def _assess_credit_availability(self, credit_data: Dict[str, Any]) -> str:
+    def _assess_credit_availability(self, credit_data: dict[str, Any]) -> str:
         """Assess credit market conditions"""
         return "normal"  # Placeholder
 
-    def _measure_risk_appetite(self, credit_data: Dict[str, Any]) -> str:
+    def _measure_risk_appetite(self, credit_data: dict[str, Any]) -> str:
         """Measure market risk appetite from credit spreads"""
         return "moderate"  # Placeholder
 
-    def _derive_market_implications(
-        self, liquidity_analysis: Dict[str, Any]
-    ) -> List[str]:
+    def _derive_market_implications(self, liquidity_analysis: dict[str, Any]) -> list[str]:
         """Derive market implications from liquidity analysis"""
         return [
             "Supportive environment for risk assets",
@@ -600,9 +545,7 @@ class MacroEconomicService(BaseFinancialService):
             "Credit markets remain healthy",
         ]
 
-    def _generate_economic_calendar(
-        self, days_ahead: int
-    ) -> List[EconomicCalendarEvent]:
+    def _generate_economic_calendar(self, days_ahead: int) -> list[EconomicCalendarEvent]:
         """Generate upcoming economic calendar events"""
         # Placeholder for economic calendar integration
         return [
@@ -615,9 +558,7 @@ class MacroEconomicService(BaseFinancialService):
             )
         ]
 
-    def _analyze_event_impacts(
-        self, events: List[EconomicCalendarEvent]
-    ) -> Dict[str, Any]:
+    def _analyze_event_impacts(self, events: list[EconomicCalendarEvent]) -> dict[str, Any]:
         """Analyze potential market impacts of upcoming events"""
         return {
             "aggregate_risk": "moderate",
@@ -625,9 +566,7 @@ class MacroEconomicService(BaseFinancialService):
             "sector_impacts": {"technology": "neutral", "financials": "positive"},
         }
 
-    def _derive_trading_implications(
-        self, events: List[EconomicCalendarEvent]
-    ) -> List[str]:
+    def _derive_trading_implications(self, events: list[EconomicCalendarEvent]) -> list[str]:
         """Derive trading implications from calendar events"""
         return [
             "Maintain defensive positioning ahead of FOMC",
@@ -637,11 +576,11 @@ class MacroEconomicService(BaseFinancialService):
 
     def _synthesize_macro_environment(
         self,
-        regime: Dict[str, Any],
-        cycle: Dict[str, Any],
-        liquidity: Dict[str, Any],
-        calendar: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        regime: dict[str, Any],
+        cycle: dict[str, Any],
+        liquidity: dict[str, Any],
+        calendar: dict[str, Any],
+    ) -> dict[str, Any]:
         """Synthesize comprehensive macro-economic environment assessment"""
         return {
             "overall_environment": "supportive",
@@ -656,9 +595,7 @@ class MacroEconomicService(BaseFinancialService):
             "outlook": "constructive_with_caution",
         }
 
-    def _derive_investment_implications(
-        self, synthesis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _derive_investment_implications(self, synthesis: dict[str, Any]) -> dict[str, Any]:
         """Derive investment implications from macro synthesis"""
         return {
             "asset_allocation": {
@@ -679,7 +616,7 @@ class MacroEconomicService(BaseFinancialService):
             "risk_positioning": "moderate_risk_on",
         }
 
-    def _assess_macro_risks(self, synthesis: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_macro_risks(self, synthesis: dict[str, Any]) -> dict[str, Any]:
         """Assess macro-economic risks"""
         return {
             "recession_risk": "low",
@@ -694,7 +631,7 @@ class MacroEconomicService(BaseFinancialService):
             ],
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test basic functionality

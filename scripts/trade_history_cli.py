@@ -11,9 +11,10 @@ Command-line interface for trade history image generation with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,16 +41,12 @@ class TradeHistoryCLI(BaseFinancialCLI):
         @self.app.command("generate")
         def generate_images(
             date: str = typer.Argument(..., help="Date in YYYYMMDD format"),
-            report_type: str = typer.Option(
-                None, help="Specific report type to process"
-            ),
+            report_type: str = typer.Option(None, help="Specific report type to process"),
             config_file: str = typer.Option(
                 "config/pipelines/dashboard_generation.yaml",
                 help="Path to configuration file",
             ),
-            validate_only: bool = typer.Option(
-                False, help="Only validate setup, do not generate images"
-            ),
+            validate_only: bool = typer.Option(False, help="Only validate setup, do not generate images"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -59,16 +56,10 @@ class TradeHistoryCLI(BaseFinancialCLI):
                 self._validate_date_format(date)
 
                 # Validate report type if specified
-                if (
-                    report_type
-                    and report_type not in TradeHistoryImageGenerator.REPORT_PATTERNS
-                ):
-                    available_types = list(
-                        TradeHistoryImageGenerator.REPORT_PATTERNS.keys()
-                    )
+                if report_type and report_type not in TradeHistoryImageGenerator.REPORT_PATTERNS:
+                    available_types = list(TradeHistoryImageGenerator.REPORT_PATTERNS.keys())
                     raise ValidationError(
-                        f"Invalid report type: {report_type}. "
-                        f"Available types: {', '.join(available_types)}"
+                        f"Invalid report type: {report_type}. Available types: {', '.join(available_types)}"
                     )
 
                 # Load configuration
@@ -93,9 +84,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                     }
                 else:
                     # Generate images
-                    generated_files = generator.generate_images_for_date(
-                        date, report_type
-                    )
+                    generated_files = generator.generate_images_for_date(date, report_type)
 
                     result = {
                         "status": "success",
@@ -106,14 +95,10 @@ class TradeHistoryCLI(BaseFinancialCLI):
                         "config_file": str(config_path),
                     }
 
-                self._output_result(
-                    result, output_format, f"Trade History Generation: {date}"
-                )
+                self._output_result(result, output_format, f"Trade History Generation: {date}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to generate trade history images for {date}"
-                )
+                self._handle_error(e, f"Failed to generate trade history images for {date}")
 
         @self.app.command("list-types")
         def list_report_types(
@@ -123,9 +108,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
             """List available report types"""
             try:
                 report_types = {
-                    "available_types": list(
-                        TradeHistoryImageGenerator.REPORT_PATTERNS.keys()
-                    ),
+                    "available_types": list(TradeHistoryImageGenerator.REPORT_PATTERNS.keys()),
                     "type_descriptions": {
                         "HISTORICAL_PERFORMANCE_REPORT": "Performance dashboard visualizations",
                         "LIVE_SIGNALS_MONITOR": "Signal chart visualizations",
@@ -136,9 +119,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                     "default_behavior": "All types processed if none specified",
                 }
 
-                self._output_result(
-                    report_types, output_format, "Available Report Types"
-                )
+                self._output_result(report_types, output_format, "Available Report Types")
 
             except Exception as e:
                 self._handle_error(e, "Failed to list report types")
@@ -146,9 +127,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
         @self.app.command("validate")
         def validate_setup(
             date: str = typer.Argument(..., help="Date in YYYYMMDD format"),
-            report_type: str = typer.Option(
-                None, help="Specific report type to validate"
-            ),
+            report_type: str = typer.Option(None, help="Specific report type to validate"),
             config_file: str = typer.Option(
                 "config/pipelines/dashboard_generation.yaml",
                 help="Path to configuration file",
@@ -193,9 +172,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
         import re
 
         if not re.match(r"^\d{8}$", date):
-            raise ValidationError(
-                f"Invalid date format: {date}. Expected YYYYMMDD format"
-            )
+            raise ValidationError(f"Invalid date format: {date}. Expected YYYYMMDD format")
 
         # Try to parse as actual date
         try:
@@ -203,15 +180,13 @@ class TradeHistoryCLI(BaseFinancialCLI):
 
             datetime.strptime(date, "%Y%m%d")
         except ValueError:
-            raise ValidationError(
-                f"Invalid date: {date}. Must be a valid date in YYYYMMDD format"
-            )
+            raise ValidationError(f"Invalid date: {date}. Must be a valid date in YYYYMMDD format")
 
-    def _load_trade_history_config(self, config_path: Path, env: str) -> Dict[str, Any]:
+    def _load_trade_history_config(self, config_path: Path, env: str) -> dict[str, Any]:
         """Load and validate trade history configuration"""
         import yaml
 
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = yaml.safe_load(f)
 
         # Apply environment-specific overrides
@@ -226,7 +201,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
 
         return config
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Trade History service health check"""
         try:
             # Check if required dependencies are available
@@ -256,9 +231,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                     "data_dir_exists": data_dir_exists,
                     "data_path": str(data_dir),
                 },
-                "report_types_available": len(
-                    TradeHistoryImageGenerator.REPORT_PATTERNS
-                ),
+                "report_types_available": len(TradeHistoryImageGenerator.REPORT_PATTERNS),
                 "environment": env,
             }
 
@@ -272,7 +245,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                 "environment": env,
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         cache_dir = Path("data/cache/trade_history")
 
@@ -287,7 +260,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                 "status": "success",
                 "message": "Trade history cache cleared",
             }
-        elif action == "cleanup":
+        if action == "cleanup":
             # Remove old generated files (older than 14 days)
             import os
             import time
@@ -305,7 +278,7 @@ class TradeHistoryCLI(BaseFinancialCLI):
                 "status": "success",
                 "message": "Old trade history files removed",
             }
-        elif action == "stats":
+        if action == "stats":
             stats = {
                 "cache_directory": str(cache_dir),
                 "cache_exists": cache_dir.exists(),
@@ -314,19 +287,14 @@ class TradeHistoryCLI(BaseFinancialCLI):
             }
 
             if cache_dir.exists():
-                total_size = sum(
-                    file_path.stat().st_size
-                    for file_path in cache_dir.rglob("*")
-                    if file_path.is_file()
-                )
+                total_size = sum(file_path.stat().st_size for file_path in cache_dir.rglob("*") if file_path.is_file())
                 stats["cache_size_mb"] = round(total_size / (1024 * 1024), 2)
 
             return {
                 "action": "stats",
                 "cache_info": stats,
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

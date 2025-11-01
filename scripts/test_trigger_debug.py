@@ -9,10 +9,9 @@ import logging
 import sys
 from pathlib import Path
 
+
 # Set up detailed logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -42,7 +41,7 @@ def test_trigger_call():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Test failed: {e}")
         import traceback
 

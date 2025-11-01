@@ -6,7 +6,7 @@ This module provides Plotly-based chart generation with JSON schema support
 for unified backend/frontend chart definitions.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -46,7 +46,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
 
         # Configure kaleido for high-quality exports (300+ DPI equivalent)
         try:
-            pass  # kaleido import handled elsewhere
+            # kaleido import handled elsewhere
 
             # Configure Kaleido scope for high-DPI exports
             if hasattr(pio, "kaleido") and pio.kaleido.scope is not None:
@@ -67,7 +67,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         except ImportError:
             # Kaleido not available - will fall back to browser-based rendering
             print("Warning: Kaleido not available, using browser-based rendering")
-        except Exception as e:
+        except Exception:
             # Kaleido configuration failed - continue with defaults
             print("Warning: Kaleido configuration failed: {e}")
 
@@ -77,7 +77,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         height: int = 1200,
         scale: float = 3.0,
         format: str = "png",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Configure high-quality export settings.
 
@@ -122,9 +122,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         scale = max(1.0, dpi_equivalent / 96)
 
         # Export configuration
-        export_config = self.configure_export_settings(
-            width=1600, height=1200, scale=scale, format=format
-        )
+        export_config = self.configure_export_settings(width=1600, height=1200, scale=scale, format=format)
 
         try:
             if format.lower() == "html":
@@ -134,7 +132,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 # Static image export with high-DPI
                 fig.write_image(filepath, **export_config)
 
-        except Exception as e:
+        except Exception:
             print("Warning: High-quality export failed, using standard settings: {e}")
             # Fallback to standard export
             fig.write_image(filepath, format=format)
@@ -163,7 +161,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         raise NotImplementedError("Plotly gauge chart implementation pending")
 
     def create_enhanced_monthly_bars(
-        self, ax: Any, monthly_data: List[MonthlyPerformance], mode: str = "light"
+        self, ax: Any, monthly_data: list[MonthlyPerformance], mode: str = "light"
     ) -> None:
         """
         Create enhanced monthly performance bar chart using Plotly.
@@ -185,16 +183,12 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     showarrow=False,
                     font=dict(size=12),
                 )
-            return
+            return None
 
         # Apply scalability optimizations if available
         if self.scalability_manager:
-            timeline_category = (
-                self.scalability_manager.detect_monthly_timeline_category(monthly_data)
-            )
-            months = self.scalability_manager.optimize_monthly_labels(
-                monthly_data, timeline_category
-            )
+            timeline_category = self.scalability_manager.detect_monthly_timeline_category(monthly_data)
+            months = self.scalability_manager.optimize_monthly_labels(monthly_data, timeline_category)
         else:
             months = [f"{data.month[:3]} {str(data.year)[2:]}" for data in monthly_data]
 
@@ -231,12 +225,8 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         )
 
         # Add return labels inside bars
-        for i, (month, win_rate, ret) in enumerate(zip(months, win_rates, returns)):
-            return_color = (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
+        for i, (month, win_rate, ret) in enumerate(zip(months, win_rates, returns, strict=False)):
+            return_color = performance_colors["positive"] if ret >= 0 else performance_colors["negative"]
             fig.add_annotation(
                 x=i,
                 y=win_rate / 2,
@@ -257,26 +247,23 @@ class PlotlyChartGenerator(AbstractChartGenerator):
             tickfont=dict(size=9),
         )
 
-        fig.update_yaxes(
-            title="Win Rate (%)", range=[0, 110], gridcolor=theme.borders, gridwidth=0.5
-        )
+        fig.update_yaxes(title="Win Rate (%)", range=[0, 110], gridcolor=theme.borders, gridwidth=0.5)
 
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             # This is for subplot integration (future use)
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             # Update the provided figure by adding traces
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            # Return the figure for flexibility
-            return fig
+        # Return the figure for flexibility
+        return fig
 
     def create_enhanced_donut_chart(
-        self, ax: Any, quality_data: List[QualityDistribution], mode: str = "light"
+        self, ax: Any, quality_data: list[QualityDistribution], mode: str = "light"
     ) -> None:
         """
         Create sophisticated donut chart for quality distribution using Plotly.
@@ -298,7 +285,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     showarrow=False,
                     font=dict(size=12),
                 )
-            return
+            return None
 
         categories = [q.category for q in quality_data]
         percentages = [q.percentage for q in quality_data]
@@ -315,7 +302,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         # Create custom text for each slice
         custom_text = []
         hover_text = []
-        for cat, pct, wr in zip(categories, percentages, win_rates):
+        for cat, pct, wr in zip(categories, percentages, win_rates, strict=False):
             custom_text.append(f"{cat}<br>{pct:.1f}%")
             hover_text.append(f"{cat}<br>Percentage: {pct:.1f}%<br>Win Rate: {wr:.0f}%")
 
@@ -331,9 +318,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 textfont=dict(size=9, color=theme.body_text, family="bold"),
                 hovertext=hover_text,
                 hoverinfo="text",
-                pull=[
-                    0.05 if cat == "Excellent" else 0 for cat in categories
-                ],  # Slight pull for excellent trades
+                pull=[0.05 if cat == "Excellent" else 0 for cat in categories],  # Slight pull for excellent trades
                 rotation=90,  # Start from top
             )
         )
@@ -350,9 +335,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         )
 
         # Add win rate indicators
-        for i, (category, percentage, win_rate) in enumerate(
-            zip(categories, percentages, win_rates)
-        ):
+        for i, (category, percentage, win_rate) in enumerate(zip(categories, percentages, win_rates, strict=False)):
             # Calculate angle for positioning
             angle_sum = sum(percentages[:i]) + percentage / 2
             angle = 90 - (angle_sum / 100 * 360)  # Convert to radians from top
@@ -384,18 +367,15 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             # Update the provided figure by adding traces
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            return fig
+        return fig
 
-    def create_waterfall_chart(
-        self, ax: Any, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_waterfall_chart(self, ax: Any, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create sophisticated waterfall chart using Plotly.
 
@@ -415,13 +395,11 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     showarrow=False,
                     font=dict(size=12),
                 )
-            return
+            return None
 
         # Check for scalability optimization
         if self.scalability_manager:
-            trade_category = self.scalability_manager.detect_trade_volume_category(
-                trades
-            )
+            trade_category = self.scalability_manager.detect_trade_volume_category(trades)
 
             # For large datasets, use performance bands instead
             if trade_category in ["large", "medium"]:
@@ -443,12 +421,8 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         fig = go.Figure()
 
         # Create waterfall bars using separate bar traces for positive/negative
-        for i, (ret, cum, ticker) in enumerate(zip(returns, cumulative, tickers)):
-            color = (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
+        for i, (ret, cum, ticker) in enumerate(zip(returns, cumulative, tickers, strict=False)):
+            color = performance_colors["positive"] if ret >= 0 else performance_colors["negative"]
 
             # Add individual bar
             fig.add_trace(
@@ -486,9 +460,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 x=list(range(len(returns))),
                 y=final_cumulative.tolist(),
                 mode="lines+markers",
-                line=dict(
-                    color=self.theme_manager.color_palette.tertiary_data, width=3
-                ),
+                line=dict(color=self.theme_manager.color_palette.tertiary_data, width=3),
                 marker=dict(
                     size=6,
                     color=self.theme_manager.color_palette.tertiary_data,
@@ -501,24 +473,18 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         )
 
         # Add zero line
-        fig.add_hline(
-            y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.5
-        )
+        fig.add_hline(y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.5)
 
         # Add performance zones
         self._add_performance_zones_plotly(fig, final_cumulative.tolist(), theme)
 
         # Update layout
-        self.theme_mapper.apply_theme_to_figure(
-            fig, mode, "Trade Performance Waterfall"
-        )
+        self.theme_mapper.apply_theme_to_figure(fig, mode, "Trade Performance Waterfall")
 
         # Configure axes
         fig.update_xaxes(
             title="Trade Rank (by Performance)",
-            ticktext=[
-                tickers[i] for i in range(0, len(trades), max(1, len(trades) // 8))
-            ],
+            ticktext=[tickers[i] for i in range(0, len(trades), max(1, len(trades) // 8))],
             tickvals=list(range(0, len(trades), max(1, len(trades) // 8))),
             tickangle=-45,
             tickfont=dict(size=8),
@@ -529,17 +495,14 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            return fig
+        return fig
 
-    def create_enhanced_scatter(
-        self, ax: Any, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_enhanced_scatter(self, ax: Any, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create enhanced scatter plot using Plotly with clustering for high-density management.
 
@@ -559,22 +522,20 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     showarrow=False,
                     font=dict(size=12),
                 )
-            return
+            return None
 
         theme = self.theme_manager.get_theme_colors(mode)
         quality_colors = self.theme_mapper.get_quality_colors_mapping()
 
         # Check for clustering optimization
         if self.scalability_manager:
-            density_category = self.scalability_manager.detect_scatter_density_category(
-                trades
-            )
+            density_category = self.scalability_manager.detect_scatter_density_category(trades)
 
             if density_category == "high":
                 # Use clustering for high-density plots
                 cluster_info = self.scalability_manager.cluster_scatter_points(trades)
                 return self._create_clustered_scatter(ax, cluster_info, mode)
-            elif density_category == "medium":
+            if density_category == "medium":
                 base_alpha = 0.6
             else:
                 base_alpha = 0.8
@@ -602,9 +563,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
             colors.append(color)
 
             # Enhanced sizing: base size + magnitude scaling + outlier boost
-            magnitude_factor = (
-                abs(trade.return_pct) / max(max_return, 1) if max_return > 0 else 0
-            )
+            magnitude_factor = abs(trade.return_pct) / max(max_return, 1) if max_return > 0 else 0
             base_size = 15  # Base size for Plotly (different scale than matplotlib)
             magnitude_size = magnitude_factor * 20
             outlier_boost = 5 if abs(trade.return_pct) > 5 else 0
@@ -696,40 +655,33 @@ class PlotlyChartGenerator(AbstractChartGenerator):
             )
 
         # Add zero line for returns
-        fig.add_hline(
-            y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.3
-        )
+        fig.add_hline(y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.3)
 
         # Add annotations for significant trades
         self._add_ticker_labels_plotly(fig, trades, durations, returns, sizes, theme)
 
         # Update layout
-        self.theme_mapper.apply_theme_to_figure(
-            fig, mode, "Duration vs Return Analysis"
-        )
+        self.theme_mapper.apply_theme_to_figure(fig, mode, "Duration vs Return Analysis")
 
-        fig.update_xaxes(
-            title="Duration (days)", gridcolor=theme.borders, gridwidth=0.5
-        )
+        fig.update_xaxes(title="Duration (days)", gridcolor=theme.borders, gridwidth=0.5)
 
         fig.update_yaxes(title="Return (%)", gridcolor=theme.borders, gridwidth=0.5)
 
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            return fig
+        return fig
 
     def create_performance_summary_panel(
         self,
         ax: Any,
-        trades: List[TradeData],
-        monthly_data: List[MonthlyPerformance],
+        trades: list[TradeData],
+        monthly_data: list[MonthlyPerformance],
         mode: str = "light",
     ) -> None:
         """
@@ -744,9 +696,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         # TODO: Implement in Phase 3
         raise NotImplementedError("Plotly performance panel implementation pending")
 
-    def export_chart_config(
-        self, chart_type: str, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def export_chart_config(self, chart_type: str, config: dict[str, Any]) -> dict[str, Any]:
         """
         Export chart configuration as JSON schema for frontend consumption.
 
@@ -830,7 +780,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
 
         return schema
 
-    def _get_data_requirements(self, chart_type: str) -> Dict[str, Any]:
+    def _get_data_requirements(self, chart_type: str) -> dict[str, Any]:
         """Get data requirements for specific chart type."""
         if chart_type == "enhanced_monthly_bars":
             return {
@@ -847,7 +797,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 ],
                 "format": "array_of_objects",
             }
-        elif chart_type == "enhanced_donut_chart":
+        if chart_type == "enhanced_donut_chart":
             return {
                 "fields": [
                     {"name": "category", "type": "string", "required": True},
@@ -866,7 +816,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 ],
                 "format": "array_of_objects",
             }
-        elif chart_type == "waterfall_chart":
+        if chart_type == "waterfall_chart":
             return {
                 "fields": [
                     {"name": "ticker", "type": "string", "required": True},
@@ -876,7 +826,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 ],
                 "format": "array_of_objects",
             }
-        elif chart_type == "enhanced_scatter":
+        if chart_type == "enhanced_scatter":
             return {
                 "fields": [
                     {"name": "ticker", "type": "string", "required": True},
@@ -888,9 +838,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
             }
         return {}
 
-    def _add_performance_zones_plotly(
-        self, fig: go.Figure, cumulative_returns: list, theme
-    ) -> None:
+    def _add_performance_zones_plotly(self, fig: go.Figure, cumulative_returns: list, theme) -> None:
         """Add performance zones to Plotly waterfall chart."""
         if not cumulative_returns:
             return
@@ -912,9 +860,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 opacity=0.8,
             )
 
-    def _create_performance_bands_chart(
-        self, ax: Any, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def _create_performance_bands_chart(self, ax: Any, trades: list[TradeData], mode: str = "light") -> None:
         """Create performance bands chart for medium/large datasets using Plotly."""
         if not self.scalability_manager:
             # Fallback to waterfall if no scalability manager
@@ -937,7 +883,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     showarrow=False,
                     font=dict(size=12),
                 )
-            return
+            return None
 
         # Create figure
         fig = go.Figure()
@@ -974,30 +920,23 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         )
 
         # Update layout
-        self.theme_mapper.apply_theme_to_figure(
-            fig, mode, "Performance Distribution by Bands"
-        )
+        self.theme_mapper.apply_theme_to_figure(fig, mode, "Performance Distribution by Bands")
 
-        fig.update_xaxes(
-            title="Number of Trades", gridcolor=theme.borders, gridwidth=0.5
-        )
+        fig.update_xaxes(title="Number of Trades", gridcolor=theme.borders, gridwidth=0.5)
 
         fig.update_yaxes(categoryorder="total ascending")  # Show best performers at top
 
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            return fig
+        return fig
 
-    def _create_clustered_scatter(
-        self, ax: Any, cluster_info: Dict[str, Any], mode: str = "light"
-    ) -> None:
+    def _create_clustered_scatter(self, ax: Any, cluster_info: dict[str, Any], mode: str = "light") -> None:
         """Create clustered scatter plot for high-density datasets using Plotly."""
         theme = self.theme_manager.get_theme_colors(mode)
         quality_colors = self.theme_mapper.get_quality_colors_mapping()
@@ -1045,10 +984,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         if cluster_info["noise"]:
             noise_durations = [t.duration_days for t in cluster_info["noise"]]
             noise_returns = [t.return_pct for t in cluster_info["noise"]]
-            noise_colors = [
-                quality_colors.get(t.quality, theme.borders)
-                for t in cluster_info["noise"]
-            ]
+            noise_colors = [quality_colors.get(t.quality, theme.borders) for t in cluster_info["noise"]]
             noise_tickers = [t.ticker for t in cluster_info["noise"]]
 
             fig.add_trace(
@@ -1064,9 +1000,7 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                     ),
                     text=[
                         f"<b>{ticker}</b><br>Duration: {dur} days<br>Return: {ret:+.1f}%"
-                        for ticker, dur, ret in zip(
-                            noise_tickers, noise_durations, noise_returns
-                        )
+                        for ticker, dur, ret in zip(noise_tickers, noise_durations, noise_returns, strict=False)
                     ],
                     hovertemplate="%{text}<extra></extra>",
                     name="Individual Trades",
@@ -1091,36 +1025,29 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         )
 
         # Add zero line for returns
-        fig.add_hline(
-            y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.3
-        )
+        fig.add_hline(y=0, line=dict(color=theme.body_text, dash="solid", width=1), opacity=0.3)
 
         # Update layout
-        self.theme_mapper.apply_theme_to_figure(
-            fig, mode, "Duration vs Return Analysis (Clustered)"
-        )
+        self.theme_mapper.apply_theme_to_figure(fig, mode, "Duration vs Return Analysis (Clustered)")
 
-        fig.update_xaxes(
-            title="Duration (days)", gridcolor=theme.borders, gridwidth=0.5
-        )
+        fig.update_xaxes(title="Duration (days)", gridcolor=theme.borders, gridwidth=0.5)
 
         fig.update_yaxes(title="Return (%)", gridcolor=theme.borders, gridwidth=0.5)
 
         # Handle different ax types
         if isinstance(ax, dict) and "row" in ax and "col" in ax:
             return fig
-        elif isinstance(ax, go.Figure):
+        if isinstance(ax, go.Figure):
             for trace in fig.data:
                 ax.add_trace(trace)
             ax.update_layout(fig.layout)
             return ax
-        else:
-            return fig
+        return fig
 
     def _add_ticker_labels_plotly(
         self,
         fig: go.Figure,
-        trades: List[TradeData],
+        trades: list[TradeData],
         durations: list,
         returns: list,
         sizes: list,
@@ -1135,18 +1062,14 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         for i, trade in enumerate(trades):
             # Label trades that are outliers or highly significant
             is_outlier = abs(returns[i]) > 5.0  # High return magnitude
-            is_extreme_duration = (
-                durations[i] > 45 or durations[i] < 3
-            )  # Extreme holding periods
+            is_extreme_duration = durations[i] > 45 or durations[i] < 3  # Extreme holding periods
             is_large_bubble = sizes[i] > 30  # Large bubble indicates significance
 
             if is_outlier or is_extreme_duration or is_large_bubble:
                 significant_trades.append((trade, durations[i], returns[i]))
 
         # Add annotations for significant trades
-        for trade, dur, ret in significant_trades[
-            :10
-        ]:  # Limit to 10 labels to avoid clutter
+        for trade, dur, ret in significant_trades[:10]:  # Limit to 10 labels to avoid clutter
             # Calculate label position with offset
             label_offset_x = 2.0
             label_offset_y = 0.5 if ret >= 0 else -0.5

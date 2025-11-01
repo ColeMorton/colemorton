@@ -13,12 +13,11 @@ Usage:
     econ_context = econ_data.get_economic_context()
 """
 
-import json
-import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 # Add utils and services to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -101,11 +100,11 @@ class RealTimeEconomicData:
             # Final fallback to current best estimate
             return 4.33
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not fetch Fed funds rate: {e}")
             return 4.33
 
-    def get_treasury_yields(self, force_refresh: bool = False) -> Dict[str, float]:
+    def get_treasury_yields(self, force_refresh: bool = False) -> dict[str, float]:
         """
         Get current Treasury yields using existing FREDEconomicService
 
@@ -126,12 +125,8 @@ class RealTimeEconomicData:
 
             # Parse 3-month yield from statistics or recent observations
             if isinstance(three_month, dict):
-                if "statistics" in three_month and three_month["statistics"].get(
-                    "latest_value"
-                ):
-                    yields["three_month"] = float(
-                        three_month["statistics"]["latest_value"]
-                    )
+                if "statistics" in three_month and three_month["statistics"].get("latest_value"):
+                    yields["three_month"] = float(three_month["statistics"]["latest_value"])
                 elif "recent_observations" in three_month:
                     for obs in reversed(three_month["recent_observations"]):
                         if obs.get("value") != "." and obs.get("value") is not None:
@@ -140,9 +135,7 @@ class RealTimeEconomicData:
 
             # Parse 10-year yield from statistics or recent observations
             if isinstance(ten_year, dict):
-                if "statistics" in ten_year and ten_year["statistics"].get(
-                    "latest_value"
-                ):
+                if "statistics" in ten_year and ten_year["statistics"].get("latest_value"):
                     yields["ten_year"] = float(ten_year["statistics"]["latest_value"])
                 elif "recent_observations" in ten_year:
                     for obs in reversed(ten_year["recent_observations"]):
@@ -156,7 +149,7 @@ class RealTimeEconomicData:
 
             return yields
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not fetch Treasury yields: {e}")
             # Return fallback values based on current market data
             return {"three_month": 4.41, "ten_year": 4.39, "spread": -0.02}
@@ -222,7 +215,7 @@ class RealTimeEconomicData:
 
         return impact
 
-    def get_economic_context(self, force_refresh: bool = False) -> Dict[str, Any]:
+    def get_economic_context(self, force_refresh: bool = False) -> dict[str, Any]:
         """
         Get comprehensive economic context for analysis
 
@@ -232,9 +225,7 @@ class RealTimeEconomicData:
         return {
             "fed_funds_rate": self.get_fed_funds_rate(force_refresh),
             "treasury_yields": self.get_treasury_yields(force_refresh),
-            "environment_assessment": self.get_economic_environment_assessment(
-                force_refresh
-            ),
+            "environment_assessment": self.get_economic_environment_assessment(force_refresh),
             "impact_assessment": self.get_economic_impact_assessment(force_refresh),
             "last_updated": datetime.now().isoformat(),
             "data_source": f"FRED API via {self.env} environment",
@@ -256,10 +247,10 @@ class RealTimeEconomicData:
             fred_service = self._get_fred_service()
             fred_service.clear_cache()
             print("FRED Economic service cache cleared")
-        except Exception as e:
+        except Exception:
             print("Warning: Could not clear cache: {e}")
 
-    def get_cache_status(self) -> Dict[str, Any]:
+    def get_cache_status(self) -> dict[str, Any]:
         """Get cache status from underlying FREDEconomicService"""
         try:
             fred_service = self._get_fred_service()
@@ -281,7 +272,7 @@ def get_formatted_fed_funds_rate(env: str = "prod") -> str:
     return econ_data.format_fed_funds_rate()
 
 
-def get_economic_context_quick(env: str = "prod") -> Dict[str, Any]:
+def get_economic_context_quick(env: str = "prod") -> dict[str, Any]:
     """Quick function to get full economic context"""
     econ_data = RealTimeEconomicData(env=env)
     return econ_data.get_economic_context()

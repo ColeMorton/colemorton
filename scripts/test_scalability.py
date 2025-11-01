@@ -10,7 +10,7 @@ import random
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -18,13 +18,12 @@ sys.path.insert(0, str(project_root))
 
 from scripts.utils.dashboard_parser import (
     MonthlyPerformance,
-    QualityDistribution,
     TradeData,
 )
 from scripts.utils.scalability_manager import create_scalability_manager
 
 
-def generate_synthetic_trades(count: int) -> List[TradeData]:
+def generate_synthetic_trades(count: int) -> list[TradeData]:
     """Generate synthetic trade data for testing."""
     tickers = [
         "AAPL",
@@ -81,7 +80,7 @@ def generate_synthetic_trades(count: int) -> List[TradeData]:
     return trades
 
 
-def generate_synthetic_monthly_data(months: int) -> List[MonthlyPerformance]:
+def generate_synthetic_monthly_data(months: int) -> list[MonthlyPerformance]:
     """Generate synthetic monthly performance data."""
     monthly_data = []
     current_date = datetime(2024, 1, 1)
@@ -96,9 +95,7 @@ def generate_synthetic_monthly_data(months: int) -> List[MonthlyPerformance]:
             trades_closed=random.randint(3, 15),
             win_rate=win_rate,
             average_return=avg_return,
-            market_context=random.choice(
-                ["Bullish", "Bearish", "Sideways", "Volatile"]
-            ),
+            market_context=random.choice(["Bullish", "Bearish", "Sideways", "Volatile"]),
         )
         monthly_data.append(monthly)
 
@@ -150,9 +147,7 @@ def test_scalability_detection():
 
         # Test detection
         trade_category = scalability_manager.detect_trade_volume_category(trades)
-        monthly_category = scalability_manager.detect_monthly_timeline_category(
-            monthly_data
-        )
+        monthly_category = scalability_manager.detect_monthly_timeline_category(monthly_data)
         scatter_category = scalability_manager.detect_scatter_density_category(trades)
 
         print("   → Trade volume: {trade_category}")
@@ -160,9 +155,7 @@ def test_scalability_detection():
         print("   → Scatter density: {scatter_category}")
 
         # Test recommendations
-        recommendations = scalability_manager.get_chart_recommendation(
-            trades, monthly_data
-        )
+        recommendations = scalability_manager.get_chart_recommendation(trades, monthly_data)
         print("   → Chart recommendations:")
         print("     - Trade performance: {recommendations['trade_performance']}")
         print("     - Monthly timeline: {recommendations['monthly_timeline']}")
@@ -238,15 +231,11 @@ def test_label_optimization():
         monthly_data = generate_synthetic_monthly_data(month_count)
 
         category = scalability_manager.detect_monthly_timeline_category(monthly_data)
-        optimized_labels = scalability_manager.optimize_monthly_labels(
-            monthly_data, category
-        )
+        optimized_labels = scalability_manager.optimize_monthly_labels(monthly_data, category)
 
         print("Timeline: {month_count} months ({category})")
         print(
-            f"   Labels: {optimized_labels[:3]}..."
-            if len(optimized_labels) > 3
-            else f"   Labels: {optimized_labels}"
+            f"   Labels: {optimized_labels[:3]}..." if len(optimized_labels) > 3 else f"   Labels: {optimized_labels}"
         )
         print()
 
@@ -263,7 +252,7 @@ if __name__ == "__main__":
 
         print("✅ All scalability tests completed successfully!")
 
-    except Exception as e:
+    except Exception:
         print("❌ Test failed: {e}")
         import traceback
 

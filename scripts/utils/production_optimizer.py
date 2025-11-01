@@ -8,15 +8,13 @@ for high-volume chart generation workloads.
 """
 
 import hashlib
-import pickle
 import threading
 import time
-import weakref
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from functools import lru_cache, wraps
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from functools import wraps
+from typing import Any
 
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -49,9 +47,7 @@ class PlotlyTemplateCache:
         self.access_count = {}
         self.lock = threading.RLock()
 
-    def get_template(
-        self, template_name: str, mode: str
-    ) -> Optional[go.layout.Template]:
+    def get_template(self, template_name: str, mode: str) -> go.layout.Template | None:
         """
         Get cached template or None if not found.
 
@@ -125,9 +121,7 @@ class DataSampleManager:
         return data_size > threshold
 
     @staticmethod
-    def sample_data(
-        data: List[Any], target_size: int, strategy: str = "intelligent"
-    ) -> List[Any]:
+    def sample_data(data: list[Any], target_size: int, strategy: str = "intelligent") -> list[Any]:
         """
         Sample data using specified strategy.
 
@@ -147,11 +141,11 @@ class DataSampleManager:
 
             return random.sample(data, target_size)
 
-        elif strategy == "systematic":
+        if strategy == "systematic":
             step = len(data) // target_size
             return [data[i] for i in range(0, len(data), step)][:target_size]
 
-        elif strategy == "intelligent":
+        if strategy == "intelligent":
             # Keep outliers and representative samples
             sorted_data = sorted(data, key=lambda x: getattr(x, "return_pct", 0))
 
@@ -165,9 +159,7 @@ class DataSampleManager:
 
             if middle_data and remaining_size > 0:
                 step = len(middle_data) // remaining_size
-                middle_sample = [
-                    middle_data[i] for i in range(0, len(middle_data), max(1, step))
-                ][:remaining_size]
+                middle_sample = [middle_data[i] for i in range(0, len(middle_data), max(1, step))][:remaining_size]
                 return extremes + middle_sample
 
             return extremes
@@ -227,7 +219,7 @@ class ChartGenerationOptimizer:
             pass
 
     def optimize_chart_generation(
-        self, chart_generator_func: Callable, chart_type: str, data: List[Any], **kwargs
+        self, chart_generator_func: Callable, chart_type: str, data: list[Any], **kwargs
     ) -> tuple[Any, PerformanceMetrics]:
         """
         Optimize chart generation with caching and performance enhancements.
@@ -290,7 +282,7 @@ class ChartGenerationOptimizer:
             self.metrics_history.append(metrics)
             return result, metrics
 
-        except Exception as e:
+        except Exception:
             # Fallback to non-optimized generation
             result = chart_generator_func(data=data, **kwargs)
 
@@ -306,8 +298,8 @@ class ChartGenerationOptimizer:
             return result, metrics
 
     def batch_optimize_charts(
-        self, chart_requests: List[Dict[str, Any]], max_workers: Optional[int] = None
-    ) -> List[tuple[Any, PerformanceMetrics]]:
+        self, chart_requests: list[dict[str, Any]], max_workers: int | None = None
+    ) -> list[tuple[Any, PerformanceMetrics]]:
         """
         Batch process multiple chart generation requests with optimization.
 
@@ -320,9 +312,7 @@ class ChartGenerationOptimizer:
         """
         if not self.config["batch_processing"]:
             # Sequential processing
-            return [
-                self.optimize_chart_generation(**request) for request in chart_requests
-            ]
+            return [self.optimize_chart_generation(**request) for request in chart_requests]
 
         # Parallel batch processing
         max_workers = max_workers or min(len(chart_requests), 4)
@@ -331,8 +321,7 @@ class ChartGenerationOptimizer:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all requests
             future_to_request = {
-                executor.submit(self.optimize_chart_generation, **request): request
-                for request in chart_requests
+                executor.submit(self.optimize_chart_generation, **request): request for request in chart_requests
             }
 
             # Collect results
@@ -340,14 +329,14 @@ class ChartGenerationOptimizer:
                 try:
                     result = future.result()
                     results.append(result)
-                except Exception as e:
+                except Exception:
                     # Log error and continue
                     print("Chart generation failed: {e}")
                     results.append((None, None))
 
         return results
 
-    def _optimize_data(self, data: List[Any], chart_type: str) -> List[Any]:
+    def _optimize_data(self, data: list[Any], chart_type: str) -> list[Any]:
         """Optimize data for chart generation."""
         if not self.config["sample_large_datasets"]:
             return data
@@ -377,35 +366,29 @@ class ChartGenerationOptimizer:
 
         return False
 
-    def _generate_cache_key(
-        self, chart_type: str, data: List[Any], kwargs: Dict[str, Any]
-    ) -> str:
+    def _generate_cache_key(self, chart_type: str, data: list[Any], kwargs: dict[str, Any]) -> str:
         """Generate cache key for chart configuration."""
         # Create deterministic hash from chart parameters
         cache_data = {
             "chart_type": chart_type,
             "data_hash": self._hash_data(data),
-            "kwargs": {
-                k: v for k, v in kwargs.items() if k != "figure"
-            },  # Exclude figure objects
+            "kwargs": {k: v for k, v in kwargs.items() if k != "figure"},  # Exclude figure objects
         }
 
         cache_string = str(sorted(cache_data.items()))
         return hashlib.md5(cache_string.encode()).hexdigest()
 
-    def _hash_data(self, data: List[Any]) -> str:
+    def _hash_data(self, data: list[Any]) -> str:
         """Generate hash for data list."""
         try:
             # Sample data for hashing to avoid performance issues
             sample_data = data[:10] if len(data) > 10 else data
-            data_string = str(
-                [(getattr(item, "__dict__", str(item))) for item in sample_data]
-            )
+            data_string = str([(getattr(item, "__dict__", str(item))) for item in sample_data])
             return hashlib.md5(data_string.encode()).hexdigest()
         except:
             return hashlib.md5(str(len(data)).encode()).hexdigest()
 
-    def _get_cached_result(self, cache_key: str) -> Optional[Any]:
+    def _get_cached_result(self, cache_key: str) -> Any | None:
         """Get cached result if available."""
         return self.config_cache.get(cache_key)
 
@@ -439,7 +422,7 @@ class ChartGenerationOptimizer:
         except ImportError:
             return 0
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """
         Generate performance report from metrics history.
 
@@ -489,9 +472,7 @@ class ChartGenerationOptimizer:
             },
         }
 
-    def optimize_export_settings(
-        self, format: str = "png", quality_level: str = "balanced"
-    ) -> Dict[str, Any]:
+    def optimize_export_settings(self, format: str = "png", quality_level: str = "balanced") -> dict[str, Any]:
         """
         Get optimized export settings for production.
 
@@ -532,7 +513,7 @@ def performance_monitor(func):
 
             print("⚡ {func.__name__} completed in {end_time - start_time:.3f}s")
             return result
-        except Exception as e:
+        except Exception:
             end_time = time.time()
             print("❌ {func.__name__} failed in {end_time - start_time:.3f}s: {e}")
             raise

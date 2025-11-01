@@ -12,9 +12,10 @@ Command-line interface for BGeometrics Bitcoin on-chain data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,7 +41,7 @@ class BGeometricsCLI(BaseFinancialCLI):
             self.service = create_bgeometrics_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform BGeometrics service health check"""
         try:
             service = self._get_service(env)
@@ -48,13 +49,12 @@ class BGeometricsCLI(BaseFinancialCLI):
             result = service.get_current_mvrv()
             if result:
                 return {"status": "healthy", "service": "bgeometrics", "env": env}
-            else:
-                return {
-                    "status": "degraded",
-                    "service": "bgeometrics",
-                    "env": env,
-                    "note": "No data returned",
-                }
+            return {
+                "status": "degraded",
+                "service": "bgeometrics",
+                "env": env,
+                "note": "No data returned",
+            }
         except Exception as e:
             return {
                 "status": "unhealthy",
@@ -63,7 +63,7 @@ class BGeometricsCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
         if action == "clear":
@@ -74,7 +74,7 @@ class BGeometricsCLI(BaseFinancialCLI):
                 "env": env,
                 "status": "completed",
             }
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
@@ -82,25 +82,20 @@ class BGeometricsCLI(BaseFinancialCLI):
                 "env": env,
                 "status": "completed",
             }
-        else:
-            return {
-                "action": action,
-                "service": "bgeometrics",
-                "env": env,
-                "status": "unknown_action",
-            }
+        return {
+            "action": action,
+            "service": "bgeometrics",
+            "env": env,
+            "status": "unknown_action",
+        }
 
     def _add_service_commands(self) -> None:
         """Add BGeometrics specific commands"""
 
         @self.app.command("mvrv")
         def get_mvrv_ratio(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -108,9 +103,7 @@ class BGeometricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_mvrv_ratio(
-                    start_date=start_date, end_date=end_date if end_date else None
-                )
+                result = service.get_mvrv_ratio(start_date=start_date, end_date=end_date if end_date else None)
                 self._output_result(result, output_format, "MVRV Ratio")
 
             except Exception as e:
@@ -118,12 +111,8 @@ class BGeometricsCLI(BaseFinancialCLI):
 
         @self.app.command("mvrv-zscore")
         def get_mvrv_zscore(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -131,9 +120,7 @@ class BGeometricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_mvrv_zscore(
-                    start_date=start_date, end_date=end_date if end_date else None
-                )
+                result = service.get_mvrv_zscore(start_date=start_date, end_date=end_date if end_date else None)
                 self._output_result(result, output_format, "MVRV Z-Score")
 
             except Exception as e:
@@ -141,12 +128,8 @@ class BGeometricsCLI(BaseFinancialCLI):
 
         @self.app.command("lth-mvrv")
         def get_lth_mvrv(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -154,9 +137,7 @@ class BGeometricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_lth_mvrv(
-                    start_date=start_date, end_date=end_date if end_date else None
-                )
+                result = service.get_lth_mvrv(start_date=start_date, end_date=end_date if end_date else None)
                 self._output_result(result, output_format, "LTH-MVRV")
 
             except Exception as e:
@@ -164,12 +145,8 @@ class BGeometricsCLI(BaseFinancialCLI):
 
         @self.app.command("cycle-metrics")
         def get_bitcoin_cycle_metrics(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -213,16 +190,13 @@ class BGeometricsCLI(BaseFinancialCLI):
                 current_mvrv = service.get_current_mvrv()
 
                 if not current_mvrv:
-                    self._handle_error(
-                        Exception("No data available"), "No MVRV data available"
-                    )
+                    self._handle_error(Exception("No data available"), "No MVRV data available")
                     return
 
                 # Create market status summary
                 status = {
                     "timestamp": current_mvrv.get("date", "N/A"),
-                    "mvrv_ratio": current_mvrv.get("mvrv")
-                    or current_mvrv.get("value", "N/A"),
+                    "mvrv_ratio": current_mvrv.get("mvrv") or current_mvrv.get("value", "N/A"),
                     "market_zone": current_mvrv.get("mvrv_zone", "N/A"),
                     "analysis": current_mvrv.get("analysis", {}),
                     "service": "BGeometrics",
@@ -248,9 +222,7 @@ class BGeometricsCLI(BaseFinancialCLI):
                 from datetime import datetime, timedelta
 
                 end_date = datetime.now().strftime("%Y-%m-%d")
-                start_date = (datetime.now() - timedelta(days=days)).strftime(
-                    "%Y-%m-%d"
-                )
+                start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
                 # Get MVRV data for the period
                 mvrv_data = service.get_mvrv_ratio(start_date, end_date)
@@ -293,18 +265,14 @@ class BGeometricsCLI(BaseFinancialCLI):
                     "zone_distribution": {
                         zone: {
                             "days": count,
-                            "percentage": round((count / total_days) * 100, 1)
-                            if total_days > 0
-                            else 0,
+                            "percentage": round((count / total_days) * 100, 1) if total_days > 0 else 0,
                         }
                         for zone, count in zones.items()
                     },
                     "dominant_zone": max(zones, key=zones.get) if zones else "N/A",
                 }
 
-                self._output_result(
-                    analysis, output_format, f"MVRV Zone Analysis ({days} days)"
-                )
+                self._output_result(analysis, output_format, f"MVRV Zone Analysis ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to analyze MVRV zones")

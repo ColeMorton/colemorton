@@ -15,10 +15,11 @@ import datetime
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 
 # Finance-grade precision tolerances
 FINANCIAL_TOLERANCES = {
@@ -42,8 +43,6 @@ class TradeOutcome(Enum):
 class ValidationError(Exception):
     """Finance-grade validation error with fail-fast behavior"""
 
-    pass
-
 
 @dataclass
 class TradeMetrics:
@@ -51,20 +50,20 @@ class TradeMetrics:
 
     ticker: str
     entry_date: datetime.date
-    exit_date: Optional[datetime.date]
+    exit_date: datetime.date | None
     entry_price: float
-    exit_price: Optional[float]
+    exit_price: float | None
     position_size: float
     pnl_csv: float  # Authoritative P&L from CSV
     return_csv: float  # Return from CSV
-    duration_days: Optional[int]
+    duration_days: int | None
     strategy_type: str
     outcome: TradeOutcome
-    mfe: Optional[float] = None
-    mae: Optional[float] = None
-    exit_efficiency: Optional[float] = None
-    x_status: Optional[str] = None  # Twitter/X status ID
-    x_link: Optional[str] = None  # Generated Twitter/X URL
+    mfe: float | None = None
+    mae: float | None = None
+    exit_efficiency: float | None = None
+    x_status: str | None = None  # Twitter/X status ID
+    x_link: str | None = None  # Generated Twitter/X URL
 
     def validate_consistency(self) -> bool:
         """Validate internal consistency of trade metrics"""
@@ -82,9 +81,7 @@ class TradeMetrics:
 
             # Validate return calculation
             if abs(self.entry_price) > 0.01:  # Avoid division by zero
-                calculated_return = calculated_pnl / (
-                    self.entry_price * self.position_size
-                )
+                calculated_return = calculated_pnl / (self.entry_price * self.position_size)
                 return_variance = abs(self.return_csv - calculated_return)
 
                 if return_variance > FINANCIAL_TOLERANCES["return_calculation"]:
@@ -157,43 +154,19 @@ class TradingCalculationEngine:
                     entry_date=entry_date,
                     exit_date=exit_date,
                     entry_price=float(row["Avg_Entry_Price"]),
-                    exit_price=(
-                        float(row["Avg_Exit_Price"])
-                        if pd.notna(row["Avg_Exit_Price"])
-                        else None
-                    ),
+                    exit_price=(float(row["Avg_Exit_Price"]) if pd.notna(row["Avg_Exit_Price"]) else None),
                     position_size=float(row["Position_Size"]),
                     pnl_csv=pnl,
                     return_csv=float(row["Return"]),
-                    duration_days=(
-                        int(row["Duration_Days"])
-                        if pd.notna(row["Duration_Days"])
-                        else None
-                    ),
+                    duration_days=(int(row["Duration_Days"]) if pd.notna(row["Duration_Days"]) else None),
                     strategy_type=str(row["Strategy_Type"]),
                     outcome=outcome,
-                    mfe=(
-                        float(row["Max_Favourable_Excursion"])
-                        if pd.notna(row["Max_Favourable_Excursion"])
-                        else None
-                    ),
-                    mae=(
-                        float(row["Max_Adverse_Excursion"])
-                        if pd.notna(row["Max_Adverse_Excursion"])
-                        else None
-                    ),
-                    exit_efficiency=(
-                        float(row["Exit_Efficiency"])
-                        if pd.notna(row["Exit_Efficiency"])
-                        else None
-                    ),
-                    x_status=(
-                        str(row["X_Status"]) if pd.notna(row.get("X_Status")) else None
-                    ),
+                    mfe=(float(row["Max_Favourable_Excursion"]) if pd.notna(row["Max_Favourable_Excursion"]) else None),
+                    mae=(float(row["Max_Adverse_Excursion"]) if pd.notna(row["Max_Adverse_Excursion"]) else None),
+                    exit_efficiency=(float(row["Exit_Efficiency"]) if pd.notna(row["Exit_Efficiency"]) else None),
+                    x_status=(str(row["X_Status"]) if pd.notna(row.get("X_Status")) else None),
                     x_link=(
-                        self._generate_twitter_url(str(row["X_Status"]))
-                        if pd.notna(row.get("X_Status"))
-                        else None
+                        self._generate_twitter_url(str(row["X_Status"])) if pd.notna(row.get("X_Status")) else None
                     ),
                 )
 
@@ -219,19 +192,17 @@ class TradingCalculationEngine:
                 validation_errors.append(str(e))
 
         if validation_errors:
-            raise ValidationError(
-                f"Trade validation failed:\n" + "\n".join(validation_errors)
-            )
+            raise ValidationError("Trade validation failed:\n" + "\n".join(validation_errors))
 
-    def get_closed_trades(self) -> List[TradeMetrics]:
+    def get_closed_trades(self) -> list[TradeMetrics]:
         """Get all closed trades with validated metrics"""
         return [t for t in self.trades if t.exit_date is not None]
 
-    def get_open_trades(self) -> List[TradeMetrics]:
+    def get_open_trades(self) -> list[TradeMetrics]:
         """Get all open trades"""
         return [t for t in self.trades if t.exit_date is None]
 
-    def get_detailed_trade_data(self) -> List[Dict[str, Any]]:
+    def get_detailed_trade_data(self) -> list[dict[str, Any]]:
         """Get detailed trade data including X Links for synthesis"""
         detailed_trades = []
         for trade in self.get_closed_trades():
@@ -240,9 +211,7 @@ class TradingCalculationEngine:
                     "ticker": trade.ticker,
                     "strategy_type": trade.strategy_type,
                     "entry_date": trade.entry_date.isoformat(),
-                    "exit_date": (
-                        trade.exit_date.isoformat() if trade.exit_date else None
-                    ),
+                    "exit_date": (trade.exit_date.isoformat() if trade.exit_date else None),
                     "pnl": trade.pnl_csv,
                     "return_pct": trade.return_csv * 100,
                     "duration_days": trade.duration_days,
@@ -258,16 +227,15 @@ class TradingCalculationEngine:
         """Determine trade quality based on performance metrics"""
         if trade.pnl_csv > 50:
             return "Excellent"
-        elif trade.pnl_csv > 10:
+        if trade.pnl_csv > 10:
             return "Good"
-        elif trade.pnl_csv > 0:
+        if trade.pnl_csv > 0:
             return "Fair"
-        elif trade.pnl_csv == 0:
+        if trade.pnl_csv == 0:
             return "Breakeven"
-        else:
-            return "Poor"
+        return "Poor"
 
-    def calculate_portfolio_performance(self) -> Dict[str, Any]:
+    def calculate_portfolio_performance(self) -> dict[str, Any]:
         """
         Calculate comprehensive portfolio performance metrics with finance-grade precision.
 
@@ -296,9 +264,7 @@ class TradingCalculationEngine:
 
         # Win rate calculation (wins / non-breakeven trades)
         # Breakevens are excluded from win rate calculation but counted in total trades
-        decisive_trades = (
-            win_count + loss_count
-        )  # Trades that had a clear win/loss outcome
+        decisive_trades = win_count + loss_count  # Trades that had a clear win/loss outcome
         win_rate = win_count / decisive_trades if decisive_trades > 0 else 0.0
 
         # P&L calculations using CSV as authoritative source
@@ -313,14 +279,10 @@ class TradingCalculationEngine:
 
         # Risk-reward metrics
         profit_factor = (
-            abs(winning_pnl / losing_pnl)
-            if abs(losing_pnl) > FINANCIAL_TOLERANCES["pnl_accuracy"]
-            else float("inf")
+            abs(winning_pnl / losing_pnl) if abs(losing_pnl) > FINANCIAL_TOLERANCES["pnl_accuracy"] else float("inf")
         )
         avg_win_loss_ratio = (
-            abs(avg_win / avg_loss)
-            if abs(avg_loss) > FINANCIAL_TOLERANCES["pnl_accuracy"]
-            else float("inf")
+            abs(avg_win / avg_loss) if abs(avg_loss) > FINANCIAL_TOLERANCES["pnl_accuracy"] else float("inf")
         )
 
         # Return-based calculations using CSV returns as authoritative
@@ -339,35 +301,25 @@ class TradingCalculationEngine:
             return_std = 0.0
 
         # Duration analysis
-        durations = [
-            t.duration_days for t in closed_trades if t.duration_days is not None
-        ]
+        durations = [t.duration_days for t in closed_trades if t.duration_days is not None]
         avg_duration = np.mean(durations) if durations else 0.0
 
         # Strategy breakdown
         strategy_performance = {}
         for strategy in set(t.strategy_type for t in closed_trades):
             strategy_trades = [t for t in closed_trades if t.strategy_type == strategy]
-            strategy_wins = [
-                t for t in strategy_trades if t.outcome == TradeOutcome.WIN
-            ]
-            strategy_losses = [
-                t for t in strategy_trades if t.outcome == TradeOutcome.LOSS
-            ]
+            strategy_wins = [t for t in strategy_trades if t.outcome == TradeOutcome.WIN]
+            strategy_losses = [t for t in strategy_trades if t.outcome == TradeOutcome.LOSS]
 
             strategy_decisive = len(strategy_wins) + len(strategy_losses)
-            strategy_win_rate = (
-                len(strategy_wins) / strategy_decisive if strategy_decisive > 0 else 0.0
-            )
+            strategy_win_rate = len(strategy_wins) / strategy_decisive if strategy_decisive > 0 else 0.0
 
             strategy_performance[strategy] = {
                 "total_trades": len(strategy_trades),
                 "win_rate": strategy_win_rate,
                 "wins": len(strategy_wins),
                 "losses": len(strategy_losses),
-                "breakevens": len(
-                    [t for t in strategy_trades if t.outcome == TradeOutcome.BREAKEVEN]
-                ),
+                "breakevens": len([t for t in strategy_trades if t.outcome == TradeOutcome.BREAKEVEN]),
                 "total_pnl": sum(t.pnl_csv for t in strategy_trades),
                 "avg_return": np.mean([t.return_csv for t in strategy_trades]),
             }
@@ -402,13 +354,11 @@ class TradingCalculationEngine:
             "strategy_performance": strategy_performance,
             # Validation metadata
             "validation_passed": True,
-            "calculation_timestamp": datetime.datetime.now(
-                datetime.timezone.utc
-            ).isoformat(),
+            "calculation_timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
             "data_source": self.csv_file_path,
         }
 
-    def validate_portfolio_metrics(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_portfolio_metrics(self, metrics: dict[str, Any]) -> dict[str, Any]:
         """
         Comprehensive validation of portfolio metrics against finance-grade standards.
 
@@ -435,11 +385,7 @@ class TradingCalculationEngine:
                 "calculated_total_pnl": calculated_total_pnl,
                 "variance": pnl_variance,
                 "tolerance_met": pnl_variance <= FINANCIAL_TOLERANCES["pnl_accuracy"],
-                "validation_confidence": (
-                    0.99
-                    if pnl_variance <= FINANCIAL_TOLERANCES["pnl_accuracy"]
-                    else 0.50
-                ),
+                "validation_confidence": (0.99 if pnl_variance <= FINANCIAL_TOLERANCES["pnl_accuracy"] else 0.50),
             }
 
             if pnl_variance > FINANCIAL_TOLERANCES["pnl_accuracy"]:
@@ -451,9 +397,7 @@ class TradingCalculationEngine:
             # Win Rate Validation with Breakeven Handling
             wins = len([t for t in closed_trades if t.outcome == TradeOutcome.WIN])
             losses = len([t for t in closed_trades if t.outcome == TradeOutcome.LOSS])
-            breakevens = len(
-                [t for t in closed_trades if t.outcome == TradeOutcome.BREAKEVEN]
-            )
+            breakevens = len([t for t in closed_trades if t.outcome == TradeOutcome.BREAKEVEN])
 
             # Cross-validate win rate calculation
             decisive_trades = wins + losses
@@ -471,11 +415,7 @@ class TradingCalculationEngine:
                 "reported_win_rate": reported_win_rate,
                 "variance": win_rate_variance,
                 "tolerance_met": win_rate_variance <= FINANCIAL_TOLERANCES["win_rate"],
-                "validation_confidence": (
-                    0.98
-                    if win_rate_variance <= FINANCIAL_TOLERANCES["win_rate"]
-                    else 0.60
-                ),
+                "validation_confidence": (0.98 if win_rate_variance <= FINANCIAL_TOLERANCES["win_rate"] else 0.60),
             }
 
             if win_rate_variance > FINANCIAL_TOLERANCES["win_rate"]:
@@ -491,9 +431,7 @@ class TradingCalculationEngine:
                 risk_free_rate = 0.02
                 avg_return = np.mean(returns)
                 excess_return = avg_return - (risk_free_rate / 252)
-                calculated_sharpe = (
-                    excess_return / return_std if return_std > 0 else 0.0
-                )
+                calculated_sharpe = excess_return / return_std if return_std > 0 else 0.0
 
                 reported_sharpe = metrics["sharpe_ratio"]
                 sharpe_variance = abs(calculated_sharpe - reported_sharpe)
@@ -502,12 +440,9 @@ class TradingCalculationEngine:
                     "calculated_sharpe": calculated_sharpe,
                     "reported_sharpe": reported_sharpe,
                     "variance": sharpe_variance,
-                    "tolerance_met": sharpe_variance
-                    <= FINANCIAL_TOLERANCES["sharpe_ratio"],
+                    "tolerance_met": sharpe_variance <= FINANCIAL_TOLERANCES["sharpe_ratio"],
                     "validation_confidence": (
-                        0.95
-                        if sharpe_variance <= FINANCIAL_TOLERANCES["sharpe_ratio"]
-                        else 0.65
+                        0.95 if sharpe_variance <= FINANCIAL_TOLERANCES["sharpe_ratio"] else 0.65
                     ),
                 }
 
@@ -537,19 +472,15 @@ class TradingCalculationEngine:
                 validation_results["overall_validation_success"] = False
 
         except Exception as e:
-            validation_results["validation_errors"].append(
-                f"Validation engine error: {str(e)}"
-            )
+            validation_results["validation_errors"].append(f"Validation engine error: {str(e)}")
             validation_results["overall_validation_success"] = False
 
         return validation_results
 
-    def get_discovery_data(self) -> Dict[str, Any]:
+    def get_discovery_data(self) -> dict[str, Any]:
         """Generate discovery phase data using unified calculations"""
         if not self.validation_passed:
-            raise ValidationError(
-                "Data validation must pass before generating discovery data"
-            )
+            raise ValidationError("Data validation must pass before generating discovery data")
 
         metrics = self.calculate_portfolio_performance()
         closed_trades = self.get_closed_trades()
@@ -561,16 +492,10 @@ class TradingCalculationEngine:
             ticker_closed = [t for t in ticker_trades if t.exit_date is not None]
 
             if ticker_closed:
-                ticker_wins = len(
-                    [t for t in ticker_closed if t.outcome == TradeOutcome.WIN]
-                )
+                ticker_wins = len([t for t in ticker_closed if t.outcome == TradeOutcome.WIN])
                 # ticker_total = len(ticker_closed)
-                ticker_decisive = len(
-                    [t for t in ticker_closed if t.outcome != TradeOutcome.BREAKEVEN]
-                )
-                ticker_win_rate = (
-                    ticker_wins / ticker_decisive if ticker_decisive > 0 else 0.0
-                )
+                ticker_decisive = len([t for t in ticker_closed if t.outcome != TradeOutcome.BREAKEVEN])
+                ticker_win_rate = ticker_wins / ticker_decisive if ticker_decisive > 0 else 0.0
 
                 ticker_performance[ticker] = {
                     "total_trades": len(ticker_trades),
@@ -583,9 +508,7 @@ class TradingCalculationEngine:
         return {
             "portfolio": "live_signals",  # Dynamic based on actual portfolio
             "discovery_metadata": {
-                "execution_timestamp": datetime.datetime.now(
-                    datetime.timezone.utc
-                ).isoformat(),
+                "execution_timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
                 "protocol_version": "DASV_Phase_1_Unified_Engine",
                 "data_source": self.csv_file_path,
                 "confidence_score": 0.95,  # High confidence due to validation
@@ -608,13 +531,9 @@ class TradingCalculationEngine:
                 "win_rate": metrics["win_rate"],
                 "total_wins": metrics["winning_trades"],
                 "total_losses": metrics["losing_trades"],
-                "average_win_return": (
-                    metrics["avg_return"] if metrics["winning_trades"] > 0 else 0.0
-                ),
+                "average_win_return": (metrics["avg_return"] if metrics["winning_trades"] > 0 else 0.0),
                 "average_loss_return": (
-                    metrics["avg_loss"]
-                    / abs(metrics["avg_loss"])
-                    * abs(metrics["avg_return"])
+                    metrics["avg_loss"] / abs(metrics["avg_loss"]) * abs(metrics["avg_return"])
                     if metrics["losing_trades"] > 0
                     else 0.0
                 ),
@@ -637,9 +556,7 @@ class TradingCalculationEngine:
                 "total_closed_trades": len(closed_trades),
                 "trades_with_x_status": len([t for t in closed_trades if t.x_status]),
                 "x_status_coverage": (
-                    len([t for t in closed_trades if t.x_status]) / len(closed_trades)
-                    if closed_trades
-                    else 0.0
+                    len([t for t in closed_trades if t.x_status]) / len(closed_trades) if closed_trades else 0.0
                 ),
                 "x_links_generated": len([t for t in closed_trades if t.x_link]),
             },

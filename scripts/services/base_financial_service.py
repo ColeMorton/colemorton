@@ -19,46 +19,36 @@ import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import requests
 from pydantic import BaseModel, Field
 
+
 # Add utils directory to path for importing historical data manager
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 from unified_cache import UnifiedCache
-
 from utils.historical_data_manager import DataType, HistoricalDataManager, Timeframe
 
 
 class FinancialServiceError(Exception):
     """Base exception for financial service errors"""
 
-    pass
-
 
 class ValidationError(FinancialServiceError):
     """Raised when input validation fails"""
-
-    pass
 
 
 class RateLimitError(FinancialServiceError):
     """Raised when rate limit is exceeded"""
 
-    pass
-
 
 class DataNotFoundError(FinancialServiceError):
     """Raised when requested data is not available"""
 
-    pass
-
 
 class APITimeoutError(FinancialServiceError):
     """Raised when API request times out"""
-
-    pass
 
 
 class CacheConfig(BaseModel):
@@ -66,11 +56,7 @@ class CacheConfig(BaseModel):
 
     enabled: bool = True
     ttl_seconds: int = 900  # 15 minutes default
-    cache_dir: str = Field(
-        default_factory=lambda: str(
-            Path(__file__).parent.parent.parent / "data" / "cache"
-        )
-    )
+    cache_dir: str = Field(default_factory=lambda: str(Path(__file__).parent.parent.parent / "data" / "cache"))
     max_size_mb: int = 100
 
 
@@ -106,15 +92,13 @@ class ServiceConfig(BaseModel):
 
     name: str
     base_url: str
-    api_key: Optional[str] = None
+    api_key: str | None = None
     timeout_seconds: int = 30
     max_retries: int = 3
     cache: CacheConfig = Field(default_factory=CacheConfig)
     rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)
-    historical_storage: HistoricalStorageConfig = Field(
-        default_factory=HistoricalStorageConfig
-    )
-    headers: Dict[str, str] = Field(default_factory=dict)
+    historical_storage: HistoricalStorageConfig = Field(default_factory=HistoricalStorageConfig)
+    headers: dict[str, str] = Field(default_factory=dict)
 
 
 class FileBasedCache:
@@ -132,7 +116,7 @@ class FileBasedCache:
         hash_key = hashlib.md5(f"{self.service_name}_{key}".encode()).hexdigest()
         return self.cache_dir / f"{hash_key}.json"
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> dict[str, Any] | None:
         """Retrieve cached data if not expired"""
         if not self.config.enabled:
             return None
@@ -142,14 +126,12 @@ class FileBasedCache:
             return None
 
         try:
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 cached_data = json.load(f)
 
             # Check if cache is expired
             cached_time = datetime.fromisoformat(cached_data["timestamp"])
-            if datetime.now() - cached_time > timedelta(
-                seconds=self.config.ttl_seconds
-            ):
+            if datetime.now() - cached_time > timedelta(seconds=self.config.ttl_seconds):
                 cache_path.unlink()  # Remove expired cache
                 return None
 
@@ -160,7 +142,7 @@ class FileBasedCache:
             cache_path.unlink(missing_ok=True)
             return None
 
-    def set(self, key: str, data: Dict[str, Any]) -> None:
+    def set(self, key: str, data: dict[str, Any]) -> None:
         """Store data in cache with timestamp"""
         if not self.config.enabled:
             return
@@ -183,12 +165,10 @@ class FileBasedCache:
         """Remove expired cache entries"""
         for cache_file in self.cache_dir.glob("*.json"):
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     cached_data = json.load(f)
                 cached_time = datetime.fromisoformat(cached_data["timestamp"])
-                if datetime.now() - cached_time > timedelta(
-                    seconds=self.config.ttl_seconds
-                ):
+                if datetime.now() - cached_time > timedelta(seconds=self.config.ttl_seconds):
                     cache_file.unlink()
             except Exception:
                 # Remove corrupted files
@@ -200,7 +180,7 @@ class RateLimiter:
 
     def __init__(self, config: RateLimitConfig):
         self.config = config
-        self.requests: List[float] = []
+        self.requests: list[float] = []
 
     def can_make_request(self) -> bool:
         """Check if request is allowed under rate limit"""
@@ -256,9 +236,7 @@ class BaseFinancialService(ABC):
                 self.historical_manager = HistoricalDataManager()
                 self.logger.info("Historical data storage enabled")
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to initialize historical data manager: {e}"
-                )
+                self.logger.warning(f"Failed to initialize historical data manager: {e}")
 
         # Initialize unified cache using historical data manager
         if self.historical_manager:
@@ -276,9 +254,7 @@ class BaseFinancialService(ABC):
 
         # Auto-collection tracking
         self._collection_cache = {}  # Track when comprehensive collection was last done
-        self._collection_lock = (
-            threading.Lock()
-        )  # Thread safety for background collection
+        self._collection_lock = threading.Lock()  # Thread safety for background collection
 
         # Initialize quarterly trigger manager for financial statements
         self.quarterly_trigger_manager = None
@@ -286,14 +262,10 @@ class BaseFinancialService(ABC):
             try:
                 from quarterly_collection_triggers import QuarterlyCollectionTrigger
 
-                self.quarterly_trigger_manager = QuarterlyCollectionTrigger(
-                    historical_manager=self.historical_manager
-                )
+                self.quarterly_trigger_manager = QuarterlyCollectionTrigger(historical_manager=self.historical_manager)
                 self.logger.info("Quarterly trigger manager initialized")
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to initialize quarterly trigger manager: {e}"
-                )
+                self.logger.warning(f"Failed to initialize quarterly trigger manager: {e}")
 
         # Initialize technical indicator calculator
         self.technical_calculator = None
@@ -301,19 +273,15 @@ class BaseFinancialService(ABC):
             try:
                 from technical_indicator_calculator import TechnicalIndicatorCalculator
 
-                self.technical_calculator = TechnicalIndicatorCalculator(
-                    historical_manager=self.historical_manager
-                )
+                self.technical_calculator = TechnicalIndicatorCalculator(historical_manager=self.historical_manager)
                 self.logger.info("Technical indicator calculator initialized")
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to initialize technical indicator calculator: {e}"
-                )
+                self.logger.warning(f"Failed to initialize technical indicator calculator: {e}")
 
         # Update session headers
         self.session.headers.update(
             {
-                "User-Agent": "Sensylate/1.0 (https://sensylate.com)",
+                "User-Agent": "Colemorton/1.0 (https://colemorton.com)",
                 "Accept": "application/json",
                 **config.headers,
             }
@@ -324,29 +292,23 @@ class BaseFinancialService(ABC):
         logger = logging.getLogger(f"financial_service.{self.config.name}")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
 
-    def _generate_cache_key(self, endpoint: str, params: Dict[str, Any]) -> str:
+    def _generate_cache_key(self, endpoint: str, params: dict[str, Any]) -> str:
         """Generate cache key from endpoint and parameters"""
-        cache_data = (
-            f"{self.config.name}_{endpoint}_{json.dumps(params, sort_keys=True)}"
-        )
+        cache_data = f"{self.config.name}_{endpoint}_{json.dumps(params, sort_keys=True)}"
         return hashlib.md5(cache_data.encode()).hexdigest()
 
-    def _generate_correlation_id(self, endpoint: str, params: Dict[str, Any]) -> str:
+    def _generate_correlation_id(self, endpoint: str, params: dict[str, Any]) -> str:
         """Generate correlation ID for request tracking"""
         correlation_data = f"{endpoint}_{params}_{time.time()}"
         return hashlib.md5(correlation_data.encode()).hexdigest()[:8]
 
-    def _detect_data_type(
-        self, endpoint: str, data: Dict[str, Any]
-    ) -> Optional[DataType]:
+    def _detect_data_type(self, endpoint: str, data: dict[str, Any]) -> DataType | None:
         """
         Auto-detect data type based on endpoint and data structure
 
@@ -365,16 +327,11 @@ class BaseFinancialService(ABC):
         # Historical price data detection (specific structure)
         if any(keyword in endpoint_lower for keyword in ["historical", "ohlc"]):
             # Look for historical data structure: {"data": [{"Date": ..., "Open": ...}]}
-            if (
-                isinstance(data, dict)
-                and "data" in data
-                and isinstance(data["data"], list)
-            ):
+            if isinstance(data, dict) and "data" in data and isinstance(data["data"], list):
                 if data["data"] and isinstance(data["data"][0], dict):
                     first_record = data["data"][0]
                     if "Date" in first_record and any(
-                        field in first_record
-                        for field in ["Open", "High", "Low", "Close"]
+                        field in first_record for field in ["Open", "High", "Low", "Close"]
                     ):
                         return DataType.STOCK_DAILY_PRICES
 
@@ -399,25 +356,18 @@ class BaseFinancialService(ABC):
                 "current_price",
                 "name",
             ]
-            if isinstance(data, dict) and any(
-                field in data for field in fundamental_fields
-            ):
+            if isinstance(data, dict) and any(field in data for field in fundamental_fields):
                 return DataType.STOCK_FUNDAMENTALS
 
         # Financial statements detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["financial", "income", "balance", "cash"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["financial", "income", "balance", "cash"]):
             financial_fields = [
                 "revenue",
                 "net_income",
                 "total_assets",
                 "operating_cash_flow",
             ]
-            if isinstance(data, dict) and any(
-                field in data for field in financial_fields
-            ):
+            if isinstance(data, dict) and any(field in data for field in financial_fields):
                 return DataType.STOCK_FINANCIALS
 
         # News sentiment detection
@@ -425,10 +375,7 @@ class BaseFinancialService(ABC):
             return DataType.STOCK_NEWS_SENTIMENT
 
         # Options data detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["options", "option_chain", "derivatives"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["options", "option_chain", "derivatives"]):
             options_fields = [
                 "strike",
                 "expiry",
@@ -437,53 +384,32 @@ class BaseFinancialService(ABC):
                 "ask",
                 "implied_volatility",
             ]
-            if isinstance(data, dict) and any(
-                field in data for field in options_fields
-            ):
+            if isinstance(data, dict) and any(field in data for field in options_fields):
                 return DataType.STOCK_OPTIONS
 
         # ETF data detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["etf_holdings", "holdings", "constituents"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["etf_holdings", "holdings", "constituents"]):
             return DataType.ETF_HOLDINGS
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["etf_flows", "flows", "fund_flows"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["etf_flows", "flows", "fund_flows"]):
             return DataType.ETF_FLOWS
 
         # Insider transactions detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["insider", "insider_trading", "form4"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["insider", "insider_trading", "form4"]):
             insider_fields = ["insider_name", "transaction_type", "shares", "price"]
-            if isinstance(data, dict) and any(
-                field in data for field in insider_fields
-            ):
+            if isinstance(data, dict) and any(field in data for field in insider_fields):
                 return DataType.INSIDER_TRANSACTIONS
 
         # Technical indicators detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["technical", "indicator", "sma", "rsi", "macd"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["technical", "indicator", "sma", "rsi", "macd"]):
             return DataType.TECHNICAL_INDICATORS
 
         # Corporate actions detection
-        if any(
-            keyword in endpoint_lower
-            for keyword in ["corporate_actions", "dividends", "splits", "spin_off"]
-        ):
+        if any(keyword in endpoint_lower for keyword in ["corporate_actions", "dividends", "splits", "spin_off"]):
             return DataType.CORPORATE_ACTIONS
 
         return None
 
-    def _extract_symbol_from_data(
-        self, data: Dict[str, Any], params: Dict[str, Any]
-    ) -> Optional[str]:
+    def _extract_symbol_from_data(self, data: dict[str, Any], params: dict[str, Any]) -> str | None:
         """
         Extract stock symbol from data or parameters
 
@@ -515,11 +441,11 @@ class BaseFinancialService(ABC):
 
     def store_historical_data(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         endpoint: str,
-        params: Dict[str, Any],
-        data_type: Optional[DataType] = None,
-        symbol: Optional[str] = None,
+        params: dict[str, Any],
+        data_type: DataType | None = None,
+        symbol: str | None = None,
         timeframe: Timeframe = Timeframe.DAILY,
     ) -> bool:
         """
@@ -561,24 +487,12 @@ class BaseFinancialService(ABC):
             DataType.STOCK_FINANCIALS: self.config.historical_storage.store_financials,
             DataType.STOCK_FUNDAMENTALS: self.config.historical_storage.store_fundamentals,
             DataType.STOCK_NEWS_SENTIMENT: self.config.historical_storage.store_news_sentiment,
-            DataType.STOCK_OPTIONS: getattr(
-                self.config.historical_storage, "store_options", True
-            ),
-            DataType.ETF_HOLDINGS: getattr(
-                self.config.historical_storage, "store_etf_holdings", True
-            ),
-            DataType.ETF_FLOWS: getattr(
-                self.config.historical_storage, "store_etf_flows", True
-            ),
-            DataType.INSIDER_TRANSACTIONS: getattr(
-                self.config.historical_storage, "store_insider_transactions", True
-            ),
-            DataType.TECHNICAL_INDICATORS: getattr(
-                self.config.historical_storage, "store_technical_indicators", True
-            ),
-            DataType.CORPORATE_ACTIONS: getattr(
-                self.config.historical_storage, "store_corporate_actions", True
-            ),
+            DataType.STOCK_OPTIONS: getattr(self.config.historical_storage, "store_options", True),
+            DataType.ETF_HOLDINGS: getattr(self.config.historical_storage, "store_etf_holdings", True),
+            DataType.ETF_FLOWS: getattr(self.config.historical_storage, "store_etf_flows", True),
+            DataType.INSIDER_TRANSACTIONS: getattr(self.config.historical_storage, "store_insider_transactions", True),
+            DataType.TECHNICAL_INDICATORS: getattr(self.config.historical_storage, "store_technical_indicators", True),
+            DataType.CORPORATE_ACTIONS: getattr(self.config.historical_storage, "store_corporate_actions", True),
         }
 
         if not storage_enabled_map.get(data_type, True):
@@ -597,9 +511,7 @@ class BaseFinancialService(ABC):
             if success:
                 self.logger.debug(f"Stored historical data: {symbol} {data_type.value}")
             else:
-                self.logger.warning(
-                    f"Failed to store historical data: {symbol} {data_type.value}"
-                )
+                self.logger.warning(f"Failed to store historical data: {symbol} {data_type.value}")
 
             return success
 
@@ -607,9 +519,7 @@ class BaseFinancialService(ABC):
             self.logger.error(f"Error storing historical data: {e}")
             return False
 
-    def _should_trigger_comprehensive_collection(
-        self, symbol: str, data_type: DataType
-    ) -> bool:
+    def _should_trigger_comprehensive_collection(self, symbol: str, data_type: DataType) -> bool:
         """
         Check if comprehensive collection should be triggered for a symbol
 
@@ -638,10 +548,7 @@ class BaseFinancialService(ABC):
 
             if last_collection:
                 hours_since = (datetime.now() - last_collection).total_seconds() / 3600
-                if (
-                    hours_since
-                    < self.config.historical_storage.collection_interval_hours
-                ):
+                if hours_since < self.config.historical_storage.collection_interval_hours:
                     return False
 
         return True
@@ -671,9 +578,7 @@ class BaseFinancialService(ABC):
 
         if self.config.historical_storage.background_collection:
             # Run in background thread
-            collection_thread = threading.Thread(
-                target=self._run_comprehensive_collection, args=(symbol,), daemon=True
-            )
+            collection_thread = threading.Thread(target=self._run_comprehensive_collection, args=(symbol,), daemon=True)
             collection_thread.start()
         else:
             # Run synchronously
@@ -701,11 +606,7 @@ class BaseFinancialService(ABC):
 
             self.logger.info(f"Creating historical data collector for {symbol}")
             collector = create_historical_data_collector(
-                base_path=(
-                    self.historical_manager.base_path
-                    if self.historical_manager
-                    else None
-                ),
+                base_path=(self.historical_manager.base_path if self.historical_manager else None),
                 rate_limit_delay=0.2,  # Faster for auto-collection
             )
 
@@ -727,21 +628,15 @@ class BaseFinancialService(ABC):
                     f"{results.get('total_files_created', 0)} files created"
                 )
             else:
-                self.logger.warning(
-                    f"Comprehensive collection failed for {symbol}: {results}"
-                )
+                self.logger.warning(f"Comprehensive collection failed for {symbol}: {results}")
 
         except Exception as e:
-            self.logger.error(
-                f"Error during comprehensive collection for {symbol}: {e}"
-            )
+            self.logger.error(f"Error during comprehensive collection for {symbol}: {e}")
             import traceback
 
             self.logger.error(f"Traceback: {traceback.format_exc()}")
 
-    def _trigger_collection_if_needed(
-        self, data: Dict[str, Any], endpoint: str, params: Dict[str, Any]
-    ):
+    def _trigger_collection_if_needed(self, data: dict[str, Any], endpoint: str, params: dict[str, Any]):
         """
         Check if comprehensive collection should be triggered and do so if needed
 
@@ -751,9 +646,7 @@ class BaseFinancialService(ABC):
             params: Request parameters
         """
         try:
-            self.logger.info(
-                f"Checking if collection should be triggered for endpoint: {endpoint}"
-            )
+            self.logger.info(f"Checking if collection should be triggered for endpoint: {endpoint}")
 
             # Auto-detect data type
             data_type = self._detect_data_type(endpoint, data)
@@ -770,9 +663,7 @@ class BaseFinancialService(ABC):
                 return
 
             # Trigger comprehensive collection if needed
-            self.logger.info(
-                f"Attempting to trigger comprehensive collection for {symbol}"
-            )
+            self.logger.info(f"Attempting to trigger comprehensive collection for {symbol}")
             self._trigger_comprehensive_collection(symbol, data_type)
 
             # Check for quarterly financial statement triggers
@@ -787,74 +678,46 @@ class BaseFinancialService(ABC):
                     if self.quarterly_trigger_manager.should_trigger_collection(
                         symbol, QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT
                     ):
-                        self.logger.info(
-                            f"Triggering quarterly collection for {symbol} (earnings season)"
+                        self.logger.info(f"Triggering quarterly collection for {symbol} (earnings season)")
+                        quarterly_results = self.quarterly_trigger_manager.trigger_quarterly_collection(
+                            symbol,
+                            QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT,
+                            self.config.name,
                         )
-                        quarterly_results = (
-                            self.quarterly_trigger_manager.trigger_quarterly_collection(
-                                symbol,
-                                QuarterlyTriggerType.EARNINGS_ANNOUNCEMENT,
-                                self.config.name,
-                            )
-                        )
-                        self.logger.info(
-                            f"Quarterly collection results: {quarterly_results}"
-                        )
+                        self.logger.info(f"Quarterly collection results: {quarterly_results}")
 
                     elif self.quarterly_trigger_manager.should_trigger_collection(
                         symbol, QuarterlyTriggerType.SCHEDULED_QUARTERLY
                     ):
-                        self.logger.info(
-                            f"Triggering scheduled quarterly collection for {symbol}"
+                        self.logger.info(f"Triggering scheduled quarterly collection for {symbol}")
+                        quarterly_results = self.quarterly_trigger_manager.trigger_quarterly_collection(
+                            symbol,
+                            QuarterlyTriggerType.SCHEDULED_QUARTERLY,
+                            self.config.name,
                         )
-                        quarterly_results = (
-                            self.quarterly_trigger_manager.trigger_quarterly_collection(
-                                symbol,
-                                QuarterlyTriggerType.SCHEDULED_QUARTERLY,
-                                self.config.name,
-                            )
-                        )
-                        self.logger.info(
-                            f"Quarterly collection results: {quarterly_results}"
-                        )
+                        self.logger.info(f"Quarterly collection results: {quarterly_results}")
 
                 except Exception as e:
-                    self.logger.warning(
-                        f"Error checking quarterly triggers for {symbol}: {e}"
-                    )
+                    self.logger.warning(f"Error checking quarterly triggers for {symbol}: {e}")
 
             # Check for technical indicator calculation triggers
             if self.technical_calculator and data_type == DataType.STOCK_DAILY_PRICES:
                 try:
                     # Check if we should calculate technical indicators (daily after price updates)
-                    self.logger.info(
-                        f"Triggering technical indicator calculation for {symbol}"
-                    )
+                    self.logger.info(f"Triggering technical indicator calculation for {symbol}")
 
                     # Calculate and store technical indicators
-                    indicators = self.technical_calculator.calculate_all_indicators(
-                        symbol
-                    )
+                    indicators = self.technical_calculator.calculate_all_indicators(symbol)
                     if indicators:
-                        if self.technical_calculator.store_indicators(
-                            symbol, indicators
-                        ):
-                            self.logger.info(
-                                f"Technical indicators calculated and stored for {symbol}"
-                            )
+                        if self.technical_calculator.store_indicators(symbol, indicators):
+                            self.logger.info(f"Technical indicators calculated and stored for {symbol}")
                         else:
-                            self.logger.warning(
-                                f"Failed to store technical indicators for {symbol}"
-                            )
+                            self.logger.warning(f"Failed to store technical indicators for {symbol}")
                     else:
-                        self.logger.warning(
-                            f"Failed to calculate technical indicators for {symbol}"
-                        )
+                        self.logger.warning(f"Failed to calculate technical indicators for {symbol}")
 
                 except Exception as e:
-                    self.logger.warning(
-                        f"Error calculating technical indicators for {symbol}: {e}"
-                    )
+                    self.logger.warning(f"Error calculating technical indicators for {symbol}: {e}")
 
         except Exception as e:
             self.logger.error(f"Error checking collection trigger: {e}")
@@ -865,9 +728,9 @@ class BaseFinancialService(ABC):
     def _make_request_with_retry(
         self,
         endpoint: str,
-        params: Dict[str, Any] = None,
-        cache_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] = None,
+        cache_key: str | None = None,
+    ) -> dict[str, Any]:
         """
         Make API request with caching, rate limiting, and retry logic
 
@@ -903,11 +766,7 @@ class BaseFinancialService(ABC):
         if self.config.api_key:
             params = {**params, "apikey": self.config.api_key}
 
-        url = (
-            f"{self.config.base_url}/{endpoint.lstrip('/')}"
-            if endpoint
-            else self.config.base_url
-        )
+        url = f"{self.config.base_url}/{endpoint.lstrip('/')}" if endpoint else self.config.base_url
 
         for attempt in range(self.config.max_retries + 1):
             try:
@@ -920,9 +779,7 @@ class BaseFinancialService(ABC):
                     f"{self.config.max_retries + 1}) to {endpoint} - ID: {correlation_id}"
                 )
 
-                response = self.session.get(
-                    url, params=params, timeout=self.config.timeout_seconds
-                )
+                response = self.session.get(url, params=params, timeout=self.config.timeout_seconds)
                 response.raise_for_status()
 
                 data = response.json()
@@ -933,9 +790,7 @@ class BaseFinancialService(ABC):
                 # Cache successful result
                 if isinstance(self.cache, UnifiedCache):
                     # Pass endpoint and params for unified cache
-                    self.cache.set(
-                        cache_key, validated_data, endpoint=endpoint, params=params
-                    )
+                    self.cache.set(cache_key, validated_data, endpoint=endpoint, params=params)
                 else:
                     # Traditional cache
                     self.cache.set(cache_key, validated_data)
@@ -945,37 +800,29 @@ class BaseFinancialService(ABC):
                     try:
                         self.store_historical_data(validated_data, endpoint, params)
                     except Exception as e:
-                        self.logger.warning(
-                            f"Historical storage failed for {endpoint}: {e}"
-                        )
+                        self.logger.warning(f"Historical storage failed for {endpoint}: {e}")
                 else:
                     # With unified cache, storage happens automatically
                     try:
                         self.store_historical_data(validated_data, endpoint, params)
                     except Exception:
-                        self.logger.debug(
-                            f"Historical storage handled by unified cache for {endpoint}"
-                        )
+                        self.logger.debug(f"Historical storage handled by unified cache for {endpoint}")
 
                 # Trigger comprehensive collection if needed (background process)
                 try:
                     self._trigger_collection_if_needed(validated_data, endpoint, params)
                 except Exception as e:
-                    self.logger.debug(
-                        f"Collection trigger check failed for {endpoint}: {e}"
-                    )
+                    self.logger.debug(f"Collection trigger check failed for {endpoint}: {e}")
 
-                self.logger.info(
-                    f"Request successful for {endpoint} - ID: {correlation_id}"
-                )
+                self.logger.info(f"Request successful for {endpoint} - ID: {correlation_id}")
                 return validated_data
 
             except requests.exceptions.HTTPError as e:
                 if response.status_code == 429:
                     raise RateLimitError(f"Rate limit exceeded: {e}")
-                elif response.status_code == 404:
+                if response.status_code == 404:
                     raise DataNotFoundError(f"Data not found: {e}")
-                elif attempt < self.config.max_retries:
+                if attempt < self.config.max_retries:
                     wait_time = 2**attempt  # Exponential backoff
                     self.logger.warning(
                         f"HTTP error (attempt {attempt + 1}/"
@@ -984,9 +831,7 @@ class BaseFinancialService(ABC):
                     )
                     time.sleep(wait_time)
                 else:
-                    raise FinancialServiceError(
-                        f"HTTP error after {self.config.max_retries + 1} attempts: {e}"
-                    )
+                    raise FinancialServiceError(f"HTTP error after {self.config.max_retries + 1} attempts: {e}")
 
             except requests.exceptions.Timeout:
                 if attempt < self.config.max_retries:
@@ -998,9 +843,7 @@ class BaseFinancialService(ABC):
                     )
                     time.sleep(wait_time)
                 else:
-                    raise APITimeoutError(
-                        f"Request timed out after {self.config.max_retries + 1} attempts"
-                    )
+                    raise APITimeoutError(f"Request timed out after {self.config.max_retries + 1} attempts")
 
             except Exception as e:
                 if attempt < self.config.max_retries:
@@ -1019,7 +862,7 @@ class BaseFinancialService(ABC):
                     raise FinancialServiceError(f"API request failed: {e}")
 
     @abstractmethod
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """
         Validate and transform API response data
 
@@ -1033,9 +876,8 @@ class BaseFinancialService(ABC):
         Raises:
             ValidationError: When response data is invalid
         """
-        pass
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         Service health check for monitoring
 
@@ -1075,7 +917,7 @@ class BaseFinancialService(ABC):
         """Clear all cached data"""
         self.cache.clear()
 
-    def get_service_info(self) -> Dict[str, Any]:
+    def get_service_info(self) -> dict[str, Any]:
         """Get service configuration and status information"""
         info = {
             "name": self.config.name,
@@ -1110,10 +952,10 @@ class BaseFinancialService(ABC):
         self,
         symbol: str,
         data_type: DataType,
-        date_start: Union[str, datetime],
-        date_end: Optional[Union[str, datetime]] = None,
+        date_start: str | datetime,
+        date_end: str | datetime | None = None,
         timeframe: Timeframe = Timeframe.DAILY,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve historical data from storage
 
@@ -1132,9 +974,7 @@ class BaseFinancialService(ABC):
             return []
 
         try:
-            return self.historical_manager.retrieve_data(
-                symbol, data_type, date_start, date_end, timeframe
-            )
+            return self.historical_manager.retrieve_data(symbol, data_type, date_start, date_end, timeframe)
         except Exception as e:
             self.logger.error(f"Failed to retrieve historical data: {e}")
             return []

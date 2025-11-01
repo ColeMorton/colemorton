@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/sector_analysis_discovery.json",
+  "$id": "https://colemorton.com/schemas/sector_analysis_discovery.json",
   "title": "Sector Analysis Discovery Schema",
   "description": "JSON Schema for validating sector analysis discovery phase outputs with institutional-grade quality standards",
   "type": "object",

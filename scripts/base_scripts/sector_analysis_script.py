@@ -12,7 +12,7 @@ Generalized, parameter-driven script for sector analysis content generation:
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from errors import DataError, ValidationError
 from result_types import ProcessingResult
@@ -23,9 +23,7 @@ from twitter_template_selector_refactored import TwitterTemplateSelector
 from unified_validation_framework import UnifiedValidationFramework
 
 
-@twitter_script(
-    name="sector_analysis", content_types=["sector"], requires_validation=True
-)
+@twitter_script(name="sector_analysis", content_types=["sector"], requires_validation=True)
 class SectorAnalysisScript(BaseScript):
     """
     Generalized sector analysis script
@@ -71,21 +69,19 @@ class SectorAnalysisScript(BaseScript):
 
         # Default paths
         self.data_outputs_path = config.data_outputs_path / "sector_analysis"
-        self.template_outputs_path = (
-            config.data_outputs_path / "twitter_sector_analysis"
-        )
+        self.template_outputs_path = config.data_outputs_path / "twitter_sector_analysis"
 
     def execute(
         self,
         sector_name: str,
         analysis_type: str,
         date: str,
-        data_path: Optional[str] = None,
-        template_variant: Optional[str] = None,
-        output_path: Optional[str] = None,
+        data_path: str | None = None,
+        template_variant: str | None = None,
+        output_path: str | None = None,
         validate_content: bool = True,
         min_rotation_signal: float = 0.5,
-        benchmark_sectors: Optional[List[str]] = None,
+        benchmark_sectors: list[str] | None = None,
         **kwargs,
     ) -> ProcessingResult:
         """Execute sector analysis script"""
@@ -122,13 +118,9 @@ class SectorAnalysisScript(BaseScript):
             # Enhance data with analysis type information
             sector_data["analysis_type"] = analysis_type
             if analysis_type == "rotation":
-                sector_data["rotation_signal"] = sector_data.get(
-                    "rotation_signal", False
-                )
+                sector_data["rotation_signal"] = sector_data.get("rotation_signal", False)
             elif analysis_type == "comparison":
-                sector_data["sector_comparison"] = sector_data.get(
-                    "sector_comparison", True
-                )
+                sector_data["sector_comparison"] = sector_data.get("sector_comparison", True)
 
             # Select template
             if template_variant:
@@ -138,9 +130,7 @@ class SectorAnalysisScript(BaseScript):
                 (
                     selected_template,
                     template_metadata,
-                ) = self.template_selector.select_optimal_template(
-                    "sector", sector_data
-                )
+                ) = self.template_selector.select_optimal_template("sector", sector_data)
 
             # Generate content
             content = self._generate_content(sector_data, selected_template)
@@ -148,15 +138,11 @@ class SectorAnalysisScript(BaseScript):
             # Validate content if requested
             validation_result = None
             if validate_content:
-                validation_result = self.validation_framework.validate_content(
-                    content, "sector", sector_data
-                )
+                validation_result = self.validation_framework.validate_content(content, "sector", sector_data)
 
                 # Fail-fast if validation score is too low
                 overall_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 if overall_score < 8.5:
                     raise ValidationError(
@@ -165,9 +151,7 @@ class SectorAnalysisScript(BaseScript):
                     )
 
             # Save content
-            output_file = self._save_content(
-                content, sector_name, analysis_type, date, output_path
-            )
+            output_file = self._save_content(content, sector_name, analysis_type, date, output_path)
 
             # Create processing result
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -189,9 +173,7 @@ class SectorAnalysisScript(BaseScript):
 
             if validation_result:
                 result.validation_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 result.add_metadata("validation_result", validation_result)
 
@@ -266,15 +248,10 @@ class SectorAnalysisScript(BaseScript):
         try:
             datetime.strptime(date, "%Y%m%d")
         except ValueError:
-            raise ValidationError(
-                f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"}
-            )
+            raise ValidationError(f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"})
 
         # Validate rotation signal threshold
-        if (
-            not isinstance(min_rotation_signal, (int, float))
-            or not 0.0 <= min_rotation_signal <= 1.0
-        ):
+        if not isinstance(min_rotation_signal, (int, float)) or not 0.0 <= min_rotation_signal <= 1.0:
             raise ValidationError(
                 f"Invalid rotation signal threshold: {min_rotation_signal}",
                 context={"valid_range": "0.0 to 1.0"},
@@ -288,9 +265,7 @@ class SectorAnalysisScript(BaseScript):
                     context={"valid_type": "list"},
                 )
 
-            invalid_sectors = [
-                s for s in benchmark_sectors if s.lower() not in self.VALID_SECTORS
-            ]
+            invalid_sectors = [s for s in benchmark_sectors if s.lower() not in self.VALID_SECTORS]
             if invalid_sectors:
                 raise ValidationError(
                     f"Invalid benchmark sectors: {invalid_sectors}",
@@ -306,9 +281,7 @@ class SectorAnalysisScript(BaseScript):
                 operation="input_validation",
             )
 
-    def _load_sector_data(
-        self, sector_name: str, date: str, data_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def _load_sector_data(self, sector_name: str, date: str, data_path: str | None = None) -> dict[str, Any]:
         """Load sector analysis data"""
 
         if data_path:
@@ -326,7 +299,7 @@ class SectorAnalysisScript(BaseScript):
             )
 
         try:
-            with open(data_file, "r", encoding="utf-8") as f:
+            with open(data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Ensure required fields
@@ -343,7 +316,7 @@ class SectorAnalysisScript(BaseScript):
                 context={"json_error": str(e)},
             )
 
-    def _determine_analysis_type(self, sector_data: Dict[str, Any]) -> str:
+    def _determine_analysis_type(self, sector_data: dict[str, Any]) -> str:
         """Automatically determine analysis type based on data"""
 
         # Check for rotation indicators
@@ -356,9 +329,7 @@ class SectorAnalysisScript(BaseScript):
             "sector_rotation",
         ]
 
-        rotation_score = sum(
-            1 for indicator in rotation_indicators if indicator in sector_data
-        )
+        rotation_score = sum(1 for indicator in rotation_indicators if indicator in sector_data)
 
         # Check for comparison indicators
         comparison_indicators = [
@@ -370,19 +341,14 @@ class SectorAnalysisScript(BaseScript):
             "peer_sectors",
         ]
 
-        comparison_score = sum(
-            1 for indicator in comparison_indicators if indicator in sector_data
-        )
+        comparison_score = sum(1 for indicator in comparison_indicators if indicator in sector_data)
 
         # Determine analysis type
         if rotation_score >= comparison_score:
             return "rotation"
-        else:
-            return "comparison"
+        return "comparison"
 
-    def _validate_rotation_analysis(
-        self, sector_data: Dict[str, Any], min_rotation_signal: float
-    ) -> None:
+    def _validate_rotation_analysis(self, sector_data: dict[str, Any], min_rotation_signal: float) -> None:
         """Validate rotation analysis requirements"""
 
         # Check for rotation signal
@@ -405,9 +371,7 @@ class SectorAnalysisScript(BaseScript):
                     },
                 )
 
-    def _validate_comparison_analysis(
-        self, sector_data: Dict[str, Any], benchmark_sectors: Optional[List[str]]
-    ) -> None:
+    def _validate_comparison_analysis(self, sector_data: dict[str, Any], benchmark_sectors: list[str] | None) -> None:
         """Validate comparison analysis requirements"""
 
         # Check for comparison indicators
@@ -416,9 +380,7 @@ class SectorAnalysisScript(BaseScript):
             "relative_valuation",
             "performance_ranking",
         ]
-        available_fields = [
-            field for field in comparison_fields if field in sector_data
-        ]
+        available_fields = [field for field in comparison_fields if field in sector_data]
 
         if not available_fields:
             raise ValidationError(
@@ -441,9 +403,7 @@ class SectorAnalysisScript(BaseScript):
                     },
                 )
 
-    def _generate_content(
-        self, sector_data: Dict[str, Any], template_variant: str
-    ) -> str:
+    def _generate_content(self, sector_data: dict[str, Any], template_variant: str) -> str:
         """Generate Twitter content using template"""
 
         try:
@@ -477,7 +437,7 @@ class SectorAnalysisScript(BaseScript):
         sector_name: str,
         analysis_type: str,
         date: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> Path:
         """Save generated content to file"""
 
@@ -486,10 +446,7 @@ class SectorAnalysisScript(BaseScript):
         else:
             # Create output directory if it doesn't exist
             self.template_outputs_path.mkdir(parents=True, exist_ok=True)
-            output_file = (
-                self.template_outputs_path
-                / f"{sector_name.lower()}_{analysis_type}_{date}.md"
-            )
+            output_file = self.template_outputs_path / f"{sector_name.lower()}_{analysis_type}_{date}.md"
 
         try:
             with open(output_file, "w", encoding="utf-8") as f:
@@ -504,7 +461,7 @@ class SectorAnalysisScript(BaseScript):
                 operation="content_saving",
             )
 
-    def get_usage_examples(self) -> List[Dict[str, Any]]:
+    def get_usage_examples(self) -> list[dict[str, Any]]:
         """Get usage examples for the script"""
 
         return [
@@ -544,9 +501,7 @@ class SectorAnalysisScript(BaseScript):
             },
         ]
 
-    def get_sector_analysis_preview(
-        self, sector_name: str, date: str, data_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def get_sector_analysis_preview(self, sector_name: str, date: str, data_path: str | None = None) -> dict[str, Any]:
         """Preview sector analysis without generating content"""
 
         try:
@@ -560,17 +515,11 @@ class SectorAnalysisScript(BaseScript):
             sector_data_copy["analysis_type"] = auto_analysis_type
 
             if auto_analysis_type == "rotation":
-                sector_data_copy["rotation_signal"] = sector_data_copy.get(
-                    "rotation_signal", False
-                )
+                sector_data_copy["rotation_signal"] = sector_data_copy.get("rotation_signal", False)
             elif auto_analysis_type == "comparison":
-                sector_data_copy["sector_comparison"] = sector_data_copy.get(
-                    "sector_comparison", True
-                )
+                sector_data_copy["sector_comparison"] = sector_data_copy.get("sector_comparison", True)
 
-            recommendations = self.template_selector.get_template_recommendations(
-                "sector", sector_data_copy
-            )
+            recommendations = self.template_selector.get_template_recommendations("sector", sector_data_copy)
 
             return {
                 "sector_name": sector_name,
@@ -579,8 +528,7 @@ class SectorAnalysisScript(BaseScript):
                 "data_summary": {
                     "fields": list(sector_data.keys()),
                     "has_rotation_indicators": any(
-                        field in sector_data
-                        for field in ["rotation_signal", "rotation_score", "flow_data"]
+                        field in sector_data for field in ["rotation_signal", "rotation_score", "flow_data"]
                     ),
                     "has_comparison_indicators": any(
                         field in sector_data
@@ -602,10 +550,10 @@ class SectorAnalysisScript(BaseScript):
                 "recommendations": [],
             }
 
-    def get_valid_sectors(self) -> List[str]:
+    def get_valid_sectors(self) -> list[str]:
         """Get list of valid sector names"""
         return self.VALID_SECTORS.copy()
 
-    def get_valid_analysis_types(self) -> List[str]:
+    def get_valid_analysis_types(self) -> list[str]:
         """Get list of valid analysis types"""
         return self.VALID_ANALYSIS_TYPES.copy()

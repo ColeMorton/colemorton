@@ -16,7 +16,7 @@ def validate_fundamental_analysis_structure(file_path):
     if not os.path.exists(file_path):
         return {"valid": False, "error": f"File not found: {file_path}"}
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
 
     issues = []
@@ -57,15 +57,13 @@ def validate_fundamental_analysis_structure(file_path):
 
     for i, pattern in enumerate(table_patterns):
         if re.search(pattern, content):
-            required_elements.append(f"✅ Found table structure {i+1}")
+            required_elements.append(f"✅ Found table structure {i + 1}")
         else:
-            issues.append(f"Missing expected table structure {i+1}")
+            issues.append(f"Missing expected table structure {i + 1}")
 
     # Check for narrative vs dashboard format
     if "## Executive Summary" in content and len(re.findall(r"\|.*\|", content)) < 10:
-        issues.append(
-            "Document appears to use narrative format instead of dashboard tables"
-        )
+        issues.append("Document appears to use narrative format instead of dashboard tables")
 
     return {
         "valid": len(issues) == 0,

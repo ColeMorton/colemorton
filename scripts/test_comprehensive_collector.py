@@ -11,14 +11,14 @@ Tests the full implementation of:
 
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 
 from utils.historical_data_collector import create_historical_data_collector
-from utils.historical_data_manager import DataType, HistoricalDataManager, Timeframe
+from utils.historical_data_manager import DataType, Timeframe
 
 
 def test_comprehensive_collector():
@@ -145,12 +145,12 @@ def test_file_structure():
     if metadata_file.exists():
         print("✅ Metadata file exists")
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file) as f:
                 metadata = json.load(f)
             print("   Total files: {metadata.get('total_files', 0)}")
             print("   Symbols tracked: {len(metadata.get('symbols', {}))}")
             print("   Data types: {list(metadata.get('data_types', {}).keys())}")
-        except Exception as e:
+        except Exception:
             print("   ⚠️  Failed to read metadata: {e}")
     else:
         print("⚠️  No metadata file found")
@@ -194,12 +194,8 @@ def run_all_tests():
         test_results["comprehensive_collection"] = {
             "success": results.get("overall_success", False),
             "files_created": results.get("total_files_created", 0),
-            "daily_success": len(
-                results.get("daily_collection", {}).get("symbols_successful", [])
-            ),
-            "weekly_success": len(
-                results.get("weekly_collection", {}).get("symbols_successful", [])
-            ),
+            "daily_success": len(results.get("daily_collection", {}).get("symbols_successful", [])),
+            "weekly_success": len(results.get("weekly_collection", {}).get("symbols_successful", [])),
         }
     except Exception as e:
         print("❌ Comprehensive collection test failed: {e}")
@@ -260,9 +256,7 @@ def run_all_tests():
     print("\n🎯 Test Results: {successful_tests}/{total_tests} tests passed")
 
     if successful_tests == total_tests:
-        print(
-            "🎉 ALL TESTS PASSED! The comprehensive historical data collection system is working!"
-        )
+        print("🎉 ALL TESTS PASSED! The comprehensive historical data collection system is working!")
         print("\n✅ READY FOR PRODUCTION:")
         print("   • 365 days daily price collection: WORKING")
         print("   • 5 years weekly price collection: WORKING")
@@ -273,9 +267,7 @@ def run_all_tests():
         print("\n🚀 USAGE:")
         print("   python scripts/collect_historical_data.py")
         print("   python scripts/collect_historical_data.py --symbols AAPL,MSFT,GOOGL")
-        print(
-            "   python scripts/collect_historical_data.py --daily-days 365 --weekly-years 5"
-        )
+        print("   python scripts/collect_historical_data.py --daily-days 365 --weekly-years 5")
     else:
         print("⚠️  Some tests failed. Review the errors above.")
 

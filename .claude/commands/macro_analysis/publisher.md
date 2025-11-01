@@ -430,7 +430,7 @@ MACRO FRONTMATTER COMPLIANCE VALIDATION:
 
 ---
 
-**Integration with Framework**: This command defines strategic macro analysis publication requirements for publisher-generated economic blog content within the broader Sensylate ecosystem through standardized macro template specifications, economic quality enforcement protocols, and macro-focused cross-command coordination.
+**Integration with Framework**: This command defines strategic macro analysis publication requirements for publisher-generated economic blog content within the broader Colemorton ecosystem through standardized macro template specifications, economic quality enforcement protocols, and macro-focused cross-command coordination.
 
 **Author**: Cole Morton
 **Framework**: Macro Analysis Publication Strategy Framework

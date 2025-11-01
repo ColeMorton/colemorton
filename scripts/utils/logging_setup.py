@@ -5,12 +5,9 @@ Logging configuration utilities.
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 
-def setup_logging(
-    level: str = "INFO", log_file: Optional[str] = None, quiet_mode: bool = False
-) -> None:
+def setup_logging(level: str = "INFO", log_file: str | None = None, quiet_mode: bool = False) -> None:
     """Setup logging configuration with optimized verbosity control."""
 
     # Convert string level to logging constant

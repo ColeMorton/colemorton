@@ -8,6 +8,7 @@ This script validates that the ES module/CommonJS fix for Puppeteer is working.
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -106,9 +107,8 @@ def test_es_module_compatibility():
     if '.cjs"' in generator_content and "require('puppeteer')" in generator_content:
         print("✅ ES module compatibility fix is properly implemented")
         return True
-    else:
-        print("❌ ES module compatibility fix not properly implemented")
-        return False
+    print("❌ ES module compatibility fix not properly implemented")
+    return False
 
 
 def main():
@@ -136,7 +136,7 @@ def main():
                 failed += 1
             else:  # result is None (skipped)
                 skipped += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -153,14 +153,11 @@ def main():
         print("4. Screenshot generation working ✅")
 
         if skipped > 0:
-            print(
-                f"\n💡 Note: {skipped} test(s) skipped (no screenshots found - run yarn photo-booth:generate)"
-            )
+            print(f"\n💡 Note: {skipped} test(s) skipped (no screenshots found - run yarn photo-booth:generate)")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

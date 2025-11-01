@@ -10,9 +10,8 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-import numpy as np
 from historical_data_manager import DataType, HistoricalDataManager, Timeframe
 
 
@@ -40,7 +39,7 @@ class TechnicalIndicatorCalculator:
     - Trend indicators (ADX, Parabolic SAR)
     """
 
-    def __init__(self, historical_manager: Optional[HistoricalDataManager] = None):
+    def __init__(self, historical_manager: HistoricalDataManager | None = None):
         """
         Initialize Technical Indicator Calculator
 
@@ -55,17 +54,13 @@ class TechnicalIndicatorCalculator:
         logger = logging.getLogger("technical_indicator_calculator")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
 
-    def get_price_data(
-        self, symbol: str, days: int = 200, timeframe: Timeframe = Timeframe.DAILY
-    ) -> List[PriceData]:
+    def get_price_data(self, symbol: str, days: int = 200, timeframe: Timeframe = Timeframe.DAILY) -> list[PriceData]:
         """
         Retrieve historical price data for calculations
 
@@ -111,13 +106,13 @@ class TechnicalIndicatorCalculator:
         return price_data
 
     # Moving Averages
-    def calculate_sma(self, prices: List[float], window: int) -> Optional[float]:
+    def calculate_sma(self, prices: list[float], window: int) -> float | None:
         """Calculate Simple Moving Average"""
         if len(prices) < window:
             return None
         return sum(prices[-window:]) / window
 
-    def calculate_ema(self, prices: List[float], window: int) -> Optional[float]:
+    def calculate_ema(self, prices: list[float], window: int) -> float | None:
         """Calculate Exponential Moving Average"""
         if len(prices) < window:
             return None
@@ -131,7 +126,7 @@ class TechnicalIndicatorCalculator:
         return ema
 
     # Momentum Indicators
-    def calculate_rsi(self, prices: List[float], window: int = 14) -> Optional[float]:
+    def calculate_rsi(self, prices: list[float], window: int = 14) -> float | None:
         """Calculate Relative Strength Index"""
         if len(prices) < window + 1:
             return None
@@ -164,11 +159,11 @@ class TechnicalIndicatorCalculator:
 
     def calculate_macd(
         self,
-        prices: List[float],
+        prices: list[float],
         fast_period: int = 12,
         slow_period: int = 26,
         signal_period: int = 9,
-    ) -> Optional[Dict[str, float]]:
+    ) -> dict[str, float] | None:
         """Calculate MACD (Moving Average Convergence Divergence)"""
         if len(prices) < slow_period:
             return None
@@ -209,8 +204,8 @@ class TechnicalIndicatorCalculator:
         return {"macd": macd_line, "signal": signal_line, "histogram": histogram}
 
     def calculate_stochastic(
-        self, price_data: List[PriceData], k_period: int = 14, d_period: int = 3
-    ) -> Optional[Dict[str, float]]:
+        self, price_data: list[PriceData], k_period: int = 14, d_period: int = 3
+    ) -> dict[str, float] | None:
         """Calculate Stochastic Oscillator"""
         if len(price_data) < k_period:
             return None
@@ -225,9 +220,7 @@ class TechnicalIndicatorCalculator:
         if highest_high == lowest_low:
             k_percent = 50
         else:
-            k_percent = (
-                (current_close - lowest_low) / (highest_high - lowest_low)
-            ) * 100
+            k_percent = ((current_close - lowest_low) / (highest_high - lowest_low)) * 100
 
         # For %D calculation, we'd need multiple %K values
         # Simplified version returns current %K
@@ -235,8 +228,8 @@ class TechnicalIndicatorCalculator:
 
     # Volatility Indicators
     def calculate_bollinger_bands(
-        self, prices: List[float], window: int = 20, std_dev: float = 2.0
-    ) -> Optional[Dict[str, float]]:
+        self, prices: list[float], window: int = 20, std_dev: float = 2.0
+    ) -> dict[str, float] | None:
         """Calculate Bollinger Bands"""
         if len(prices) < window:
             return None
@@ -260,9 +253,7 @@ class TechnicalIndicatorCalculator:
             "bandwidth": (upper_band - lower_band) / sma * 100,
         }
 
-    def calculate_atr(
-        self, price_data: List[PriceData], window: int = 14
-    ) -> Optional[float]:
+    def calculate_atr(self, price_data: list[PriceData], window: int = 14) -> float | None:
         """Calculate Average True Range"""
         if len(price_data) < window + 1:
             return None
@@ -287,7 +278,7 @@ class TechnicalIndicatorCalculator:
         return sum(true_ranges[-window:]) / window
 
     # Volume Indicators
-    def calculate_obv(self, price_data: List[PriceData]) -> Optional[float]:
+    def calculate_obv(self, price_data: list[PriceData]) -> float | None:
         """Calculate On-Balance Volume"""
         if len(price_data) < 2:
             return None
@@ -303,9 +294,7 @@ class TechnicalIndicatorCalculator:
 
         return obv
 
-    def calculate_volume_sma(
-        self, price_data: List[PriceData], window: int = 20
-    ) -> Optional[float]:
+    def calculate_volume_sma(self, price_data: list[PriceData], window: int = 20) -> float | None:
         """Calculate Volume Simple Moving Average"""
         if len(price_data) < window:
             return None
@@ -313,9 +302,7 @@ class TechnicalIndicatorCalculator:
         volumes = [data.volume for data in price_data[-window:]]
         return sum(volumes) / window
 
-    def calculate_all_indicators(
-        self, symbol: str, days: int = 200
-    ) -> Optional[Dict[str, Any]]:
+    def calculate_all_indicators(self, symbol: str, days: int = 200) -> dict[str, Any] | None:
         """
         Calculate all available technical indicators for a symbol
 
@@ -330,9 +317,7 @@ class TechnicalIndicatorCalculator:
             price_data = self.get_price_data(symbol, days)
 
             if len(price_data) < 50:  # Need minimum data for calculations
-                self.logger.warning(
-                    f"Insufficient price data for {symbol}: {len(price_data)} records"
-                )
+                self.logger.warning(f"Insufficient price data for {symbol}: {len(price_data)} records")
                 return None
 
             closes = [data.close for data in price_data]
@@ -354,44 +339,32 @@ class TechnicalIndicatorCalculator:
             # Momentum Indicators
             indicators["indicators"]["rsi_14"] = self.calculate_rsi(closes, 14)
             indicators["indicators"]["macd"] = self.calculate_macd(closes)
-            indicators["indicators"]["stochastic"] = self.calculate_stochastic(
-                price_data
-            )
+            indicators["indicators"]["stochastic"] = self.calculate_stochastic(price_data)
 
             # Volatility Indicators
-            indicators["indicators"][
-                "bollinger_bands"
-            ] = self.calculate_bollinger_bands(closes)
+            indicators["indicators"]["bollinger_bands"] = self.calculate_bollinger_bands(closes)
             indicators["indicators"]["atr_14"] = self.calculate_atr(price_data, 14)
 
             # Volume Indicators
             indicators["indicators"]["obv"] = self.calculate_obv(price_data)
-            indicators["indicators"]["volume_sma_20"] = self.calculate_volume_sma(
-                price_data, 20
-            )
+            indicators["indicators"]["volume_sma_20"] = self.calculate_volume_sma(price_data, 20)
 
             # Current price info
             current_price = closes[-1]
             indicators["indicators"]["current_price"] = current_price
-            indicators["indicators"]["price_change"] = (
-                closes[-1] - closes[-2] if len(closes) > 1 else 0
-            )
+            indicators["indicators"]["price_change"] = closes[-1] - closes[-2] if len(closes) > 1 else 0
             indicators["indicators"]["price_change_pct"] = (
-                ((closes[-1] - closes[-2]) / closes[-2] * 100)
-                if len(closes) > 1 and closes[-2] != 0
-                else 0
+                ((closes[-1] - closes[-2]) / closes[-2] * 100) if len(closes) > 1 and closes[-2] != 0 else 0
             )
 
-            self.logger.info(
-                f"Calculated {len(indicators['indicators'])} indicators for {symbol}"
-            )
+            self.logger.info(f"Calculated {len(indicators['indicators'])} indicators for {symbol}")
             return indicators
 
         except Exception as e:
             self.logger.error(f"Error calculating indicators for {symbol}: {e}")
             return None
 
-    def store_indicators(self, symbol: str, indicators: Dict[str, Any]) -> bool:
+    def store_indicators(self, symbol: str, indicators: dict[str, Any]) -> bool:
         """
         Store calculated indicators in historical data system
 
@@ -413,7 +386,7 @@ class TechnicalIndicatorCalculator:
             self.logger.error(f"Error storing indicators for {symbol}: {e}")
             return False
 
-    def calculate_and_store_indicators(self, symbols: List[str]) -> Dict[str, Any]:
+    def calculate_and_store_indicators(self, symbols: list[str]) -> dict[str, Any]:
         """
         Calculate and store technical indicators for multiple symbols
 
@@ -438,9 +411,7 @@ class TechnicalIndicatorCalculator:
                 if indicators:
                     if self.store_indicators(symbol, indicators):
                         results["successful"].append(symbol)
-                        results["total_indicators_calculated"] += len(
-                            indicators.get("indicators", {})
-                        )
+                        results["total_indicators_calculated"] += len(indicators.get("indicators", {}))
                     else:
                         results["failed"].append(f"{symbol}: Storage failed")
                 else:
@@ -458,7 +429,7 @@ class TechnicalIndicatorCalculator:
 
 
 def create_technical_indicator_calculator(
-    base_path: Optional[Path] = None,
+    base_path: Path | None = None,
 ) -> TechnicalIndicatorCalculator:
     """Factory function to create technical indicator calculator"""
     hdm = HistoricalDataManager(base_path=base_path)

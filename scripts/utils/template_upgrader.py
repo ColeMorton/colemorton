@@ -13,7 +13,8 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -30,9 +31,9 @@ class TemplateUpgradePlan:
     target_path: str
     template_domain: str
     template_type: str
-    upgrades_required: List[str] = field(default_factory=list)
+    upgrades_required: list[str] = field(default_factory=list)
     risk_level: str = "low"  # low, medium, high
-    backup_path: Optional[str] = None
+    backup_path: str | None = None
     upgrade_status: str = "pending"  # pending, in_progress, completed, failed
 
 
@@ -45,10 +46,10 @@ class UpgradeReport:
     templates_upgraded: int
     templates_failed: int
     templates_skipped: int
-    upgrade_plans: List[TemplateUpgradePlan] = field(default_factory=list)
-    validation_results: Dict[str, Any] = field(default_factory=dict)
+    upgrade_plans: list[TemplateUpgradePlan] = field(default_factory=list)
+    validation_results: dict[str, Any] = field(default_factory=dict)
     rollback_available: bool = False
-    backup_directory: Optional[str] = None
+    backup_directory: str | None = None
 
 
 class TemplateUpgrader:
@@ -73,9 +74,7 @@ class TemplateUpgrader:
 
         self.templates_dir = Path(templates_dir)
         self.standardized_dir = Path(standardized_dir)
-        self.backup_dir = (
-            self.templates_dir / "backups" / datetime.now().strftime("%Y%m%d_%H%M%S")
-        )
+        self.backup_dir = self.templates_dir / "backups" / datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Initialize template optimizer for standards
         self.template_optimizer = TemplateConsistencyOptimizer()
@@ -134,7 +133,7 @@ class TemplateUpgrader:
     def analyze_template(self, template_path: Path) -> TemplateUpgradePlan:
         """Analyze a template and create upgrade plan"""
         try:
-            with open(template_path, "r") as f:
+            with open(template_path) as f:
                 content = f.read()
         except Exception as e:
             return TemplateUpgradePlan(
@@ -221,13 +220,9 @@ class TemplateUpgrader:
     def _check_formatting_patterns(self, content: str, plan: TemplateUpgradePlan):
         """Check for standard formatting patterns"""
         # Check confidence formatting
-        confidence_patterns = re.findall(
-            r"confidence[_\w]*\s*[:=]\s*(\d+\.?\d*)", content
-        )
+        confidence_patterns = re.findall(r"confidence[_\w]*\s*[:=]\s*(\d+\.?\d*)", content)
         if confidence_patterns and not re.search(r"\|round\(2\)", content):
-            plan.upgrades_required.append(
-                "Add proper confidence score formatting with round(2)"
-            )
+            plan.upgrades_required.append("Add proper confidence score formatting with round(2)")
 
         # Check date formatting
         date_patterns = re.findall(r"(timestamp|date)[_\w]*\s*[:=]", content)
@@ -268,7 +263,7 @@ class TemplateUpgrader:
                 if f"block {block_name}" not in content:
                     plan.upgrades_required.append(f"Add {block_name} block")
 
-    def create_backup(self, template_path: Path) -> Optional[str]:
+    def create_backup(self, template_path: Path) -> str | None:
         """Create backup of template before upgrade"""
         try:
             self.backup_dir.mkdir(parents=True, exist_ok=True)
@@ -280,7 +275,7 @@ class TemplateUpgrader:
 
             shutil.copy2(template_path, backup_path)
             return str(backup_path)
-        except Exception as e:
+        except Exception:
             print("Failed to backup {template_path}: {e}")
             return None
 
@@ -291,7 +286,7 @@ class TemplateUpgrader:
 
         try:
             # Load current template
-            with open(plan.source_path, "r") as f:
+            with open(plan.source_path) as f:
                 content = f.read()
 
             # Apply upgrades
@@ -309,15 +304,13 @@ class TemplateUpgrader:
 
                     plan.upgrade_status = "completed"
                     return True
-                else:
-                    plan.upgrade_status = "failed"
-                    return False
-            else:
-                # Dry run - just validate
-                plan.upgrade_status = "validated"
-                return True
+                plan.upgrade_status = "failed"
+                return False
+            # Dry run - just validate
+            plan.upgrade_status = "validated"
+            return True
 
-        except Exception as e:
+        except Exception:
             print("Upgrade failed for {plan.source_path}: {e}")
             plan.upgrade_status = "failed"
             return False
@@ -329,9 +322,7 @@ class TemplateUpgrader:
         # Add base template if needed
         if "Add base template inheritance" in plan.upgrades_required:
             if plan.template_type in ["analysis", "synthesis", "validation"]:
-                upgraded = (
-                    self.standard_patterns["base_template_extends"] + "\n\n" + upgraded
-                )
+                upgraded = self.standard_patterns["base_template_extends"] + "\n\n" + upgraded
 
         # Add standard imports
         imports_to_add = []
@@ -346,12 +337,7 @@ class TemplateUpgrader:
             extends_match = re.search(r"({% extends [^%]+ %})", upgraded)
             if extends_match:
                 insert_pos = extends_match.end()
-                upgraded = (
-                    upgraded[:insert_pos]
-                    + "\n\n"
-                    + "\n".join(imports_to_add)
-                    + upgraded[insert_pos:]
-                )
+                upgraded = upgraded[:insert_pos] + "\n\n" + "\n".join(imports_to_add) + upgraded[insert_pos:]
             else:
                 upgraded = "\n".join(imports_to_add) + "\n\n" + upgraded
 
@@ -361,9 +347,7 @@ class TemplateUpgrader:
             metadata_match = re.search(r"(## .*metadata.*)", upgraded, re.IGNORECASE)
             if metadata_match:
                 # Replace with standard block
-                upgraded = upgraded.replace(
-                    metadata_match.group(0), self.standard_patterns["metadata_block"]
-                )
+                upgraded = upgraded.replace(metadata_match.group(0), self.standard_patterns["metadata_block"])
 
         # Standardize confidence formatting
         if "Add proper confidence score formatting" in plan.upgrades_required:
@@ -384,9 +368,7 @@ class TemplateUpgrader:
             )
 
         # Add missing blocks
-        blocks_to_add = [
-            u for u in plan.upgrades_required if u.startswith("Add") and "block" in u
-        ]
+        blocks_to_add = [u for u in plan.upgrades_required if u.startswith("Add") and "block" in u]
         if blocks_to_add:
             for block_upgrade in blocks_to_add:
                 block_name = block_upgrade.split()[-2]  # Extract block name
@@ -397,15 +379,13 @@ class TemplateUpgrader:
 
         return upgraded
 
-    def validate_upgrade(
-        self, original_path: str, upgraded_path: str
-    ) -> Dict[str, Any]:
+    def validate_upgrade(self, original_path: str, upgraded_path: str) -> dict[str, Any]:
         """Validate upgraded template"""
         try:
-            with open(original_path, "r") as f:
+            with open(original_path) as f:
                 original = f.read()
 
-            with open(upgraded_path, "r") as f:
+            with open(upgraded_path) as f:
                 upgraded = f.read()
 
             # Check content preservation
@@ -415,9 +395,7 @@ class TemplateUpgrader:
             standard_compliant = self._check_upgrade_compliance(upgraded)
 
             # Calculate validation score
-            validation_score = (
-                content_preserved["score"] + standard_compliant["score"]
-            ) / 2
+            validation_score = (content_preserved["score"] + standard_compliant["score"]) / 2
 
             return {
                 "valid": validation_score >= 0.7,
@@ -429,9 +407,7 @@ class TemplateUpgrader:
         except Exception as e:
             return {"valid": False, "score": 0.0, "error": str(e)}
 
-    def _check_content_preservation(
-        self, original: str, upgraded: str
-    ) -> Dict[str, Any]:
+    def _check_content_preservation(self, original: str, upgraded: str) -> dict[str, Any]:
         """Check if original content is preserved in upgrade"""
         # Extract key content patterns
         original_vars = set(re.findall(r"{{ ([^}]+) }}", original))
@@ -444,9 +420,7 @@ class TemplateUpgrader:
         preserved = original_var_names.intersection(upgraded_var_names)
         lost = original_var_names - upgraded_var_names
 
-        preservation_rate = (
-            len(preserved) / len(original_var_names) if original_var_names else 1.0
-        )
+        preservation_rate = len(preserved) / len(original_var_names) if original_var_names else 1.0
 
         return {
             "score": preservation_rate,
@@ -455,17 +429,14 @@ class TemplateUpgrader:
             "preservation_rate": preservation_rate,
         }
 
-    def _check_upgrade_compliance(self, content: str) -> Dict[str, Any]:
+    def _check_upgrade_compliance(self, content: str) -> dict[str, Any]:
         """Check compliance with upgrade standards"""
         issues = []
         score = 1.0
 
         # Check base template
         if not re.search(r'{% extends [\'"].*base.*\.j2[\'"] %}', content):
-            if any(
-                keyword in content.lower()
-                for keyword in ["analysis", "synthesis", "validation"]
-            ):
+            if any(keyword in content.lower() for keyword in ["analysis", "synthesis", "validation"]):
                 issues.append("Missing base template inheritance")
                 score -= 0.2
 
@@ -493,13 +464,9 @@ class TemplateUpgrader:
             "issues": issues,
         }
 
-    def upgrade_all_templates(
-        self, dry_run: bool = True, pattern: str = "*.j2"
-    ) -> UpgradeReport:
+    def upgrade_all_templates(self, dry_run: bool = True, pattern: str = "*.j2") -> UpgradeReport:
         """Upgrade all templates in directory"""
-        print(
-            f"{'🔍' if dry_run else '🔧'} Template Upgrade {'(DRY RUN)' if dry_run else '(APPLYING UPGRADES)'}"
-        )
+        print(f"{'🔍' if dry_run else '🔧'} Template Upgrade {'(DRY RUN)' if dry_run else '(APPLYING UPGRADES)'}")
         print("=" * 70)
 
         report = UpgradeReport(
@@ -527,9 +494,7 @@ class TemplateUpgrader:
             # Skip if no upgrades required
             if not plan.upgrades_required:
                 report.templates_skipped += 1
-                print(
-                    f"  ✓ {template_file.relative_to(self.templates_dir)} - No upgrades needed"
-                )
+                print(f"  ✓ {template_file.relative_to(self.templates_dir)} - No upgrades needed")
                 continue
 
             # Upgrade template
@@ -542,15 +507,11 @@ class TemplateUpgrader:
 
                 # Validate if not dry run
                 if not dry_run:
-                    validation = self.validate_upgrade(
-                        plan.source_path, plan.target_path
-                    )
+                    validation = self.validate_upgrade(plan.source_path, plan.target_path)
                     report.validation_results[template_file.name] = validation
 
                     if validation["valid"]:
-                        print(
-                            f"    ✅ Upgrade successful (score: {validation['score']:.2f})"
-                        )
+                        print(f"    ✅ Upgrade successful (score: {validation['score']:.2f})")
                     else:
                         print("    ⚠️  Upgrade completed with warnings")
             else:
@@ -579,12 +540,10 @@ class TemplateUpgrader:
                     shutil.copy2(plan.backup_path, plan.target_path)
                     success_count += 1
                     print("  ✅ Restored {Path(plan.target_path).name}")
-                except Exception as e:
+                except Exception:
                     print("  ❌ Failed to restore {Path(plan.target_path).name}: {e}")
 
-        print(
-            f"✅ Rollback complete: {success_count}/{len(report.upgrade_plans)} templates restored"
-        )
+        print(f"✅ Rollback complete: {success_count}/{len(report.upgrade_plans)} templates restored")
         return success_count > 0
 
     def print_report(self, report: UpgradeReport):
@@ -621,11 +580,7 @@ class TemplateUpgrader:
                     status = "✅" if validation["valid"] else "⚠️"
                     print("  {status} {template}: {validation['score']:.2f}")
 
-            avg_score = (
-                total_score / len(report.validation_results)
-                if report.validation_results
-                else 0
-            )
+            avg_score = total_score / len(report.validation_results) if report.validation_results else 0
             print("  Average validation score: {avg_score:.2f}")
 
         # Common upgrades
@@ -633,15 +588,11 @@ class TemplateUpgrader:
         for plan in report.upgrade_plans:
             for upgrade in plan.upgrades_required:
                 upgrade_type = upgrade.split(":")[0] if ":" in upgrade else upgrade
-                upgrade_frequency[upgrade_type] = (
-                    upgrade_frequency.get(upgrade_type, 0) + 1
-                )
+                upgrade_frequency[upgrade_type] = upgrade_frequency.get(upgrade_type, 0) + 1
 
         if upgrade_frequency:
             print("\n📋 Most Common Upgrades:")
-            for upgrade_type, count in sorted(
-                upgrade_frequency.items(), key=lambda x: x[1], reverse=True
-            )[:5]:
+            for upgrade_type, count in sorted(upgrade_frequency.items(), key=lambda x: x[1], reverse=True)[:5]:
                 print("  {upgrade_type}: {count} templates")
 
 
@@ -655,14 +606,10 @@ def main():
         action="store_true",
         help="Analyze templates and create upgrade plan",
     )
-    parser.add_argument(
-        "--upgrade", action="store_true", help="Apply template upgrades"
-    )
+    parser.add_argument("--upgrade", action="store_true", help="Apply template upgrades")
     parser.add_argument("--rollback", help="Rollback upgrades using report JSON")
     parser.add_argument("--templates-dir", help="Templates directory path")
-    parser.add_argument(
-        "--pattern", default="*.j2", help="File pattern to process (default: *.j2)"
-    )
+    parser.add_argument("--pattern", default="*.j2", help="File pattern to process (default: *.j2)")
     parser.add_argument("--export", help="Export upgrade report to JSON")
 
     args = parser.parse_args()
@@ -678,11 +625,7 @@ def main():
         if args.export:
             # Export report
             timestamp = report.timestamp.strftime("%Y%m%d_%H%M%S")
-            export_path = (
-                Path(args.export)
-                if args.export
-                else f"template_upgrade_report_{timestamp}.json"
-            )
+            export_path = Path(args.export) if args.export else f"template_upgrade_report_{timestamp}.json"
 
             report_data = {
                 "timestamp": report.timestamp.isoformat(),
@@ -717,9 +660,7 @@ def main():
         upgrader.print_report(report)
 
         if report.templates_failed > 0:
-            print(
-                f"\n⚠️  {report.templates_failed} upgrades failed. Rollback available."
-            )
+            print(f"\n⚠️  {report.templates_failed} upgrades failed. Rollback available.")
 
     else:
         parser.print_help()

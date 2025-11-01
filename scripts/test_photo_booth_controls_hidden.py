@@ -8,6 +8,7 @@ This script validates that photo-booth-controls are properly hidden from screens
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -45,9 +46,7 @@ def test_photobooth_component_has_controls():
     """Test that PhotoBoothDisplay component has the photo-booth-controls class."""
     print("🔍 Testing PhotoBoothDisplay component structure...")
 
-    component_path = (
-        project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
-    )
+    component_path = project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
     if not component_path.exists():
         print("❌ PhotoBoothDisplay component not found: {component_path}")
         return False
@@ -92,9 +91,7 @@ def test_controls_only_affect_screenshots():
             base_content = f.read()
 
         if ".photo-booth-controls" in base_content and "display: none" in base_content:
-            print(
-                "❌ Regular Base.astro also hides photo-booth-controls (should only be PhotoBoothBase)"
-            )
+            print("❌ Regular Base.astro also hides photo-booth-controls (should only be PhotoBoothBase)")
             return False
 
     print("✅ Controls hiding is properly isolated to PhotoBoothBase layout")
@@ -111,10 +108,7 @@ def test_screenshot_specific_hiding():
 
     # Check that CSS uses !important for reliable hiding
     controls_css_section = content[
-        content.find(".photo-booth-controls") : content.find(
-            "}", content.find(".photo-booth-controls")
-        )
-        + 1
+        content.find(".photo-booth-controls") : content.find("}", content.find(".photo-booth-controls")) + 1
     ]
 
     if "!important" not in controls_css_section:
@@ -151,10 +145,7 @@ def test_dashboard_content_not_hidden():
     ]
 
     for selector in problematic_selectors:
-        if (
-            f"{selector} {{" in content
-            and "display: none" in content[content.find(f"{selector} {{") :]
-        ):
+        if f"{selector} {{" in content and "display: none" in content[content.find(f"{selector} {{") :]:
             print("❌ Dashboard content selector {selector} is being hidden")
             return False
 
@@ -184,7 +175,7 @@ def main():
                 passed += 1
             else:
                 failed += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -212,9 +203,8 @@ def main():
         print("- No control panels or UI elements")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

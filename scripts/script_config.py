@@ -13,10 +13,9 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
-
 from error_handler import ErrorHandler
 from errors import ConfigurationError
 
@@ -35,7 +34,7 @@ class ScriptConfig:
     twitter_templates_path: Path
 
     # Validation settings
-    validation_thresholds: Dict[str, float] = field(
+    validation_thresholds: dict[str, float] = field(
         default_factory=lambda: {
             "institutional_minimum": 9.0,
             "publication_minimum": 8.5,
@@ -45,7 +44,7 @@ class ScriptConfig:
     )
 
     # Content type mappings
-    content_type_mappings: Dict[str, str] = field(
+    content_type_mappings: dict[str, str] = field(
         default_factory=lambda: {
             "fundamental_analysis": "fundamental",
             "post_strategy": "strategy",
@@ -55,7 +54,7 @@ class ScriptConfig:
     )
 
     # Template settings
-    template_settings: Dict[str, Any] = field(
+    template_settings: dict[str, Any] = field(
         default_factory=lambda: {
             "default_template_format": "jinja2",
             "template_cache_enabled": True,
@@ -65,7 +64,7 @@ class ScriptConfig:
 
     # Logging settings
     log_level: str = "INFO"
-    log_file: Optional[Path] = None
+    log_file: Path | None = None
     structured_logging: bool = True
 
     # Processing settings
@@ -75,7 +74,7 @@ class ScriptConfig:
 
     # Performance settings
     enable_performance_tracking: bool = True
-    performance_log_file: Optional[Path] = None
+    performance_log_file: Path | None = None
 
     def __post_init__(self):
         """Validate configuration after initialization"""
@@ -129,21 +128,17 @@ class ScriptConfig:
             directory.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def from_environment(cls, base_path: Optional[Path] = None) -> "ScriptConfig":
+    def from_environment(cls, base_path: Path | None = None) -> "ScriptConfig":
         """Create configuration from environment variables"""
 
         if base_path is None:
-            base_path = Path(os.environ.get("SENSYLATE_BASE_PATH", Path.cwd()))
+            base_path = Path(os.environ.get("COLEMORTON_BASE_PATH", Path.cwd()))
         else:
             base_path = Path(base_path)
 
         # Get paths from environment with defaults
-        data_outputs_path = Path(
-            os.environ.get("SENSYLATE_DATA_OUTPUTS", base_path / "data" / "outputs")
-        )
-        templates_path = Path(
-            os.environ.get("SENSYLATE_TEMPLATES", base_path / "scripts" / "templates")
-        )
+        data_outputs_path = Path(os.environ.get("COLEMORTON_DATA_OUTPUTS", base_path / "data" / "outputs"))
+        templates_path = Path(os.environ.get("COLEMORTON_TEMPLATES", base_path / "scripts" / "templates"))
 
         # Twitter-specific paths
         twitter_outputs_path = data_outputs_path / "twitter"
@@ -151,23 +146,15 @@ class ScriptConfig:
 
         # Validation thresholds from environment
         validation_thresholds = {
-            "institutional_minimum": float(
-                os.environ.get("VALIDATION_INSTITUTIONAL_MIN", "9.0")
-            ),
-            "publication_minimum": float(
-                os.environ.get("VALIDATION_PUBLICATION_MIN", "8.5")
-            ),
+            "institutional_minimum": float(os.environ.get("VALIDATION_INSTITUTIONAL_MIN", "9.0")),
+            "publication_minimum": float(os.environ.get("VALIDATION_PUBLICATION_MIN", "8.5")),
             "accuracy_minimum": float(os.environ.get("VALIDATION_ACCURACY_MIN", "9.5")),
-            "compliance_minimum": float(
-                os.environ.get("VALIDATION_COMPLIANCE_MIN", "9.5")
-            ),
+            "compliance_minimum": float(os.environ.get("VALIDATION_COMPLIANCE_MIN", "9.5")),
         }
 
         # Logging settings
         log_level = os.environ.get("LOG_LEVEL", "INFO")
-        log_file = (
-            Path(os.environ.get("LOG_FILE")) if os.environ.get("LOG_FILE") else None
-        )
+        log_file = Path(os.environ.get("LOG_FILE")) if os.environ.get("LOG_FILE") else None
 
         # Processing settings
         fail_fast = os.environ.get("FAIL_FAST", "true").lower() == "true"
@@ -193,12 +180,10 @@ class ScriptConfig:
         """Create configuration from YAML or JSON file"""
 
         if not config_file.exists():
-            raise ConfigurationError(
-                f"Configuration file not found: {config_file}", config_file=config_file
-            )
+            raise ConfigurationError(f"Configuration file not found: {config_file}", config_file=config_file)
 
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 if config_file.suffix.lower() in [".yaml", ".yml"]:
                     config_data = yaml.safe_load(f)
                 else:
@@ -225,13 +210,8 @@ class ScriptConfig:
         if "log_file" in config_data and config_data["log_file"]:
             config_data["log_file"] = Path(config_data["log_file"])
 
-        if (
-            "performance_log_file" in config_data
-            and config_data["performance_log_file"]
-        ):
-            config_data["performance_log_file"] = Path(
-                config_data["performance_log_file"]
-            )
+        if "performance_log_file" in config_data and config_data["performance_log_file"]:
+            config_data["performance_log_file"] = Path(config_data["performance_log_file"])
 
         return cls(**config_data)
 
@@ -279,9 +259,7 @@ class ScriptConfig:
             "max_retries": self.max_retries,
             "timeout_seconds": self.timeout_seconds,
             "enable_performance_tracking": self.enable_performance_tracking,
-            "performance_log_file": (
-                str(self.performance_log_file) if self.performance_log_file else None
-            ),
+            "performance_log_file": (str(self.performance_log_file) if self.performance_log_file else None),
         }
 
         try:
@@ -298,7 +276,7 @@ class ScriptConfig:
                 context={"error": str(e)},
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
             "base_path": str(self.base_path),
@@ -316,9 +294,7 @@ class ScriptConfig:
             "max_retries": self.max_retries,
             "timeout_seconds": self.timeout_seconds,
             "enable_performance_tracking": self.enable_performance_tracking,
-            "performance_log_file": (
-                str(self.performance_log_file) if self.performance_log_file else None
-            ),
+            "performance_log_file": (str(self.performance_log_file) if self.performance_log_file else None),
         }
 
 
@@ -359,14 +335,12 @@ class ConfigurationManager:
 
         for setting in required_settings:
             if setting not in self.config.template_settings:
-                raise ConfigurationError(
-                    f"Missing required template setting: {setting}", config_key=setting
-                )
+                raise ConfigurationError(f"Missing required template setting: {setting}", config_key=setting)
 
-    def get_environment_override(self, key: str) -> Optional[str]:
+    def get_environment_override(self, key: str) -> str | None:
         """Get environment variable override for configuration key"""
 
-        env_key = f"SENSYLATE_{key.upper()}"
+        env_key = f"COLEMORTON_{key.upper()}"
         return os.environ.get(env_key)
 
     def apply_environment_overrides(self) -> None:
@@ -399,7 +373,7 @@ def load_config_from_file(config_file: Path) -> ScriptConfig:
 
     try:
         return ScriptConfig.from_file(config_file)
-    except ConfigurationError as e:
+    except ConfigurationError:
         # Fall back to environment configuration
         print("Warning: Failed to load config file {config_file}: {e}")
         print("Falling back to environment configuration")

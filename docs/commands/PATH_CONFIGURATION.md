@@ -3,7 +3,7 @@
 **Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
 **Authority**: Platform Architecture | **Audience**: Command Developers
 
-This document defines the standardized path variables used across all Claude commands in the Sensylate project.
+This document defines the standardized path variables used across all Claude commands in the Colemorton project.
 
 ## Base Path Variables
 
@@ -15,7 +15,7 @@ All commands use configurable base paths to ensure consistency and maintainabili
 SCRIPTS_BASE:
   default: "./scripts"
   description: "Root directory for all Python scripts"
-  environment_variable: "SENSYLATE_SCRIPTS_BASE"
+  environment_variable: "COLEMORTON_SCRIPTS_BASE"
   examples:
     - "{SCRIPTS_BASE}/yahoo_finance_cli.py"
     - "{SCRIPTS_BASE}/base_scripts/fundamental_analysis_script.py"
@@ -24,7 +24,7 @@ SCRIPTS_BASE:
 DATA_OUTPUTS:
   default: "./data/outputs"
   description: "Root directory for all generated outputs"
-  environment_variable: "SENSYLATE_DATA_OUTPUTS"
+  environment_variable: "COLEMORTON_DATA_OUTPUTS"
   examples:
     - "{DATA_OUTPUTS}/fundamental_analysis/AAPL_20250718.md"
     - "{DATA_OUTPUTS}/twitter/fundamental_analysis/TSLA_20250718.md"
@@ -33,7 +33,7 @@ DATA_OUTPUTS:
 TEMPLATES_BASE:
   default: "./scripts/templates"
   description: "Root directory for all Jinja2 templates"
-  environment_variable: "SENSYLATE_TEMPLATES_BASE"
+  environment_variable: "COLEMORTON_TEMPLATES_BASE"
   examples:
     - "{TEMPLATES_BASE}/twitter/fundamental/twitter_fundamental_A_valuation.j2"
     - "{TEMPLATES_BASE}/shared/base_twitter.j2"
@@ -42,7 +42,7 @@ TEMPLATES_BASE:
 DATA_IMAGES:
   default: "./data/images"
   description: "Root directory for all image data"
-  environment_variable: "SENSYLATE_DATA_IMAGES"
+  environment_variable: "COLEMORTON_DATA_IMAGES"
   examples:
     - "{DATA_IMAGES}/trendspider_tabular/AAPL_20250718.png"
     - "{DATA_IMAGES}/tradingview/TSLA_20250718.png"
@@ -55,7 +55,7 @@ DATA_IMAGES:
 CONFIG_BASE:
   default: "./config"
   description: "Configuration files and settings"
-  environment_variable: "SENSYLATE_CONFIG_BASE"
+  environment_variable: "COLEMORTON_CONFIG_BASE"
   examples:
     - "{CONFIG_BASE}/financial_services.yaml"
     - "{CONFIG_BASE}/script_registry.json"
@@ -64,7 +64,7 @@ CONFIG_BASE:
 LOGS_BASE:
   default: "./logs"
   description: "Application logs and execution traces"
-  environment_variable: "SENSYLATE_LOGS_BASE"
+  environment_variable: "COLEMORTON_LOGS_BASE"
   examples:
     - "{LOGS_BASE}/twitter_system.log"
     - "{LOGS_BASE}/cli_services.log"
@@ -100,10 +100,10 @@ def resolve_base_path(env_var: str, default: str) -> Path:
     return Path(default)
 
 # Usage
-SCRIPTS_BASE = resolve_base_path("SENSYLATE_SCRIPTS_BASE", "./scripts")
-DATA_OUTPUTS = resolve_base_path("SENSYLATE_DATA_OUTPUTS", "./data/outputs")
-TEMPLATES_BASE = resolve_base_path("SENSYLATE_TEMPLATES_BASE", "./scripts/templates")
-DATA_IMAGES = resolve_base_path("SENSYLATE_DATA_IMAGES", "./data/images")
+SCRIPTS_BASE = resolve_base_path("COLEMORTON_SCRIPTS_BASE", "./scripts")
+DATA_OUTPUTS = resolve_base_path("COLEMORTON_DATA_OUTPUTS", "./data/outputs")
+TEMPLATES_BASE = resolve_base_path("COLEMORTON_TEMPLATES_BASE", "./scripts/templates")
+DATA_IMAGES = resolve_base_path("COLEMORTON_DATA_IMAGES", "./data/images")
 ```
 
 ## Directory Structure Examples
@@ -111,7 +111,7 @@ DATA_IMAGES = resolve_base_path("SENSYLATE_DATA_IMAGES", "./data/images")
 ### Complete Project Structure
 
 ```
-sensylate/
+colemorton/
 ├── scripts/                           # {SCRIPTS_BASE}
 │   ├── base_scripts/
 │   │   ├── fundamental_analysis_script.py
@@ -244,30 +244,30 @@ output_file = data_outputs / "fundamental_analysis" / f"{ticker}_{date}.md"
 ### Development Environment
 
 ```bash
-export SENSYLATE_SCRIPTS_BASE="/Users/dev/sensylate/scripts"
-export SENSYLATE_DATA_OUTPUTS="/Users/dev/sensylate/data/outputs"
-export SENSYLATE_TEMPLATES_BASE="/Users/dev/sensylate/scripts/templates"
-export SENSYLATE_DATA_IMAGES="/Users/dev/sensylate/data/images"
+export COLEMORTON_SCRIPTS_BASE="/Users/dev/colemorton/scripts"
+export COLEMORTON_DATA_OUTPUTS="/Users/dev/colemorton/data/outputs"
+export COLEMORTON_TEMPLATES_BASE="/Users/dev/colemorton/scripts/templates"
+export COLEMORTON_DATA_IMAGES="/Users/dev/colemorton/data/images"
 ```
 
 ### Production Environment
 
 ```bash
-export SENSYLATE_SCRIPTS_BASE="/opt/sensylate/scripts"
-export SENSYLATE_DATA_OUTPUTS="/var/sensylate/outputs"
-export SENSYLATE_TEMPLATES_BASE="/opt/sensylate/templates"
-export SENSYLATE_DATA_IMAGES="/var/sensylate/images"
-export SENSYLATE_LOGS_BASE="/var/log/sensylate"
+export COLEMORTON_SCRIPTS_BASE="/opt/colemorton/scripts"
+export COLEMORTON_DATA_OUTPUTS="/var/colemorton/outputs"
+export COLEMORTON_TEMPLATES_BASE="/opt/colemorton/templates"
+export COLEMORTON_DATA_IMAGES="/var/colemorton/images"
+export COLEMORTON_LOGS_BASE="/var/log/colemorton"
 ```
 
 ### Docker Environment
 
 ```dockerfile
-ENV SENSYLATE_SCRIPTS_BASE=/app/scripts
-ENV SENSYLATE_DATA_OUTPUTS=/app/data/outputs
-ENV SENSYLATE_TEMPLATES_BASE=/app/templates
-ENV SENSYLATE_DATA_IMAGES=/app/data/images
-ENV SENSYLATE_LOGS_BASE=/app/logs
+ENV COLEMORTON_SCRIPTS_BASE=/app/scripts
+ENV COLEMORTON_DATA_OUTPUTS=/app/data/outputs
+ENV COLEMORTON_TEMPLATES_BASE=/app/templates
+ENV COLEMORTON_DATA_IMAGES=/app/data/images
+ENV COLEMORTON_LOGS_BASE=/app/logs
 ```
 
 ---

@@ -27,10 +27,11 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from base_financial_service import FinancialServiceError
 from yahoo_finance import create_yahoo_finance_service
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +72,9 @@ class ValidationIssue:
 
     severity: SeverityLevel
     metric: str
-    claimed_value: Union[float, str]
-    actual_value: Union[float, str]
-    variance: Optional[float]
+    claimed_value: float | str
+    actual_value: float | str
+    variance: float | None
     threshold_exceeded: float
     description: str
     recommendation: str
@@ -88,10 +89,10 @@ class ValidationResult:
     overall_score: float
     is_blocking: bool
     ready_for_publication: bool
-    issues: List[ValidationIssue]
+    issues: list[ValidationIssue]
     data_freshness_hours: float
     validation_timestamp: datetime
-    sources_validated: List[str]
+    sources_validated: list[str]
 
 
 class ErrorToleranceConfig:
@@ -146,7 +147,7 @@ class ErrorToleranceConfig:
             ),
         }
 
-    def get_threshold(self, metric: str) -> Optional[ValidationThreshold]:
+    def get_threshold(self, metric: str) -> ValidationThreshold | None:
         """Get threshold configuration for a metric"""
         return self.thresholds.get(metric)
 
@@ -176,7 +177,7 @@ class DataSourceHierarchy:
             "config_fallback": 0.70,
         }
 
-    def get_authoritative_source(self, sources: List[str]) -> str:
+    def get_authoritative_source(self, sources: list[str]) -> str:
         """Get the most authoritative source from available sources"""
         available_sources = [s for s in sources if s in self.source_priority]
         if not available_sources:
@@ -197,7 +198,7 @@ class RealTimeValidationService:
     tolerances and fail-fast logic.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self.tolerance_config = ErrorToleranceConfig()
         self.source_hierarchy = DataSourceHierarchy()
         self.cache = {}
@@ -221,7 +222,7 @@ class RealTimeValidationService:
 
         logger.info("Real-time validation service initialized")
 
-    def validate_stock_claims(self, claims: Dict[str, Any]) -> ValidationResult:
+    def validate_stock_claims(self, claims: dict[str, Any]) -> ValidationResult:
         """
         Validate stock-related financial claims against real-time data
 
@@ -287,10 +288,7 @@ class RealTimeValidationService:
                     issues.append(price_issue)
 
             # Validate expected return calculation
-            if all(
-                k in claims
-                for k in ["current_price", "target_price", "expected_return"]
-            ):
+            if all(k in claims for k in ["current_price", "target_price", "expected_return"]):
                 return_issue = self._validate_return_calculation(
                     current_price=claims["current_price"],
                     target_price=claims["target_price"],
@@ -333,10 +331,7 @@ class RealTimeValidationService:
 
         # Determine overall status
         is_blocking = any(issue.is_blocking for issue in issues)
-        has_high_severity = any(
-            issue.severity in [SeverityLevel.CRITICAL, SeverityLevel.HIGH]
-            for issue in issues
-        )
+        has_high_severity = any(issue.severity in [SeverityLevel.CRITICAL, SeverityLevel.HIGH] for issue in issues)
 
         if is_blocking:
             status = ValidationStatus.BLOCKED
@@ -356,9 +351,7 @@ class RealTimeValidationService:
             overall_score = 10.0
         else:
             # Deduct points based on issue severity
-            deductions = sum(
-                self._get_severity_deduction(issue.severity) for issue in issues
-            )
+            deductions = sum(self._get_severity_deduction(issue.severity) for issue in issues)
             overall_score = max(0.0, 10.0 - deductions)
 
         return ValidationResult(
@@ -367,16 +360,12 @@ class RealTimeValidationService:
             is_blocking=is_blocking,
             ready_for_publication=not is_blocking,
             issues=issues,
-            data_freshness_hours=(
-                market_data.get("data_age_hours", 0.0)
-                if "market_data" in locals()
-                else 0.0
-            ),
+            data_freshness_hours=(market_data.get("data_age_hours", 0.0) if "market_data" in locals() else 0.0),
             validation_timestamp=datetime.now(),
             sources_validated=sources_validated,
         )
 
-    def _get_current_market_data(self, ticker: str) -> Dict[str, Any]:
+    def _get_current_market_data(self, ticker: str) -> dict[str, Any]:
         """Get current market data with caching"""
         cache_key = f"market_data_{ticker}"
 
@@ -395,9 +384,7 @@ class RealTimeValidationService:
         # Extract relevant data
         market_data = {
             "ticker": ticker.upper(),
-            "current_price": stock_info.get(
-                "regularMarketPrice", stock_info.get("currentPrice")
-            ),
+            "current_price": stock_info.get("regularMarketPrice", stock_info.get("currentPrice")),
             "market_cap": stock_info.get("marketCap"),
             "volume": stock_info.get("regularMarketVolume"),
             "data_timestamp": datetime.now(),
@@ -410,9 +397,7 @@ class RealTimeValidationService:
 
         return market_data
 
-    def _validate_price_claim(
-        self, claimed_price: float, actual_price: float, ticker: str
-    ) -> Optional[ValidationIssue]:
+    def _validate_price_claim(self, claimed_price: float, actual_price: float, ticker: str) -> ValidationIssue | None:
         """Validate stock price claim against real-time data"""
         if actual_price is None or actual_price <= 0:
             return ValidationIssue(
@@ -462,18 +447,16 @@ class RealTimeValidationService:
         current_price: float,
         target_price: float,
         claimed_return: float,
-        actual_current_price: Optional[float],
+        actual_current_price: float | None,
         ticker: str,
-    ) -> Optional[ValidationIssue]:
+    ) -> ValidationIssue | None:
         """Validate expected return calculation accuracy"""
         # Calculate expected return based on claimed current price
         claimed_calc_return = ((target_price - current_price) / current_price) * 100
 
         # Calculate expected return based on actual current price if available
         if actual_current_price and actual_current_price > 0:
-            actual_calc_return = (
-                (target_price - actual_current_price) / actual_current_price
-            ) * 100
+            actual_calc_return = ((target_price - actual_current_price) / actual_current_price) * 100
             primary_comparison = actual_calc_return
             comparison_base = f"actual price ${actual_current_price:.2f}"
         else:
@@ -510,9 +493,7 @@ class RealTimeValidationService:
 
         return None
 
-    def _validate_market_cap(
-        self, claimed_mcap: float, actual_mcap: float, ticker: str
-    ) -> Optional[ValidationIssue]:
+    def _validate_market_cap(self, claimed_mcap: float, actual_mcap: float, ticker: str) -> ValidationIssue | None:
         """Validate market capitalization claim"""
         if actual_mcap is None or actual_mcap <= 0:
             return None  # Skip validation if data unavailable
@@ -571,7 +552,7 @@ class RealTimeValidationService:
             current_avg * (total_validations - 1) + validation_time_ms
         ) / total_validations
 
-    def get_validation_stats(self) -> Dict[str, Any]:
+    def get_validation_stats(self) -> dict[str, Any]:
         """Get validation service statistics"""
         return {
             "validation_statistics": self.validation_stats.copy(),
@@ -592,9 +573,7 @@ class RealTimeValidationService:
             },
         }
 
-    def validate_twitter_post_claims(
-        self, post_content: str, metadata: Dict[str, Any] = None
-    ) -> ValidationResult:
+    def validate_twitter_post_claims(self, post_content: str, metadata: dict[str, Any] = None) -> ValidationResult:
         """
         Validate financial claims in Twitter post content
 
@@ -622,9 +601,7 @@ class RealTimeValidationService:
 
         return self.validate_stock_claims(claims)
 
-    def _extract_financial_claims(
-        self, content: str, metadata: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def _extract_financial_claims(self, content: str, metadata: dict[str, Any] = None) -> dict[str, Any]:
         """Extract financial claims from Twitter post content"""
         import re
 
@@ -646,9 +623,7 @@ class RealTimeValidationService:
         # Extract percentages (expected returns) - pattern reserved for future use
 
         # Look for target patterns
-        target_match = re.search(
-            r"target[:\s@]*\$?([0-9,]+\.?\d*)", content, re.IGNORECASE
-        )
+        target_match = re.search(r"target[:\s@]*\$?([0-9,]+\.?\d*)", content, re.IGNORECASE)
         if target_match:
             claims["target_price"] = float(target_match.group(1).replace(",", ""))
 

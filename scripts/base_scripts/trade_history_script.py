@@ -12,7 +12,7 @@ Generalized, parameter-driven script for trade history content generation:
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from errors import DataError, ValidationError
 from result_types import ProcessingResult
@@ -23,9 +23,7 @@ from twitter_template_selector_refactored import TwitterTemplateSelector
 from unified_validation_framework import UnifiedValidationFramework
 
 
-@twitter_script(
-    name="trade_history", content_types=["trade_history"], requires_validation=True
-)
+@twitter_script(name="trade_history", content_types=["trade_history"], requires_validation=True)
 class TradeHistoryScript(BaseScript):
     """
     Generalized trade history script
@@ -63,9 +61,9 @@ class TradeHistoryScript(BaseScript):
         self,
         analysis_name: str,
         date: str,
-        data_path: Optional[str] = None,
-        template_variant: Optional[str] = None,
-        output_path: Optional[str] = None,
+        data_path: str | None = None,
+        template_variant: str | None = None,
+        output_path: str | None = None,
         validate_content: bool = True,
         min_win_rate: float = 0.0,
         min_trades: int = 0,
@@ -94,15 +92,11 @@ class TradeHistoryScript(BaseScript):
             trade_data = self._load_trade_data(analysis_name, date, data_path)
 
             # Apply performance filtering
-            self._validate_performance_requirements(
-                trade_data, min_win_rate, min_trades
-            )
+            self._validate_performance_requirements(trade_data, min_win_rate, min_trades)
 
             # Add transparency and analysis information
             trade_data["transparency_level"] = transparency_level
-            trade_data["performance_metrics"] = self._has_performance_metrics(
-                trade_data
-            )
+            trade_data["performance_metrics"] = self._has_performance_metrics(trade_data)
 
             # Select template
             if template_variant:
@@ -112,9 +106,7 @@ class TradeHistoryScript(BaseScript):
                 (
                     selected_template,
                     template_metadata,
-                ) = self.template_selector.select_optimal_template(
-                    "trade_history", trade_data
-                )
+                ) = self.template_selector.select_optimal_template("trade_history", trade_data)
 
             # Generate content
             content = self._generate_content(trade_data, selected_template)
@@ -122,15 +114,11 @@ class TradeHistoryScript(BaseScript):
             # Validate content if requested
             validation_result = None
             if validate_content:
-                validation_result = self.validation_framework.validate_content(
-                    content, "trade_history", trade_data
-                )
+                validation_result = self.validation_framework.validate_content(content, "trade_history", trade_data)
 
                 # Fail-fast if validation score is too low
                 overall_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 if overall_score < 8.5:
                     raise ValidationError(
@@ -161,9 +149,7 @@ class TradeHistoryScript(BaseScript):
 
             if validation_result:
                 result.validation_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 result.add_metadata("validation_result", validation_result)
 
@@ -229,9 +215,7 @@ class TradeHistoryScript(BaseScript):
         try:
             datetime.strptime(date, "%Y%m%d")
         except ValueError:
-            raise ValidationError(
-                f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"}
-            )
+            raise ValidationError(f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"})
 
         # Validate win rate threshold
         if not isinstance(min_win_rate, (int, float)) or not 0.0 <= min_win_rate <= 1.0:
@@ -263,9 +247,7 @@ class TradeHistoryScript(BaseScript):
                 operation="input_validation",
             )
 
-    def _load_trade_data(
-        self, analysis_name: str, date: str, data_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def _load_trade_data(self, analysis_name: str, date: str, data_path: str | None = None) -> dict[str, Any]:
         """Load trade history data"""
 
         if data_path:
@@ -283,7 +265,7 @@ class TradeHistoryScript(BaseScript):
             )
 
         try:
-            with open(data_file, "r", encoding="utf-8") as f:
+            with open(data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Ensure required fields
@@ -301,7 +283,7 @@ class TradeHistoryScript(BaseScript):
             )
 
     def _validate_performance_requirements(
-        self, trade_data: Dict[str, Any], min_win_rate: float, min_trades: int
+        self, trade_data: dict[str, Any], min_win_rate: float, min_trades: int
     ) -> None:
         """Validate trade performance against requirements"""
 
@@ -323,7 +305,7 @@ class TradeHistoryScript(BaseScript):
                     context={"win_rate": win_rate, "min_win_rate": min_win_rate},
                 )
 
-    def _has_performance_metrics(self, trade_data: Dict[str, Any]) -> bool:
+    def _has_performance_metrics(self, trade_data: dict[str, Any]) -> bool:
         """Check if trade data has performance metrics"""
 
         performance_fields = [
@@ -339,9 +321,7 @@ class TradeHistoryScript(BaseScript):
 
         return any(field in trade_data for field in performance_fields)
 
-    def _generate_content(
-        self, trade_data: Dict[str, Any], template_variant: str
-    ) -> str:
+    def _generate_content(self, trade_data: dict[str, Any], template_variant: str) -> str:
         """Generate Twitter content using template"""
 
         try:
@@ -374,7 +354,7 @@ class TradeHistoryScript(BaseScript):
         content: str,
         analysis_name: str,
         date: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> Path:
         """Save generated content to file"""
 
@@ -398,7 +378,7 @@ class TradeHistoryScript(BaseScript):
                 operation="content_saving",
             )
 
-    def get_usage_examples(self) -> List[Dict[str, Any]]:
+    def get_usage_examples(self) -> list[dict[str, Any]]:
         """Get usage examples for the script"""
 
         return [
@@ -433,9 +413,7 @@ class TradeHistoryScript(BaseScript):
             },
         ]
 
-    def get_performance_summary(
-        self, analysis_name: str, date: str, data_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def get_performance_summary(self, analysis_name: str, date: str, data_path: str | None = None) -> dict[str, Any]:
         """Get performance summary for trade history"""
 
         try:
@@ -465,8 +443,7 @@ class TradeHistoryScript(BaseScript):
                 "data_quality": {
                     "total_fields": len(trade_data),
                     "performance_field_count": len(performance_metrics),
-                    "completeness_score": len(performance_metrics)
-                    / 6.0,  # 6 key metrics
+                    "completeness_score": len(performance_metrics) / 6.0,  # 6 key metrics
                 },
             }
 
@@ -480,8 +457,8 @@ class TradeHistoryScript(BaseScript):
             }
 
     def validate_trade_data_quality(
-        self, analysis_name: str, date: str, data_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, analysis_name: str, date: str, data_path: str | None = None
+    ) -> dict[str, Any]:
         """Validate trade data quality"""
 
         try:
@@ -489,9 +466,7 @@ class TradeHistoryScript(BaseScript):
 
             # Check required fields
             required_fields = ["analysis_name", "date"]
-            missing_fields = [
-                field for field in required_fields if field not in trade_data
-            ]
+            missing_fields = [field for field in required_fields if field not in trade_data]
 
             # Check performance fields
             performance_fields = [
@@ -501,9 +476,7 @@ class TradeHistoryScript(BaseScript):
                 "sharpe_ratio",
                 "max_drawdown",
             ]
-            available_performance = [
-                field for field in performance_fields if field in trade_data
-            ]
+            available_performance = [field for field in performance_fields if field in trade_data]
 
             # Check data types
             type_issues = []
@@ -515,29 +488,21 @@ class TradeHistoryScript(BaseScript):
                     "max_drawdown",
                     "profit_factor",
                 ] and not isinstance(value, (int, float)):
-                    type_issues.append(
-                        f"{field}: expected number, got {type(value).__name__}"
-                    )
+                    type_issues.append(f"{field}: expected number, got {type(value).__name__}")
                 elif field == "total_trades" and not isinstance(value, int):
-                    type_issues.append(
-                        f"{field}: expected integer, got {type(value).__name__}"
-                    )
+                    type_issues.append(f"{field}: expected integer, got {type(value).__name__}")
 
             # Check logical consistency
             logical_issues = []
             if "win_rate" in trade_data:
                 win_rate = trade_data["win_rate"]
                 if isinstance(win_rate, (int, float)) and not 0.0 <= win_rate <= 1.0:
-                    logical_issues.append(
-                        f"win_rate {win_rate} outside valid range [0.0, 1.0]"
-                    )
+                    logical_issues.append(f"win_rate {win_rate} outside valid range [0.0, 1.0]")
 
             if "total_trades" in trade_data:
                 total_trades = trade_data["total_trades"]
                 if isinstance(total_trades, int) and total_trades < 0:
-                    logical_issues.append(
-                        f"total_trades {total_trades} cannot be negative"
-                    )
+                    logical_issues.append(f"total_trades {total_trades} cannot be negative")
 
             # Calculate quality score
             quality_score = 1.0
@@ -575,19 +540,17 @@ class TradeHistoryScript(BaseScript):
 
     def _generate_quality_recommendations(
         self,
-        missing_fields: List[str],
-        available_performance: List[str],
-        type_issues: List[str],
-        logical_issues: List[str],
-    ) -> List[str]:
+        missing_fields: list[str],
+        available_performance: list[str],
+        type_issues: list[str],
+        logical_issues: list[str],
+    ) -> list[str]:
         """Generate data quality improvement recommendations"""
 
         recommendations = []
 
         if missing_fields:
-            recommendations.append(
-                f"Add missing required fields: {', '.join(missing_fields)}"
-            )
+            recommendations.append(f"Add missing required fields: {', '.join(missing_fields)}")
 
         if len(available_performance) < 3:
             recommendations.append(
@@ -598,15 +561,13 @@ class TradeHistoryScript(BaseScript):
             recommendations.append("Fix data type issues: " + ", ".join(type_issues))
 
         if logical_issues:
-            recommendations.append(
-                "Fix logical inconsistencies: " + ", ".join(logical_issues)
-            )
+            recommendations.append("Fix logical inconsistencies: " + ", ".join(logical_issues))
 
         if not recommendations:
             recommendations.append("Data quality is good - no major issues found")
 
         return recommendations
 
-    def get_valid_transparency_levels(self) -> List[str]:
+    def get_valid_transparency_levels(self) -> list[str]:
         """Get list of valid transparency levels"""
         return self.VALID_TRANSPARENCY_LEVELS.copy()

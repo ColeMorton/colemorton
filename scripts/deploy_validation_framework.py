@@ -24,7 +24,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -33,7 +33,7 @@ try:
     from scripts.services.macro_economic import create_macro_economic_service
     from scripts.utils.dasv_cross_validator import DASVCrossValidator
     from scripts.utils.fed_rate_validation import FedRateValidator
-except ImportError as e:
+except ImportError:
     print("Error importing validation components: {e}")
     print("Please ensure all validation utilities are properly installed")
     sys.exit(1)
@@ -77,7 +77,7 @@ class ValidationFrameworkDeployer:
             },
         }
 
-    def check_installation(self) -> Dict[str, bool]:
+    def check_installation(self) -> dict[str, bool]:
         """Check if all validation components are properly installed"""
         results = {}
 
@@ -127,7 +127,7 @@ class ValidationFrameworkDeployer:
 
         return results
 
-    def validate_region(self, region_date: str) -> Dict[str, any]:
+    def validate_region(self, region_date: str) -> dict[str, any]:
         """Validate a specific region using the enhanced framework"""
         try:
             # Initialize cross-validator
@@ -147,8 +147,7 @@ class ValidationFrameworkDeployer:
                 "validation_passed": report.overall_passed,
                 "overall_score": report.overall_score,
                 "quality_gates": gate_results,
-                "institutional_certified": report.overall_score
-                >= self.validation_config["min_institutional_score"],
+                "institutional_certified": report.overall_score >= self.validation_config["min_institutional_score"],
                 "blocking_issues": report.blocking_issues,
                 "critical_issues": report.critical_issues,
                 "recommendations": report.recommendations,
@@ -173,7 +172,7 @@ class ValidationFrameworkDeployer:
                 },
             }
 
-    def run_full_pipeline_check(self) -> Dict[str, any]:
+    def run_full_pipeline_check(self) -> dict[str, any]:
         """Run comprehensive pipeline validation check"""
         results = {
             "installation_check": self.check_installation(),
@@ -183,22 +182,13 @@ class ValidationFrameworkDeployer:
         }
 
         # Check installation status
-        installation_issues = [
-            component
-            for component, status in results["installation_check"].items()
-            if not status
-        ]
+        installation_issues = [component for component, status in results["installation_check"].items() if not status]
 
         if installation_issues:
             results["validation_framework_status"]["status"] = "degraded"
-            results["validation_framework_status"][
-                "missing_components"
-            ] = installation_issues
+            results["validation_framework_status"]["missing_components"] = installation_issues
             results["recommendations"].extend(
-                [
-                    f"Install missing component: {component}"
-                    for component in installation_issues
-                ]
+                [f"Install missing component: {component}" for component in installation_issues]
             )
         else:
             results["validation_framework_status"]["status"] = "operational"
@@ -217,18 +207,14 @@ class ValidationFrameworkDeployer:
         validation_dir = self.project_root / "data/outputs/macro_analysis/validation"
         if validation_dir.exists():
             validation_files = list(validation_dir.glob("*.json"))
-            results["validation_framework_status"]["existing_validations"] = len(
-                validation_files
-            )
+            results["validation_framework_status"]["existing_validations"] = len(validation_files)
 
             if validation_files:
                 # Check latest validation
                 latest_validation = max(validation_files, key=os.path.getctime)
                 results["validation_framework_status"]["latest_validation"] = {
                     "file": latest_validation.name,
-                    "timestamp": datetime.fromtimestamp(
-                        os.path.getctime(latest_validation)
-                    ).isoformat(),
+                    "timestamp": datetime.fromtimestamp(os.path.getctime(latest_validation)).isoformat(),
                 }
 
         # Check hardcoded value detection
@@ -237,9 +223,7 @@ class ValidationFrameworkDeployer:
             hardcoded_check = fed_validator.check_directory("data/outputs/")
             results["hardcoded_detection"] = {
                 "issues_found": len(hardcoded_check),
-                "status": (
-                    "clean" if len(hardcoded_check) == 0 else "violations_detected"
-                ),
+                "status": ("clean" if len(hardcoded_check) == 0 else "violations_detected"),
             }
 
             if len(hardcoded_check) > 0:
@@ -249,10 +233,7 @@ class ValidationFrameworkDeployer:
             results["hardcoded_detection"] = {"status": "error", "error": str(e)}
 
         # Overall framework status
-        if (
-            results["validation_framework_status"]["status"] == "operational"
-            and not installation_issues
-        ):
+        if results["validation_framework_status"]["status"] == "operational" and not installation_issues:
             results["overall_status"] = "ready"
         elif installation_issues:
             results["overall_status"] = "installation_required"
@@ -263,7 +244,7 @@ class ValidationFrameworkDeployer:
 
         return results
 
-    def _apply_quality_gates(self, report) -> Dict[str, Dict[str, any]]:
+    def _apply_quality_gates(self, report) -> dict[str, dict[str, any]]:
         """Apply quality gates to validation report"""
         gate_results = {}
 
@@ -281,9 +262,7 @@ class ValidationFrameworkDeployer:
                 # Check for freshness issues in any phase
                 freshness_issues = any(
                     "freshness" in violation.lower() or "stale" in violation.lower()
-                    for violations in [
-                        result.violations for result in report.phase_results.values()
-                    ]
+                    for violations in [result.violations for result in report.phase_results.values()]
                     for violation in violations
                 )
                 gate_result["passed"] = not freshness_issues
@@ -293,9 +272,7 @@ class ValidationFrameworkDeployer:
                 # Check for variance issues
                 variance_issues = any(
                     "variance" in violation.lower()
-                    for violations in [
-                        result.violations for result in report.phase_results.values()
-                    ]
+                    for violations in [result.violations for result in report.phase_results.values()]
                     for violation in violations
                 )
                 gate_result["passed"] = not variance_issues
@@ -319,14 +296,14 @@ class ValidationFrameworkDeployer:
 
         return gate_results
 
-    def generate_deployment_report(self, status: Dict[str, any]) -> str:
+    def generate_deployment_report(self, status: dict[str, any]) -> str:
         """Generate human-readable deployment report"""
         lines = [
             "=" * 80,
             "ENHANCED VALIDATION FRAMEWORK DEPLOYMENT REPORT",
             "=" * 80,
             f"Timestamp: {status.get('timestamp', 'N/A')}",
-            f"Framework Version: enhanced_v1.0",
+            "Framework Version: enhanced_v1.0",
             "",
         ]
 
@@ -350,14 +327,10 @@ class ValidationFrameworkDeployer:
             )
 
             if "missing_components" in framework_status:
-                lines.append(
-                    f"  Missing Components: {len(framework_status['missing_components'])}"
-                )
+                lines.append(f"  Missing Components: {len(framework_status['missing_components'])}")
 
             if "existing_validations" in framework_status:
-                lines.append(
-                    f"  Existing Validations: {framework_status['existing_validations']}"
-                )
+                lines.append(f"  Existing Validations: {framework_status['existing_validations']}")
 
             lines.append("")
 
@@ -365,12 +338,8 @@ class ValidationFrameworkDeployer:
             lines.extend(["QUALITY GATES:", "-" * 40])
 
             for gate_name, gate_status in status["quality_gates_status"].items():
-                blocking_text = (
-                    "BLOCKING" if gate_status.get("blocking") else "NON-BLOCKING"
-                )
-                lines.append(
-                    f"  {gate_name}: Threshold {gate_status.get('threshold')} ({blocking_text})"
-                )
+                blocking_text = "BLOCKING" if gate_status.get("blocking") else "NON-BLOCKING"
+                lines.append(f"  {gate_name}: Threshold {gate_status.get('threshold')} ({blocking_text})")
 
             lines.append("")
 
@@ -417,9 +386,7 @@ class ValidationFrameworkDeployer:
 
 def main():
     """Command-line interface for validation framework deployment"""
-    parser = argparse.ArgumentParser(
-        description="Enhanced Validation Framework Deployment"
-    )
+    parser = argparse.ArgumentParser(description="Enhanced Validation Framework Deployment")
 
     parser.add_argument(
         "--check-installation",
@@ -441,15 +408,11 @@ def main():
 
     parser.add_argument("--output", help="Output file for results")
 
-    parser.add_argument(
-        "--json", action="store_true", help="Output results in JSON format"
-    )
+    parser.add_argument("--json", action="store_true", help="Output results in JSON format")
 
     args = parser.parse_args()
 
-    if not any(
-        [args.check_installation, args.validate_region, args.full_pipeline_check]
-    ):
+    if not any([args.check_installation, args.validate_region, args.full_pipeline_check]):
         parser.print_help()
         sys.exit(1)
 
@@ -471,8 +434,7 @@ def main():
         else:
             if args.check_installation:
                 output_text = "Installation Check Results:\n" + "\n".join(
-                    f"  {component}: {'✓' if status else '✗'}"
-                    for component, status in results.items()
+                    f"  {component}: {'✓' if status else '✗'}" for component, status in results.items()
                 )
             else:
                 output_text = deployer.generate_deployment_report(results)

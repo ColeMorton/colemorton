@@ -21,7 +21,7 @@ def load_sample_data(file_path: str) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Sample data file not found: {file_path}")
 
-    with open(path, "r") as f:
+    with open(path) as f:
         return json.load(f)
 
 
@@ -34,9 +34,7 @@ def test_template_rendering():
     test_data_dir = scripts_dir / "test_data"
 
     # Set up Jinja2 environment
-    jinja_env = Environment(
-        loader=FileSystemLoader(str(templates_dir)), autoescape=True
-    )
+    jinja_env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
 
     print("🧪 Testing Enhanced Templates with Sample Data")
     print("=" * 60)
@@ -137,9 +135,7 @@ def test_template_rendering():
 
         except Exception as e:
             print("   ❌ Error: {e}")
-            results.append(
-                {"name": test_case["name"], "status": "FAILED", "error": str(e)}
-            )
+            results.append({"name": test_case["name"], "status": "FAILED", "error": str(e)})
 
     # Summary
     print("\n" + "=" * 60)
@@ -156,9 +152,7 @@ def test_template_rendering():
         if result["status"] == "PASSED":
             print("   📊 Content length: {result['content_length']:,} characters")
             if result.get("missing_sections"):
-                print(
-                    f"   ⚠️  Missing sections: {', '.join(result['missing_sections'])}"
-                )
+                print(f"   ⚠️  Missing sections: {', '.join(result['missing_sections'])}")
         else:
             print("   💥 Error: {result.get('error', 'Unknown error')}")
 
@@ -168,9 +162,8 @@ def test_template_rendering():
         print("🎉 All templates rendered successfully!")
         print("✨ Template duplication reduction implementation is working correctly!")
         return True
-    else:
-        print("❌ Some templates failed to render. Please check the errors above.")
-        return False
+    print("❌ Some templates failed to render. Please check the errors above.")
+    return False
 
 
 if __name__ == "__main__":

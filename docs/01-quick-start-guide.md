@@ -5,7 +5,7 @@
 
 ## Purpose & Scope
 
-This guide provides a streamlined path to get Sensylate up and running quickly, focusing on the essential setup steps and first-run experience.
+This guide provides a streamlined path to get Colemorton up and running quickly, focusing on the essential setup steps and first-run experience.
 
 ## Prerequisites
 
@@ -23,8 +23,8 @@ Before you begin, ensure you have:
 
 ```bash
 # Clone the repository
-git clone https://github.com/sensylate/platform.git
-cd sensylate
+git clone https://github.com/colemorton/platform.git
+cd colemorton
 
 # Install Python dependencies
 pip install -r requirements.txt
@@ -146,7 +146,7 @@ mkdir -p data/outputs/sector_analysis
 After successful setup, you should see:
 
 ```
-sensylate/
+colemorton/
 ├── frontend/                 # Astro frontend platform
 │   ├── src/content/         # Content collections
 │   ├── public/              # Static assets
@@ -212,7 +212,7 @@ If you encounter issues:
 
 ## 🎉 Success!
 
-You're now ready to use Sensylate! The platform provides:
+You're now ready to use Colemorton! The platform provides:
 
 - **Automated trading analysis** with institutional-quality reports
 - **Multi-source data integration** from 18+ financial APIs
@@ -228,4 +228,4 @@ Start with the fundamental analysis scripts and explore the generated content in
 **Learning Curve**: Beginner-friendly with comprehensive documentation
 **Support**: Complete user manual and troubleshooting guides available
 
-*Welcome to Sensylate - your comprehensive trading analysis platform!*
+*Welcome to Colemorton - your comprehensive trading analysis platform!*

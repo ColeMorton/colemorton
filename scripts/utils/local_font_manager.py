@@ -8,7 +8,6 @@ integration, using the same font files as the frontend for consistency.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
@@ -17,7 +16,7 @@ import matplotlib.pyplot as plt
 class LocalFontManager:
     """Manages local font loading for Python/matplotlib integration."""
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: str | None = None):
         """
         Initialize local font manager.
 
@@ -28,10 +27,10 @@ class LocalFontManager:
         self.logger = logging.getLogger(__name__)
         self.project_root = self._get_project_root(project_root)
         self.fonts_dir = self.project_root / "fonts" / "heebo"
-        self._font_paths: Dict[str, Path] = {}
+        self._font_paths: dict[str, Path] = {}
         self._fonts_loaded = False
 
-    def _get_project_root(self, project_root: Optional[str]) -> Path:
+    def _get_project_root(self, project_root: str | None) -> Path:
         """
         Get project root directory.
 
@@ -126,13 +125,10 @@ class LocalFontManager:
                 self._configure_matplotlib_fonts()
 
                 self._fonts_loaded = True
-                self.logger.info(
-                    f"Successfully loaded {loaded_count} Heebo font weights"
-                )
+                self.logger.info(f"Successfully loaded {loaded_count} Heebo font weights")
                 return True
-            else:
-                self.logger.error("No Heebo fonts could be loaded")
-                return False
+            self.logger.error("No Heebo fonts could be loaded")
+            return False
 
         except Exception as e:
             self.logger.error(f"Font loading failed: {e}")
@@ -146,7 +142,7 @@ class LocalFontManager:
 
         self.logger.debug(f"Configured matplotlib font family: {font_list}")
 
-    def get_font_list(self) -> List[str]:
+    def get_font_list(self) -> list[str]:
         """
         Get prioritized font list with Heebo and system fallbacks.
 
@@ -183,9 +179,7 @@ class LocalFontManager:
             "fonts_loaded": self._fonts_loaded,
             "heebo_available": self.is_heebo_available(),
             "fonts_directory": str(self.fonts_dir),
-            "loaded_font_paths": {
-                weight: str(path) for weight, path in self._font_paths.items()
-            },
+            "loaded_font_paths": {weight: str(path) for weight, path in self._font_paths.items()},
             "matplotlib_font_list": self.get_font_list(),
         }
 
@@ -210,7 +204,7 @@ class LocalFontManager:
         return success
 
 
-def create_font_manager(project_root: Optional[str] = None) -> LocalFontManager:
+def create_font_manager(project_root: str | None = None) -> LocalFontManager:
     """
     Factory function to create a LocalFontManager instance.
 
@@ -223,7 +217,7 @@ def create_font_manager(project_root: Optional[str] = None) -> LocalFontManager:
     return LocalFontManager(project_root)
 
 
-def initialize_fonts(project_root: Optional[str] = None) -> bool:
+def initialize_fonts(project_root: str | None = None) -> bool:
     """
     Convenience function to initialize fonts for plotting.
 

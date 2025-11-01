@@ -8,13 +8,12 @@ whether to use exact filename or find latest file matching pattern.
 
 import os
 import re
-from typing import Optional, Tuple
 
 
 def parse_portfolio_parameter(
     portfolio: str,
-    data_dir: str = "/Users/colemorton/Projects/sensylate/data/raw/trade_history/",
-) -> Tuple[bool, str, Optional[str]]:
+    data_dir: str = "/Users/colemorton/Projects/colemorton/data/raw/trade_history/",
+) -> tuple[bool, str, str | None]:
     """
     Parse portfolio parameter and resolve to actual CSV filename.
 
@@ -37,30 +36,28 @@ def parse_portfolio_parameter(
 
         if os.path.exists(filepath):
             return True, filename, None
-        else:
-            return False, "", f"Specified file not found: {filepath}"
+        return False, "", f"Specified file not found: {filepath}"
 
-    else:
-        # Portfolio name only - find latest file
-        if not os.path.exists(data_dir):
-            return False, "", f"Data directory not found: {data_dir}"
+    # Portfolio name only - find latest file
+    if not os.path.exists(data_dir):
+        return False, "", f"Data directory not found: {data_dir}"
 
-        # Find all files matching portfolio pattern
-        # pattern = f"{portfolio}_*.csv"  # Unused variable
-        matching_files = []
+    # Find all files matching portfolio pattern
+    # pattern = f"{portfolio}_*.csv"  # Unused variable
+    matching_files = []
 
-        for filename in os.listdir(data_dir):
-            if re.match(f"{portfolio}_\\d{{8}}\\.csv$", filename):
-                matching_files.append(filename)
+    for filename in os.listdir(data_dir):
+        if re.match(f"{portfolio}_\\d{{8}}\\.csv$", filename):
+            matching_files.append(filename)
 
-        if not matching_files:
-            return False, "", f"No files found for portfolio: {portfolio}"
+    if not matching_files:
+        return False, "", f"No files found for portfolio: {portfolio}"
 
-        # Sort by date (embedded in filename) and return latest
-        matching_files.sort(reverse=True)  # Latest first
-        latest_file = matching_files[0]
+    # Sort by date (embedded in filename) and return latest
+    matching_files.sort(reverse=True)  # Latest first
+    latest_file = matching_files[0]
 
-        return True, latest_file, None
+    return True, latest_file, None
 
 
 def extract_csv_structure_info(csv_path: str) -> dict:
@@ -78,7 +75,7 @@ def extract_csv_structure_info(csv_path: str) -> dict:
         return {"error": f"File not found: {csv_path}"}
 
     try:
-        with open(csv_path, "r") as f:
+        with open(csv_path) as f:
             header = f.readline().strip()
             columns = header.split(",")
 
@@ -122,13 +119,11 @@ def test_portfolio_parsing():
             print("Resolved to: {filename}")
 
             # Try to extract CSV info if file exists
-            csv_path = f"/Users/colemorton/Projects/sensylate/data/raw/trade_history/{filename}"
+            csv_path = f"/Users/colemorton/Projects/colemorton/data/raw/trade_history/{filename}"
             csv_info = extract_csv_structure_info(csv_path)
 
             if "error" not in csv_info:
-                print(
-                    f"CSV Info: {csv_info['total_rows']} rows, {csv_info['total_columns']} columns"
-                )
+                print(f"CSV Info: {csv_info['total_rows']} rows, {csv_info['total_columns']} columns")
                 print("Key columns: Position_UUID, Ticker, Strategy_Type, Status")
 
         else:
@@ -142,7 +137,9 @@ def validate_discovery_schema():
     Validate that the JSON schema file is properly structured.
     """
 
-    schema_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/discover/trading_discovery_schema_v1.json"
+    schema_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/discover/trading_discovery_schema_v1.json"
+    )
 
     print("=== Discovery Schema Validation ===\n")
 
@@ -153,7 +150,7 @@ def validate_discovery_schema():
     try:
         import json
 
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = json.load(f)
 
         # Basic schema validation
@@ -182,9 +179,9 @@ def validate_discovery_schema():
 
         print("Total properties defined: {len(schema.get('properties', {}))}")
 
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("❌ Invalid JSON: {e}")
-    except Exception as e:
+    except Exception:
         print("❌ Schema validation error: {e}")
 
 

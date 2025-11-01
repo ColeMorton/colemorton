@@ -6,8 +6,8 @@ Quick validation that the new consolidated file structure works correctly.
 """
 
 import sys
-from datetime import datetime
 from pathlib import Path
+
 
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 from historical_data_manager import DataType, HistoricalDataManager, Timeframe
@@ -77,9 +77,7 @@ def test_consolidated_storage():
     meta_exists = expected_meta.exists()
 
     print("   CSV file: {'✅ EXISTS' if csv_exists else '❌ MISSING'} ({expected_csv})")
-    print(
-        f"   Metadata file: {'✅ EXISTS' if meta_exists else '❌ MISSING'} ({expected_meta})"
-    )
+    print(f"   Metadata file: {'✅ EXISTS' if meta_exists else '❌ MISSING'} ({expected_meta})")
 
     if csv_exists:
         csv_size = expected_csv.stat().st_size
@@ -100,9 +98,7 @@ def test_consolidated_storage():
     if retrieved:
         print("   Record details:")
         for record in retrieved:
-            print(
-                f"     {record['date']}: Close=${record['close']}, Volume={record['volume']:,}"
-            )
+            print(f"     {record['date']}: Close=${record['close']}, Volume={record['volume']:,}")
 
     # Test 4: Append additional data (deduplication test)
     print("\n➕ Test 4: Testing append with deduplication...")

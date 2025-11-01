@@ -6,8 +6,6 @@ This module wraps the existing AdvancedChartGenerator to implement the
 AbstractChartGenerator interface for backward compatibility.
 """
 
-from typing import List
-
 import matplotlib.pyplot as plt
 
 from scripts.utils.abstract_chart_generator import AbstractChartGenerator
@@ -32,9 +30,7 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
         """
         super().__init__(theme_manager, scalability_manager)
         # Create the legacy chart generator instance
-        self._legacy_generator = AdvancedChartGenerator(
-            theme_manager, scalability_manager
-        )
+        self._legacy_generator = AdvancedChartGenerator(theme_manager, scalability_manager)
 
     def create_enhanced_gauge(
         self,
@@ -57,7 +53,7 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
         self._legacy_generator.create_enhanced_gauge(ax, value, title, max_value, mode)
 
     def create_enhanced_monthly_bars(
-        self, ax: plt.Axes, monthly_data: List[MonthlyPerformance], mode: str = "light"
+        self, ax: plt.Axes, monthly_data: list[MonthlyPerformance], mode: str = "light"
     ) -> None:
         """
         Create enhanced monthly performance bar chart using matplotlib.
@@ -70,7 +66,7 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
         self._legacy_generator.create_enhanced_monthly_bars(ax, monthly_data, mode)
 
     def create_enhanced_donut_chart(
-        self, ax: plt.Axes, quality_data: List[QualityDistribution], mode: str = "light"
+        self, ax: plt.Axes, quality_data: list[QualityDistribution], mode: str = "light"
     ) -> None:
         """
         Create sophisticated donut chart for quality distribution using matplotlib.
@@ -82,9 +78,7 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
         """
         self._legacy_generator.create_enhanced_donut_chart(ax, quality_data, mode)
 
-    def create_waterfall_chart(
-        self, ax: plt.Axes, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_waterfall_chart(self, ax: plt.Axes, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create sophisticated waterfall chart using matplotlib.
 
@@ -95,9 +89,7 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
         """
         self._legacy_generator.create_waterfall_chart(ax, trades, mode)
 
-    def create_enhanced_scatter(
-        self, ax: plt.Axes, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_enhanced_scatter(self, ax: plt.Axes, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create enhanced scatter plot using matplotlib.
 
@@ -111,8 +103,8 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
     def create_performance_summary_panel(
         self,
         ax: plt.Axes,
-        trades: List[TradeData],
-        monthly_data: List[MonthlyPerformance],
+        trades: list[TradeData],
+        monthly_data: list[MonthlyPerformance],
         mode: str = "light",
     ) -> None:
         """
@@ -124,6 +116,4 @@ class MatplotlibChartGenerator(AbstractChartGenerator):
             monthly_data: Monthly performance data
             mode: 'light' or 'dark' mode
         """
-        self._legacy_generator.create_performance_summary_panel(
-            ax, trades, monthly_data, mode
-        )
+        self._legacy_generator.create_performance_summary_panel(ax, trades, monthly_data, mode)

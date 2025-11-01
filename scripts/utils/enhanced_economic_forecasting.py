@@ -6,9 +6,8 @@ Part of Phase 2 optimization for macro analysis system
 """
 
 import json
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 
@@ -24,7 +23,7 @@ class EconomicForecastingEngine:
         # Regional economic parameters
         self.regional_params = self._load_regional_parameters()
 
-    def _load_regional_parameters(self) -> Dict[str, Any]:
+    def _load_regional_parameters(self) -> dict[str, Any]:
         """Load region-specific economic parameters"""
         # Default US parameters - can be extended for other regions
         return {
@@ -57,22 +56,18 @@ class EconomicForecastingEngine:
         )
 
     def generate_enhanced_forecasts(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate comprehensive economic forecasts with multiple methods"""
 
         # Extract current indicators
-        current_indicators = self._extract_current_indicators(
-            discovery_data, analysis_data
-        )
+        current_indicators = self._extract_current_indicators(discovery_data, analysis_data)
 
         # Generate scenario-based forecasts
         scenario_forecasts = self._generate_scenario_forecasts(current_indicators)
 
         # Create probabilistic outcomes
-        probabilistic_outcomes = self._calculate_probabilistic_outcomes(
-            scenario_forecasts
-        )
+        probabilistic_outcomes = self._calculate_probabilistic_outcomes(scenario_forecasts)
 
         # Generate forward-looking indicators
         forward_indicators = self._generate_forward_indicators(current_indicators)
@@ -81,9 +76,7 @@ class EconomicForecastingEngine:
         policy_simulations = self._simulate_policy_impacts(current_indicators)
 
         # Calculate forecast confidence
-        forecast_confidence = self._calculate_forecast_confidence(
-            current_indicators, scenario_forecasts
-        )
+        forecast_confidence = self._calculate_forecast_confidence(current_indicators, scenario_forecasts)
 
         return {
             "forecast_metadata": {
@@ -102,9 +95,7 @@ class EconomicForecastingEngine:
             ),
         }
 
-    def _extract_current_indicators(
-        self, discovery_data: Dict, analysis_data: Dict
-    ) -> Dict[str, Any]:
+    def _extract_current_indicators(self, discovery_data: dict, analysis_data: dict) -> dict[str, Any]:
         """Extract current economic indicators from discovery and analysis data"""
 
         # GDP data
@@ -126,9 +117,7 @@ class EconomicForecastingEngine:
         )
         current_unemployment = 4.0  # Default
         if employment_data.get("unemployment_data", {}).get("observations"):
-            current_unemployment = employment_data["unemployment_data"]["observations"][
-                0
-            ].get("value", 4.0)
+            current_unemployment = employment_data["unemployment_data"]["observations"][0].get("value", 4.0)
 
         # Inflation data
         inflation_data = (
@@ -138,9 +127,7 @@ class EconomicForecastingEngine:
         )
         current_inflation = 2.5  # Default
         if inflation_data.get("cpi_data", {}).get("observations"):
-            current_inflation = inflation_data["cpi_data"]["observations"][0].get(
-                "value", 2.5
-            )
+            current_inflation = inflation_data["cpi_data"]["observations"][0].get("value", 2.5)
 
         # Policy rate
         policy_data = (
@@ -150,15 +137,11 @@ class EconomicForecastingEngine:
         )
         current_policy_rate = 4.5  # Default
         if policy_data.get("fed_funds_rate", {}).get("current_rate"):
-            current_policy_rate = policy_data["fed_funds_rate"]["current_rate"].get(
-                "value", 4.5
-            )
+            current_policy_rate = policy_data["fed_funds_rate"]["current_rate"].get("value", 4.5)
 
         # Recession probability
         recession_prob = (
-            discovery_data.get("economic_indicators", {})
-            .get("composite_scores", {})
-            .get("recession_probability", 0.25)
+            discovery_data.get("economic_indicators", {}).get("composite_scores", {}).get("recession_probability", 0.25)
         )
 
         return {
@@ -172,9 +155,7 @@ class EconomicForecastingEngine:
             "inflation_target": self.regional_params["inflation_target"],
         }
 
-    def _generate_scenario_forecasts(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_scenario_forecasts(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Generate base/bear/bull scenario forecasts"""
 
         current_gdp = indicators["gdp_growth"]
@@ -228,9 +209,7 @@ class EconomicForecastingEngine:
             },
         }
 
-    def _generate_base_scenario(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, List[float]]:
+    def _generate_base_scenario(self, indicators: dict[str, Any]) -> dict[str, list[float]]:
         """Generate base case quarterly forecasts"""
 
         gdp_path = []
@@ -252,9 +231,7 @@ class EconomicForecastingEngine:
         for quarter in range(self.forecast_horizon):
             # GDP: gradual convergence to trend with some volatility
             gdp_target = trend_growth
-            gdp_adjustment = (
-                gdp_target - current_gdp
-            ) * 0.15  # 15% quarterly adjustment
+            gdp_adjustment = (gdp_target - current_gdp) * 0.15  # 15% quarterly adjustment
             current_gdp += gdp_adjustment + np.random.normal(0, 0.2)
             gdp_path.append(round(current_gdp, 2))
 
@@ -263,12 +240,8 @@ class EconomicForecastingEngine:
             unemployment_adjustment = (unemployment_target - current_unemployment) * 0.1
             # GDP impact on unemployment (Okun's law approximation)
             gdp_impact = -(current_gdp - trend_growth) * 0.3
-            current_unemployment += (
-                unemployment_adjustment + gdp_impact + np.random.normal(0, 0.1)
-            )
-            current_unemployment = max(
-                2.5, min(8.5, current_unemployment)
-            )  # Dynamic bounds
+            current_unemployment += unemployment_adjustment + gdp_impact + np.random.normal(0, 0.1)
+            current_unemployment = max(2.5, min(8.5, current_unemployment))  # Dynamic bounds
             unemployment_path.append(round(current_unemployment, 2))
 
             # Inflation: gradual convergence to target with some persistence
@@ -282,9 +255,7 @@ class EconomicForecastingEngine:
             output_gap = (current_gdp - trend_growth) / trend_growth
             taylor_rate = neutral_rate + 1.5 * inflation_gap + 0.5 * output_gap
 
-            rate_adjustment = (
-                taylor_rate - current_policy_rate
-            ) * 0.2  # Gradual adjustment
+            rate_adjustment = (taylor_rate - current_policy_rate) * 0.2  # Gradual adjustment
             current_policy_rate += rate_adjustment
             current_policy_rate = max(0.0, min(8.0, current_policy_rate))  # Bounds
             policy_rate_path.append(round(current_policy_rate, 2))
@@ -296,9 +267,7 @@ class EconomicForecastingEngine:
             "policy_rate": policy_rate_path,
         }
 
-    def _generate_bear_scenario(
-        self, indicators: Dict[str, Any], recession_prob: float
-    ) -> Dict[str, List[float]]:
+    def _generate_bear_scenario(self, indicators: dict[str, Any], recession_prob: float) -> dict[str, list[float]]:
         """Generate bear case with recession scenario"""
 
         # Start with base scenario structure but apply stress
@@ -318,24 +287,19 @@ class EconomicForecastingEngine:
                 base_forecasts["unemployment_rate"],
                 base_forecasts["inflation_rate"],
                 base_forecasts["policy_rate"],
+                strict=False,
             )
         ):
             # Apply recession stress in first half of forecast
             if quarter < 4:
-                stress_factor = recession_intensity * (
-                    1 - quarter / 4.0
-                )  # Declining stress
+                stress_factor = recession_intensity * (1 - quarter / 4.0)  # Declining stress
 
                 # GDP stress: significant contraction
-                gdp_stress = gdp - stress_factor * (
-                    3.0 + gdp
-                )  # Deeper contraction for higher growth
+                gdp_stress = gdp - stress_factor * (3.0 + gdp)  # Deeper contraction for higher growth
                 gdp_path.append(round(gdp_stress, 2))
 
                 # Unemployment stress: significant rise
-                unemployment_stress = (
-                    unemployment + stress_factor * 3.0
-                )  # Up to 3pp increase
+                unemployment_stress = unemployment + stress_factor * 3.0  # Up to 3pp increase
                 unemployment_path.append(round(min(unemployment_stress, 10.0), 2))
 
                 # Inflation stress: disinflationary pressure
@@ -343,23 +307,17 @@ class EconomicForecastingEngine:
                 inflation_path.append(round(max(inflation_stress, -1.0), 2))
 
                 # Policy rate stress: aggressive accommodation
-                policy_stress = policy_rate - stress_factor * (
-                    policy_rate - 0.25
-                )  # Toward zero
+                policy_stress = policy_rate - stress_factor * (policy_rate - 0.25)  # Toward zero
                 policy_rate_path.append(round(max(policy_stress, 0.0), 2))
 
             else:
                 # Recovery phase: gradual improvement
-                recovery_factor = (
-                    (quarter - 4) / 4.0 * self.regional_params["recovery_speed"]
-                )
+                recovery_factor = (quarter - 4) / 4.0 * self.regional_params["recovery_speed"]
 
                 gdp_recovery = gdp + recovery_factor * 1.0  # Gradual recovery
                 gdp_path.append(round(gdp_recovery, 2))
 
-                unemployment_recovery = (
-                    unemployment - recovery_factor * 0.5
-                )  # Slow employment recovery
+                unemployment_recovery = unemployment - recovery_factor * 0.5  # Slow employment recovery
                 unemployment_path.append(
                     round(
                         max(
@@ -380,9 +338,7 @@ class EconomicForecastingEngine:
             "policy_rate": policy_rate_path,
         }
 
-    def _generate_bull_scenario(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, List[float]]:
+    def _generate_bull_scenario(self, indicators: dict[str, Any]) -> dict[str, list[float]]:
         """Generate bull case with accelerated growth"""
 
         # Start with base scenario and apply positive shocks
@@ -399,12 +355,11 @@ class EconomicForecastingEngine:
                 base_forecasts["unemployment_rate"],
                 base_forecasts["inflation_rate"],
                 base_forecasts["policy_rate"],
+                strict=False,
             )
         ):
             # Apply positive productivity shock
-            productivity_boost = 0.8 * (
-                1 - quarter / self.forecast_horizon
-            )  # Declining boost
+            productivity_boost = 0.8 * (1 - quarter / self.forecast_horizon)  # Declining boost
 
             # GDP boost: above-trend growth
             gdp_boost = gdp + productivity_boost
@@ -413,14 +368,10 @@ class EconomicForecastingEngine:
             # Unemployment: faster decline to natural rate
             unemployment_boost = unemployment - productivity_boost * 0.3
             natural_unemployment = self.regional_params["natural_unemployment"]
-            unemployment_path.append(
-                round(max(unemployment_boost, natural_unemployment - 1.5), 2)
-            )  # Dynamic floor
+            unemployment_path.append(round(max(unemployment_boost, natural_unemployment - 1.5), 2))  # Dynamic floor
 
             # Inflation: modest increase but contained
-            inflation_boost = (
-                inflation + productivity_boost * 0.2
-            )  # Limited passthrough
+            inflation_boost = inflation + productivity_boost * 0.2  # Limited passthrough
             inflation_path.append(round(min(inflation_boost, 4.0), 2))  # Cap at 4%
 
             # Policy rate: more gradual tightening
@@ -434,9 +385,7 @@ class EconomicForecastingEngine:
             "policy_rate": policy_rate_path,
         }
 
-    def _calculate_probabilistic_outcomes(
-        self, scenario_forecasts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_probabilistic_outcomes(self, scenario_forecasts: dict[str, Any]) -> dict[str, Any]:
         """Calculate probability-weighted outcomes and confidence intervals"""
 
         indicators = [
@@ -492,16 +441,14 @@ class EconomicForecastingEngine:
             probabilistic_outcomes[indicator] = {
                 "expected_path": weighted_path,
                 "confidence_intervals": confidence_intervals,
-                "scenario_dispersion": self._calculate_scenario_dispersion(
-                    base_path, bear_path, bull_path
-                ),
+                "scenario_dispersion": self._calculate_scenario_dispersion(base_path, bear_path, bull_path),
             }
 
         return probabilistic_outcomes
 
     def _calculate_scenario_dispersion(
-        self, base_path: List[float], bear_path: List[float], bull_path: List[float]
-    ) -> Dict[str, float]:
+        self, base_path: list[float], bear_path: list[float], bull_path: list[float]
+    ) -> dict[str, float]:
         """Calculate dispersion metrics across scenarios"""
 
         # Calculate standard deviation across scenarios for each quarter
@@ -513,14 +460,10 @@ class EconomicForecastingEngine:
         return {
             "average_std_deviation": round(np.mean(quarterly_stds), 3),
             "maximum_std_deviation": round(np.max(quarterly_stds), 3),
-            "dispersion_trend": (
-                "increasing" if quarterly_stds[-1] > quarterly_stds[0] else "decreasing"
-            ),
+            "dispersion_trend": ("increasing" if quarterly_stds[-1] > quarterly_stds[0] else "decreasing"),
         }
 
-    def _generate_forward_indicators(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_forward_indicators(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Generate forward-looking economic indicators"""
 
         current_gdp = indicators["gdp_growth"]
@@ -553,114 +496,82 @@ class EconomicForecastingEngine:
             "integrated_nowcast": {
                 "nowcast_gdp": round(current_gdp + (leading_composite - 100) * 0.02, 2),
                 "nowcast_confidence": 0.75,
-                "revision_risk": (
-                    "medium" if abs(leading_composite - 100) > 5 else "low"
-                ),
+                "revision_risk": ("medium" if abs(leading_composite - 100) > 5 else "low"),
             },
         }
 
-    def _calculate_leading_composite(self, indicators: Dict[str, Any]) -> float:
+    def _calculate_leading_composite(self, indicators: dict[str, Any]) -> float:
         """Calculate composite leading indicator"""
 
         # Simple composite based on current indicators
         gdp_component = (indicators["gdp_growth"] / indicators["trend_growth"]) * 100
-        unemployment_component = (
-            indicators["natural_unemployment"] / indicators["unemployment_rate"]
-        ) * 100
-        inflation_component = (
-            100
-            - abs(indicators["inflation_rate"] - indicators["inflation_target"]) * 10
-        )
+        unemployment_component = (indicators["natural_unemployment"] / indicators["unemployment_rate"]) * 100
+        inflation_component = 100 - abs(indicators["inflation_rate"] - indicators["inflation_target"]) * 10
 
         # Recession probability impact
         recession_impact = (1 - indicators["recession_probability"]) * 100
 
         # Weighted average
         composite = (
-            0.3 * gdp_component
-            + 0.25 * unemployment_component
-            + 0.2 * inflation_component
-            + 0.25 * recession_impact
+            0.3 * gdp_component + 0.25 * unemployment_component + 0.2 * inflation_component + 0.25 * recession_impact
         )
 
         return composite
 
-    def _project_consumer_expectations(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _project_consumer_expectations(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Project consumer expectations"""
 
         # Base consumer confidence from economic conditions
         natural_rate = indicators["natural_unemployment"]
         base_confidence = 100 - (indicators["unemployment_rate"] - natural_rate) * 5
-        base_confidence -= (
-            indicators["inflation_rate"] - indicators["inflation_target"]
-        ) * 3
+        base_confidence -= (indicators["inflation_rate"] - indicators["inflation_target"]) * 3
         base_confidence = max(40, min(base_confidence, 120))
 
         return {
             "consumer_confidence_projection": round(base_confidence, 1),
             "spending_intentions": "positive" if base_confidence > 90 else "cautious",
             "employment_expectations": (
-                "improving"
-                if indicators["unemployment_rate"] < indicators["natural_unemployment"]
-                else "stable"
+                "improving" if indicators["unemployment_rate"] < indicators["natural_unemployment"] else "stable"
             ),
             "confidence": 0.78,
         }
 
-    def _project_business_investment(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _project_business_investment(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Project business investment intentions"""
 
         # Investment based on growth expectations and financing costs
         trend_growth = indicators["trend_growth"]
         investment_index = 100 + (indicators["gdp_growth"] - trend_growth) * 10
         neutral_rate = indicators["inflation_target"] + 1.0
-        investment_index -= (
-            indicators["policy_rate"] - neutral_rate
-        ) * 5  # Cost of capital impact
+        investment_index -= (indicators["policy_rate"] - neutral_rate) * 5  # Cost of capital impact
         investment_index = max(60, min(investment_index, 140))
 
         return {
             "investment_intentions_index": round(investment_index, 1),
             "capex_outlook": "expanding" if investment_index > 100 else "cautious",
-            "financing_conditions": (
-                "favorable"
-                if indicators["policy_rate"] < neutral_rate + 1.0
-                else "restrictive"
-            ),
+            "financing_conditions": ("favorable" if indicators["policy_rate"] < neutral_rate + 1.0 else "restrictive"),
             "confidence": 0.82,
         }
 
-    def _calculate_financial_conditions_index(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_financial_conditions_index(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Calculate financial conditions index"""
 
         # Simplified financial conditions based on policy rate and growth
         neutral_rate = indicators["inflation_target"] + 1.0
         trend_growth = indicators["trend_growth"]
-        fci = (
-            100 - (indicators["policy_rate"] - neutral_rate) * 8
-        )  # Tighter conditions = lower index
-        fci += (
-            indicators["gdp_growth"] - trend_growth
-        ) * 5  # Stronger growth = easier conditions
+        fci = 100 - (indicators["policy_rate"] - neutral_rate) * 8  # Tighter conditions = lower index
+        fci += (indicators["gdp_growth"] - trend_growth) * 5  # Stronger growth = easier conditions
         fci = max(50, min(fci, 150))
 
         return {
             "financial_conditions_index": round(fci, 1),
-            "conditions_assessment": (
-                "loose" if fci > 110 else "tight" if fci < 90 else "neutral"
-            ),
+            "conditions_assessment": ("loose" if fci > 110 else "tight" if fci < 90 else "neutral"),
             "credit_availability": "ample" if fci > 105 else "limited",
             "market_stress": "low" if fci > 95 else "elevated",
             "confidence": 0.80,
         }
 
-    def _simulate_policy_impacts(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _simulate_policy_impacts(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Simulate various policy scenarios and their impacts"""
 
         # Rate cut scenario
@@ -679,29 +590,22 @@ class EconomicForecastingEngine:
             "monetary_policy_scenarios": {
                 "50bp_rate_cut": rate_cut_impact,
                 "50bp_rate_hike": rate_hike_impact,
-                "policy_effectiveness": (
-                    "high" if indicators["policy_rate"] > 2.0 else "limited"
-                ),
+                "policy_effectiveness": ("high" if indicators["policy_rate"] > 2.0 else "limited"),
             },
             "fiscal_policy_scenarios": fiscal_stimulus,
             "trade_policy_scenarios": trade_impact,
             "policy_coordination": {
                 "monetary_fiscal_alignment": (
                     "supportive"
-                    if indicators["inflation_rate"]
-                    < indicators["inflation_target"] + 1.0
+                    if indicators["inflation_rate"] < indicators["inflation_target"] + 1.0
                     else "conflicted"
                 ),
                 "international_coordination": "limited",
-                "policy_uncertainty_index": round(
-                    50 + indicators["recession_probability"] * 100, 0
-                ),
+                "policy_uncertainty_index": round(50 + indicators["recession_probability"] * 100, 0),
             },
         }
 
-    def _simulate_rate_change(
-        self, indicators: Dict[str, Any], rate_change: float
-    ) -> Dict[str, Any]:
+    def _simulate_rate_change(self, indicators: dict[str, Any], rate_change: float) -> dict[str, Any]:
         """Simulate impact of interest rate changes"""
 
         # GDP impact (with lag)
@@ -727,9 +631,7 @@ class EconomicForecastingEngine:
             "peak_impact_quarters": 4,
         }
 
-    def _simulate_fiscal_policy(
-        self, indicators: Dict[str, Any], stimulus: bool = True
-    ) -> Dict[str, Any]:
+    def _simulate_fiscal_policy(self, indicators: dict[str, Any], stimulus: bool = True) -> dict[str, Any]:
         """Simulate fiscal policy impacts"""
 
         multiplier = 1.5 if stimulus else -1.2  # Stimulus vs austerity multiplier
@@ -753,7 +655,7 @@ class EconomicForecastingEngine:
             "sustainability_risk": "medium" if abs(fiscal_impulse) > 2.0 else "low",
         }
 
-    def _simulate_trade_policy(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _simulate_trade_policy(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Simulate trade policy impacts"""
 
         # Assume trade tensions increase costs and reduce growth
@@ -772,9 +674,7 @@ class EconomicForecastingEngine:
             "competitiveness_impact": "negative",
         }
 
-    def _calculate_forecast_confidence(
-        self, indicators: Dict[str, Any], scenario_forecasts: Dict[str, Any]
-    ) -> float:
+    def _calculate_forecast_confidence(self, indicators: dict[str, Any], scenario_forecasts: dict[str, Any]) -> float:
         """Calculate overall forecast confidence"""
 
         confidence_factors = []
@@ -808,10 +708,10 @@ class EconomicForecastingEngine:
 
     def _create_forecast_summary(
         self,
-        scenario_forecasts: Dict[str, Any],
-        probabilistic_outcomes: Dict[str, Any],
-        forward_indicators: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        scenario_forecasts: dict[str, Any],
+        probabilistic_outcomes: dict[str, Any],
+        forward_indicators: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create integrated forecast summary"""
 
         # Extract key forecasts
@@ -825,19 +725,9 @@ class EconomicForecastingEngine:
 
         return {
             "growth_trajectory": {
-                "current_quarter_forecast": (
-                    expected_gdp_path[current_quarter] if expected_gdp_path else 2.0
-                ),
-                "one_year_forecast": (
-                    expected_gdp_path[one_year]
-                    if len(expected_gdp_path) > one_year
-                    else 2.0
-                ),
-                "two_year_forecast": (
-                    expected_gdp_path[two_year]
-                    if len(expected_gdp_path) > two_year
-                    else 2.0
-                ),
+                "current_quarter_forecast": (expected_gdp_path[current_quarter] if expected_gdp_path else 2.0),
+                "one_year_forecast": (expected_gdp_path[one_year] if len(expected_gdp_path) > one_year else 2.0),
+                "two_year_forecast": (expected_gdp_path[two_year] if len(expected_gdp_path) > two_year else 2.0),
                 "average_growth_forecast": round(np.mean(expected_gdp_path), 2),
             },
             "key_themes": [
@@ -880,13 +770,9 @@ def validate_forecasting_engine():
         "cli_comprehensive_analysis": {
             "central_bank_economic_data": {
                 "gdp_data": {"observations": [{"value": 2.5}]},
-                "employment_data": {
-                    "unemployment_data": {"observations": [{"value": 4.2}]}
-                },
+                "employment_data": {"unemployment_data": {"observations": [{"value": 4.2}]}},
                 "inflation_data": {"cpi_data": {"observations": [{"value": 2.8}]}},
-                "monetary_policy_data": {
-                    "fed_funds_rate": {"current_rate": {"value": 4.5}}
-                },
+                "monetary_policy_data": {"fed_funds_rate": {"current_rate": {"value": 4.5}}},
             }
         },
         "economic_indicators": {"composite_scores": {"recession_probability": 0.25}},

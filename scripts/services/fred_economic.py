@@ -13,7 +13,8 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 from base_financial_service import (
@@ -22,6 +23,7 @@ from base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -82,7 +84,7 @@ class FREDEconomicService(BaseFinancialService):
             },
         }
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate FRED response data"""
 
         if not isinstance(data, dict):
@@ -98,9 +100,7 @@ class FREDEconomicService(BaseFinancialService):
 
         return data
 
-    def _make_request_with_retry(
-        self, endpoint: str, params: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def _make_request_with_retry(self, endpoint: str, params: dict[str, Any] = None) -> dict[str, Any]:
         """Override to use 'api_key' parameter instead of 'apikey' for FRED API"""
         if params is None:
             params = {}
@@ -122,9 +122,7 @@ class FREDEconomicService(BaseFinancialService):
 
         return result
 
-    def get_series_data(
-        self, series_id: str, start_date: str = None, end_date: str = None
-    ) -> Dict[str, Any]:
+    def get_series_data(self, series_id: str, start_date: str = None, end_date: str = None) -> dict[str, Any]:
         """
         Get time series data for a specific FRED series
 
@@ -158,7 +156,7 @@ class FREDEconomicService(BaseFinancialService):
 
         return result
 
-    def get_series_info(self, series_id: str) -> Dict[str, Any]:
+    def get_series_info(self, series_id: str) -> dict[str, Any]:
         """
         Get series information and metadata
 
@@ -183,7 +181,7 @@ class FREDEconomicService(BaseFinancialService):
 
         return result
 
-    def search_series(self, search_text: str, limit: int = 10) -> Dict[str, Any]:
+    def search_series(self, search_text: str, limit: int = 10) -> dict[str, Any]:
         """
         Search for FRED series by text
 
@@ -210,9 +208,7 @@ class FREDEconomicService(BaseFinancialService):
 
         return result
 
-    def get_economic_indicator(
-        self, series_id: str, date_range: str = "1y"
-    ) -> Dict[str, Any]:
+    def get_economic_indicator(self, series_id: str, date_range: str = "1y") -> dict[str, Any]:
         """
         Get economic indicator data for specified period with analysis
 
@@ -240,17 +236,13 @@ class FREDEconomicService(BaseFinancialService):
             start_date = end_date - timedelta(days=365)
 
         # Get series data and info
-        data = self.get_series_data(
-            series_id, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
-        )
+        data = self.get_series_data(series_id, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
         series_info = self.get_series_info(series_id)
 
         # Process observations for analysis
         observations = data.get("observations", [])
-        valid_observations = [
-            obs for obs in observations if obs.get("value") and obs["value"] != "."
-        ]
+        valid_observations = [obs for obs in observations if obs.get("value") and obs["value"] != "."]
 
         # Calculate statistics
         statistics = {"trend": "no_data"}
@@ -271,13 +263,7 @@ class FREDEconomicService(BaseFinancialService):
                 sum_x2 = sum(x[i] ** 2 for i in range(n))
 
                 slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x**2)
-                trend = (
-                    "increasing"
-                    if slope > 0
-                    else "decreasing"
-                    if slope < 0
-                    else "stable"
-                )
+                trend = "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
             else:
                 trend = "insufficient_data"
 
@@ -302,9 +288,7 @@ class FREDEconomicService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_sector_indicators(
-        self, sector: str, indicators: str = ""
-    ) -> Dict[str, Any]:
+    def get_sector_indicators(self, sector: str, indicators: str = "") -> dict[str, Any]:
         """
         Get economic indicators relevant to a specific sector
 
@@ -358,9 +342,7 @@ class FREDEconomicService(BaseFinancialService):
         sector_lower = sector.lower()
         if sector_lower not in sector_indicators:
             available_sectors = list(sector_indicators.keys())
-            raise ValidationError(
-                f"Sector '{sector}' not supported. Available: {available_sectors}"
-            )
+            raise ValidationError(f"Sector '{sector}' not supported. Available: {available_sectors}")
 
         # Get indicator data
         sector_data = {}
@@ -369,9 +351,7 @@ class FREDEconomicService(BaseFinancialService):
         # Filter indicators if specified
         if indicators:
             requested_indicators = [i.strip() for i in indicators.split(",")]
-            target_indicators = {
-                k: v for k, v in target_indicators.items() if k in requested_indicators
-            }
+            target_indicators = {k: v for k, v in target_indicators.items() if k in requested_indicators}
 
         for indicator_name, series_id in target_indicators.items():
             try:
@@ -383,11 +363,7 @@ class FREDEconomicService(BaseFinancialService):
                 )
 
                 observations = data.get("observations", [])
-                valid_observations = [
-                    obs
-                    for obs in observations
-                    if obs.get("value") and obs["value"] != "."
-                ]
+                valid_observations = [obs for obs in observations if obs.get("value") and obs["value"] != "."]
 
                 if valid_observations:
                     latest_value = float(valid_observations[-1]["value"])
@@ -405,14 +381,12 @@ class FREDEconomicService(BaseFinancialService):
             "sector": sector,
             "indicators": sector_data,
             "total_indicators": len(target_indicators),
-            "successful_indicators": len(
-                [v for v in sector_data.values() if "error" not in v]
-            ),
+            "successful_indicators": len([v for v in sector_data.values() if "error" not in v]),
             "data_source": "FRED",
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_inflation_data(self, period: str = "1y") -> Dict[str, Any]:
+    def get_inflation_data(self, period: str = "1y") -> dict[str, Any]:
         """
         Get comprehensive inflation data from multiple measures
 
@@ -448,11 +422,7 @@ class FREDEconomicService(BaseFinancialService):
                 )
 
                 observations = data.get("observations", [])
-                valid_observations = [
-                    obs
-                    for obs in observations
-                    if obs.get("value") and obs["value"] != "."
-                ]
+                valid_observations = [obs for obs in observations if obs.get("value") and obs["value"] != "."]
 
                 if valid_observations:
                     values = [float(obs["value"]) for obs in valid_observations]
@@ -469,9 +439,7 @@ class FREDEconomicService(BaseFinancialService):
                         "latest_date": valid_observations[-1]["date"],
                         "yoy_change": round(yoy_change, 2) if yoy_change else None,
                         "recent_trend": (
-                            "increasing"
-                            if len(values) >= 3 and values[-1] > values[-3]
-                            else "decreasing"
+                            "increasing" if len(values) >= 3 and values[-1] > values[-3] else "decreasing"
                         ),
                     }
 
@@ -491,9 +459,7 @@ class FREDEconomicService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_interest_rates(
-        self, rate_type: str = "all", period: str = "1y"
-    ) -> Dict[str, Any]:
+    def get_interest_rates(self, rate_type: str = "all", period: str = "1y") -> dict[str, Any]:
         """
         Get interest rate data
 
@@ -512,9 +478,7 @@ class FREDEconomicService(BaseFinancialService):
             rate_series = {rate_type: rate_series[rate_type]}
         elif rate_type != "all":
             available_types = list(rate_series.keys())
-            raise ValidationError(
-                f"Rate type '{rate_type}' not supported. Available: {available_types}"
-            )
+            raise ValidationError(f"Rate type '{rate_type}' not supported. Available: {available_types}")
 
         # Calculate date range
         end_date = datetime.now()
@@ -539,11 +503,7 @@ class FREDEconomicService(BaseFinancialService):
                 )
 
                 observations = data.get("observations", [])
-                valid_observations = [
-                    obs
-                    for obs in observations
-                    if obs.get("value") and obs["value"] != "."
-                ]
+                valid_observations = [obs for obs in observations if obs.get("value") and obs["value"] != "."]
 
                 if valid_observations:
                     values = [float(obs["value"]) for obs in valid_observations]
@@ -577,7 +537,7 @@ class FREDEconomicService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_available_indicators(self) -> Dict[str, Any]:
+    def get_available_indicators(self) -> dict[str, Any]:
         """Get available economic indicators organized by category"""
         return {
             "available_indicators": self.indicators,
@@ -587,7 +547,7 @@ class FREDEconomicService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with Federal Funds Rate

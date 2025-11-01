@@ -10,9 +10,10 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -20,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import base script and registry
 try:
     from base_script import BaseScript
-
     from script_registry import ScriptConfig, twitter_script
 
     REGISTRY_AVAILABLE = True
@@ -35,7 +35,7 @@ class IndustryAnalysis:
     def __init__(
         self,
         industry: str,
-        discovery_file: Optional[str] = None,
+        discovery_file: str | None = None,
         output_dir: str = "./data/outputs/industry_analysis/analysis",
     ):
         """
@@ -61,19 +61,19 @@ class IndustryAnalysis:
         self.risk_matrix = {}
         self.economic_analysis = {}
 
-    def _load_discovery_data(self) -> Optional[Dict[str, Any]]:
+    def _load_discovery_data(self) -> dict[str, Any] | None:
         """Load discovery phase data"""
         if self.discovery_file and os.path.exists(self.discovery_file):
             try:
-                with open(self.discovery_file, "r") as f:
+                with open(self.discovery_file) as f:
                     data = json.load(f)
                 print("✅ Loaded discovery data from: {self.discovery_file}")
                 return data
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load discovery data: {e}")
         return None
 
-    def analyze_industry_structure(self) -> Dict[str, Any]:
+    def analyze_industry_structure(self) -> dict[str, Any]:
         """Analyze industry structure and competitive dynamics"""
         structure = {
             "competitive_landscape": self._analyze_competitive_landscape(),
@@ -86,7 +86,7 @@ class IndustryAnalysis:
         self.structure_scorecard = structure
         return structure
 
-    def _analyze_competitive_landscape(self) -> Dict[str, Any]:
+    def _analyze_competitive_landscape(self) -> dict[str, Any]:
         """Analyze competitive landscape"""
         # Extract company data from discovery if available
         companies = []
@@ -107,14 +107,12 @@ class IndustryAnalysis:
             "confidence": 9.3,
         }
 
-    def _analyze_innovation_leadership(self) -> Dict[str, Any]:
+    def _analyze_innovation_leadership(self) -> dict[str, Any]:
         """Analyze innovation and R&D dynamics"""
         # Extract technology trends from discovery
         tech_trends = {}
         if self.discovery_data:
-            tech_trends = self.discovery_data.get("trend_analysis", {}).get(
-                "technology_trends", {}
-            )
+            tech_trends = self.discovery_data.get("trend_analysis", {}).get("technology_trends", {})
 
         rd_intensity = self._calculate_rd_intensity()
         innovation_score = self._calculate_innovation_score(tech_trends)
@@ -130,7 +128,7 @@ class IndustryAnalysis:
             "confidence": 9.0,
         }
 
-    def _analyze_value_chain(self) -> Dict[str, Any]:
+    def _analyze_value_chain(self) -> dict[str, Any]:
         """Analyze industry value chain and monetization"""
         return {
             "grade": "B+",
@@ -143,14 +141,12 @@ class IndustryAnalysis:
             "confidence": 9.1,
         }
 
-    def _analyze_market_dynamics(self) -> Dict[str, Any]:
+    def _analyze_market_dynamics(self) -> dict[str, Any]:
         """Analyze market dynamics and growth drivers"""
         # Extract market trends from discovery
         market_trends = {}
         if self.discovery_data:
-            market_trends = self.discovery_data.get("trend_analysis", {}).get(
-                "market_trends", {}
-            )
+            market_trends = self.discovery_data.get("trend_analysis", {}).get("market_trends", {})
 
         return {
             "market_size": self._estimate_market_size(),
@@ -162,7 +158,7 @@ class IndustryAnalysis:
             "confidence": 9.2,
         }
 
-    def _analyze_entry_barriers(self) -> Dict[str, Any]:
+    def _analyze_entry_barriers(self) -> dict[str, Any]:
         """Analyze barriers to entry"""
         return {
             "capital_requirements": self._assess_capital_barriers(),
@@ -174,7 +170,7 @@ class IndustryAnalysis:
             "confidence": 9.0,
         }
 
-    def analyze_competitive_moats(self) -> List[Dict[str, Any]]:
+    def analyze_competitive_moats(self) -> list[dict[str, Any]]:
         """Analyze and quantify competitive moats"""
         moats = []
 
@@ -184,8 +180,7 @@ class IndustryAnalysis:
             {
                 "moat_category": "Network Effects",
                 "strength": network_strength,
-                "durability": network_strength
-                - 0.5,  # Slightly less durable than strong
+                "durability": network_strength - 0.5,  # Slightly less durable than strong
                 "evidence": self._get_network_effect_evidence(),
                 "assessment": "Strengthening with AI personalization",
                 "economic_resilience": "High",
@@ -238,7 +233,7 @@ class IndustryAnalysis:
         }
         return moats
 
-    def identify_growth_catalysts(self) -> List[Dict[str, Any]]:
+    def identify_growth_catalysts(self) -> list[dict[str, Any]]:
         """Identify and quantify industry growth catalysts"""
         catalysts = []
 
@@ -302,7 +297,7 @@ class IndustryAnalysis:
         self.growth_catalysts = catalysts
         return catalysts
 
-    def develop_risk_matrix(self) -> Dict[str, Dict[str, Any]]:
+    def develop_risk_matrix(self) -> dict[str, dict[str, Any]]:
         """Develop comprehensive risk assessment matrix"""
         risk_matrix = {
             "regulatory_risks": self._assess_regulatory_risks(),
@@ -313,15 +308,13 @@ class IndustryAnalysis:
         }
 
         # Calculate aggregate risk metrics
-        risk_matrix["aggregate_risk_score"] = self._calculate_aggregate_risk_score(
-            risk_matrix
-        )
+        risk_matrix["aggregate_risk_score"] = self._calculate_aggregate_risk_score(risk_matrix)
         risk_matrix["risk_assessment"] = self._generate_risk_assessment(risk_matrix)
 
         self.risk_matrix = risk_matrix
         return risk_matrix
 
-    def _assess_regulatory_risks(self) -> Dict[str, Any]:
+    def _assess_regulatory_risks(self) -> dict[str, Any]:
         """Assess regulatory risks"""
         risks = {}
 
@@ -347,7 +340,7 @@ class IndustryAnalysis:
 
         return risks
 
-    def _assess_competitive_risks(self) -> Dict[str, Any]:
+    def _assess_competitive_risks(self) -> dict[str, Any]:
         """Assess competitive risks"""
         risks = {}
 
@@ -374,7 +367,7 @@ class IndustryAnalysis:
 
         return risks
 
-    def _assess_economic_risks(self) -> Dict[str, Any]:
+    def _assess_economic_risks(self) -> dict[str, Any]:
         """Assess economic and cyclical risks"""
         risks = {}
 
@@ -400,7 +393,7 @@ class IndustryAnalysis:
 
         return risks
 
-    def _assess_technology_risks(self) -> Dict[str, Any]:
+    def _assess_technology_risks(self) -> dict[str, Any]:
         """Assess technology and obsolescence risks"""
         risks = {}
 
@@ -425,7 +418,7 @@ class IndustryAnalysis:
 
         return risks
 
-    def _assess_operational_risks(self) -> Dict[str, Any]:
+    def _assess_operational_risks(self) -> dict[str, Any]:
         """Assess operational and execution risks"""
         return {
             "scalability_challenges": {
@@ -444,7 +437,7 @@ class IndustryAnalysis:
             },
         }
 
-    def analyze_economic_sensitivity(self) -> Dict[str, Any]:
+    def analyze_economic_sensitivity(self) -> dict[str, Any]:
         """Analyze industry sensitivity to economic factors"""
         # Load economic indicators from discovery
         economic_data = {}
@@ -465,7 +458,7 @@ class IndustryAnalysis:
         self.economic_analysis = sensitivity
         return sensitivity
 
-    def generate_stress_test_scenarios(self) -> List[Dict[str, Any]]:
+    def generate_stress_test_scenarios(self) -> list[dict[str, Any]]:
         """Generate stress test scenarios for the industry"""
         scenarios = []
 
@@ -531,9 +524,7 @@ class IndustryAnalysis:
 
         # Structure analysis completeness
         if self.structure_scorecard:
-            structure_confidence = self.structure_scorecard.get(
-                "structure_confidence", 9.0
-            )
+            structure_confidence = self.structure_scorecard.get("structure_confidence", 9.0)
             confidence_factors.append(structure_confidence)
 
         # Moat analysis quality
@@ -553,7 +544,7 @@ class IndustryAnalysis:
             return round(np.mean(confidence_factors), 1)
         return 9.0
 
-    def generate_analysis_output(self) -> Dict[str, Any]:
+    def generate_analysis_output(self) -> dict[str, Any]:
         """Generate comprehensive analysis phase output"""
         analysis_data = {
             "metadata": {
@@ -575,15 +566,13 @@ class IndustryAnalysis:
                 "structure_assessment_complete": True,
                 "moat_analysis_depth": len(self.moat_analysis.get("moats", [])),
                 "catalyst_identification_count": len(self.growth_catalysts),
-                "risk_categories_covered": len(
-                    [k for k in self.risk_matrix.keys() if "_risks" in k]
-                ),
+                "risk_categories_covered": len([k for k in self.risk_matrix.keys() if "_risks" in k]),
                 "economic_integration": bool(self.economic_analysis),
             },
         }
         return analysis_data
 
-    def save_analysis_output(self, data: Dict[str, Any]) -> str:
+    def save_analysis_output(self, data: dict[str, Any]) -> str:
         """Save analysis output to file"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -597,7 +586,7 @@ class IndustryAnalysis:
         return filepath
 
     # Helper methods for competitive landscape
-    def _calculate_market_concentration(self, companies: List[Dict]) -> float:
+    def _calculate_market_concentration(self, companies: list[dict]) -> float:
         """Calculate market concentration (placeholder)"""
         # In reality, would calculate HHI or CR5
         return 0.68  # 68% top 5 concentration
@@ -606,23 +595,21 @@ class IndustryAnalysis:
         """Grade competitive landscape based on concentration"""
         if concentration < 0.5:
             return "A"
-        elif concentration < 0.7:
+        if concentration < 0.7:
             return "B+"
-        elif concentration < 0.8:
+        if concentration < 0.8:
             return "B"
-        else:
-            return "C+"
+        return "C+"
 
     def _assess_competitive_structure(self, concentration: float) -> str:
         """Assess competitive structure"""
         if concentration < 0.5:
             return "Highly competitive with fragmented market"
-        elif concentration < 0.7:
+        if concentration < 0.7:
             return "Oligopoly with competitive fringe"
-        elif concentration < 0.8:
+        if concentration < 0.8:
             return "Concentrated oligopoly"
-        else:
-            return "Highly concentrated market"
+        return "Highly concentrated market"
 
     def _assess_competitive_intensity(self) -> str:
         """Assess competitive intensity"""
@@ -632,10 +619,9 @@ class IndustryAnalysis:
         """Assess pricing power based on concentration"""
         if concentration > 0.7:
             return "Strong pricing power"
-        elif concentration > 0.5:
+        if concentration > 0.5:
             return "Moderate pricing power"
-        else:
-            return "Limited pricing power"
+        return "Limited pricing power"
 
     # Helper methods for innovation analysis
     def _calculate_rd_intensity(self) -> float:
@@ -649,7 +635,7 @@ class IndustryAnalysis:
         }
         return rd_map.get(self.industry, 10.0)
 
-    def _calculate_innovation_score(self, tech_trends: Dict) -> float:
+    def _calculate_innovation_score(self, tech_trends: dict) -> float:
         """Calculate innovation score based on technology trends"""
         if not tech_trends:
             return 7.0
@@ -667,25 +653,23 @@ class IndustryAnalysis:
         """Grade innovation leadership"""
         if score >= 9.0:
             return "A"
-        elif score >= 8.0:
+        if score >= 8.0:
             return "A-"
-        elif score >= 7.0:
+        if score >= 7.0:
             return "B+"
-        else:
-            return "B"
+        return "B"
 
     def _assess_innovation_leadership(self, score: float) -> str:
         """Assess innovation leadership"""
         if score >= 9.0:
             return "Industry innovation leader with breakthrough capabilities"
-        elif score >= 8.0:
+        if score >= 8.0:
             return "Strong innovation with competitive differentiation"
-        elif score >= 7.0:
+        if score >= 7.0:
             return "Solid innovation keeping pace with industry"
-        else:
-            return "Moderate innovation with improvement needed"
+        return "Moderate innovation with improvement needed"
 
-    def _assess_technology_adoption(self, tech_trends: Dict) -> Dict[str, Any]:
+    def _assess_technology_adoption(self, tech_trends: dict) -> dict[str, Any]:
         """Assess technology adoption patterns"""
         return {
             "ai_ml_adoption": "High" if "ai" in str(tech_trends).lower() else "Medium",
@@ -698,11 +682,11 @@ class IndustryAnalysis:
         """Assess value chain efficiency"""
         return "Geographic risks managed through regionalization"
 
-    def _identify_monetization_models(self) -> List[str]:
+    def _identify_monetization_models(self) -> list[str]:
         """Identify monetization models"""
         return ["subscription", "advertising", "transaction_fees", "data_licensing"]
 
-    def _analyze_margin_structure(self) -> Dict[str, float]:
+    def _analyze_margin_structure(self) -> dict[str, float]:
         """Analyze margin structure"""
         return {
             "gross_margin": 65.0,
@@ -742,7 +726,7 @@ class IndustryAnalysis:
             return "Highly cyclical"
         return "Moderate cyclicality"
 
-    def _identify_demand_drivers(self) -> List[str]:
+    def _identify_demand_drivers(self) -> list[str]:
         """Identify demand drivers"""
         return [
             "digital_transformation",
@@ -750,7 +734,7 @@ class IndustryAnalysis:
             "technology_advancement",
         ]
 
-    def _analyze_supply_dynamics(self) -> Dict[str, Any]:
+    def _analyze_supply_dynamics(self) -> dict[str, Any]:
         """Analyze supply dynamics"""
         return {
             "capacity_utilization": "High",
@@ -837,7 +821,7 @@ class IndustryAnalysis:
         """Get technology moat evidence"""
         return "Patent portfolio, R&D leadership, technical standards"
 
-    def _calculate_aggregate_moat_strength(self, moats: List[Dict]) -> float:
+    def _calculate_aggregate_moat_strength(self, moats: list[dict]) -> float:
         """Calculate aggregate moat strength"""
         if not moats:
             return 5.0
@@ -874,7 +858,7 @@ class IndustryAnalysis:
         """Get geographic expansion evidence"""
         return "Emerging markets represent 60% of global population"
 
-    def _assess_regulatory_catalyst(self) -> Dict[str, Any]:
+    def _assess_regulatory_catalyst(self) -> dict[str, Any]:
         """Assess if regulation could be a positive catalyst"""
         # Some regulations create opportunities
         if self.industry in ["renewable_energy", "electric_vehicles"]:
@@ -908,7 +892,7 @@ class IndustryAnalysis:
         """Calculate probability of market disruption"""
         if self.industry in ["traditional_retail", "legacy_media"]:
             return 0.7
-        elif self.industry in ["software_infrastructure", "semiconductors"]:
+        if self.industry in ["software_infrastructure", "semiconductors"]:
             return 0.3
         return 0.5
 
@@ -932,7 +916,7 @@ class IndustryAnalysis:
             "internet_content_and_information",
         ]
 
-    def _calculate_aggregate_risk_score(self, risk_matrix: Dict) -> float:
+    def _calculate_aggregate_risk_score(self, risk_matrix: dict) -> float:
         """Calculate aggregate risk score"""
         all_scores = []
         for category, risks in risk_matrix.items():
@@ -943,17 +927,16 @@ class IndustryAnalysis:
 
         return round(np.mean(all_scores) if all_scores else 2.5, 1)
 
-    def _generate_risk_assessment(self, risk_matrix: Dict) -> str:
+    def _generate_risk_assessment(self, risk_matrix: dict) -> str:
         """Generate overall risk assessment"""
         score = risk_matrix.get("aggregate_risk_score", 2.5)
         if score < 2.0:
             return "Low risk with strong mitigation strategies"
-        elif score < 3.0:
+        if score < 3.0:
             return "Moderate risk with manageable mitigation strategies"
-        elif score < 4.0:
+        if score < 4.0:
             return "Elevated risk requiring active management"
-        else:
-            return "High risk requiring comprehensive risk management"
+        return "High risk requiring comprehensive risk management"
 
     # Economic sensitivity helpers
     def _calculate_gdp_correlation(self) -> float:
@@ -967,7 +950,7 @@ class IndustryAnalysis:
         """Calculate interest rate sensitivity"""
         if self.industry in ["real_estate", "financials"]:
             return "High"
-        elif self.industry in ["consumer_durables", "automotive"]:
+        if self.industry in ["consumer_durables", "automotive"]:
             return "Medium-High"
         return "Medium"
 
@@ -991,7 +974,7 @@ class IndustryAnalysis:
         """Determine position in economic cycle"""
         return "Mid-to-late cycle"
 
-    def _identify_policy_implications(self) -> List[str]:
+    def _identify_policy_implications(self) -> list[str]:
         """Identify policy implications"""
         return [
             "Monetary policy impacts valuation multiples",
@@ -1023,7 +1006,7 @@ if REGISTRY_AVAILABLE:
     class IndustryAnalysisScript(BaseScript):
         """Registry-integrated industry analysis script"""
 
-        def execute(self, **kwargs) -> Dict[str, Any]:
+        def execute(self, **kwargs) -> dict[str, Any]:
             """Execute industry analysis workflow"""
             industry = kwargs.get("industry", "software_infrastructure")
             discovery_file = kwargs.get("discovery_file")
@@ -1032,9 +1015,7 @@ if REGISTRY_AVAILABLE:
             if not discovery_file:
                 discovery_dir = "./data/outputs/industry_analysis/discovery"
                 date_str = datetime.now().strftime("%Y%m%d")
-                discovery_file = os.path.join(
-                    discovery_dir, f"{industry}_{date_str}_discovery.json"
-                )
+                discovery_file = os.path.join(discovery_dir, f"{industry}_{date_str}_discovery.json")
 
             analysis = IndustryAnalysis(
                 industry=industry,
@@ -1089,9 +1070,7 @@ def main():
     if not args.discovery_file:
         discovery_dir = "./data/outputs/industry_analysis/discovery"
         date_str = datetime.now().strftime("%Y%m%d")
-        args.discovery_file = os.path.join(
-            discovery_dir, f"{args.industry}_{date_str}_discovery.json"
-        )
+        args.discovery_file = os.path.join(discovery_dir, f"{args.industry}_{date_str}_discovery.json")
 
     # Initialize and run analysis
     analysis = IndustryAnalysis(

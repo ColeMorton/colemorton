@@ -12,16 +12,17 @@ Adds comprehensive market context data to existing discovery outputs including:
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_market_context_data() -> Dict[str, Any]:
+def get_market_context_data() -> dict[str, Any]:
     """Get comprehensive market context data"""
     market_context = {
         "benchmark_data": {
@@ -67,7 +68,7 @@ def get_market_context_data() -> Dict[str, Any]:
     return market_context
 
 
-def get_cli_service_validation() -> Dict[str, Any]:
+def get_cli_service_validation() -> dict[str, Any]:
     """Get CLI service health validation"""
     cli_validation = {
         "service_health": "comprehensive_health_check_all_services",
@@ -84,7 +85,7 @@ def get_cli_service_validation() -> Dict[str, Any]:
     return cli_validation
 
 
-def get_enhanced_research_data() -> Dict[str, Any]:
+def get_enhanced_research_data() -> dict[str, Any]:
     """Get enhanced research and economic context"""
     research_data = {
         "economic_calendar": {
@@ -122,7 +123,7 @@ def enhance_discovery_output(discovery_file_path: Path) -> bool:
     """
     try:
         # Load existing discovery data
-        with open(discovery_file_path, "r") as f:
+        with open(discovery_file_path) as f:
             discovery_data = json.load(f)
 
         logger.info(f"Loaded existing discovery data from {discovery_file_path}")
@@ -183,42 +184,28 @@ def enhance_discovery_output(discovery_file_path: Path) -> bool:
         new_confidence = min(0.95, original_confidence + market_context_boost)
 
         discovery_data["discovery_metadata"]["confidence_score"] = new_confidence
-        discovery_data["discovery_metadata"]["enhanced_timestamp"] = datetime.now(
-            timezone.utc
-        ).isoformat()
-        discovery_data["discovery_metadata"][
-            "enhancement_version"
-        ] = "DASV_Phase_1_Enhanced_Market_Context"
+        discovery_data["discovery_metadata"]["enhanced_timestamp"] = datetime.now(UTC).isoformat()
+        discovery_data["discovery_metadata"]["enhancement_version"] = "DASV_Phase_1_Enhanced_Market_Context"
 
         # Update data quality assessment
         if "data_quality_assessment" in discovery_data:
-            discovery_data["data_quality_assessment"][
-                "overall_confidence"
-            ] = new_confidence
-            discovery_data["data_quality_assessment"][
-                "market_context_confidence"
-            ] = 0.88
-            discovery_data["data_quality_assessment"][
-                "cli_integration_confidence"
-            ] = 0.90
+            discovery_data["data_quality_assessment"]["overall_confidence"] = new_confidence
+            discovery_data["data_quality_assessment"]["market_context_confidence"] = 0.88
+            discovery_data["data_quality_assessment"]["cli_integration_confidence"] = 0.90
 
         # Ensure next phase readiness
         if "next_phase_inputs" in discovery_data:
             discovery_data["next_phase_inputs"]["market_context_available"] = True
             discovery_data["next_phase_inputs"]["cli_services_operational"] = True
             discovery_data["next_phase_inputs"]["economic_context_integrated"] = True
-            discovery_data["next_phase_inputs"]["enhanced_confidence_met"] = (
-                new_confidence >= 0.85
-            )
+            discovery_data["next_phase_inputs"]["enhanced_confidence_met"] = new_confidence >= 0.85
 
         # Save enhanced discovery data
         with open(discovery_file_path, "w") as f:
             json.dump(discovery_data, f, indent=2)
 
         logger.info(f"Enhanced discovery output saved to {discovery_file_path}")
-        logger.info(
-            f"Confidence improved from {original_confidence:.3f} to {new_confidence:.3f}"
-        )
+        logger.info(f"Confidence improved from {original_confidence:.3f} to {new_confidence:.3f}")
 
         return True
 

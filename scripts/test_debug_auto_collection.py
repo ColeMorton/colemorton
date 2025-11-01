@@ -10,10 +10,9 @@ import sys
 import time
 from pathlib import Path
 
+
 # Set up detailed logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -53,7 +52,6 @@ def test_with_debug():
             print("   ✅ API call successful for: {result.get('symbol', 'N/A')}")
 
             # Check if data type detection worked
-            from services.base_financial_service import DataType
 
             detected_type = service._detect_data_type("stock_info_AMD", result)
             print("   🔍 Detected data type: {detected_type}")
@@ -64,9 +62,7 @@ def test_with_debug():
 
             # Check if collection should be triggered
             if detected_type:
-                should_trigger = service._should_trigger_comprehensive_collection(
-                    symbol or "AMD", detected_type
-                )
+                should_trigger = service._should_trigger_comprehensive_collection(symbol or "AMD", detected_type)
                 print("   🔍 Should trigger collection: {should_trigger}")
 
             # Wait and check for collection activity
@@ -81,7 +77,7 @@ def test_with_debug():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Debug test failed: {e}")
         import traceback
 
@@ -151,9 +147,7 @@ def test_synchronous_collection():
             print("   ✅ API call completed: {result.get('symbol', 'N/A')}")
 
             # Count files after (should be immediate with sync collection)
-            files_after = (
-                len(list(data_path.rglob("*.json"))) if data_path.exists() else 0
-            )
+            files_after = len(list(data_path.rglob("*.json"))) if data_path.exists() else 0
             print("   📁 Files after: {files_after}")
 
             new_files = files_after - files_before
@@ -165,22 +159,18 @@ def test_synchronous_collection():
                 # Show what was created
                 if data_path.exists():
                     for file_path in data_path.rglob("*.json"):
-                        if (
-                            file_path.stat().st_mtime > time.time() - 5
-                        ):  # Modified in last 5 seconds
+                        if file_path.stat().st_mtime > time.time() - 5:  # Modified in last 5 seconds
                             rel_path = file_path.relative_to(data_path)
                             size = file_path.stat().st_size
                             print("      📄 {rel_path} ({size} bytes)")
 
                 return True
-            else:
-                print("   ⚠️  No files created with synchronous collection")
-                return False
-        else:
-            print("   ❌ API call failed")
+            print("   ⚠️  No files created with synchronous collection")
             return False
+        print("   ❌ API call failed")
+        return False
 
-    except Exception as e:
+    except Exception:
         print("❌ Synchronous test failed: {e}")
         import traceback
 

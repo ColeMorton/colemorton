@@ -6,7 +6,6 @@ Demonstrates real CLI commands that trigger file creation in ./data/raw/
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -16,9 +15,7 @@ def run_command(cmd, description):
     print("   Command: {' '.join(cmd)}")
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=Path(__file__).parent
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent)
 
         if result.returncode == 0:
             print("   ✅ Command succeeded")
@@ -35,7 +32,7 @@ def run_command(cmd, description):
 
         return result.returncode == 0
 
-    except Exception as e:
+    except Exception:
         print("   ❌ Failed to run command: {e}")
         return False
 
@@ -48,9 +45,7 @@ def count_files():
         csv_files = list(raw_path.rglob("*.csv"))
         meta_files = list(raw_path.rglob("*.meta.json"))
         # Also count old format JSON files for backward compatibility
-        old_json_files = [
-            f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")
-        ]
+        old_json_files = [f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")]
         return len(csv_files) + len(meta_files) + len(old_json_files)
     return 0
 
@@ -64,9 +59,7 @@ def show_latest_files(count=3):
     # Collect all relevant files: CSV, metadata JSON, and old format JSON
     csv_files = list(raw_path.rglob("*.csv"))
     meta_files = list(raw_path.rglob("*.meta.json"))
-    old_json_files = [
-        f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")
-    ]
+    old_json_files = [f for f in raw_path.rglob("*.json") if not f.name.endswith(".meta.json")]
 
     all_files = csv_files + meta_files + old_json_files
 
@@ -136,9 +129,7 @@ def main():
         print("\n🎉 SUCCESS: CLI commands are creating hybrid format data files!")
 
         print("\n✅ PROVEN CLI TRIGGERS:")
-        print(
-            "   • python fundamental_analysis/fundamental_analysis.py --symbol SYMBOL"
-        )
+        print("   • python fundamental_analysis/fundamental_analysis.py --symbol SYMBOL")
         print("   • Any script that calls financial services with fresh data")
         print("   • Direct service API calls create CSV + metadata JSON files")
         print("   • Files stored in optimized hybrid format for better performance")

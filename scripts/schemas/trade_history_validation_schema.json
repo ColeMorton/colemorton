@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/trade_history_validation.json",
+  "$id": "https://colemorton.com/schemas/trade_history_validation.json",
   "title": "Trade History Validation Schema",
   "description": "Comprehensive validation schema for trade history validation JSON outputs from DASV Phase 4 framework",
   "type": "object",

@@ -9,7 +9,7 @@ ensuring consistency with the Sensylate brand guidelines.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, cast
 
 import yaml
 
@@ -57,7 +57,7 @@ class Typography:
 class ThemeManager:
     """Manages theme configuration and color palettes for dashboard generation."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """
         Initialize theme manager.
 
@@ -74,7 +74,7 @@ class ThemeManager:
         self.dark_theme = self._create_dark_theme()
         self.typography = self._create_typography()
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load configuration from YAML file."""
         if not self.config_path:
             # Use default configuration
@@ -83,22 +83,20 @@ class ThemeManager:
         try:
             config_file = Path(self.config_path)
             if not config_file.exists():
-                self.logger.warning(
-                    f"Config file not found: {self.config_path}, using defaults"
-                )
+                self.logger.warning(f"Config file not found: {self.config_path}, using defaults")
                 return self._get_default_config()
 
-            with open(config_file, "r") as file:
+            with open(config_file) as file:
                 config_data: Any = yaml.safe_load(file)
                 if config_data is not None and isinstance(config_data, dict):
-                    return cast(Dict[str, Any], config_data)
+                    return cast(dict[str, Any], config_data)
                 return {}
 
         except Exception as e:
             self.logger.error(f"Failed to load config: {e}, using defaults")
             return self._get_default_config()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default Sensylate theme configuration."""
         return {
             "design_system": {
@@ -206,7 +204,7 @@ class ThemeManager:
             return self.dark_theme
         return self.light_theme
 
-    def get_quality_colors(self) -> Dict[str, str]:
+    def get_quality_colors(self) -> dict[str, str]:
         """
         Get color mapping for trade quality categories.
 
@@ -219,7 +217,7 @@ class ThemeManager:
             "Poor": self.color_palette.secondary_data,  # Purple
         }
 
-    def get_performance_colors(self) -> Dict[str, str]:
+    def get_performance_colors(self) -> dict[str, str]:
         """
         Get color mapping for performance indicators.
 
@@ -245,7 +243,7 @@ class ThemeManager:
             self.color_palette.tertiary_data,  # Blue
         ]
 
-    def get_matplotlib_style(self, mode: str = "light") -> Dict[str, Any]:
+    def get_matplotlib_style(self, mode: str = "light") -> dict[str, Any]:
         """
         Get matplotlib style configuration for the specified mode.
 
@@ -331,7 +329,7 @@ class ThemeManager:
             self.logger.error(f"Color validation failed: {e}")
             return False
 
-    def _get_font_list(self) -> List[str]:
+    def _get_font_list(self) -> list[str]:
         """
         Get prioritized font list with fallbacks.
 
@@ -363,14 +361,11 @@ class ThemeManager:
         success = initialize_fonts()
 
         if success:
-            self.logger.info(
-                f"Successfully configured local "
-                f"'{self.typography.primary_family}' fonts"
-            )
+            self.logger.info(f"Successfully configured local '{self.typography.primary_family}' fonts")
         else:
             self.logger.warning("Local fonts not available, using system fallbacks")
 
-    def get_title_style(self, mode: str = "light") -> Dict[str, Any]:
+    def get_title_style(self, mode: str = "light") -> dict[str, Any]:
         """
         Get standardized title styling for all charts.
 
@@ -404,7 +399,7 @@ class ThemeManager:
             ax.set_title(title, **style)
 
 
-def create_theme_manager(config_path: Optional[str] = None) -> ThemeManager:
+def create_theme_manager(config_path: str | None = None) -> ThemeManager:
     """
     Factory function to create a ThemeManager instance.
 

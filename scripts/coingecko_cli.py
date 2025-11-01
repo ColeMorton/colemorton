@@ -12,9 +12,10 @@ Command-line interface for CoinGecko cryptocurrency data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -45,9 +46,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
 
         @self.app.command("price")
         def get_crypto_price(
-            coin_ids: str = typer.Argument(
-                ..., help="Comma-separated coin IDs (e.g., bitcoin,ethereum)"
-            ),
+            coin_ids: str = typer.Argument(..., help="Comma-separated coin IDs (e.g., bitcoin,ethereum)"),
             vs_currencies: str = typer.Option("usd", help="Comma-separated currencies"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
@@ -64,9 +63,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
 
         @self.app.command("coin")
         def get_coin_details(
-            coin_id: str = typer.Argument(
-                ..., help="Coin ID (e.g., bitcoin, ethereum)"
-            ),
+            coin_id: str = typer.Argument(..., help="Coin ID (e.g., bitcoin, ethereum)"),
             localization: bool = typer.Option(False, help="Include localized data"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
@@ -85,9 +82,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
         def get_market_data(
             vs_currency: str = typer.Option("usd", help="Currency for prices"),
             order: str = typer.Option("market_cap_desc", help="Sorting order"),
-            per_page: int = typer.Option(
-                100, help="Number of results per page (max 250)"
-            ),
+            per_page: int = typer.Option(100, help="Number of results per page (max 250)"),
             page: int = typer.Option(1, help="Page number"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
@@ -100,9 +95,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
                     per_page = 250
 
                 result = service.get_market_data(vs_currency, order, per_page, page)
-                self._output_result(
-                    result, output_format, f"Crypto Markets (page {page})"
-                )
+                self._output_result(result, output_format, f"Crypto Markets (page {page})")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get market data")
@@ -120,9 +113,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_historical_data(coin_id, vs_currency, days)
-                self._output_result(
-                    result, output_format, f"Historical Data: {coin_id} ({days} days)"
-                )
+                self._output_result(result, output_format, f"Historical Data: {coin_id} ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get historical data for {coin_id}")
@@ -199,9 +190,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_market_data(
-                    vs_currency, "market_cap_desc", limit, 1
-                )
+                result = service.get_market_data(vs_currency, "market_cap_desc", limit, 1)
 
                 # Simplify for table output
                 if output_format == OutputFormat.TABLE and isinstance(result, list):
@@ -220,18 +209,14 @@ class CoinGeckoCLI(BaseFinancialCLI):
                             )
                     result = simplified_result
 
-                self._output_result(
-                    result, output_format, f"Top {limit} Cryptocurrencies"
-                )
+                self._output_result(result, output_format, f"Top {limit} Cryptocurrencies")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get top {limit} cryptocurrencies")
 
         @self.app.command("compare")
         def compare_cryptocurrencies(
-            coin_ids: str = typer.Argument(
-                ..., help="Comma-separated coin IDs to compare"
-            ),
+            coin_ids: str = typer.Argument(..., help="Comma-separated coin IDs to compare"),
             vs_currency: str = typer.Option("usd", help="Currency for comparison"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
@@ -252,9 +237,7 @@ class CoinGeckoCLI(BaseFinancialCLI):
                                     "symbol": coin_data.get("symbol", "").upper(),
                                     "price": f"${coin_data.get('current_price', 0):,.2f}",
                                     "change_24h": f"{coin_data.get('price_change_percentage_24h', 0):+.2f}%",
-                                    "market_cap_rank": coin_data.get(
-                                        "market_cap_rank", "N/A"
-                                    ),
+                                    "market_cap_rank": coin_data.get("market_cap_rank", "N/A"),
                                     "market_cap": f"${coin_data.get('market_cap', 0):,.0f}",
                                 }
                             )
@@ -315,33 +298,32 @@ class CoinGeckoCLI(BaseFinancialCLI):
             except Exception as e:
                 self._handle_error(e, "Failed to get batch prices")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform CoinGecko service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

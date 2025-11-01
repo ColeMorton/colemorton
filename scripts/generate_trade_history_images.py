@@ -10,12 +10,11 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 try:
@@ -36,12 +35,8 @@ class TemplateBasedDashboardGenerator:
         """Initialize the generator with a specific date."""
         self.date_str = date_str
         self.debug = debug
-        self.report_dir = Path(
-            "/Users/colemorton/Projects/sensylate/data/outputs/trade_history"
-        )
-        self.template_dir = Path(
-            "/Users/colemorton/Projects/sensylate/templates/dashboards"
-        )
+        self.report_dir = Path("/Users/colemorton/Projects/colemorton/data/outputs/trade_history")
+        self.template_dir = Path("/Users/colemorton/Projects/colemorton/templates/dashboards")
 
         # Load template
         self.template = self._load_template("historical_performance_template.json")
@@ -49,18 +44,16 @@ class TemplateBasedDashboardGenerator:
         # Setup Plotly templates
         self._setup_plotly_templates()
 
-    def _load_template(self, template_name: str) -> Dict[str, Any]:
+    def _load_template(self, template_name: str) -> dict[str, Any]:
         """Load template configuration."""
         template_path = self.template_dir / template_name
         if not template_path.exists():
             raise FileNotFoundError(f"Template not found: {template_path}")
 
-        with open(template_path, "r") as f:
+        with open(template_path) as f:
             template = json.load(f)
 
-        logger.info(
-            f"Loaded template: {template['template_name']} v{template['version']}"
-        )
+        logger.info(f"Loaded template: {template['template_name']} v{template['version']}")
         return template
 
     def _setup_plotly_templates(self):
@@ -90,12 +83,12 @@ class TemplateBasedDashboardGenerator:
                 zeroline=False,
             ),
             colorway=[
-                colors["sensylate_palette"]["primary_data"],
-                colors["sensylate_palette"]["secondary_data"],
-                colors["sensylate_palette"]["tertiary_data"],
+                colors["colemorton_palette"]["primary_data"],
+                colors["colemorton_palette"]["secondary_data"],
+                colors["colemorton_palette"]["tertiary_data"],
             ],
         )
-        pio.templates["sensylate_light"] = light_template
+        pio.templates["colemorton_light"] = light_template
 
         # Dark theme template
         dark_template = go.layout.Template()
@@ -120,25 +113,21 @@ class TemplateBasedDashboardGenerator:
                 zeroline=False,
             ),
             colorway=[
-                colors["sensylate_palette"]["primary_data"],
-                colors["sensylate_palette"]["secondary_data"],
-                colors["sensylate_palette"]["tertiary_data"],
+                colors["colemorton_palette"]["primary_data"],
+                colors["colemorton_palette"]["secondary_data"],
+                colors["colemorton_palette"]["tertiary_data"],
             ],
         )
-        pio.templates["sensylate_dark"] = dark_template
+        pio.templates["colemorton_dark"] = dark_template
 
     def run(self):
         """Main execution method."""
-        logger.info(
-            f"Starting template-based dashboard generation for date: {self.date_str}"
-        )
+        logger.info(f"Starting template-based dashboard generation for date: {self.date_str}")
 
         # Find HISTORICAL_PERFORMANCE reports only
         reports = self._find_historical_performance_reports()
         if not reports:
-            logger.warning(
-                f"No HISTORICAL_PERFORMANCE reports found for date {self.date_str}"
-            )
+            logger.warning(f"No HISTORICAL_PERFORMANCE reports found for date {self.date_str}")
             return
 
         logger.info(f"Found {len(reports)} HISTORICAL_PERFORMANCE report(s) to process")
@@ -152,7 +141,7 @@ class TemplateBasedDashboardGenerator:
                 if self.debug:
                     raise
 
-    def _find_historical_performance_reports(self) -> List[Path]:
+    def _find_historical_performance_reports(self) -> list[Path]:
         """Find only HISTORICAL_PERFORMANCE reports matching the date pattern."""
         pattern = f"HISTORICAL_PERFORMANCE_REPORT_*{self.date_str}*.md"
         reports = list(self.report_dir.glob(pattern))
@@ -171,10 +160,10 @@ class TemplateBasedDashboardGenerator:
         # Generate performance dashboard with dual mode
         self._generate_dashboard_dual_mode(data, report_path)
 
-    def _parse_report(self, report_path: Path) -> Dict[str, Any]:
+    def _parse_report(self, report_path: Path) -> dict[str, Any]:
         """Parse report data from markdown file."""
         try:
-            with open(report_path, "r") as f:
+            with open(report_path) as f:
                 content = f.read()
 
             data = {
@@ -185,9 +174,7 @@ class TemplateBasedDashboardGenerator:
 
             # Extract comprehensive data
             data["metrics"] = self._extract_metrics(content)
-            data["all_trades"] = self._extract_all_trades(
-                content
-            )  # ALL trades for waterfall
+            data["all_trades"] = self._extract_all_trades(content)  # ALL trades for waterfall
             data["weekly_data"] = self._extract_weekly_performance(
                 data["all_trades"]
             )  # Weekly performance from entry dates
@@ -198,14 +185,12 @@ class TemplateBasedDashboardGenerator:
             logger.error(f"Error parsing report: {str(e)}")
             return {}
 
-    def _extract_metrics(self, content: str) -> Dict[str, Any]:
+    def _extract_metrics(self, content: str) -> dict[str, Any]:
         """Extract key metrics from report content."""
         metrics = {}
 
         # Win rate with wins/losses - updated pattern for the actual format
-        win_rate_match = re.search(
-            r"Win Rate[:\*\s]+(\d+\.?\d*)%\s*\((\d+)\s*wins?,\s*(\d+)\s*loss", content
-        )
+        win_rate_match = re.search(r"Win Rate[:\*\s]+(\d+\.?\d*)%\s*\((\d+)\s*wins?,\s*(\d+)\s*loss", content)
         if win_rate_match:
             metrics["win_rate"] = float(win_rate_match.group(1))
             metrics["wins"] = int(win_rate_match.group(2))
@@ -234,7 +219,7 @@ class TemplateBasedDashboardGenerator:
         logger.info(f"Extracted metrics: {metrics}")
         return metrics
 
-    def _extract_all_trades(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_all_trades(self, content: str) -> list[dict[str, Any]]:
         """Extract ALL trade data including duration for waterfall chart."""
         trades = []
 
@@ -254,14 +239,14 @@ class TemplateBasedDashboardGenerator:
                     "type": "table",
                 }
             )
-            logger.debug(
-                f"Extracted trade: {match.group(1)} {match.group(4)}% {match.group(5)}d"
-            )
+            logger.debug(f"Extracted trade: {match.group(1)} {match.group(4)}% {match.group(5)}d")
 
         # If no trades found in main table, try alternate patterns
         if not trades:
             # Try individual trade sections
-            trade_section_pattern = r"###\s*(?:🥇|🥈|🥉)?\s*([A-Z]+)\s*-\s*\*\*([+-]?\d+\.?\d*)%\*\*.*?Duration:\s*(\d+)\s*days?"
+            trade_section_pattern = (
+                r"###\s*(?:🥇|🥈|🥉)?\s*([A-Z]+)\s*-\s*\*\*([+-]?\d+\.?\d*)%\*\*.*?Duration:\s*(\d+)\s*days?"
+            )
             matches = re.finditer(trade_section_pattern, content, re.DOTALL)
 
             for match in matches:
@@ -295,9 +280,7 @@ class TemplateBasedDashboardGenerator:
         logger.info(f"Extracted {len(trades)} total trades for waterfall chart")
         return trades
 
-    def _extract_weekly_performance(
-        self, trades: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _extract_weekly_performance(self, trades: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Generate weekly performance data based on entry dates."""
         from datetime import datetime
 
@@ -327,17 +310,13 @@ class TemplateBasedDashboardGenerator:
         result = []
         for week_key in sorted(weekly_data.keys()):
             data = weekly_data[week_key]
-            avg_return = (
-                sum(data["returns"]) / len(data["returns"]) if data["returns"] else 0
-            )
-            result.append(
-                {"week": week_key, "return": avg_return, "trades": data["trade_count"]}
-            )
+            avg_return = sum(data["returns"]) / len(data["returns"]) if data["returns"] else 0
+            result.append({"week": week_key, "return": avg_return, "trades": data["trade_count"]})
 
         logger.info(f"Generated weekly performance data for {len(result)} weeks")
         return result
 
-    def _generate_dashboard_dual_mode(self, data: Dict[str, Any], report_path: Path):
+    def _generate_dashboard_dual_mode(self, data: dict[str, Any], report_path: Path):
         """Generate dashboard in both light and dark modes using template."""
         # Generate light mode
         logger.info("Generating light mode dashboard")
@@ -351,9 +330,7 @@ class TemplateBasedDashboardGenerator:
         output_base_dark = report_path.parent / f"{report_path.stem}_dashboard_dark"
         self._export_figure(fig_dark, output_base_dark, "dark")
 
-    def _create_dashboard_from_template(
-        self, data: Dict[str, Any], theme_mode: str
-    ) -> go.Figure:
+    def _create_dashboard_from_template(self, data: dict[str, Any], theme_mode: str) -> go.Figure:
         """Create dashboard using template layout."""
         template_name = f"sensylate_{theme_mode}"
         colors = self.template["color_scheme"]
@@ -375,9 +352,7 @@ class TemplateBasedDashboardGenerator:
         gauge_spacing = top_right_config["spacing"]  # 0.05 spacing within gauge grid
 
         # Get inter-chart spacing from template
-        chart_spacing = styling["spacing"][
-            "inter_chart"
-        ]  # Template: 2% spacing between main chart areas
+        chart_spacing = styling["spacing"]["inter_chart"]  # Template: 2% spacing between main chart areas
 
         # Calculate 2x2 grid positioning with spacing
         # Right half: 50% + spacing to 100%
@@ -388,9 +363,7 @@ class TemplateBasedDashboardGenerator:
         quadrant_y_end = 1.0
 
         # Calculate individual gauge dimensions within the quadrant
-        gauge_width = (
-            quadrant_x_end - quadrant_x_start - gauge_spacing
-        ) / 2  # 2 columns
+        gauge_width = (quadrant_x_end - quadrant_x_start - gauge_spacing) / 2  # 2 columns
         gauge_height = (quadrant_y_end - quadrant_y_start - gauge_spacing) / 2  # 2 rows
 
         # Define 2x2 positions: [top-left, top-right, bottom-left, bottom-right]
@@ -436,7 +409,7 @@ class TemplateBasedDashboardGenerator:
                 suffix = ""
 
             color_key = metric_config["color"]
-            color = colors["sensylate_palette"][color_key]
+            color = colors["colemorton_palette"][color_key]
 
             # Get position from 2x2 grid
             x_start, x_end, y_start, y_end = gauge_positions[i]
@@ -444,12 +417,10 @@ class TemplateBasedDashboardGenerator:
             # Create gauge with ranges from template - NO RED/GREEN
             gauge_range = metric_config.get("range", [0, 100])
             threshold = metric_config.get("threshold", 50)
-            gauge_colors = metric_config.get(
-                "gauge_colors", {"low": "neutral", "high": "primary_data"}
-            )
+            gauge_colors = metric_config.get("gauge_colors", {"low": "neutral", "high": "primary_data"})
 
-            low_color = colors["sensylate_palette"][gauge_colors["low"]]
-            high_color = colors["sensylate_palette"][gauge_colors["high"]]
+            low_color = colors["colemorton_palette"][gauge_colors["low"]]
+            high_color = colors["colemorton_palette"][gauge_colors["high"]]
 
             fig.add_trace(
                 go.Indicator(
@@ -458,9 +429,7 @@ class TemplateBasedDashboardGenerator:
                     number={
                         "suffix": suffix,
                         "font": {
-                            "size": styling["fonts"][
-                                "subtitle_size"
-                            ],  # Smaller for 2x2 grid
+                            "size": styling["fonts"]["subtitle_size"],  # Smaller for 2x2 grid
                             "color": color,
                             "family": styling["fonts"]["family"],
                         },
@@ -468,9 +437,7 @@ class TemplateBasedDashboardGenerator:
                     title={
                         "text": metric_config["title"],
                         "font": {
-                            "size": styling["fonts"][
-                                "text_size"
-                            ],  # Smaller for 2x2 grid
+                            "size": styling["fonts"]["text_size"],  # Smaller for 2x2 grid
                             "family": styling["fonts"]["family"],
                         },
                     },
@@ -478,21 +445,15 @@ class TemplateBasedDashboardGenerator:
                         "axis": {
                             "range": gauge_range,
                             "tickwidth": styling["gauges"]["border_width"],
-                            "tickfont": {
-                                "size": styling["fonts"]["small_text_size"]
-                            },  # Smaller ticks
+                            "tickfont": {"size": styling["fonts"]["small_text_size"]},  # Smaller ticks
                         },
                         "bar": {
                             "color": color,
                             "thickness": styling["gauges"]["bar_thickness"],
                         },
-                        "bgcolor": colors["grids"][
-                            "dark_mode" if is_dark else "light_mode"
-                        ],
+                        "bgcolor": colors["grids"]["dark_mode" if is_dark else "light_mode"],
                         "borderwidth": styling["gauges"]["border_width"],
-                        "bordercolor": colors["text"][
-                            "dark_mode" if is_dark else "light_mode"
-                        ],
+                        "bordercolor": colors["text"]["dark_mode" if is_dark else "light_mode"],
                         "steps": [
                             {
                                 "range": [gauge_range[0], threshold],
@@ -505,9 +466,7 @@ class TemplateBasedDashboardGenerator:
                         ],
                         "threshold": {
                             "line": {
-                                "color": colors["text"][
-                                    "dark_mode" if is_dark else "light_mode"
-                                ],
+                                "color": colors["text"]["dark_mode" if is_dark else "light_mode"],
                                 "width": styling["gauges"]["border_width"],
                             },
                             "thickness": 0.75,
@@ -557,16 +516,14 @@ class TemplateBasedDashboardGenerator:
                     marker=dict(
                         color=[
                             (
-                                colors["sensylate_palette"]["positive"]
+                                colors["colemorton_palette"]["positive"]
                                 if v >= 0
-                                else colors["sensylate_palette"]["negative"]
+                                else colors["colemorton_palette"]["negative"]
                             )
                             for v in values
                         ],
                         line=dict(
-                            color=colors["grids"][
-                                "dark_mode" if is_dark else "light_mode"
-                            ],
+                            color=colors["grids"]["dark_mode" if is_dark else "light_mode"],
                             width=1,
                         ),
                     ),
@@ -588,11 +545,7 @@ class TemplateBasedDashboardGenerator:
 
             # Color by profit/loss using template colors
             marker_colors = [
-                (
-                    colors["sensylate_palette"]["positive"]
-                    if r > 0
-                    else colors["sensylate_palette"]["negative"]
-                )
+                (colors["colemorton_palette"]["positive"] if r > 0 else colors["colemorton_palette"]["negative"])
                 for r in returns
             ]
 
@@ -601,7 +554,7 @@ class TemplateBasedDashboardGenerator:
 
             # Enhanced text positioning with more dramatic offset
             scatter_text_positions = []
-            for i, (d, r) in enumerate(zip(durations, returns)):
+            for i, (d, r) in enumerate(zip(durations, returns, strict=False)):
                 # Dramatic positioning with template offset
                 if r > 0:
                     scatter_text_positions.append("top center")
@@ -618,9 +571,7 @@ class TemplateBasedDashboardGenerator:
                         color=marker_colors,
                         line=dict(
                             width=2,
-                            color=colors["text"][
-                                "dark_mode" if is_dark else "light_mode"
-                            ],
+                            color=colors["text"]["dark_mode" if is_dark else "light_mode"],
                         ),
                         symbol="circle",
                     ),
@@ -655,15 +606,11 @@ class TemplateBasedDashboardGenerator:
                         y=y_trend,
                         mode="lines",
                         line=dict(
-                            color=colors["sensylate_palette"]["tertiary_data"],
-                            width=scatter_config[
-                                "trend_line_width"
-                            ],  # Template: 4px trend line
+                            color=colors["colemorton_palette"]["tertiary_data"],
+                            width=scatter_config["trend_line_width"],  # Template: 4px trend line
                             dash="dash",
                         ),
-                        opacity=scatter_config[
-                            "trend_line_opacity"
-                        ],  # Template: 0.85 opacity
+                        opacity=scatter_config["trend_line_opacity"],  # Template: 0.85 opacity
                         showlegend=False,
                         xaxis="x2",
                         yaxis="y2",
@@ -679,7 +626,7 @@ class TemplateBasedDashboardGenerator:
                         y=[avg_return, avg_return],
                         mode="lines",
                         line=dict(
-                            color=colors["sensylate_palette"]["tertiary_data"],
+                            color=colors["colemorton_palette"]["tertiary_data"],
                             width=2,
                             dash="dash",
                         ),
@@ -695,11 +642,7 @@ class TemplateBasedDashboardGenerator:
             weeks = [d["week"] for d in data["weekly_data"]]
             returns = [d["return"] for d in data["weekly_data"]]
             bar_colors = [
-                (
-                    colors["sensylate_palette"]["positive"]
-                    if r > 0
-                    else colors["sensylate_palette"]["negative"]
-                )
+                (colors["colemorton_palette"]["positive"] if r > 0 else colors["colemorton_palette"]["negative"])
                 for r in returns
             ]
 
@@ -737,9 +680,7 @@ class TemplateBasedDashboardGenerator:
         # CYCLE 10: Calculate 2x2 grid positioning with equal quadrants
 
         # 2x2 Grid positioning with chart spacing from template
-        chart_spacing = styling["spacing"][
-            "inter_chart"
-        ]  # Template: 2% spacing between chart areas
+        chart_spacing = styling["spacing"]["inter_chart"]  # Template: 2% spacing between chart areas
 
         # Calculate ranges with spacing
         # Vertical ranges: bottom half [0, 0.50-spacing], top half [0.50+spacing, 1.0]
@@ -753,17 +694,11 @@ class TemplateBasedDashboardGenerator:
         # Annotation positioning for 2x2 grid - ALL ALIGNED AT SAME HEIGHT
         # All top section labels should be at exact same vertical position
         top_label_y = top_vertical_range[1] + 0.02  # Same height for all top labels
-        bottom_label_y = (
-            bottom_vertical_range[1] + 0.05
-        )  # Higher offset for bottom labels to avoid overlap
+        bottom_label_y = bottom_vertical_range[1] + 0.05  # Higher offset for bottom labels to avoid overlap
 
-        waterfall_x = (
-            left_horizontal_range[0] + left_horizontal_range[1]
-        ) / 2  # Center of left half
+        waterfall_x = (left_horizontal_range[0] + left_horizontal_range[1]) / 2  # Center of left half
         scatter_x = waterfall_x  # Same as waterfall (left half center)
-        weekly_x = (
-            right_horizontal_range[0] + right_horizontal_range[1]
-        ) / 2  # Center of right half
+        weekly_x = (right_horizontal_range[0] + right_horizontal_range[1]) / 2  # Center of right half
 
         # CYCLE 9: Template-driven layout with NO TEXT CLIPPING
         fig.update_layout(
@@ -961,9 +896,7 @@ class TemplateBasedDashboardGenerator:
             if self.debug:
                 raise
 
-    def _generate_frontend_config(
-        self, fig: go.Figure, output_base: Path, theme_mode: str
-    ):
+    def _generate_frontend_config(self, fig: go.Figure, output_base: Path, theme_mode: str):
         """Generate frontend-ready JSON configuration."""
         config = {
             "chartType": "plotly",

@@ -4,7 +4,7 @@ This file provides critical guidance to Claude Code when working with this repos
 
 ## Project Overview
 
-Sensylate is a multi-modal platform combining **Python data processing** and **Astro frontend** for trading strategy analysis and content generation.
+Colemorton is a multi-modal platform combining **Python data processing** and **Astro frontend** for trading strategy analysis and content generation.
 
 **Tech Stack**:
 - **Frontend**: Astro 5.7+ with TailwindCSS 4+, TypeScript, React, MDX

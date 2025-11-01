@@ -15,7 +15,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-
 from data_contract_discovery import DataContract, DataContractDiscovery
 from data_pipeline_manager import DataPipelineManager
 from result_types import ProcessingResult
@@ -177,9 +176,7 @@ class DataPipelineManagerTests(unittest.TestCase):
 
         # Create a sample contract file
         portfolio_file = self.frontend_data_dir / "portfolio/test_portfolio.csv"
-        portfolio_data = pd.DataFrame(
-            {"Date": ["2025-01-01", "2025-01-02"], "Portfolio_Value": [1000.0, 1010.0]}
-        )
+        portfolio_data = pd.DataFrame({"Date": ["2025-01-01", "2025-01-02"], "Portfolio_Value": [1000.0, 1010.0]})
         portfolio_data.to_csv(portfolio_file, index=False)
 
         self.pipeline = DataPipelineManager(self.frontend_data_dir)
@@ -313,9 +310,7 @@ class DataGenerationTests(unittest.TestCase):
         schema = [
             ColumnSchema(name="test_date", data_type="datetime"),
             ColumnSchema(name="test_numeric", data_type="numeric"),
-            ColumnSchema(
-                name="test_string", data_type="string", sample_values=["A", "B", "C"]
-            ),
+            ColumnSchema(name="test_string", data_type="string", sample_values=["A", "B", "C"]),
         ]
 
         mock_contract = DataContract(
@@ -395,9 +390,7 @@ class EndToEndIntegrationTests(unittest.TestCase):
 
         portfolio_value_data = pd.DataFrame(
             {
-                "Date": pd.date_range("2024-01-01", periods=100, freq="D").strftime(
-                    "%Y-%m-%d"
-                ),
+                "Date": pd.date_range("2024-01-01", periods=100, freq="D").strftime("%Y-%m-%d"),
                 "Portfolio_Value": np.random.normal(1000, 100, 100),
                 "Normalized_Value": np.random.normal(1.0, 0.1, 100),
             }
@@ -425,9 +418,7 @@ class EndToEndIntegrationTests(unittest.TestCase):
 
         positions_data = pd.DataFrame(
             {
-                "Date": pd.date_range("2024-12-01", periods=30, freq="D").strftime(
-                    "%Y-%m-%d"
-                ),
+                "Date": pd.date_range("2024-12-01", periods=30, freq="D").strftime("%Y-%m-%d"),
                 "Ticker": np.random.choice(["NVDA", "AMD"], 30),
                 "PnL": np.random.normal(25, 50, 30),
                 "Position_UUID": [f"POS_{i}" for i in range(30)],
@@ -438,23 +429,15 @@ class EndToEndIntegrationTests(unittest.TestCase):
     def test_full_pipeline_execution(self):
         """Test complete pipeline execution"""
         # Mock CLI service failures to test fallback behavior
-        with patch.object(
-            self.pipeline, "_fetch_live_signals_data"
-        ) as mock_live_signals, patch.object(
-            self.pipeline, "_fetch_yahoo_finance_data"
-        ) as mock_yahoo, patch.object(
-            self.pipeline, "_fetch_trade_history_data"
-        ) as mock_trade:
+        with (
+            patch.object(self.pipeline, "_fetch_live_signals_data") as mock_live_signals,
+            patch.object(self.pipeline, "_fetch_yahoo_finance_data") as mock_yahoo,
+            patch.object(self.pipeline, "_fetch_trade_history_data") as mock_trade,
+        ):
             # Make CLI services fail to test data generation fallback
-            mock_live_signals.return_value = ProcessingResult(
-                success=False, operation="test", error="Mock failure"
-            )
-            mock_yahoo.return_value = ProcessingResult(
-                success=False, operation="test", error="Mock failure"
-            )
-            mock_trade.return_value = ProcessingResult(
-                success=False, operation="test", error="Mock failure"
-            )
+            mock_live_signals.return_value = ProcessingResult(success=False, operation="test", error="Mock failure")
+            mock_yahoo.return_value = ProcessingResult(success=False, operation="test", error="Mock failure")
+            mock_trade.return_value = ProcessingResult(success=False, operation="test", error="Mock failure")
 
             result = self.pipeline.refresh_all_chart_data(skip_errors=True)
 
@@ -511,12 +494,8 @@ class EndToEndIntegrationTests(unittest.TestCase):
     def test_error_handling_and_recovery(self):
         """Test error handling and recovery mechanisms"""
         # Test with skip_errors=False (should fail fast)
-        with patch.object(
-            self.pipeline, "_generate_portfolio_contract_data"
-        ) as mock_gen:
-            mock_gen.return_value = ProcessingResult(
-                success=False, operation="test", error="Mock error"
-            )
+        with patch.object(self.pipeline, "_generate_portfolio_contract_data") as mock_gen:
+            mock_gen.return_value = ProcessingResult(success=False, operation="test", error="Mock error")
 
             result = self.pipeline.refresh_all_chart_data(skip_errors=False)
 
@@ -524,12 +503,8 @@ class EndToEndIntegrationTests(unittest.TestCase):
             self.assertFalse(result.success)
 
         # Test with skip_errors=True (should continue)
-        with patch.object(
-            self.pipeline, "_generate_portfolio_contract_data"
-        ) as mock_gen:
-            mock_gen.return_value = ProcessingResult(
-                success=False, operation="test", error="Mock error"
-            )
+        with patch.object(self.pipeline, "_generate_portfolio_contract_data") as mock_gen:
+            mock_gen.return_value = ProcessingResult(success=False, operation="test", error="Mock error")
 
             result = self.pipeline.refresh_all_chart_data(skip_errors=True)
 
@@ -575,9 +550,7 @@ def run_all_tests():
     if result.failures:
         print("\n❌ Failures:")
         for test, error in result.failures:
-            print(
-                f"   - {test}: {error.split('AssertionError: ')[-1].split(chr(10))[0]}"
-            )
+            print(f"   - {test}: {error.split('AssertionError: ')[-1].split(chr(10))[0]}")
 
     if result.errors:
         print("\n💥 Errors:")
@@ -587,9 +560,8 @@ def run_all_tests():
     if len(result.failures) == 0 and len(result.errors) == 0:
         print("\n✅ All tests passed! Contract pipeline is working correctly.")
         return True
-    else:
-        print("\n⚠️ Some tests failed. Please review the issues above.")
-        return False
+    print("\n⚠️ Some tests failed. Please review the issues above.")
+    return False
 
 
 if __name__ == "__main__":

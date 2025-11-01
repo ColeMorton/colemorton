@@ -7,29 +7,26 @@ import json
 import sys
 from pathlib import Path
 
+
 try:
     from jsonschema import ValidationError, validate
 except ImportError:
-    print(
-        "Error: jsonschema library not found. Install it with: pip install jsonschema"
-    )
+    print("Error: jsonschema library not found. Install it with: pip install jsonschema")
     sys.exit(1)
 
 
 def load_schema():
     """Load the discovery schema from the schemas directory."""
-    schema_path = (
-        Path(__file__).parent / "schemas" / "fundamental_analysis_discovery_schema.json"
-    )
+    schema_path = Path(__file__).parent / "schemas" / "fundamental_analysis_discovery_schema.json"
 
     if not schema_path.exists():
         print("Error: Schema file not found at {schema_path}")
         return None
 
     try:
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             return json.load(f)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("Error: Invalid JSON in schema file: {e}")
         return None
 
@@ -37,9 +34,9 @@ def load_schema():
 def load_discovery_file(file_path):
     """Load a discovery JSON file."""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("Error: Invalid JSON in {file_path}: {e}")
         return None
     except FileNotFoundError:
@@ -69,13 +66,7 @@ def main():
     print("✅ Schema loaded successfully")
 
     # Test files (7 most recent)
-    discovery_dir = (
-        Path(__file__).parent.parent
-        / "data"
-        / "outputs"
-        / "fundamental_analysis"
-        / "discovery"
-    )
+    discovery_dir = Path(__file__).parent.parent / "data" / "outputs" / "fundamental_analysis" / "discovery"
     test_files = [
         "VTRS_20250725_discovery.json",  # Most recent
         "FANG_20250724_discovery.json",
@@ -101,9 +92,7 @@ def main():
             continue
 
         # Validate against schema
-        is_valid, error_message = validate_discovery_file(
-            discovery_data, schema, file_path
-        )
+        is_valid, error_message = validate_discovery_file(discovery_data, schema, file_path)
         validation_results.append((file_name, is_valid, error_message))
 
         # Print immediate result
@@ -128,19 +117,18 @@ def main():
         print("\n🎉 ALL FILES PASS VALIDATION!")
         print("Schema is ready for production use.")
         return 0
-    else:
-        print("\n⚠️  {total_count - valid_count} files failed validation.")
-        print("Schema may need adjustments.")
+    print("\n⚠️  {total_count - valid_count} files failed validation.")
+    print("Schema may need adjustments.")
 
-        # Print detailed errors for failed validations
-        print("\n🔍 DETAILED ERRORS:")
-        print("-" * 40)
-        for file_name, is_valid, error_message in validation_results:
-            if not is_valid:
-                print("\n❌ {file_name}:")
-                print("   {error_message}")
+    # Print detailed errors for failed validations
+    print("\n🔍 DETAILED ERRORS:")
+    print("-" * 40)
+    for file_name, is_valid, error_message in validation_results:
+        if not is_valid:
+            print("\n❌ {file_name}:")
+            print("   {error_message}")
 
-        return 1
+    return 1
 
 
 if __name__ == "__main__":

@@ -8,12 +8,12 @@ quality checks for the DASV system consistency.
 """
 
 import json
-import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -31,7 +31,7 @@ class ValidationSuite:
 
     name: str
     description: str
-    validators: List[str]
+    validators: list[str]
     required_score: float = 0.8
     fail_fast: bool = False
     timeout_minutes: int = 5
@@ -45,8 +45,8 @@ class CIResult:
     passed: bool
     score: float
     execution_time: float
-    issues: List[str] = field(default_factory=list)
-    details: Dict[str, Any] = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 class CICDIntegration:
@@ -80,7 +80,7 @@ class CICDIntegration:
     def load_configuration(self):
         """Load CI/CD configuration"""
         if self.config_path.exists():
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 config = json.load(f)
         else:
             # Default configuration
@@ -96,7 +96,7 @@ class CICDIntegration:
         # Global settings
         self.settings = config.get("settings", {})
 
-    def get_default_configuration(self) -> Dict[str, Any]:
+    def get_default_configuration(self) -> dict[str, Any]:
         """Get default CI/CD configuration"""
         return {
             "settings": {
@@ -155,13 +155,13 @@ class CICDIntegration:
             ],
         }
 
-    def save_configuration(self, config: Dict[str, Any]):
+    def save_configuration(self, config: dict[str, Any]):
         """Save CI/CD configuration"""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.config_path, "w") as f:
             json.dump(config, f, indent=2)
 
-    def run_validation_suite(self, suite_name: str) -> List[CIResult]:
+    def run_validation_suite(self, suite_name: str) -> list[CIResult]:
         """Run a specific validation suite"""
         if suite_name not in self.validation_suites:
             raise ValueError(f"Unknown validation suite: {suite_name}")
@@ -181,9 +181,7 @@ class CICDIntegration:
 
                 # Print immediate feedback
                 status = "✅" if result.passed else "❌"
-                print(
-                    f"{status} {validator_name}: {result.score:.2f} ({result.execution_time:.1f}s)"
-                )
+                print(f"{status} {validator_name}: {result.score:.2f} ({result.execution_time:.1f}s)")
 
                 if result.issues:
                     for issue in result.issues[:2]:  # Show first 2 issues
@@ -271,9 +269,7 @@ class CICDIntegration:
         report = self.path_synchronizer.scan_all_commands("*.md")
 
         # Calculate score
-        score = 1.0 - (
-            report.total_issues / max(1, report.total_files_scanned * 5)
-        )  # Max 5 issues per file
+        score = 1.0 - (report.total_issues / max(1, report.total_files_scanned * 5))  # Max 5 issues per file
         score = max(0.0, min(1.0, score))
 
         # Extract issues
@@ -281,12 +277,8 @@ class CICDIntegration:
         for file_path, file_issues in report.file_issues.items():
             file_name = Path(file_path).name
             for issue in file_issues:
-                if (
-                    issue.issue_type == "hardcoded"
-                ):  # Only report actual hardcoded paths
-                    issues.append(
-                        f"{file_name}:{issue.line_number} - {issue.original_text}"
-                    )
+                if issue.issue_type == "hardcoded":  # Only report actual hardcoded paths
+                    issues.append(f"{file_name}:{issue.line_number} - {issue.original_text}")
 
         return CIResult(
             suite_name="path_consistency",
@@ -465,7 +457,7 @@ exit 0
             print("✅ Pre-commit hook installed: {hook_script}")
             return True
 
-        except Exception as e:
+        except Exception:
             print("❌ Failed to install pre-commit hook: {e}")
             return False
 
@@ -555,16 +547,14 @@ jobs:
         print("✅ GitHub Actions workflow generated: {workflow_file}")
         return str(workflow_file)
 
-    def export_results(self, results: List[CIResult], output_path: str) -> str:
+    def export_results(self, results: list[CIResult], output_path: str) -> str:
         """Export validation results to JSON"""
         report_data = {
             "timestamp": datetime.now().isoformat(),
             "total_validators": len(results),
             "passed_validators": sum(1 for r in results if r.passed),
             "failed_validators": sum(1 for r in results if not r.passed),
-            "overall_score": (
-                sum(r.score for r in results) / len(results) if results else 0.0
-            ),
+            "overall_score": (sum(r.score for r in results) / len(results) if results else 0.0),
             "results": [
                 {
                     "suite_name": r.suite_name,
@@ -597,17 +587,13 @@ def main():
         choices=["pre_commit", "pull_request", "main_branch", "nightly"],
         help="Validation suite to run",
     )
-    parser.add_argument(
-        "--install-hook", action="store_true", help="Install pre-commit hook"
-    )
+    parser.add_argument("--install-hook", action="store_true", help="Install pre-commit hook")
     parser.add_argument(
         "--generate-github-action",
         action="store_true",
         help="Generate GitHub Actions workflow",
     )
-    parser.add_argument(
-        "--list-suites", action="store_true", help="List available validation suites"
-    )
+    parser.add_argument("--list-suites", action="store_true", help="List available validation suites")
     parser.add_argument("--export", help="Export results to JSON file")
     parser.add_argument(
         "--exit-code",

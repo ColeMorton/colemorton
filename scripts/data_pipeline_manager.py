@@ -17,10 +17,11 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -71,21 +72,17 @@ class DryRunReport:
             }
         )
 
-    def set_current_data_status(self, category: str, file_status_data: Dict[str, Any]):
+    def set_current_data_status(self, category: str, file_status_data: dict[str, Any]):
         """Set current data status for a category"""
         self.current_data_status[category] = file_status_data
 
-    def add_update_plan_item(
-        self, file_path: str, reason: str, estimated_time: float, row_count: int = 0
-    ):
+    def add_update_plan_item(self, file_path: str, reason: str, estimated_time: float, row_count: int = 0):
         """Add item to update plan"""
         self.update_plan[file_path] = {
             "reason": reason,
             "estimated_time": estimated_time,
             "projected_row_count": row_count,
-            "estimated_size_mb": (
-                round(row_count * 0.05 / 1000, 2) if row_count > 0 else 0.0
-            ),
+            "estimated_size_mb": (round(row_count * 0.05 / 1000, 2) if row_count > 0 else 0.0),
         }
 
     def add_operation(self, operation: str, duration: float, details: str = ""):
@@ -99,13 +96,11 @@ class DryRunReport:
             }
         )
 
-    def set_service_mapping(self, contract_id: str, services: List[str]):
+    def set_service_mapping(self, contract_id: str, services: list[str]):
         """Set service mapping for contract"""
         self.service_mappings[contract_id] = services
 
-    def add_validation_result(
-        self, contract_id: str, is_valid: bool, issues: List[str]
-    ):
+    def add_validation_result(self, contract_id: str, is_valid: bool, issues: list[str]):
         """Add validation result"""
         self.validation_results[contract_id] = {
             "is_valid": is_valid,
@@ -127,9 +122,7 @@ class DryRunReport:
         # Header
         report_lines.append("📊 DATA PIPELINE DRY-RUN REPORT")
         report_lines.append("=" * 50)
-        report_lines.append(
-            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+        report_lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report_lines.append("")
 
         # Contract Discovery
@@ -138,14 +131,10 @@ class DryRunReport:
         total_contracts = len(self.contracts)
         categories = set(c["category"] for c in self.contracts)
         new_contracts = len([c for c in self.contracts if c["status"] == "new"])
-        modified_contracts = len(
-            [c for c in self.contracts if c["status"] == "modified"]
-        )
+        modified_contracts = len([c for c in self.contracts if c["status"] == "modified"])
 
         report_lines.append(f"- Total contracts: {total_contracts}")
-        report_lines.append(
-            f"- Categories: {', '.join(categories)} ({len(categories)} total)"
-        )
+        report_lines.append(f"- Categories: {', '.join(categories)} ({len(categories)} total)")
         report_lines.append(f"- New contracts: {new_contracts}")
         report_lines.append(f"- Modified contracts: {modified_contracts}")
         report_lines.append("")
@@ -153,37 +142,17 @@ class DryRunReport:
         # Current Data Status
         report_lines.append("CURRENT DATA STATUS")
         report_lines.append("-" * 20)
-        total_files = sum(
-            len(status.get("files", {})) for status in self.current_data_status.values()
-        )
+        total_files = sum(len(status.get("files", {})) for status in self.current_data_status.values())
         fresh_files = sum(
-            len(
-                [
-                    f
-                    for f, data in status.get("files", {}).items()
-                    if data.get("status") == "fresh"
-                ]
-            )
+            len([f for f, data in status.get("files", {}).items() if data.get("status") == "fresh"])
             for status in self.current_data_status.values()
         )
         stale_files = sum(
-            len(
-                [
-                    f
-                    for f, data in status.get("files", {}).items()
-                    if data.get("status") == "stale"
-                ]
-            )
+            len([f for f, data in status.get("files", {}).items() if data.get("status") == "stale"])
             for status in self.current_data_status.values()
         )
         missing_files = sum(
-            len(
-                [
-                    f
-                    for f, data in status.get("files", {}).items()
-                    if not data.get("exists", True)
-                ]
-            )
+            len([f for f, data in status.get("files", {}).items() if not data.get("exists", True)])
             for status in self.current_data_status.values()
         )
         total_size_bytes = sum(
@@ -194,34 +163,28 @@ class DryRunReport:
         report_lines.append(f"- Fresh files: {fresh_files}")
         report_lines.append(f"- Stale files: {stale_files} (>24h old)")
         report_lines.append(f"- Missing files: {missing_files}")
-        report_lines.append(f"- Total size: {total_size_bytes / (1024*1024):.1f}MB")
+        report_lines.append(f"- Total size: {total_size_bytes / (1024 * 1024):.1f}MB")
         report_lines.append("")
 
         # Update Plan
         report_lines.append("UPDATE PLAN")
         report_lines.append("-" * 12)
         files_to_update = len(self.update_plan)
-        total_estimated_time = sum(
-            item["estimated_time"] for item in self.update_plan.values()
-        )
+        total_estimated_time = sum(item["estimated_time"] for item in self.update_plan.values())
         unique_services = set()
         for services in self.service_mappings.values():
             unique_services.update(services)
 
         report_lines.append(f"- Files to update: {files_to_update}")
         if files_to_update > 0:
-            reasons: Dict[str, int] = {}
+            reasons: dict[str, int] = {}
             for item in self.update_plan.values():
                 reason = item["reason"]
                 reasons[reason] = reasons.get(reason, 0) + 1
-            reason_summary = ", ".join(
-                f"{reason} ({count})" for reason, count in reasons.items()
-            )
+            reason_summary = ", ".join(f"{reason} ({count})" for reason, count in reasons.items())
             report_lines.append(f"- Reasons: {reason_summary}")
         report_lines.append(f"- Estimated processing time: {total_estimated_time:.0f}s")
-        report_lines.append(
-            f"- Services required: {', '.join(sorted(unique_services))}"
-        )
+        report_lines.append(f"- Services required: {', '.join(sorted(unique_services))}")
         report_lines.append("")
 
         # Operations Sequence
@@ -230,23 +193,15 @@ class DryRunReport:
             report_lines.append("-" * 19)
             for i, op in enumerate(self.operations_sequence, 1):
                 details = f" - {op['details']}" if op["details"] else ""
-                report_lines.append(
-                    f"{i}. {op['operation']} ({op['estimated_duration']:.1f}s){details}"
-                )
+                report_lines.append(f"{i}. {op['operation']} ({op['estimated_duration']:.1f}s){details}")
             report_lines.append("")
 
         # Projected Results
         report_lines.append("PROJECTED RESULTS")
         report_lines.append("-" * 17)
-        total_projected_rows = sum(
-            item["projected_row_count"] for item in self.update_plan.values()
-        )
-        total_projected_size = sum(
-            item["estimated_size_mb"] for item in self.update_plan.values()
-        )
-        all_valid = all(
-            result["is_valid"] for result in self.validation_results.values()
-        )
+        total_projected_rows = sum(item["projected_row_count"] for item in self.update_plan.values())
+        total_projected_size = sum(item["estimated_size_mb"] for item in self.update_plan.values())
+        all_valid = all(result["is_valid"] for result in self.validation_results.values())
 
         report_lines.append(f"- Total files after update: {total_files}")
         if total_projected_size > 0:
@@ -302,8 +257,7 @@ class DryRunReport:
             "current_data_status": self.current_data_status,
             "update_plan": self.update_plan,
             "operations_sequence": [
-                {**op, "timestamp": op["timestamp"].isoformat()}
-                for op in self.operations_sequence
+                {**op, "timestamp": op["timestamp"].isoformat()} for op in self.operations_sequence
             ],
             "service_mappings": self.service_mappings,
             "validation_results": self.validation_results,
@@ -328,9 +282,7 @@ class DataPipelineManager:
     Frontend Contracts → Contract Discovery → CLI Services → Schema Validation → Frontend Data
     """
 
-    def __init__(
-        self, frontend_data_path: Optional[Path] = None, quiet_mode: bool = False
-    ):
+    def __init__(self, frontend_data_path: Path | None = None, quiet_mode: bool = False):
         """Initialize contract-driven data pipeline manager"""
         setup_logging("INFO", quiet_mode=quiet_mode)
         self.logger = logging.getLogger("data_pipeline_manager")
@@ -369,8 +321,8 @@ class DataPipelineManager:
         self._validated_contracts: set[str] = set()
 
         # Discover contracts from frontend requirements
-        self.discovery_result: Optional[ContractDiscoveryResult] = None
-        self.contracts: List[DataContract] = []
+        self.discovery_result: ContractDiscoveryResult | None = None
+        self.contracts: list[DataContract] = []
 
         # CLI service capability mapping (what each service can provide)
         self.cli_service_capabilities = self._initialize_cli_capabilities()
@@ -378,23 +330,13 @@ class DataPipelineManager:
         # Initialize chart status manager for pipeline filtering
         self.chart_status_manager = ChartDataDependencyManager(self.frontend_src_path)
 
-        self.logger.info(
-            f"Initialized contract-driven pipeline for {self.frontend_data_dir}"
-        )
+        self.logger.info(f"Initialized contract-driven pipeline for {self.frontend_data_dir}")
 
     def _get_source_data_path(self, portfolio_name: str) -> Path:
         """Get the source data file path for a portfolio"""
-        return (
-            self.project_root
-            / "data"
-            / "raw"
-            / "trade_history"
-            / f"{portfolio_name}.csv"
-        )
+        return self.project_root / "data" / "raw" / "trade_history" / f"{portfolio_name}.csv"
 
-    def _get_source_data_modification_time(
-        self, portfolio_name: str
-    ) -> Optional[datetime]:
+    def _get_source_data_modification_time(self, portfolio_name: str) -> datetime | None:
         """Get the modification time of source data file for a portfolio"""
         source_path = self._get_source_data_path(portfolio_name)
         if source_path.exists():
@@ -417,18 +359,13 @@ class DataPipelineManager:
             self.logger.warning(f"Error checking open positions in {source_path}: {e}")
             return False
 
-    def _extract_portfolio_name_from_contract(
-        self, contract: DataContract
-    ) -> Optional[str]:
+    def _extract_portfolio_name_from_contract(self, contract: DataContract) -> str | None:
         """Extract portfolio name from contract ID or file path"""
         # Pattern: look for portfolio name in contract_id or file path
         # Examples: "trade-history_live_signals", "portfolio_live-signals_live_signals_equity"
 
         # Try to extract from contract_id
-        if (
-            "live_signals" in contract.contract_id
-            or "live-signals" in contract.contract_id
-        ):
+        if "live_signals" in contract.contract_id or "live-signals" in contract.contract_id:
             return "live_signals"
 
         # Try to extract from file path
@@ -439,7 +376,7 @@ class DataPipelineManager:
         # Could add more portfolio patterns here as needed
         return None
 
-    def _initialize_cli_capabilities(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_cli_capabilities(self) -> dict[str, dict[str, Any]]:
         """Initialize CLI service capability mapping"""
         return {
             "yahoo_finance": {
@@ -533,12 +470,12 @@ class DataPipelineManager:
 
         return self.discovery_result
 
-    def get_contracts_by_category(self, category: str) -> List[DataContract]:
+    def get_contracts_by_category(self, category: str) -> list[DataContract]:
         """Get contracts for a specific category"""
         self.discover_contracts()
         return [c for c in self.contracts if c.category == category]
 
-    def map_contract_to_services(self, contract: DataContract) -> List[str]:
+    def map_contract_to_services(self, contract: DataContract) -> list[str]:
         """Map a contract to capable CLI services using active chart requirements"""
         # Get services from active chart requirements if available
         try:
@@ -595,9 +532,7 @@ class DataPipelineManager:
             )
 
         # Check freshness
-        file_age_hours = (
-            datetime.now() - contract.last_modified
-        ).total_seconds() / 3600
+        file_age_hours = (datetime.now() - contract.last_modified).total_seconds() / 3600
         if file_age_hours > contract.freshness_threshold_hours:
             return ProcessingResult(
                 success=False,
@@ -605,9 +540,7 @@ class DataPipelineManager:
                 error=f"Contract data is stale ({file_age_hours:.1f}h > {contract.freshness_threshold_hours}h threshold)",
             )
 
-        result = ProcessingResult(
-            success=True, operation=f"validate_contract_{contract.contract_id}"
-        )
+        result = ProcessingResult(success=True, operation=f"validate_contract_{contract.contract_id}")
         result.add_metadata("capable_services", capable_services)
         result.add_metadata("file_age_hours", file_age_hours)
         result.add_metadata("freshness_threshold", contract.freshness_threshold_hours)
@@ -640,9 +573,7 @@ class DataPipelineManager:
 
             if not service_availability["success"]:
                 failed_services.extend(service_availability.get("failed_services", []))
-                validation_results.append(
-                    f"Service availability check failed: {service_availability['error']}"
-                )
+                validation_results.append(f"Service availability check failed: {service_availability['error']}")
 
             # Step 2: Validate service health
             self.logger.info("Validating service health...")
@@ -650,28 +581,20 @@ class DataPipelineManager:
 
             if not service_health["success"]:
                 failed_services.extend(service_health.get("failed_services", []))
-                validation_results.append(
-                    f"Service health check failed: {service_health['error']}"
-                )
+                validation_results.append(f"Service health check failed: {service_health['error']}")
 
             # Step 3: Discover contracts and validate dependency chains
-            self.logger.info(
-                "Discovering contracts and validating dependency chains..."
-            )
+            self.logger.info("Discovering contracts and validating dependency chains...")
             discovery_result = self.discover_contracts()
 
             for contract in discovery_result.contracts:
                 capable_services = self.map_contract_to_services(contract)
                 if not capable_services:
-                    validation_results.append(
-                        f"No services available for contract {contract.contract_id}"
-                    )
+                    validation_results.append(f"No services available for contract {contract.contract_id}")
                     continue
 
                 # Check if any capable service is actually available and healthy
-                available_capable_services = [
-                    svc for svc in capable_services if svc not in failed_services
-                ]
+                available_capable_services = [svc for svc in capable_services if svc not in failed_services]
 
                 if not available_capable_services:
                     validation_results.append(
@@ -681,9 +604,7 @@ class DataPipelineManager:
 
             # Step 4: Validate existing data contracts schema compliance
             self.logger.info("Validating data contract schema compliance...")
-            schema_validation = self._validate_contract_schemas(
-                discovery_result.contracts
-            )
+            schema_validation = self._validate_contract_schemas(discovery_result.contracts)
 
             if not schema_validation["success"]:
                 validation_results.extend(schema_validation.get("schema_errors", []))
@@ -705,13 +626,9 @@ class DataPipelineManager:
             result.add_metadata("services_checked", len(self.cli_service_capabilities))
 
             if success:
-                self.logger.info(
-                    f"Service dependency validation passed in {duration.total_seconds():.2f}s"
-                )
+                self.logger.info(f"Service dependency validation passed in {duration.total_seconds():.2f}s")
             else:
-                self.logger.error(
-                    f"Service dependency validation failed: {len(validation_results)} issues found"
-                )
+                self.logger.error(f"Service dependency validation failed: {len(validation_results)} issues found")
                 for issue in validation_results:
                     self.logger.error(f"  - {issue}")
 
@@ -719,9 +636,7 @@ class DataPipelineManager:
 
         except Exception as e:
             duration = datetime.now() - start_time
-            self.logger.error(
-                f"Service dependency validation failed with exception: {e}"
-            )
+            self.logger.error(f"Service dependency validation failed with exception: {e}")
 
             return ProcessingResult(
                 success=False,
@@ -734,7 +649,7 @@ class DataPipelineManager:
                 },
             )
 
-    def _validate_service_availability(self) -> Dict[str, Any]:
+    def _validate_service_availability(self) -> dict[str, Any]:
         """Validate that CLI services are available and executable"""
         from cli_wrapper import get_service_manager
 
@@ -752,11 +667,7 @@ class DataPipelineManager:
                     is_available = dashboard_script.exists()
                     availability_details[service_name] = {
                         "available": is_available,
-                        "error": (
-                            None
-                            if is_available
-                            else f"Dashboard script not found: {dashboard_script}"
-                        ),
+                        "error": (None if is_available else f"Dashboard script not found: {dashboard_script}"),
                     }
                     if not is_available:
                         failed_services.append(service_name)
@@ -769,11 +680,7 @@ class DataPipelineManager:
 
                     availability_details[service_name] = {
                         "available": is_available,
-                        "error": (
-                            None
-                            if is_available
-                            else f"Service {service_name} not available"
-                        ),
+                        "error": (None if is_available else f"Service {service_name} not available"),
                     }
 
                     if not is_available:
@@ -807,12 +714,12 @@ class DataPipelineManager:
                 "error": f"Service manager initialization failed: {e}",
             }
 
-    def _validate_service_health(self) -> Dict[str, Any]:
+    def _validate_service_health(self) -> dict[str, Any]:
         """Validate that available services are healthy and can execute basic operations"""
         from cli_wrapper import get_service_manager
 
         failed_services = []
-        health_details: dict[str, dict[str, Union[bool, str, None]]] = {}
+        health_details: dict[str, dict[str, bool | str | None]] = {}
 
         try:
             service_manager = get_service_manager()
@@ -824,13 +731,9 @@ class DataPipelineManager:
                     try:
                         import importlib.util
 
-                        dashboard_script = (
-                            self.scripts_dir / "live_signals_dashboard.py"
-                        )
+                        dashboard_script = self.scripts_dir / "live_signals_dashboard.py"
                         if dashboard_script.exists():
-                            spec = importlib.util.spec_from_file_location(
-                                "live_signals_dashboard", dashboard_script
-                            )
+                            spec = importlib.util.spec_from_file_location("live_signals_dashboard", dashboard_script)
                             module = importlib.util.module_from_spec(spec)
                             spec.loader.exec_module(module)
                             health_details[service_name] = {
@@ -890,9 +793,7 @@ class DataPipelineManager:
             error_msg = None
 
             if not success:
-                error_msg = (
-                    f"Services failed health check: {', '.join(failed_services)}"
-                )
+                error_msg = f"Services failed health check: {', '.join(failed_services)}"
 
             return {
                 "success": success,
@@ -909,9 +810,7 @@ class DataPipelineManager:
                 "error": f"Service health validation failed: {e}",
             }
 
-    def _validate_contract_schemas(
-        self, contracts: List[DataContract]
-    ) -> Dict[str, Any]:
+    def _validate_contract_schemas(self, contracts: list[DataContract]) -> dict[str, Any]:
         """Validate that contract data meets expected schemas with warning vs error categorization"""
         schema_errors = []
         schema_warnings = []
@@ -925,9 +824,7 @@ class DataPipelineManager:
                 # Check if file is empty or has only headers
                 file_size = contract.file_path.stat().st_size
                 if file_size == 0:
-                    schema_warnings.append(
-                        f"File {contract.contract_id} is empty - will be populated by data pipeline"
-                    )
+                    schema_warnings.append(f"File {contract.contract_id} is empty - will be populated by data pipeline")
                     continue
 
                 # Enhanced CSV validation with empty file handling
@@ -947,9 +844,7 @@ class DataPipelineManager:
                     )
                     continue
                 except Exception as csv_error:
-                    schema_errors.append(
-                        f"Failed to parse CSV for {contract.contract_id}: {csv_error}"
-                    )
+                    schema_errors.append(f"Failed to parse CSV for {contract.contract_id}: {csv_error}")
                     continue
 
                 # Validate data types based on contract category - now returns (errors, warnings)
@@ -962,18 +857,14 @@ class DataPipelineManager:
                     schema_errors.extend(errors)
                     schema_warnings.extend(warnings)
                 elif contract.category == "open-positions":
-                    errors, warnings = self._validate_open_positions_schema(
-                        df, contract
-                    )
+                    errors, warnings = self._validate_open_positions_schema(df, contract)
                     schema_errors.extend(errors)
                     schema_warnings.extend(warnings)
 
                 validated_contracts += 1
 
             except Exception as e:
-                schema_errors.append(
-                    f"Schema validation failed for {contract.contract_id}: {e}"
-                )
+                schema_errors.append(f"Schema validation failed for {contract.contract_id}: {e}")
 
         # Only fail on critical errors, not warnings
         success = len(schema_errors) == 0
@@ -989,9 +880,7 @@ class DataPipelineManager:
             "validated_contracts": validated_contracts,
         }
 
-    def _validate_trade_history_schema(
-        self, df: pd.DataFrame, contract: DataContract
-    ) -> Tuple[List[str], List[str]]:
+    def _validate_trade_history_schema(self, df: pd.DataFrame, contract: DataContract) -> tuple[list[str], list[str]]:
         """Validate trade history specific schema requirements - returns (errors, warnings)"""
         errors: list[str] = []
         warnings: list[str] = []
@@ -1006,32 +895,24 @@ class DataPipelineManager:
         }
         missing_columns = required_columns - set(df.columns)
         if missing_columns:
-            errors.append(
-                f"Missing trade history columns in {contract.contract_id}: {missing_columns}"
-            )
+            errors.append(f"Missing trade history columns in {contract.contract_id}: {missing_columns}")
 
         if len(df) > 0:
             # Validate PnL is numeric
             try:
                 pd.to_numeric(df["PnL"], errors="coerce")
             except Exception:
-                errors.append(
-                    f"PnL column contains non-numeric values in {contract.contract_id}"
-                )
+                errors.append(f"PnL column contains non-numeric values in {contract.contract_id}")
 
             # Validate Status values
             valid_statuses = {"Open", "Closed"}
             invalid_statuses = set(df["Status"].unique()) - valid_statuses
             if invalid_statuses:
-                errors.append(
-                    f"Invalid Status values in {contract.contract_id}: {invalid_statuses}"
-                )
+                errors.append(f"Invalid Status values in {contract.contract_id}: {invalid_statuses}")
 
         return errors, warnings
 
-    def _validate_portfolio_schema(
-        self, df: pd.DataFrame, contract: DataContract
-    ) -> Tuple[List[str], List[str]]:
+    def _validate_portfolio_schema(self, df: pd.DataFrame, contract: DataContract) -> tuple[list[str], list[str]]:
         """Validate portfolio specific schema requirements - returns (errors, warnings)"""
         errors: list[str] = []
         warnings: list[str] = []
@@ -1040,9 +921,7 @@ class DataPipelineManager:
         required_columns = {"Date"}
         missing_columns = required_columns - set(df.columns)
         if missing_columns:
-            warnings.append(
-                f"Missing portfolio columns in {contract.contract_id}: {missing_columns}"
-            )
+            warnings.append(f"Missing portfolio columns in {contract.contract_id}: {missing_columns}")
 
         if len(df) > 0 and "Date" in df.columns:
             # Validate Date format - treat as warning since data might be parseable in different format
@@ -1053,9 +932,7 @@ class DataPipelineManager:
 
         return errors, warnings
 
-    def _validate_open_positions_schema(
-        self, df: pd.DataFrame, contract: DataContract
-    ) -> Tuple[List[str], List[str]]:
+    def _validate_open_positions_schema(self, df: pd.DataFrame, contract: DataContract) -> tuple[list[str], list[str]]:
         """Validate open positions specific schema requirements - returns (errors, warnings)"""
         errors: list[str] = []
         warnings: list[str] = []
@@ -1064,18 +941,14 @@ class DataPipelineManager:
         required_columns = {"Ticker", "PnL", "Date"}
         missing_columns = required_columns - set(df.columns)
         if missing_columns:
-            errors.append(
-                f"Missing open positions columns in {contract.contract_id}: {missing_columns}"
-            )
+            errors.append(f"Missing open positions columns in {contract.contract_id}: {missing_columns}")
 
         if len(df) > 0:
             # Validate PnL is numeric
             try:
                 pd.to_numeric(df["PnL"], errors="coerce")
             except Exception:
-                errors.append(
-                    f"PnL column contains non-numeric values in {contract.contract_id}"
-                )
+                errors.append(f"PnL column contains non-numeric values in {contract.contract_id}")
 
             # Validate Date format
             try:
@@ -1096,7 +969,7 @@ class DataPipelineManager:
             ProcessingResult with success status and contract fulfillment details
         """
         start_time = datetime.now()
-        performance_metrics: Dict[str, Any] = {
+        performance_metrics: dict[str, Any] = {
             "discovery_time": 0.0,
             "validation_time": 0.0,
             "processing_time_by_category": {},
@@ -1111,14 +984,10 @@ class DataPipelineManager:
             # Step 1: Discover all frontend data contracts
             discovery_start = datetime.now()
             discovery_result = self.discover_contracts()
-            performance_metrics["discovery_time"] = (
-                datetime.now() - discovery_start
-            ).total_seconds()
+            performance_metrics["discovery_time"] = (datetime.now() - discovery_start).total_seconds()
 
             if not discovery_result.contracts:
-                raise ValidationError(
-                    "No data contracts discovered from frontend requirements"
-                )
+                raise ValidationError("No data contracts discovered from frontend requirements")
 
             performance_metrics["total_contracts"] = len(discovery_result.contracts)
             self.logger.info(
@@ -1136,7 +1005,7 @@ class DataPipelineManager:
                     f"Service health check failed: {health_results['unhealthy_services']}/{health_results['total_services']} services unhealthy. "
                     f"Errors: {'; '.join(health_results['errors'])}"
                 )
-            elif not health_results["overall_healthy"]:
+            if not health_results["overall_healthy"]:
                 self.logger.warning(
                     f"Service health check failed but continuing due to skip_errors: "
                     f"{health_results['unhealthy_services']}/{health_results['total_services']} services unhealthy"
@@ -1144,26 +1013,17 @@ class DataPipelineManager:
 
             # Step 3: Comprehensive service dependency validation
             validation_start = datetime.now()
-            self.logger.info(
-                "Performing comprehensive service dependency validation..."
-            )
+            self.logger.info("Performing comprehensive service dependency validation...")
             dependency_validation = self.validate_service_dependencies()
-            performance_metrics["validation_time"] = (
-                datetime.now() - validation_start
-            ).total_seconds()
-            performance_metrics["health_check_time"] = (
-                validation_start - health_check_start
-            ).total_seconds()
+            performance_metrics["validation_time"] = (datetime.now() - validation_start).total_seconds()
+            performance_metrics["health_check_time"] = (validation_start - health_check_start).total_seconds()
 
             if not dependency_validation.success:
                 if not skip_errors:
-                    raise ValidationError(
-                        f"Service dependency validation failed: {dependency_validation.error}"
-                    )
-                else:
-                    self.logger.warning(
-                        f"Service dependency validation failed but continuing due to skip_errors: {dependency_validation.error}"
-                    )
+                    raise ValidationError(f"Service dependency validation failed: {dependency_validation.error}")
+                self.logger.warning(
+                    f"Service dependency validation failed but continuing due to skip_errors: {dependency_validation.error}"
+                )
 
             self.logger.info(
                 f"Service validation completed [Health Check: {performance_metrics['health_check_time']:.2f}s, "
@@ -1177,13 +1037,9 @@ class DataPipelineManager:
                 capable_services = self.map_contract_to_services(contract)
                 if not capable_services:
                     unfulfillable_contracts.append(contract.contract_id)
-                    self.logger.warning(
-                        f"No services available to fulfill contract: {contract.contract_id}"
-                    )
+                    self.logger.warning(f"No services available to fulfill contract: {contract.contract_id}")
                     if not skip_errors:
-                        raise ConfigurationError(
-                            f"Cannot fulfill contract {contract.contract_id}: no capable services"
-                        )
+                        raise ConfigurationError(f"Cannot fulfill contract {contract.contract_id}: no capable services")
 
             # Step 5: Refresh contracts by category
             results = {}
@@ -1191,7 +1047,7 @@ class DataPipelineManager:
             successful_contracts = []
 
             # Group contracts by category for efficient processing
-            contracts_by_category: Dict[str, List[DataContract]] = {}
+            contracts_by_category: dict[str, list[DataContract]] = {}
             for contract in discovery_result.contracts:
                 if contract.contract_id not in unfulfillable_contracts:
                     if contract.category not in contracts_by_category:
@@ -1202,20 +1058,12 @@ class DataPipelineManager:
             for category, contracts in contracts_by_category.items():
                 try:
                     category_start = datetime.now()
-                    self.logger.info(
-                        f"Refreshing {category} category ({len(contracts)} contracts)"
-                    )
-                    category_result = self._refresh_contracts_for_category(
-                        category, contracts
-                    )
+                    self.logger.info(f"Refreshing {category} category ({len(contracts)} contracts)")
+                    category_result = self._refresh_contracts_for_category(category, contracts)
                     category_time = (datetime.now() - category_start).total_seconds()
-                    performance_metrics["processing_time_by_category"][
-                        category
-                    ] = category_time
+                    performance_metrics["processing_time_by_category"][category] = category_time
 
-                    self.logger.info(
-                        f"Category {category} processing completed [Time: {category_time:.2f}s]"
-                    )
+                    self.logger.info(f"Category {category} processing completed [Time: {category_time:.2f}s]")
                     results[category] = category_result
 
                     if category_result.success:
@@ -1223,9 +1071,7 @@ class DataPipelineManager:
                     else:
                         failed_contracts.extend([c.contract_id for c in contracts])
                         if not skip_errors:
-                            raise Exception(
-                                f"Failed to refresh {category}: {category_result.error}"
-                            )
+                            raise Exception(f"Failed to refresh {category}: {category_result.error}")
 
                 except Exception as e:
                     self.logger.error(f"Error refreshing {category} contracts: {e}")
@@ -1255,18 +1101,12 @@ class DataPipelineManager:
             # Build detailed error message if pipeline failed
             error_reasons = []
             if not dependencies_valid:
-                error_reasons.append(
-                    f"Service dependencies failed: {dependency_validation.error}"
-                )
+                error_reasons.append(f"Service dependencies failed: {dependency_validation.error}")
             if not contracts_successful:
                 if failed_contracts:
-                    error_reasons.append(
-                        f"Contract processing failed: {failed_contracts}"
-                    )
+                    error_reasons.append(f"Contract processing failed: {failed_contracts}")
                 if unfulfillable_contracts:
-                    error_reasons.append(
-                        f"Contracts unfulfillable: {unfulfillable_contracts}"
-                    )
+                    error_reasons.append(f"Contracts unfulfillable: {unfulfillable_contracts}")
 
             result = ProcessingResult(
                 success=overall_success,
@@ -1280,9 +1120,7 @@ class DataPipelineManager:
             result.add_metadata("successful_contracts", successful_count)
             result.add_metadata("failed_contracts", failed_count)
             result.add_metadata("unfulfillable_contracts", len(unfulfillable_contracts))
-            result.add_metadata(
-                "categories_processed", list(contracts_by_category.keys())
-            )
+            result.add_metadata("categories_processed", list(contracts_by_category.keys()))
             result.add_metadata(
                 "contract_results",
                 {
@@ -1320,21 +1158,15 @@ class DataPipelineManager:
                 {
                     "success": dependency_validation.success,
                     "error": dependency_validation.error,
-                    "failed_services": dependency_validation.metadata.get(
-                        "failed_services", []
-                    ),
-                    "validation_results": dependency_validation.metadata.get(
-                        "validation_results", []
-                    ),
+                    "failed_services": dependency_validation.metadata.get("failed_services", []),
+                    "validation_results": dependency_validation.metadata.get("validation_results", []),
                 },
             )
 
             # Log final pipeline status with accurate service health reporting
             failed_services = dependency_validation.metadata.get("failed_services", [])
             service_health_status = (
-                "all services healthy"
-                if not failed_services
-                else f"service failures: {', '.join(failed_services)}"
+                "all services healthy" if not failed_services else f"service failures: {', '.join(failed_services)}"
             )
 
             if overall_success:
@@ -1363,16 +1195,12 @@ class DataPipelineManager:
             self.logger.error(f"Contract-driven data refresh failed: {e}")
             return error_result
 
-    def _refresh_contracts_for_category(
-        self, category: str, contracts: List[DataContract]
-    ) -> ProcessingResult:
+    def _refresh_contracts_for_category(self, category: str, contracts: list[DataContract]) -> ProcessingResult:
         """Refresh data for contracts in a specific category"""
         start_time = datetime.now()
 
         try:
-            self.logger.info(
-                f"Processing {len(contracts)} contracts for category: {category}"
-            )
+            self.logger.info(f"Processing {len(contracts)} contracts for category: {category}")
 
             # Step 1: Identify required CLI services for this category
             required_services = set()
@@ -1380,20 +1208,14 @@ class DataPipelineManager:
                 capable_services = self.map_contract_to_services(contract)
                 required_services.update(capable_services)
 
-            self.logger.info(
-                f"Required services for {category}: {list(required_services)}"
-            )
+            self.logger.info(f"Required services for {category}: {list(required_services)}")
 
             # Step 2: Execute CLI services to fetch/generate data
             for service_name in required_services:
                 try:
-                    service_result = self._execute_cli_service_for_category(
-                        service_name, category
-                    )
+                    service_result = self._execute_cli_service_for_category(service_name, category)
                     if not service_result.success:
-                        self.logger.warning(
-                            f"Service {service_name} failed: {service_result.error}"
-                        )
+                        self.logger.warning(f"Service {service_name} failed: {service_result.error}")
                         # Continue with other services - some contracts might still be fulfillable
                 except Exception as e:
                     self.logger.error(f"Error executing service {service_name}: {e}")
@@ -1415,9 +1237,7 @@ class DataPipelineManager:
                         )
                 except Exception as e:
                     failed_contracts.append(contract.contract_id)
-                    self.logger.error(
-                        f"Error fulfilling contract {contract.contract_id}: {e}"
-                    )
+                    self.logger.error(f"Error fulfilling contract {contract.contract_id}: {e}")
 
             processing_time = (datetime.now() - start_time).total_seconds()
 
@@ -1455,26 +1275,23 @@ class DataPipelineManager:
                 processing_time=processing_time,
             )
 
-    def _execute_cli_service_for_category(
-        self, service_name: str, category: str
-    ) -> ProcessingResult:
+    def _execute_cli_service_for_category(self, service_name: str, category: str) -> ProcessingResult:
         """Execute a CLI service to generate data for a category"""
 
         # Map service names to execution methods
         if service_name == "live_signals_dashboard":
             return self._fetch_live_signals_data()
-        elif service_name == "trade_history":
+        if service_name == "trade_history":
             return self._fetch_trade_history_data()
-        elif service_name == "yahoo_finance":
+        if service_name == "yahoo_finance":
             return self._fetch_yahoo_finance_data()
-        elif service_name == "alpha_vantage":
+        if service_name == "alpha_vantage":
             return self._fetch_alpha_vantage_data()
-        else:
-            return ProcessingResult(
-                success=False,
-                operation=f"execute_{service_name}",
-                error=f"Unknown CLI service: {service_name}",
-            )
+        return ProcessingResult(
+            success=False,
+            operation=f"execute_{service_name}",
+            error=f"Unknown CLI service: {service_name}",
+        )
 
     def _fulfill_contract(self, contract: DataContract) -> ProcessingResult:
         """Fulfill a specific data contract by ensuring data meets schema requirements"""
@@ -1490,9 +1307,7 @@ class DataPipelineManager:
                     success=True,
                     operation=f"fulfill_contract_{contract.contract_id}",
                     error=None,
-                    metadata={
-                        "skip_reason": "Raw stock data handled by Yahoo Finance fetch"
-                    },
+                    metadata={"skip_reason": "Raw stock data handled by Yahoo Finance fetch"},
                 )
 
             # Check if contract file exists and has recent data
@@ -1506,9 +1321,7 @@ class DataPipelineManager:
                 # Data doesn't meet requirements, regenerate
                 return self._generate_contract_data(contract)
 
-            return ProcessingResult(
-                success=True, operation=f"fulfill_contract_{contract.contract_id}"
-            )
+            return ProcessingResult(success=True, operation=f"fulfill_contract_{contract.contract_id}")
 
         except Exception as e:
             return ProcessingResult(
@@ -1527,13 +1340,12 @@ class DataPipelineManager:
             # Generate data based on contract category and schema
             if contract.category == "portfolio":
                 return self._generate_portfolio_contract_data(contract)
-            elif contract.category == "trade-history":
+            if contract.category == "trade-history":
                 return self._generate_trade_history_contract_data(contract)
-            elif contract.category == "open-positions":
+            if contract.category == "open-positions":
                 return self._generate_open_positions_contract_data(contract)
-            else:
-                # Use the contract schema to generate synthetic data
-                return self._generate_generic_contract_data(contract)
+            # Use the contract schema to generate synthetic data
+            return self._generate_generic_contract_data(contract)
 
         except Exception as e:
             return ProcessingResult(
@@ -1547,9 +1359,7 @@ class DataPipelineManager:
 
         try:
             # Check file freshness
-            file_age_hours = (
-                datetime.now() - contract.last_modified
-            ).total_seconds() / 3600
+            file_age_hours = (datetime.now() - contract.last_modified).total_seconds() / 3600
             if file_age_hours > contract.freshness_threshold_hours:
                 return ProcessingResult(
                     success=False,
@@ -1578,9 +1388,7 @@ class DataPipelineManager:
                         error=f"Missing required columns: {missing_columns}",
                     )
 
-                return ProcessingResult(
-                    success=True, operation=f"validate_contract_{contract.contract_id}"
-                )
+                return ProcessingResult(success=True, operation=f"validate_contract_{contract.contract_id}")
 
             except Exception as e:
                 return ProcessingResult(
@@ -1596,9 +1404,7 @@ class DataPipelineManager:
                 error=str(e),
             )
 
-    def _generate_portfolio_contract_data(
-        self, contract: DataContract
-    ) -> ProcessingResult:
+    def _generate_portfolio_contract_data(self, contract: DataContract) -> ProcessingResult:
         """Generate portfolio data that matches the contract schema"""
         try:
             # Determine the type of portfolio data from file path
@@ -1616,24 +1422,15 @@ class DataPipelineManager:
             elif "benchmark_comparison" in file_name.lower():
                 # Generate benchmark comparison data
                 df = self._generate_benchmark_comparison_data()
-            elif "closed_positions_pnl" in file_name.lower():
+            elif "closed_positions_pnl" in file_name.lower() or "open_positions_pnl" in file_name.lower():
                 # This should be handled by trade history data
-                df = (
-                    pd.DataFrame()
-                )  # Empty placeholder - will be filled by trade history processing
-            elif "open_positions_pnl" in file_name.lower():
-                # This should be handled by trade history data
-                df = (
-                    pd.DataFrame()
-                )  # Empty placeholder - will be filled by trade history processing
+                df = pd.DataFrame()  # Empty placeholder - will be filled by trade history processing
             elif "equity" in relative_path and "live_signals" in relative_path:
                 # This is live signals equity data
                 df = self._generate_live_signals_equity_data()
             else:
                 # Default to portfolio value data
-                self.logger.warning(
-                    f"Unknown portfolio data type for {file_name}, defaulting to portfolio value"
-                )
+                self.logger.warning(f"Unknown portfolio data type for {file_name}, defaulting to portfolio value")
                 df = self._generate_portfolio_value_data()
 
             # Save to contract file path without filtering columns
@@ -1652,9 +1449,7 @@ class DataPipelineManager:
                 error=str(e),
             )
 
-    def _generate_trade_history_contract_data(
-        self, contract: DataContract
-    ) -> ProcessingResult:
+    def _generate_trade_history_contract_data(self, contract: DataContract) -> ProcessingResult:
         """Generate trade history data that matches the contract schema"""
         try:
             df = self._generate_trade_history_data()
@@ -1680,9 +1475,7 @@ class DataPipelineManager:
                 error=str(e),
             )
 
-    def _generate_open_positions_contract_data(
-        self, contract: DataContract
-    ) -> ProcessingResult:
+    def _generate_open_positions_contract_data(self, contract: DataContract) -> ProcessingResult:
         """Generate open positions data that matches the contract schema"""
         try:
             # Check if this file should be skipped due to chart freeze status
@@ -1718,13 +1511,11 @@ class DataPipelineManager:
                 error=str(e),
             )
 
-    def _generate_generic_contract_data(
-        self, contract: DataContract
-    ) -> ProcessingResult:
+    def _generate_generic_contract_data(self, contract: DataContract) -> ProcessingResult:
         """Generate generic data based on contract schema"""
         try:
             # Create synthetic data based on schema
-            data: Dict[str, Any] = {}
+            data: dict[str, Any] = {}
             num_rows = contract.minimum_rows
 
             for column_schema in contract.schema:
@@ -1742,21 +1533,15 @@ class DataPipelineManager:
                     if column_schema.format_pattern == "integer":
                         data[column_schema.name] = np.random.randint(1, 1000, num_rows)
                     else:
-                        data[column_schema.name] = np.round(
-                            np.random.normal(100, 20, num_rows), 2
-                        )
+                        data[column_schema.name] = np.round(np.random.normal(100, 20, num_rows), 2)
 
                 elif column_schema.data_type == "string":
                     # Generate string data from sample values or random
                     if column_schema.sample_values:
-                        choices = column_schema.sample_values * (
-                            num_rows // len(column_schema.sample_values) + 1
-                        )
+                        choices = column_schema.sample_values * (num_rows // len(column_schema.sample_values) + 1)
                         data[column_schema.name] = choices[:num_rows]
                     else:
-                        data[column_schema.name] = [
-                            f"Value_{i}" for i in range(num_rows)
-                        ]
+                        data[column_schema.name] = [f"Value_{i}" for i in range(num_rows)]
 
                 else:
                     # Default to string
@@ -1767,9 +1552,7 @@ class DataPipelineManager:
             # Save to contract file path
             df.to_csv(contract.file_path, index=False)
 
-            return ProcessingResult(
-                success=True, operation=f"generate_generic_data_{contract.contract_id}"
-            )
+            return ProcessingResult(success=True, operation=f"generate_generic_data_{contract.contract_id}")
 
         except Exception as e:
             return ProcessingResult(
@@ -1794,9 +1577,7 @@ class DataPipelineManager:
             }
         )
 
-    def _refresh_category_data(
-        self, category: str, config: Dict[str, Any]
-    ) -> ProcessingResult:
+    def _refresh_category_data(self, category: str, config: dict[str, Any]) -> ProcessingResult:
         """Refresh data for a specific category"""
         start_time = datetime.now()
 
@@ -1813,9 +1594,7 @@ class DataPipelineManager:
                 self.logger.info(f"Processing data with {script}")
                 result = self._run_processing_script(script)
                 if not result.success:
-                    self.logger.warning(
-                        f"Processing script {script} failed: {result.error}"
-                    )
+                    self.logger.warning(f"Processing script {script} failed: {result.error}")
                     # Continue with available data
 
             # Step 3: Transform to CSV format for frontend
@@ -1825,9 +1604,7 @@ class DataPipelineManager:
                 if csv_result.success:
                     transformed_files.append(output_file)
                 else:
-                    self.logger.warning(
-                        f"Failed to transform {output_file}: {csv_result.error}"
-                    )
+                    self.logger.warning(f"Failed to transform {output_file}: {csv_result.error}")
 
             processing_time = (datetime.now() - start_time).total_seconds()
 
@@ -1860,29 +1637,22 @@ class DataPipelineManager:
         """Fetch data from a specific CLI source"""
         if source == "yahoo_finance":
             return self._fetch_yahoo_finance_data()
-        elif source == "alpha_vantage":
+        if source == "alpha_vantage":
             return self._fetch_alpha_vantage_data()
-        elif source == "live_signals_dashboard":
+        if source == "live_signals_dashboard":
             return self._fetch_live_signals_data()
-        elif source == "trade_history":
+        if source == "trade_history":
             return self._fetch_trade_history_data()
-        else:
-            return ProcessingResult(
-                success=False,
-                operation=f"fetch_{source}",
-                error=f"Unknown data source: {source}",
-            )
+        return ProcessingResult(
+            success=False,
+            operation=f"fetch_{source}",
+            error=f"Unknown data source: {source}",
+        )
 
-    def _extract_symbols_from_trade_history(self) -> Set[str]:
+    def _extract_symbols_from_trade_history(self) -> set[str]:
         """Extract unique stock symbols from trade history data"""
         symbols: set[str] = set()
-        trade_history_path = (
-            Path(self.project_root)
-            / "data"
-            / "raw"
-            / "trade_history"
-            / "live_signals.csv"
-        )
+        trade_history_path = Path(self.project_root) / "data" / "raw" / "trade_history" / "live_signals.csv"
 
         try:
             if trade_history_path.exists():
@@ -1892,23 +1662,17 @@ class DataPipelineManager:
                 if "Ticker" in df.columns:
                     unique_symbols = df["Ticker"].dropna().unique()
                     symbols.update(unique_symbols)
-                    self.logger.info(
-                        f"Extracted {len(symbols)} unique symbols from trade history"
-                    )
+                    self.logger.info(f"Extracted {len(symbols)} unique symbols from trade history")
                 else:
-                    self.logger.warning(
-                        "No 'Ticker' column found in trade history data"
-                    )
+                    self.logger.warning("No 'Ticker' column found in trade history data")
             else:
-                self.logger.warning(
-                    f"Trade history file not found: {trade_history_path}"
-                )
+                self.logger.warning(f"Trade history file not found: {trade_history_path}")
         except Exception as e:
             self.logger.warning(f"Error reading trade history data: {e}")
 
         return symbols
 
-    def _extract_symbols_from_contracts(self) -> List[str]:
+    def _extract_symbols_from_contracts(self) -> list[str]:
         """Extract stock symbols only from active chart requirements (demand-driven)"""
         symbols = set()
 
@@ -1924,29 +1688,19 @@ class DataPipelineManager:
             active_requirements = detector.discover_active_requirements()
 
             # Only extract symbols if portfolio or raw data charts are active
-            portfolio_active = any(
-                req.category == "portfolio" for req in active_requirements.requirements
-            )
-            raw_active = any(
-                req.category == "raw" for req in active_requirements.requirements
-            )
+            portfolio_active = any(req.category == "portfolio" for req in active_requirements.requirements)
+            raw_active = any(req.category == "raw" for req in active_requirements.requirements)
 
             if not (portfolio_active or raw_active):
-                self.logger.info(
-                    "No portfolio or raw data charts active - skipping symbol extraction"
-                )
+                self.logger.info("No portfolio or raw data charts active - skipping symbol extraction")
                 return []
 
             # Extract symbols from existing raw stock contracts (only for active charts)
             raw_contracts = self.get_contracts_by_category("raw")
             for contract in raw_contracts:
                 # Extract symbols from contract IDs like "raw_stocks_AAPL_daily"
-                if contract.contract_id.startswith(
-                    "raw_stocks_"
-                ) and contract.contract_id.endswith("_daily"):
-                    symbol = contract.contract_id.replace("raw_stocks_", "").replace(
-                        "_daily", ""
-                    )
+                if contract.contract_id.startswith("raw_stocks_") and contract.contract_id.endswith("_daily"):
+                    symbol = contract.contract_id.replace("raw_stocks_", "").replace("_daily", "")
                     symbols.add(symbol)
 
             # Extract symbols from active raw chart requirements
@@ -1958,21 +1712,16 @@ class DataPipelineManager:
 
             for req in raw_chart_requirements:
                 # Extract symbol from data_source like "raw/stocks/AAPL/daily.csv"
-                if "/stocks/" in req.data_source and req.data_source.endswith(
-                    "/daily.csv"
-                ):
+                if "/stocks/" in req.data_source and req.data_source.endswith("/daily.csv"):
                     symbol = req.data_source.split("/stocks/")[1].split("/")[0]
                     symbols.add(symbol)
-                    self.logger.info(
-                        f"Extracted symbol '{symbol}' from active raw chart '{req.chart_type}'"
-                    )
+                    self.logger.info(f"Extracted symbol '{symbol}' from active raw chart '{req.chart_type}'")
 
             # Extract symbols from trade history only if portfolio charts that require trade_history are active
             trade_history_portfolio_charts = [
                 req
                 for req in active_requirements.requirements
-                if req.category == "portfolio"
-                and "trade_history" in req.required_services
+                if req.category == "portfolio" and "trade_history" in req.required_services
             ]
 
             if trade_history_portfolio_charts:
@@ -1986,8 +1735,7 @@ class DataPipelineManager:
                 yahoo_finance_portfolio_charts = [
                     req
                     for req in active_requirements.requirements
-                    if req.category == "portfolio"
-                    and "yahoo_finance" in req.required_services
+                    if req.category == "portfolio" and "yahoo_finance" in req.required_services
                 ]
                 if yahoo_finance_portfolio_charts:
                     benchmark_symbols = ["BTC-USD", "SPY", "QQQ"]
@@ -2002,9 +1750,7 @@ class DataPipelineManager:
             # Fallback to default symbols if no symbols found but charts are active
             if not symbol_list and (portfolio_active or raw_active):
                 symbol_list = ["BTC-USD", "SPY", "QQQ"]
-                self.logger.warning(
-                    "No symbols found from active chart requirements, using fallback symbols"
-                )
+                self.logger.warning("No symbols found from active chart requirements, using fallback symbols")
             else:
                 self.logger.info(
                     f"Collected {len(symbol_list)} symbols for {len(active_requirements.requirements)} active chart requirements"
@@ -2019,12 +1765,8 @@ class DataPipelineManager:
             symbols = set()
             raw_contracts = self.get_contracts_by_category("raw")
             for contract in raw_contracts:
-                if contract.contract_id.startswith(
-                    "raw_stocks_"
-                ) and contract.contract_id.endswith("_daily"):
-                    symbol = contract.contract_id.replace("raw_stocks_", "").replace(
-                        "_daily", ""
-                    )
+                if contract.contract_id.startswith("raw_stocks_") and contract.contract_id.endswith("_daily"):
+                    symbol = contract.contract_id.replace("raw_stocks_", "").replace("_daily", "")
                     symbols.add(symbol)
 
             trade_history_symbols = self._extract_symbols_from_trade_history()
@@ -2067,9 +1809,7 @@ class DataPipelineManager:
 
                     if result.success:
                         successful_symbols.append(symbol)
-                        self.logger.info(
-                            f"Successfully fetched historical data for {symbol}"
-                        )
+                        self.logger.info(f"Successfully fetched historical data for {symbol}")
                     else:
                         failed_symbols.append(symbol)
                         error_category = self._categorize_service_error(result.error)
@@ -2079,9 +1819,7 @@ class DataPipelineManager:
 
                 except Exception as e:
                     failed_symbols.append(symbol)
-                    self.logger.error(
-                        f"Error fetching historical data for {symbol}: {str(e)}"
-                    )
+                    self.logger.error(f"Error fetching historical data for {symbol}: {str(e)}")
 
             # Return overall success only if majority of symbols succeeded (60% threshold)
             success_rate = len(successful_symbols) / len(symbols) if symbols else 0
@@ -2124,7 +1862,7 @@ class DataPipelineManager:
                 error_category="infrastructure",
             )
 
-    def _copy_symbols_to_frontend(self, symbols: List[str]) -> None:
+    def _copy_symbols_to_frontend(self, symbols: list[str]) -> None:
         """Copy successfully fetched stock data from scripts to frontend directory"""
         if not symbols:
             return
@@ -2167,37 +1905,23 @@ class DataPipelineManager:
             return "infrastructure_logging"
 
         # Network/connectivity errors
-        if any(
-            term in error_lower
-            for term in ["connection", "timeout", "network", "dns", "ssl"]
-        ):
+        if any(term in error_lower for term in ["connection", "timeout", "network", "dns", "ssl"]):
             return "network"
 
         # Authentication/API key errors
-        if any(
-            term in error_lower
-            for term in ["auth", "api key", "unauthorized", "forbidden", "401", "403"]
-        ):
+        if any(term in error_lower for term in ["auth", "api key", "unauthorized", "forbidden", "401", "403"]):
             return "authentication"
 
         # Rate limiting errors
-        if any(
-            term in error_lower for term in ["rate limit", "too many requests", "429"]
-        ):
+        if any(term in error_lower for term in ["rate limit", "too many requests", "429"]):
             return "rate_limit"
 
         # Data/validation errors
-        if any(
-            term in error_lower
-            for term in ["invalid", "validation", "schema", "format"]
-        ):
+        if any(term in error_lower for term in ["invalid", "validation", "schema", "format"]):
             return "data_validation"
 
         # Service unavailable errors
-        if any(
-            term in error_lower
-            for term in ["unavailable", "service", "500", "502", "503"]
-        ):
+        if any(term in error_lower for term in ["unavailable", "service", "500", "502", "503"]):
             return "service_unavailable"
 
         # Default category for unclassified errors
@@ -2206,9 +1930,7 @@ class DataPipelineManager:
     def _fetch_alpha_vantage_data(self) -> ProcessingResult:
         """Fetch supplementary data from Alpha Vantage"""
         try:
-            self.logger.info(
-                "Initiating Alpha Vantage data fetch for technical analysis"
-            )
+            self.logger.info("Initiating Alpha Vantage data fetch for technical analysis")
 
             # Use existing Alpha Vantage CLI with valid command: analyze
             # Validate CLI contract before execution
@@ -2226,9 +1948,7 @@ class DataPipelineManager:
             else:
                 # Categorize the error type for better debugging
                 error_category = self._categorize_service_error(result.error)
-                self.logger.warning(
-                    f"Alpha Vantage data fetch failed: {error_category} - {result.error}"
-                )
+                self.logger.warning(f"Alpha Vantage data fetch failed: {error_category} - {result.error}")
 
             return result
         except Exception as e:
@@ -2257,16 +1977,13 @@ class DataPipelineManager:
 
             if result.returncode == 0:
                 return ProcessingResult(success=True, operation="fetch_live_signals")
-            else:
-                return ProcessingResult(
-                    success=False,
-                    operation="fetch_live_signals",
-                    error=f"Live signals script failed: {result.stderr}",
-                )
-        except Exception as e:
             return ProcessingResult(
-                success=False, operation="fetch_live_signals", error=str(e)
+                success=False,
+                operation="fetch_live_signals",
+                error=f"Live signals script failed: {result.stderr}",
             )
+        except Exception as e:
+            return ProcessingResult(success=False, operation="fetch_live_signals", error=str(e))
 
     def _fetch_trade_history_data(self) -> ProcessingResult:
         """Fetch fresh trade history data"""
@@ -2289,17 +2006,13 @@ class DataPipelineManager:
             else:
                 # Categorize the error type for better debugging
                 error_category = self._categorize_service_error(result.error)
-                self.logger.warning(
-                    f"Trade history data fetch failed: {error_category} - {result.error}"
-                )
+                self.logger.warning(f"Trade history data fetch failed: {error_category} - {result.error}")
 
             # Generate chart-ready data files regardless of image generation success
             # Chart data only needs the CSV data, not the theme-dependent images
             chart_result = self._generate_chart_ready_data()
             if not chart_result.success:
-                self.logger.warning(
-                    f"Chart data generation failed: {chart_result.error}"
-                )
+                self.logger.warning(f"Chart data generation failed: {chart_result.error}")
             else:
                 self.logger.info("Chart data generation completed successfully")
 
@@ -2321,16 +2034,8 @@ class DataPipelineManager:
             self.logger.info("Generating chart-ready data files")
 
             # Read the main trade history data from raw data source
-            raw_trade_history_file = (
-                self.project_root
-                / "data"
-                / "raw"
-                / "trade_history"
-                / "live_signals.csv"
-            )
-            frontend_trade_history_file = (
-                self.frontend_data_dir / "trade-history" / "live_signals.csv"
-            )
+            raw_trade_history_file = self.project_root / "data" / "raw" / "trade_history" / "live_signals.csv"
+            frontend_trade_history_file = self.frontend_data_dir / "trade-history" / "live_signals.csv"
 
             # Prefer raw data source, fallback to frontend if needed
             if raw_trade_history_file.exists():
@@ -2338,9 +2043,7 @@ class DataPipelineManager:
                 self.logger.info(f"Using raw data source: {raw_trade_history_file}")
             elif frontend_trade_history_file.exists():
                 trade_history_file = frontend_trade_history_file
-                self.logger.warning(
-                    f"Raw data not found, using frontend data: {frontend_trade_history_file}"
-                )
+                self.logger.warning(f"Raw data not found, using frontend data: {frontend_trade_history_file}")
             else:
                 return ProcessingResult(
                     success=False,
@@ -2355,54 +2058,30 @@ class DataPipelineManager:
             results = []
 
             # Generate trade PnL waterfall data (sorted by PnL magnitude)
-            waterfall_output_path = str(
-                self.frontend_data_dir
-                / "trade-history"
-                / "trade_pnl_waterfall_sorted.csv"
-            )
+            waterfall_output_path = str(self.frontend_data_dir / "trade-history" / "trade_pnl_waterfall_sorted.csv")
             if self.chart_status_manager.should_skip_output_file(waterfall_output_path):
-                self.logger.info(
-                    "Skipping waterfall data generation - chart is frozen/static"
-                )
-                waterfall_result = ProcessingResult(
-                    success=True, operation="skip_waterfall_data"
-                )
+                self.logger.info("Skipping waterfall data generation - chart is frozen/static")
+                waterfall_result = ProcessingResult(success=True, operation="skip_waterfall_data")
             else:
                 waterfall_result = self._generate_waterfall_data(df)
             results.append(waterfall_result)
 
             # Generate closed positions PnL progression data
             closed_positions_output_path = str(
-                self.frontend_data_dir
-                / "portfolio"
-                / "closed_positions_pnl_progression.csv"
+                self.frontend_data_dir / "portfolio" / "closed_positions_pnl_progression.csv"
             )
-            if self.chart_status_manager.should_skip_output_file(
-                closed_positions_output_path
-            ):
-                self.logger.info(
-                    "Skipping closed positions data generation - chart is frozen/static"
-                )
-                closed_positions_result = ProcessingResult(
-                    success=True, operation="skip_closed_positions_data"
-                )
+            if self.chart_status_manager.should_skip_output_file(closed_positions_output_path):
+                self.logger.info("Skipping closed positions data generation - chart is frozen/static")
+                closed_positions_result = ProcessingResult(success=True, operation="skip_closed_positions_data")
             else:
                 closed_positions_result = self._generate_closed_positions_data(df)
             results.append(closed_positions_result)
 
             # Generate open positions PnL data
-            open_positions_output_path = str(
-                self.frontend_data_dir / "portfolio" / "open_positions_pnl_current.csv"
-            )
-            if self.chart_status_manager.should_skip_output_file(
-                open_positions_output_path
-            ):
-                self.logger.info(
-                    "Skipping open positions data generation - chart is frozen/static"
-                )
-                open_positions_result = ProcessingResult(
-                    success=True, operation="skip_open_positions_data"
-                )
+            open_positions_output_path = str(self.frontend_data_dir / "portfolio" / "open_positions_pnl_current.csv")
+            if self.chart_status_manager.should_skip_output_file(open_positions_output_path):
+                self.logger.info("Skipping open positions data generation - chart is frozen/static")
+                open_positions_result = ProcessingResult(success=True, operation="skip_open_positions_data")
             else:
                 open_positions_result = self._generate_chart_open_positions_data(df)
             results.append(open_positions_result)
@@ -2411,18 +2090,17 @@ class DataPipelineManager:
             if all(result.success for result in results):
                 self.logger.info("Successfully generated all chart-ready data files")
                 return ProcessingResult(success=True, operation="generate_chart_data")
-            else:
-                errors: list[str] = []
-                result_names = ["Waterfall", "Closed positions", "Open positions"]
-                for i, result in enumerate(results):
-                    if not result.success and result.error:
-                        errors.append(f"{result_names[i]}: {result.error}")
+            errors: list[str] = []
+            result_names = ["Waterfall", "Closed positions", "Open positions"]
+            for i, result in enumerate(results):
+                if not result.success and result.error:
+                    errors.append(f"{result_names[i]}: {result.error}")
 
-                return ProcessingResult(
-                    success=False,
-                    operation="generate_chart_data",
-                    error="; ".join(errors),
-                )
+            return ProcessingResult(
+                success=False,
+                operation="generate_chart_data",
+                error="; ".join(errors),
+            )
 
         except Exception as e:
             return ProcessingResult(
@@ -2445,9 +2123,7 @@ class DataPipelineManager:
                 )
 
             # Convert Exit_Timestamp to datetime for proper sorting
-            closed_trades["Exit_Timestamp_dt"] = pd.to_datetime(
-                closed_trades["Exit_Timestamp"]
-            )
+            closed_trades["Exit_Timestamp_dt"] = pd.to_datetime(closed_trades["Exit_Timestamp"])
 
             # Handle ticker uniqueness: number duplicate tickers by Exit_Timestamp order
             unique_tickers = []
@@ -2455,9 +2131,7 @@ class DataPipelineManager:
             # Group by ticker and sort each group by Exit_Timestamp (oldest first)
             for ticker in closed_trades["Ticker"].unique():
                 ticker_trades = closed_trades[closed_trades["Ticker"] == ticker].copy()
-                ticker_trades = ticker_trades.sort_values(
-                    "Exit_Timestamp_dt", ascending=True
-                )
+                ticker_trades = ticker_trades.sort_values("Exit_Timestamp_dt", ascending=True)
 
                 if len(ticker_trades) == 1:
                     # Single trade - keep original ticker name
@@ -2471,9 +2145,7 @@ class DataPipelineManager:
                         unique_tickers.append(idx)
 
             # Sort by PnL magnitude (highest gains to highest losses)
-            closed_trades["PnL_numeric"] = pd.to_numeric(
-                closed_trades["PnL"], errors="coerce"
-            )
+            closed_trades["PnL_numeric"] = pd.to_numeric(closed_trades["PnL"], errors="coerce")
             sorted_trades = closed_trades.sort_values("PnL_numeric", ascending=False)
 
             # Create waterfall data with required columns (excluding temporary columns)
@@ -2513,11 +2185,7 @@ class DataPipelineManager:
             ]
 
             # Save to trade-history directory
-            output_file = (
-                self.frontend_data_dir
-                / "trade-history"
-                / "trade_pnl_waterfall_sorted.csv"
-            )
+            output_file = self.frontend_data_dir / "trade-history" / "trade_pnl_waterfall_sorted.csv"
             output_file.parent.mkdir(parents=True, exist_ok=True)
             waterfall_data.to_csv(output_file, index=False)
 
@@ -2532,24 +2200,18 @@ class DataPipelineManager:
             return ProcessingResult(success=True, operation="generate_waterfall_data")
 
         except Exception as e:
-            return ProcessingResult(
-                success=False, operation="generate_waterfall_data", error=str(e)
-            )
+            return ProcessingResult(success=False, operation="generate_waterfall_data", error=str(e))
 
-    def _load_historical_price_data(self, ticker: str) -> Dict[str, float]:
+    def _load_historical_price_data(self, ticker: str) -> dict[str, float]:
         """Load historical price data for a ticker from raw data stocks directory with enhanced validation"""
         price_data: dict[str, float] = {}
 
         try:
             # Try to load historical price data from raw stocks directory
-            price_file = (
-                self.project_root / "data" / "raw" / "stocks" / ticker / "daily.csv"
-            )
+            price_file = self.project_root / "data" / "raw" / "stocks" / ticker / "daily.csv"
 
             if not price_file.exists():
-                self.logger.warning(
-                    f"No historical price data found for {ticker} at {price_file}"
-                )
+                self.logger.warning(f"No historical price data found for {ticker} at {price_file}")
                 return price_data
 
             # Read CSV with error handling
@@ -2564,13 +2226,9 @@ class DataPipelineManager:
 
             # Validate required columns
             required_columns = ["date", "close"]
-            missing_columns = [
-                col for col in required_columns if col not in price_df.columns
-            ]
+            missing_columns = [col for col in required_columns if col not in price_df.columns]
             if missing_columns:
-                self.logger.warning(
-                    f"Missing required columns for {ticker}: {missing_columns}"
-                )
+                self.logger.warning(f"Missing required columns for {ticker}: {missing_columns}")
                 return price_data
 
             # Validate data quality and convert to dict
@@ -2597,9 +2255,7 @@ class DataPipelineManager:
                         continue
 
                     close_price = float(row["close"])
-                    if (
-                        close_price <= 0 or close_price > 1000000
-                    ):  # Sanity check for reasonable price range
+                    if close_price <= 0 or close_price > 1000000:  # Sanity check for reasonable price range
                         invalid_rows += 1
                         continue
 
@@ -2621,20 +2277,14 @@ class DataPipelineManager:
 
                 # Warn if data quality is poor
                 if quality_pct < 50:
-                    self.logger.warning(
-                        f"Poor data quality for {ticker}: {quality_pct:.1f}% valid rows"
-                    )
+                    self.logger.warning(f"Poor data quality for {ticker}: {quality_pct:.1f}% valid rows")
                 elif invalid_rows > 0:
-                    self.logger.debug(
-                        f"Filtered out {invalid_rows} invalid rows for {ticker}"
-                    )
+                    self.logger.debug(f"Filtered out {invalid_rows} invalid rows for {ticker}")
             else:
                 self.logger.warning(f"No valid price data found for {ticker}")
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to load historical price data for {ticker}: {e}"
-            )
+            self.logger.warning(f"Failed to load historical price data for {ticker}: {e}")
 
         return price_data
 
@@ -2680,9 +2330,7 @@ class DataPipelineManager:
                     error="No closed trades found",
                 )
 
-            self.logger.info(
-                f"Processing {len(closed_trades)} closed positions for time series generation"
-            )
+            self.logger.info(f"Processing {len(closed_trades)} closed positions for time series generation")
 
             # Generate daily time series data for each closed position
             time_series_data = []
@@ -2702,12 +2350,8 @@ class DataPipelineManager:
 
                     # Validate and parse timestamps
                     try:
-                        entry_timestamp = pd.to_datetime(
-                            trade["Entry_Timestamp"], errors="coerce"
-                        )
-                        exit_timestamp = pd.to_datetime(
-                            trade["Exit_Timestamp"], errors="coerce"
-                        )
+                        entry_timestamp = pd.to_datetime(trade["Entry_Timestamp"], errors="coerce")
+                        exit_timestamp = pd.to_datetime(trade["Exit_Timestamp"], errors="coerce")
 
                         if pd.isna(entry_timestamp) or pd.isna(exit_timestamp):
                             self.logger.warning(
@@ -2726,9 +2370,7 @@ class DataPipelineManager:
                             continue
 
                     except Exception as e:
-                        self.logger.warning(
-                            f"Skipping {ticker} trade due to timestamp parsing error: {e}"
-                        )
+                        self.logger.warning(f"Skipping {ticker} trade due to timestamp parsing error: {e}")
                         continue
 
                     # Validate price data
@@ -2744,16 +2386,12 @@ class DataPipelineManager:
                             continue
 
                     except (ValueError, TypeError) as e:
-                        self.logger.warning(
-                            f"Skipping {ticker} trade due to price parsing error: {e}"
-                        )
+                        self.logger.warning(f"Skipping {ticker} trade due to price parsing error: {e}")
                         continue
 
                     # Load historical price data first to determine available trading dates
                     if ticker not in price_data_cache:
-                        price_data_cache[ticker] = self._load_historical_price_data(
-                            ticker
-                        )
+                        price_data_cache[ticker] = self._load_historical_price_data(ticker)
 
                     historical_prices = price_data_cache[ticker]
 
@@ -2784,9 +2422,7 @@ class DataPipelineManager:
                         positions_with_real_data += 1
                     else:
                         positions_with_interpolated_data += 1
-                        self.logger.warning(
-                            f"Using linear interpolation for {ticker} - no historical data available"
-                        )
+                        self.logger.warning(f"Using linear interpolation for {ticker} - no historical data available")
 
                     # Get trade parameters (already validated above)
                     direction = trade["Direction"]
@@ -2809,13 +2445,9 @@ class DataPipelineManager:
 
                             # Calculate actual PnL based on real price movement from entry market price
                             if direction == "Long":
-                                current_pnl = (
-                                    current_market_price - entry_market_price
-                                ) * position_size
+                                current_pnl = (current_market_price - entry_market_price) * position_size
                             else:  # Short position
-                                current_pnl = (
-                                    entry_market_price - current_market_price
-                                ) * position_size
+                                current_pnl = (entry_market_price - current_market_price) * position_size
 
                             current_price = current_market_price
 
@@ -2824,9 +2456,7 @@ class DataPipelineManager:
                             if len(date_range) > 1:
                                 progress_ratio = i / (len(date_range) - 1)
                             else:
-                                progress_ratio = (
-                                    1.0  # Single day trade gets final PnL immediately
-                                )
+                                progress_ratio = 1.0  # Single day trade gets final PnL immediately
 
                             current_pnl = float(trade["PnL"]) * progress_ratio
                             price_progress = (exit_price - entry_price) * progress_ratio
@@ -2849,9 +2479,7 @@ class DataPipelineManager:
                         )
 
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to process trade {trade.get('Position_UUID', 'unknown')}: {e}"
-                    )
+                    self.logger.warning(f"Failed to process trade {trade.get('Position_UUID', 'unknown')}: {e}")
                     continue
 
             if not time_series_data:
@@ -2865,11 +2493,7 @@ class DataPipelineManager:
             closed_positions_df = pd.DataFrame(time_series_data)
 
             # Create portfolio subdirectory for closed positions data
-            output_file = (
-                self.frontend_data_dir
-                / "portfolio"
-                / "closed_positions_pnl_progression.csv"
-            )
+            output_file = self.frontend_data_dir / "portfolio" / "closed_positions_pnl_progression.csv"
             output_file.parent.mkdir(parents=True, exist_ok=True)
             closed_positions_df.to_csv(output_file, index=False)
 
@@ -2885,14 +2509,10 @@ class DataPipelineManager:
                 f"{positions_with_interpolated_data} with linear interpolation)"
             )
 
-            return ProcessingResult(
-                success=True, operation="generate_closed_positions_data"
-            )
+            return ProcessingResult(success=True, operation="generate_closed_positions_data")
 
         except Exception as e:
-            return ProcessingResult(
-                success=False, operation="generate_closed_positions_data", error=str(e)
-            )
+            return ProcessingResult(success=False, operation="generate_closed_positions_data", error=str(e))
 
     def _generate_chart_open_positions_data(self, df: pd.DataFrame) -> ProcessingResult:
         """Generate open positions PnL data"""
@@ -2940,28 +2560,18 @@ class DataPipelineManager:
 
                 # Add current date and price columns (would need real-time data)
                 open_positions_data["Date"] = datetime.now().strftime("%Y-%m-%d")
-                open_positions_data["Current_Price"] = open_positions_data[
-                    "Entry_Price"
-                ]  # Placeholder
+                open_positions_data["Current_Price"] = open_positions_data["Entry_Price"]  # Placeholder
 
             # Save to portfolio directory
-            output_file = (
-                self.frontend_data_dir / "portfolio" / "open_positions_pnl_current.csv"
-            )
+            output_file = self.frontend_data_dir / "portfolio" / "open_positions_pnl_current.csv"
             output_file.parent.mkdir(parents=True, exist_ok=True)
             open_positions_data.to_csv(output_file, index=False)
 
-            self.logger.info(
-                f"Generated open positions data with {len(open_positions_data)} positions"
-            )
-            return ProcessingResult(
-                success=True, operation="generate_open_positions_data"
-            )
+            self.logger.info(f"Generated open positions data with {len(open_positions_data)} positions")
+            return ProcessingResult(success=True, operation="generate_open_positions_data")
 
         except Exception as e:
-            return ProcessingResult(
-                success=False, operation="generate_open_positions_data", error=str(e)
-            )
+            return ProcessingResult(success=False, operation="generate_open_positions_data", error=str(e))
 
     def _run_processing_script(self, script: str) -> ProcessingResult:
         """Run a data processing script"""
@@ -2985,34 +2595,30 @@ class DataPipelineManager:
 
             if result.returncode == 0:
                 return ProcessingResult(success=True, operation=f"run_{script}")
-            else:
-                return ProcessingResult(
-                    success=False,
-                    operation=f"run_{script}",
-                    error=f"Script failed: {result.stderr}",
-                )
-        except Exception as e:
             return ProcessingResult(
-                success=False, operation=f"run_{script}", error=str(e)
+                success=False,
+                operation=f"run_{script}",
+                error=f"Script failed: {result.stderr}",
             )
+        except Exception as e:
+            return ProcessingResult(success=False, operation=f"run_{script}", error=str(e))
 
     def _transform_to_csv(self, category: str, output_file: str) -> ProcessingResult:
         """Transform processed data to frontend-compatible CSV format"""
         try:
             if category == "portfolio":
                 return self._transform_portfolio_csv(output_file)
-            elif category == "live_signals":
+            if category == "live_signals":
                 return self._transform_live_signals_csv(output_file)
-            elif category == "trade_history":
+            if category == "trade_history":
                 return self._transform_trade_history_csv(output_file)
-            elif category == "open_positions":
+            if category == "open_positions":
                 return self._transform_open_positions_csv(output_file)
-            else:
-                return ProcessingResult(
-                    success=False,
-                    operation=f"transform_{category}_{output_file}",
-                    error=f"Unknown category: {category}",
-                )
+            return ProcessingResult(
+                success=False,
+                operation=f"transform_{category}_{output_file}",
+                error=f"Unknown category: {category}",
+            )
         except Exception as e:
             return ProcessingResult(
                 success=False,
@@ -3045,9 +2651,7 @@ class DataPipelineManager:
 
             df.to_csv(output_path, index=False)
 
-            return ProcessingResult(
-                success=True, operation=f"transform_portfolio_{output_file}"
-            )
+            return ProcessingResult(success=True, operation=f"transform_portfolio_{output_file}")
 
         except Exception as e:
             return ProcessingResult(
@@ -3059,18 +2663,14 @@ class DataPipelineManager:
     def _transform_live_signals_csv(self, output_file: str) -> ProcessingResult:
         """Transform live signals data to CSV format"""
         try:
-            output_path = (
-                self.frontend_data_dir / "portfolio/live-signals" / output_file
-            )
+            output_path = self.frontend_data_dir / "portfolio/live-signals" / output_file
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Generate live signals equity data
             df = self._generate_live_signals_equity_data()
             df.to_csv(output_path, index=False)
 
-            return ProcessingResult(
-                success=True, operation=f"transform_live_signals_{output_file}"
-            )
+            return ProcessingResult(success=True, operation=f"transform_live_signals_{output_file}")
 
         except Exception as e:
             return ProcessingResult(
@@ -3089,9 +2689,7 @@ class DataPipelineManager:
             df = self._generate_trade_history_data()
             df.to_csv(output_path, index=False)
 
-            return ProcessingResult(
-                success=True, operation=f"transform_trade_history_{output_file}"
-            )
+            return ProcessingResult(success=True, operation=f"transform_trade_history_{output_file}")
 
         except Exception as e:
             return ProcessingResult(
@@ -3110,9 +2708,7 @@ class DataPipelineManager:
             df = self._generate_open_positions_data()
             df.to_csv(output_path, index=False)
 
-            return ProcessingResult(
-                success=True, operation=f"transform_open_positions_{output_file}"
-            )
+            return ProcessingResult(success=True, operation=f"transform_open_positions_{output_file}")
 
         except Exception as e:
             return ProcessingResult(
@@ -3127,28 +2723,20 @@ class DataPipelineManager:
 
         # Generate synthetic portfolio growth data
         initial_value = 1000.0
-        daily_returns = np.random.normal(
-            0.001, 0.02, len(dates)
-        )  # 0.1% daily return, 2% volatility
+        daily_returns = np.random.normal(0.001, 0.02, len(dates))  # 0.1% daily return, 2% volatility
         portfolio_values = [initial_value]
 
         for ret in daily_returns[1:]:
             portfolio_values.append(portfolio_values[-1] * (1 + ret))
 
-        return pd.DataFrame(
-            {"Date": dates.strftime("%Y-%m-%d"), "Portfolio_Value": portfolio_values}
-        )
+        return pd.DataFrame({"Date": dates.strftime("%Y-%m-%d"), "Portfolio_Value": portfolio_values})
 
     def _generate_portfolio_returns_data(self) -> pd.DataFrame:
         """Generate portfolio returns time series data"""
         dates = pd.date_range(start="2014-01-01", end=datetime.now(), freq="D")
-        returns = (
-            np.random.normal(0.001, 0.02, len(dates)) * 100
-        )  # Convert to percentage
+        returns = np.random.normal(0.001, 0.02, len(dates)) * 100  # Convert to percentage
 
-        return pd.DataFrame(
-            {"Date": dates.strftime("%Y-%m-%d"), "Returns_Pct": returns}
-        )
+        return pd.DataFrame({"Date": dates.strftime("%Y-%m-%d"), "Returns_Pct": returns})
 
     def _generate_portfolio_drawdowns_data(self) -> pd.DataFrame:
         """Generate portfolio drawdown time series data"""
@@ -3158,9 +2746,7 @@ class DataPipelineManager:
         base_drawdowns = np.random.exponential(scale=0.05, size=len(dates))
         drawdowns = -np.abs(base_drawdowns) * 100  # Convert to negative percentage
 
-        return pd.DataFrame(
-            {"Date": dates.strftime("%Y-%m-%d"), "Drawdown_Pct": drawdowns}
-        )
+        return pd.DataFrame({"Date": dates.strftime("%Y-%m-%d"), "Drawdown_Pct": drawdowns})
 
     def _generate_live_signals_equity_data(self) -> pd.DataFrame:
         """Generate live signals equity time series data"""
@@ -3176,9 +2762,7 @@ class DataPipelineManager:
 
         for i, date in enumerate(dates):
             # Add some realistic trading volatility
-            daily_change = np.random.normal(
-                0.5, 15.0
-            )  # $0.50 average gain, $15 daily volatility
+            daily_change = np.random.normal(0.5, 15.0)  # $0.50 average gain, $15 daily volatility
             current_equity += daily_change
 
             # Track peak and drawdown
@@ -3192,10 +2776,7 @@ class DataPipelineManager:
             drawdown_values.append(drawdown)
 
         # Calculate additional metrics
-        equity_changes = [0.0] + [
-            equity_values[i] - equity_values[i - 1]
-            for i in range(1, len(equity_values))
-        ]
+        equity_changes = [0.0] + [equity_values[i] - equity_values[i - 1] for i in range(1, len(equity_values))]
 
         return pd.DataFrame(
             {
@@ -3286,9 +2867,9 @@ class DataPipelineManager:
                 "Long_Window": np.random.randint(30, 70),
                 "Signal_Window": 0,
                 "Entry_Timestamp": entry_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "Exit_Timestamp": (
-                    entry_date + timedelta(days=np.random.randint(1, 120))
-                ).strftime("%Y-%m-%d %H:%M:%S"),
+                "Exit_Timestamp": (entry_date + timedelta(days=np.random.randint(1, 120))).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
                 "Avg_Entry_Price": np.random.uniform(100, 500),
                 "Avg_Exit_Price": np.random.uniform(100, 500),
                 "Position_Size": 1.0,
@@ -3319,9 +2900,7 @@ class DataPipelineManager:
 
         # Generate time series for each open position
         positions = []
-        dates = pd.date_range(
-            start=datetime.now() - timedelta(days=90), end=datetime.now(), freq="D"
-        )
+        dates = pd.date_range(start=datetime.now() - timedelta(days=90), end=datetime.now(), freq="D")
 
         for ticker in tickers:
             entry_date = datetime.now() - timedelta(days=np.random.randint(30, 90))
@@ -3330,9 +2909,7 @@ class DataPipelineManager:
             for date in dates:
                 if date >= entry_date:
                     # Add daily PnL change
-                    daily_change = np.random.normal(
-                        2, 10
-                    )  # $2 average daily gain, $10 volatility
+                    daily_change = np.random.normal(2, 10)  # $2 average daily gain, $10 volatility
                     cumulative_pnl += daily_change
 
                     positions.append(
@@ -3357,7 +2934,7 @@ class DataPipelineManager:
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
 
-    def validate_data_freshness(self) -> Dict[str, Any]:
+    def validate_data_freshness(self) -> dict[str, Any]:
         """Validate freshness of chart data files using discovered contracts"""
         validation_results = {}
         current_time = datetime.now()
@@ -3367,7 +2944,7 @@ class DataPipelineManager:
             self.discover_contracts()
 
         # Group contracts by category
-        contracts_by_category: Dict[str, List[DataContract]] = {}
+        contracts_by_category: dict[str, list[DataContract]] = {}
         for contract in self.contracts:
             if contract.category not in contracts_by_category:
                 contracts_by_category[contract.category] = []
@@ -3375,7 +2952,7 @@ class DataPipelineManager:
 
         # Validate each category
         for category, contracts in contracts_by_category.items():
-            category_results: Dict[str, Any] = {
+            category_results: dict[str, Any] = {
                 "files": {},
                 "status": "healthy",
                 "issues": [],
@@ -3396,46 +2973,32 @@ class DataPipelineManager:
 
                     if category in ["portfolio", "trade-history"]:
                         # Extract portfolio name from contract
-                        portfolio_name = self._extract_portfolio_name_from_contract(
-                            contract
-                        )
+                        portfolio_name = self._extract_portfolio_name_from_contract(contract)
                         if portfolio_name:
-                            source_mod_time = self._get_source_data_modification_time(
-                                portfolio_name
-                            )
-                            output_mod_time = datetime.fromtimestamp(
-                                file_path.stat().st_mtime
-                            )
+                            source_mod_time = self._get_source_data_modification_time(portfolio_name)
+                            output_mod_time = datetime.fromtimestamp(file_path.stat().st_mtime)
 
                             if source_mod_time and source_mod_time > output_mod_time:
                                 needs_update = True
-                                source_age_hours = (
-                                    current_time - source_mod_time
-                                ).total_seconds() / 3600
+                                source_age_hours = (current_time - source_mod_time).total_seconds() / 3600
                                 update_reason = f"Source data modified {source_age_hours:.1f}h ago, output is outdated"
                             else:
                                 needs_update = False
                                 update_reason = "Output is up-to-date with source data"
                         else:
                             # Fallback to time-based logic
-                            needs_update = (
-                                file_age_hours > contract.freshness_threshold_hours
+                            needs_update = file_age_hours > contract.freshness_threshold_hours
+                            update_reason = (
+                                f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                             )
-                            update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                     elif category == "open-positions":
                         # Special logic for open positions: check if positions actually exist
-                        portfolio_name = self._extract_portfolio_name_from_contract(
-                            contract
-                        )
+                        portfolio_name = self._extract_portfolio_name_from_contract(contract)
                         if portfolio_name:
-                            has_open_positions = self._check_open_positions_exist(
-                                portfolio_name
-                            )
+                            has_open_positions = self._check_open_positions_exist(portfolio_name)
                             if not has_open_positions:
                                 # No open positions, only update if file is very old (cleanup)
-                                needs_update = (
-                                    file_age_hours > 24
-                                )  # 24h cleanup threshold
+                                needs_update = file_age_hours > 24  # 24h cleanup threshold
                                 update_reason = (
                                     f"No open positions, cleanup needed (file is {file_age_hours:.1f}h old)"
                                     if needs_update
@@ -3443,22 +3006,20 @@ class DataPipelineManager:
                                 )
                             else:
                                 # Has open positions, use standard freshness check
-                                needs_update = (
-                                    file_age_hours > contract.freshness_threshold_hours
-                                )
+                                needs_update = file_age_hours > contract.freshness_threshold_hours
                                 update_reason = f"Open positions exist, file is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                         else:
                             # Fallback to time-based logic
-                            needs_update = (
-                                file_age_hours > contract.freshness_threshold_hours
+                            needs_update = file_age_hours > contract.freshness_threshold_hours
+                            update_reason = (
+                                f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                             )
-                            update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                     else:
                         # Default time-based logic for other categories
-                        needs_update = (
-                            file_age_hours > contract.freshness_threshold_hours
+                        needs_update = file_age_hours > contract.freshness_threshold_hours
+                        update_reason = (
+                            f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                         )
-                        update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
 
                     file_status = "stale" if needs_update else "fresh"
 
@@ -3498,9 +3059,7 @@ class DataPipelineManager:
         try:
             # Step 1: Discover all contracts
             self.logger.info("Discovering contracts for dry-run analysis")
-            report.add_operation(
-                "Contract Discovery", 0.1, "Scanning frontend directory structure"
-            )
+            report.add_operation("Contract Discovery", 0.1, "Scanning frontend directory structure")
 
             self.discover_contracts()
 
@@ -3512,9 +3071,7 @@ class DataPipelineManager:
                         status = "missing"
                         reason = "File does not exist"
                     else:
-                        file_age_hours = (
-                            datetime.now() - contract.last_modified
-                        ).total_seconds() / 3600
+                        file_age_hours = (datetime.now() - contract.last_modified).total_seconds() / 3600
 
                         # Use source-based logic for portfolio and trade-history data
                         needs_update = False
@@ -3522,70 +3079,48 @@ class DataPipelineManager:
 
                         if contract.category in ["portfolio", "trade-history"]:
                             # Extract portfolio name from contract
-                            portfolio_name = self._extract_portfolio_name_from_contract(
-                                contract
-                            )
+                            portfolio_name = self._extract_portfolio_name_from_contract(contract)
                             if portfolio_name:
-                                source_mod_time = (
-                                    self._get_source_data_modification_time(
-                                        portfolio_name
-                                    )
-                                )
+                                source_mod_time = self._get_source_data_modification_time(portfolio_name)
                                 output_mod_time = contract.last_modified
 
-                                if (
-                                    source_mod_time
-                                    and source_mod_time > output_mod_time
-                                ):
+                                if source_mod_time and source_mod_time > output_mod_time:
                                     needs_update = True
-                                    source_age_hours = (
-                                        datetime.now() - source_mod_time
-                                    ).total_seconds() / 3600
-                                    update_reason = f"Source data modified {source_age_hours:.1f}h ago, output is outdated"
+                                    source_age_hours = (datetime.now() - source_mod_time).total_seconds() / 3600
+                                    update_reason = (
+                                        f"Source data modified {source_age_hours:.1f}h ago, output is outdated"
+                                    )
                                 else:
                                     needs_update = False
                                     update_reason = f"File is {file_age_hours:.1f}h old, up-to-date with source"
                             else:
                                 # Fallback to time-based logic
-                                needs_update = (
-                                    file_age_hours > contract.freshness_threshold_hours
-                                )
+                                needs_update = file_age_hours > contract.freshness_threshold_hours
                                 update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                         elif contract.category == "open-positions":
                             # Special logic for open positions
-                            portfolio_name = self._extract_portfolio_name_from_contract(
-                                contract
-                            )
+                            portfolio_name = self._extract_portfolio_name_from_contract(contract)
                             if portfolio_name:
-                                has_open_positions = self._check_open_positions_exist(
-                                    portfolio_name
-                                )
+                                has_open_positions = self._check_open_positions_exist(portfolio_name)
                                 if not has_open_positions:
-                                    needs_update = (
-                                        file_age_hours > 24
-                                    )  # 24h cleanup threshold
+                                    needs_update = file_age_hours > 24  # 24h cleanup threshold
                                     update_reason = (
                                         f"No open positions, cleanup needed (file is {file_age_hours:.1f}h old)"
                                         if needs_update
                                         else f"No open positions, file is {file_age_hours:.1f}h old (no update needed)"
                                     )
                                 else:
-                                    needs_update = (
-                                        file_age_hours
-                                        > contract.freshness_threshold_hours
-                                    )
+                                    needs_update = file_age_hours > contract.freshness_threshold_hours
                                     update_reason = f"Open positions exist, file is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                             else:
-                                needs_update = (
-                                    file_age_hours > contract.freshness_threshold_hours
-                                )
+                                needs_update = file_age_hours > contract.freshness_threshold_hours
                                 update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                         else:
                             # Default time-based logic for other categories
-                            needs_update = (
-                                file_age_hours > contract.freshness_threshold_hours
+                            needs_update = file_age_hours > contract.freshness_threshold_hours
+                            update_reason = (
+                                f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
                             )
-                            update_reason = f"File is {file_age_hours:.1f}h old (threshold: {contract.freshness_threshold_hours}h)"
 
                         status = "stale" if needs_update else "fresh"
                         reason = update_reason
@@ -3599,9 +3134,7 @@ class DataPipelineManager:
                     # Add to update plan if needed
                     if status in ["missing", "stale"]:
                         estimated_rows = self._estimate_data_rows(contract)
-                        estimated_time = self._estimate_processing_time(
-                            contract, estimated_rows
-                        )
+                        estimated_time = self._estimate_processing_time(contract, estimated_rows)
 
                         report.add_update_plan_item(
                             str(contract.file_path),
@@ -3611,9 +3144,7 @@ class DataPipelineManager:
                         )
 
                         # Add detailed operation for this file
-                        operation_details = (
-                            f"{estimated_rows} rows, {contract.category} category"
-                        )
+                        operation_details = f"{estimated_rows} rows, {contract.category} category"
                         report.add_operation(
                             f"Generate {contract.relative_path}",
                             estimated_time,
@@ -3629,17 +3160,13 @@ class DataPipelineManager:
                     )
 
                 except Exception as e:
-                    error_msg = (
-                        f"Failed to analyze contract {contract.contract_id}: {str(e)}"
-                    )
+                    error_msg = f"Failed to analyze contract {contract.contract_id}: {str(e)}"
                     report.add_error(error_msg)
                     self.logger.error(error_msg)
 
             # Step 2: Get current data status
             self.logger.info("Analyzing current data status")
-            report.add_operation(
-                "Data Status Analysis", 0.5, "Checking file freshness and sizes"
-            )
+            report.add_operation("Data Status Analysis", 0.5, "Checking file freshness and sizes")
 
             current_status = self.validate_data_freshness()
             for category, status_data in current_status.items():
@@ -3653,16 +3180,10 @@ class DataPipelineManager:
                     15.0,
                     f"{total_files_to_update} files to update",
                 )
-                report.add_operation(
-                    "CSV Transformation", 5.0, "Convert data to frontend format"
-                )
-                report.add_operation(
-                    "Schema Validation", 2.0, "Validate output schemas"
-                )
+                report.add_operation("CSV Transformation", 5.0, "Convert data to frontend format")
+                report.add_operation("Schema Validation", 2.0, "Validate output schemas")
 
-            self.logger.info(
-                f"Dry-run analysis completed. {total_files_to_update} files would be updated."
-            )
+            self.logger.info(f"Dry-run analysis completed. {total_files_to_update} files would be updated.")
 
         except Exception as e:
             error_msg = f"Dry-run analysis failed: {str(e)}"
@@ -3676,45 +3197,38 @@ class DataPipelineManager:
         if contract.category == "portfolio":
             if "live-signals" in contract.relative_path:
                 return 150  # ~5 months of daily data
-            else:
-                return 3960  # ~11 years of daily data (2014-2025)
-        elif contract.category == "trade-history":
+            return 3960  # ~11 years of daily data (2014-2025)
+        if contract.category == "trade-history":
             return 45  # Typical number of closed trades
-        elif contract.category == "open-positions":
+        if contract.category == "open-positions":
             return 450  # 5 positions × 90 days
-        else:
-            return 100  # Default estimate
+        return 100  # Default estimate
 
-    def _estimate_processing_time(
-        self, contract: DataContract, row_count: int
-    ) -> float:
+    def _estimate_processing_time(self, contract: DataContract, row_count: int) -> float:
         """Estimate processing time for a contract in seconds"""
         base_time = 1.0  # Base processing time
         row_factor = max(1.0, row_count / 1000.0)  # Scale with row count
 
         if contract.category == "portfolio":
             return base_time * row_factor * 2.0  # Portfolio data is more complex
-        elif contract.category == "live-signals":
+        if contract.category == "live-signals":
             return base_time * row_factor * 3.0  # Live signals require more processing
-        else:
-            return base_time * row_factor
+        return base_time * row_factor
 
-    def _simulate_validation(self, contract: DataContract) -> List[str]:
+    def _simulate_validation(self, contract: DataContract) -> list[str]:
         """Simulate validation and return potential issues"""
         issues = []
 
         # Check if file path is valid
         if not contract.file_path.parent.exists():
-            issues.append(
-                f"Parent directory does not exist: {contract.file_path.parent}"
-            )
+            issues.append(f"Parent directory does not exist: {contract.file_path.parent}")
 
         # Check expected schema
         if not contract.schema:
             issues.append("No expected schema defined")
 
         # Check for known problematic paths
-        if "sensylate-command-system-enhancements" in str(contract.file_path):
+        if "colemorton-command-system-enhancements" in str(contract.file_path):
             issues.append("File path references external project directory")
 
         return issues
@@ -3738,9 +3252,7 @@ class DataPipelineManager:
 
         self.logger.debug(f"Validating CLI contract: {service_name}.{command}")
 
-        validation_result = self.cli_validator.validate_service_command(
-            service_name, command
-        )
+        validation_result = self.cli_validator.validate_service_command(service_name, command)
 
         if not validation_result["valid"]:
             error_msg = f"CLI contract validation failed for {service_name}.{command}: "
@@ -3758,11 +3270,9 @@ class DataPipelineManager:
 
         # Cache successful validation
         self._validated_contracts.add(contract_key)
-        self.logger.debug(
-            f"CLI contract validated successfully: {service_name}.{command}"
-        )
+        self.logger.debug(f"CLI contract validated successfully: {service_name}.{command}")
 
-    def _perform_service_health_checks(self, services: List[str]) -> Dict[str, Any]:
+    def _perform_service_health_checks(self, services: list[str]) -> dict[str, Any]:
         """
         Perform health checks on required services before pipeline execution
 
@@ -3772,7 +3282,7 @@ class DataPipelineManager:
         Returns:
             Dictionary with health check results
         """
-        health_results: Dict[str, Any] = {
+        health_results: dict[str, Any] = {
             "overall_healthy": True,
             "total_services": len(services),
             "healthy_services": 0,
@@ -3784,7 +3294,7 @@ class DataPipelineManager:
         self.logger.info(f"Performing health checks on {len(services)} services...")
 
         for service_name in services:
-            service_health: Dict[str, Any] = {
+            service_health: dict[str, Any] = {
                 "healthy": False,
                 "cli_exists": False,
                 "basic_commands_available": False,
@@ -3798,9 +3308,7 @@ class DataPipelineManager:
                     service_health["cli_exists"] = True
 
                     # Check if basic commands are available
-                    available_commands = self.cli_validator._get_cli_commands(
-                        cli_file, service_name
-                    )
+                    available_commands = self.cli_validator._get_cli_commands(cli_file, service_name)
                     if available_commands:
                         service_health["basic_commands_available"] = True
                         service_health["available_commands"] = available_commands
@@ -3810,41 +3318,26 @@ class DataPipelineManager:
                     service_health["errors"].append(f"CLI file not found: {cli_file}")
 
                 # Try a basic health check command if available
-                if (
-                    service_health["cli_exists"]
-                    and service_health["basic_commands_available"]
-                ):
+                if service_health["cli_exists"] and service_health["basic_commands_available"]:
                     try:
                         # For services with health check commands, test them
                         if "health" in available_commands:
-                            self.logger.debug(
-                                f"Testing health command for {service_name}"
-                            )
+                            self.logger.debug(f"Testing health command for {service_name}")
                             # Note: We could add actual health command execution here if needed
 
                         service_health["healthy"] = True
 
                     except Exception as e:
-                        service_health["errors"].append(
-                            f"Health check failed: {str(e)}"
-                        )
+                        service_health["errors"].append(f"Health check failed: {str(e)}")
 
                 # Mark service as healthy if it passes basic checks
-                if (
-                    service_health["cli_exists"]
-                    and service_health["basic_commands_available"]
-                ):
+                if service_health["cli_exists"] and service_health["basic_commands_available"]:
                     service_health["healthy"] = True
                     health_results["healthy_services"] += 1
                 else:
                     health_results["unhealthy_services"] += 1
                     health_results["overall_healthy"] = False
-                    health_results["errors"].extend(
-                        [
-                            f"{service_name}: {error}"
-                            for error in service_health["errors"]
-                        ]
-                    )
+                    health_results["errors"].extend([f"{service_name}: {error}" for error in service_health["errors"]])
 
             except Exception as e:
                 service_health["errors"].append(f"Health check exception: {str(e)}")
@@ -3878,21 +3371,15 @@ def main():
     """Main entry point for data pipeline management"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Manage chart data pipeline for frontend"
-    )
-    parser.add_argument(
-        "--validate-only", action="store_true", help="Only validate data freshness"
-    )
+    parser = argparse.ArgumentParser(description="Manage chart data pipeline for frontend")
+    parser.add_argument("--validate-only", action="store_true", help="Only validate data freshness")
     parser.add_argument(
         "--skip-errors",
         action="store_true",
         help="Continue despite individual failures",
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    parser.add_argument(
-        "--quiet", action="store_true", help="Enable quiet mode (warnings only)"
-    )
+    parser.add_argument("--quiet", action="store_true", help="Enable quiet mode (warnings only)")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -3918,9 +3405,7 @@ def main():
         chart_status_summary = pipeline.chart_status_manager.get_status_summary()
         frozen_count = len(chart_status_summary.get("frozen_data_sources", []))
         if frozen_count > 0:
-            print(
-                f"🔒 {frozen_count} data sources frozen/static - pipeline will skip these"
-            )
+            print(f"🔒 {frozen_count} data sources frozen/static - pipeline will skip these")
             for detail in chart_status_summary.get("chart_details", []):
                 if detail["status"] in ["frozen", "static"]:
                     reason = f" ({detail['reason']})" if detail.get("reason") else ""
@@ -3945,9 +3430,7 @@ def main():
                     print("   - {issue}")
 
         exit_code = 0 if overall_healthy else 1
-        print(
-            f"\nOverall Status: {'✅ Healthy' if overall_healthy else '⚠️ Issues Found'}"
-        )
+        print(f"\nOverall Status: {'✅ Healthy' if overall_healthy else '⚠️ Issues Found'}")
         sys.exit(exit_code)
 
     elif args.dry_run:
@@ -3977,9 +3460,7 @@ def main():
             print(
                 f"   Contracts: {result.metadata.get('successful_contracts', 0)}/{result.metadata.get('total_contracts', 0)}"
             )
-            print(
-                f"   Categories: {len(result.metadata.get('categories_processed', []))}"
-            )
+            print(f"   Categories: {len(result.metadata.get('categories_processed', []))}")
             print("   Duration: {result.processing_time:.2f}s")
 
             # Show discovery statistics
@@ -3997,15 +3478,12 @@ def main():
             if contract_results.get("failed"):
                 print("   Failed contracts: {contract_results['failed']}")
             if contract_results.get("unfulfillable"):
-                print(
-                    f"   Unfulfillable contracts: {contract_results['unfulfillable']}"
-                )
+                print(f"   Unfulfillable contracts: {contract_results['unfulfillable']}")
 
             sys.exit(1)
 
 
 if __name__ == "__main__":
     # numpy is already imported at the top of the file
-    pass
 
     main()

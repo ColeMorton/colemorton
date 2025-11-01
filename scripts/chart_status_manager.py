@@ -11,7 +11,8 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
+
 
 # Global module-level caches to prevent repeated operations across instances
 _GLOBAL_MDX_SCAN_CACHE = None
@@ -33,10 +34,10 @@ class ChartStatusInfo:
 
     chart_type: str
     status: ChartStatus
-    frozen_date: Optional[str] = None
-    frozen_by: Optional[str] = None
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
+    frozen_date: str | None = None
+    frozen_by: str | None = None
+    file_path: str | None = None
+    line_number: int | None = None
 
 
 class ChartStatusManager:
@@ -44,7 +45,7 @@ class ChartStatusManager:
     Manages chart status by scanning MDX files and mapping to data sources
     """
 
-    def __init__(self, frontend_src_path: Optional[Path] = None):
+    def __init__(self, frontend_src_path: Path | None = None):
         """Initialize chart status manager"""
         self.logger = logging.getLogger("chart_status_manager")
 
@@ -58,17 +59,11 @@ class ChartStatusManager:
 
         # Validate that the frontend src path exists
         if not self.frontend_src_path.exists():
-            self.logger.error(
-                f"Frontend src path does not exist: {self.frontend_src_path}"
-            )
-            raise FileNotFoundError(
-                f"Frontend src directory not found: {self.frontend_src_path}"
-            )
+            self.logger.error(f"Frontend src path does not exist: {self.frontend_src_path}")
+            raise FileNotFoundError(f"Frontend src directory not found: {self.frontend_src_path}")
 
         # Demote initialization log to DEBUG to reduce noise (this gets called 11+ times)
-        self.logger.debug(
-            f"Chart status manager initialized with frontend path: {self.frontend_src_path}"
-        )
+        self.logger.debug(f"Chart status manager initialized with frontend path: {self.frontend_src_path}")
 
         # Data source mappings for chart types
         self.chart_data_source_mapping = {
@@ -86,7 +81,7 @@ class ChartStatusManager:
             # Add more mappings as needed
         }
 
-    def scan_mdx_files(self) -> List[ChartStatusInfo]:
+    def scan_mdx_files(self) -> list[ChartStatusInfo]:
         """
         Scan all MDX files for ChartDisplay components and extract status information
 
@@ -105,9 +100,7 @@ class ChartStatusManager:
 
         # Only log scan start once globally across all instances
         if not _GLOBAL_SCAN_LOGGED:
-            self.logger.info(
-                f"Found {len(mdx_files)} MDX files to scan for chart status"
-            )
+            self.logger.info(f"Found {len(mdx_files)} MDX files to scan for chart status")
             _GLOBAL_SCAN_LOGGED = True
         else:
             # All subsequent scans are silent (not even DEBUG) to eliminate noise
@@ -127,9 +120,7 @@ class ChartStatusManager:
                 file_charts = self._extract_chart_status_from_file(mdx_file)
                 chart_statuses.extend(file_charts)
                 if file_charts:
-                    self.logger.debug(
-                        f"Found {len(file_charts)} charts in {mdx_file.name}"
-                    )
+                    self.logger.debug(f"Found {len(file_charts)} charts in {mdx_file.name}")
             except Exception as e:
                 self.logger.warning(f"Failed to scan {mdx_file}: {e}")
 
@@ -144,7 +135,7 @@ class ChartStatusManager:
 
         return chart_statuses
 
-    def _extract_chart_status_from_file(self, mdx_file: Path) -> List[ChartStatusInfo]:
+    def _extract_chart_status_from_file(self, mdx_file: Path) -> list[ChartStatusInfo]:
         """Extract chart status information from a single MDX file"""
         chart_statuses = []
 
@@ -168,9 +159,7 @@ class ChartStatusManager:
 
         return chart_statuses
 
-    def _parse_chart_props(
-        self, props_str: str, file_path: Path, line_number: int
-    ) -> Optional[ChartStatusInfo]:
+    def _parse_chart_props(self, props_str: str, file_path: Path, line_number: int) -> ChartStatusInfo | None:
         """Parse ChartDisplay component properties"""
         try:
             # Extract key properties using regex
@@ -192,19 +181,17 @@ class ChartStatusManager:
             )
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to parse chart props at {file_path}:{line_number}: {e}"
-            )
+            self.logger.warning(f"Failed to parse chart props at {file_path}:{line_number}: {e}")
             return None
 
-    def _extract_prop_value(self, props_str: str, prop_name: str) -> Optional[str]:
+    def _extract_prop_value(self, props_str: str, prop_name: str) -> str | None:
         """Extract a property value from component props string"""
         # Pattern to match prop="value" or prop='value'
         pattern = rf'{prop_name}=["\'](.*?)["\']'
         match = re.search(pattern, props_str)
         return match.group(1) if match else None
 
-    def get_data_source_status_mapping(self) -> Dict[str, ChartStatus]:
+    def get_data_source_status_mapping(self) -> dict[str, ChartStatus]:
         """
         Build mapping of data source files to their aggregated chart status
 
@@ -217,15 +204,13 @@ class ChartStatusManager:
             return _GLOBAL_CHART_STATUS_MAPPING_CACHE
 
         chart_statuses = self.scan_mdx_files()
-        data_source_status: Dict[str, ChartStatus] = {}
+        data_source_status: dict[str, ChartStatus] = {}
 
         for chart_info in chart_statuses:
             # Get data source for this chart type
             data_source = self.chart_data_source_mapping.get(chart_info.chart_type)
             if not data_source:
-                self.logger.debug(
-                    f"No data source mapping for chart type: {chart_info.chart_type}"
-                )
+                self.logger.debug(f"No data source mapping for chart type: {chart_info.chart_type}")
                 continue
 
             # Track the most restrictive status for each data source
@@ -234,23 +219,18 @@ class ChartStatusManager:
             # Priority: static > frozen > active
             if chart_info.status == ChartStatus.STATIC:
                 data_source_status[data_source] = ChartStatus.STATIC
-            elif (
-                chart_info.status == ChartStatus.FROZEN
-                and current_status != ChartStatus.STATIC
-            ):
+            elif chart_info.status == ChartStatus.FROZEN and current_status != ChartStatus.STATIC:
                 data_source_status[data_source] = ChartStatus.FROZEN
 
         # Cache the results globally
         _GLOBAL_CHART_STATUS_MAPPING_CACHE = data_source_status
 
         # Log generation only once globally (demote to DEBUG level to reduce noise)
-        self.logger.debug(
-            f"Generated status mapping for {len(data_source_status)} data sources"
-        )
+        self.logger.debug(f"Generated status mapping for {len(data_source_status)} data sources")
 
         return data_source_status
 
-    def get_frozen_data_sources(self) -> Set[str]:
+    def get_frozen_data_sources(self) -> set[str]:
         """Get set of data source paths that should be skipped in pipeline"""
         status_mapping = self.get_data_source_status_mapping()
         return {
@@ -301,13 +281,11 @@ class ChartStatusManager:
             # Check if any frozen source ends with this filename
             for frozen_source in frozen_sources:
                 if frozen_source.endswith(filename):
-                    self.logger.info(
-                        f"Blocking update to potentially frozen file: {filename}"
-                    )
+                    self.logger.info(f"Blocking update to potentially frozen file: {filename}")
                     return True
             return False
 
-    def get_status_summary(self) -> Dict[str, Any]:
+    def get_status_summary(self) -> dict[str, Any]:
         """Get summary of chart status information"""
         chart_statuses = self.scan_mdx_files()
         status_counts = {}
@@ -340,7 +318,7 @@ class ChartStatusManager:
 
 
 def create_chart_status_manager(
-    frontend_src_path: Optional[str] = None,
+    frontend_src_path: str | None = None,
 ) -> ChartStatusManager:
     """Factory function to create chart status manager"""
     return ChartStatusManager(Path(frontend_src_path) if frontend_src_path else None)

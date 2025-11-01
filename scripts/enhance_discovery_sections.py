@@ -8,12 +8,10 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
-def generate_peer_group_analysis(
-    ticker: str, sector: str, industry: str
-) -> Dict[str, Any]:
+def generate_peer_group_analysis(ticker: str, sector: str, industry: str) -> dict[str, Any]:
     """
     Generate peer group analysis based on sector and industry
     """
@@ -76,8 +74,8 @@ def generate_peer_group_analysis(
 
 
 def generate_discovery_insights(
-    ticker: str, financial_data: Dict[str, Any], market_data: Dict[str, Any]
-) -> Dict[str, Any]:
+    ticker: str, financial_data: dict[str, Any], market_data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Generate discovery insights with observations, gaps, and research priorities
     """
@@ -124,13 +122,7 @@ def generate_discovery_insights(
     else:
         # Generic insights template
         profit_status = "profitable" if net_income > 0 else "loss-making"
-        growth_status = (
-            "growth"
-            if revenue_growth > 0.05
-            else "slow growth"
-            if revenue_growth > 0
-            else "declining"
-        )
+        growth_status = "growth" if revenue_growth > 0.05 else "slow growth" if revenue_growth > 0 else "declining"
 
         insights["initial_observations"] = [
             f"Company shows {growth_status} with {revenue_growth:.1%} revenue growth",
@@ -158,8 +150,8 @@ def generate_discovery_insights(
 
 
 def calculate_source_reliability_scores(
-    cli_service_health: Dict[str, Any],
-) -> Dict[str, float]:
+    cli_service_health: dict[str, Any],
+) -> dict[str, float]:
     """
     Calculate source reliability scores for each CLI service
     """
@@ -192,12 +184,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
     # Load discovery file
     base_dir = Path(__file__).parent.parent
     discovery_file = (
-        base_dir
-        / "data"
-        / "outputs"
-        / "fundamental_analysis"
-        / "discovery"
-        / f"{ticker}_{date_str}_discovery.json"
+        base_dir / "data" / "outputs" / "fundamental_analysis" / "discovery" / f"{ticker}_{date_str}_discovery.json"
     )
 
     if not discovery_file.exists():
@@ -207,7 +194,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
     print("Enhancing discovery sections for {ticker}...")
 
     # Load current discovery data
-    with open(discovery_file, "r") as f:
+    with open(discovery_file) as f:
         discovery_data = json.load(f)
 
     enhancements_made = []
@@ -215,13 +202,9 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
     # 1. Add peer group analysis if missing
     if "peer_group_data" not in discovery_data:
         sector = discovery_data.get("company_intelligence", {}).get("sector", "Unknown")
-        industry = discovery_data.get("company_intelligence", {}).get(
-            "industry", "Unknown"
-        )
+        industry = discovery_data.get("company_intelligence", {}).get("industry", "Unknown")
 
-        discovery_data["peer_group_data"] = generate_peer_group_analysis(
-            ticker, sector, industry
-        )
+        discovery_data["peer_group_data"] = generate_peer_group_analysis(ticker, sector, industry)
         enhancements_made.append("Added comprehensive peer group analysis")
 
     # 2. Add discovery insights if missing
@@ -229,9 +212,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
         financial_data = discovery_data.get("financial_metrics", {})
         market_data = discovery_data.get("market_data", {})
 
-        discovery_data["discovery_insights"] = generate_discovery_insights(
-            ticker, financial_data, market_data
-        )
+        discovery_data["discovery_insights"] = generate_discovery_insights(ticker, financial_data, market_data)
         enhancements_made.append("Added discovery insights and research priorities")
 
     # 3. Enhance data quality assessment with source reliability scoring
@@ -241,9 +222,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
     cli_service_health = discovery_data.get("cli_service_validation", {})
     source_scores = calculate_source_reliability_scores(cli_service_health)
 
-    discovery_data["data_quality_assessment"][
-        "source_reliability_scores"
-    ] = source_scores
+    discovery_data["data_quality_assessment"]["source_reliability_scores"] = source_scores
     discovery_data["data_quality_assessment"]["data_completeness"] = 0.94
     discovery_data["data_quality_assessment"]["data_freshness"] = {
         "market_data": "Real-time (within 15 minutes)",
@@ -257,9 +236,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
         "7-source CLI integration provides institutional-grade data quality",
     ]
 
-    enhancements_made.append(
-        "Added source reliability scoring and data quality assessment"
-    )
+    enhancements_made.append("Added source reliability scoring and data quality assessment")
 
     # 4. Update overall confidence scores
     if enhancements_made:
@@ -273,9 +250,7 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
         if "data_quality_insights" not in cli_insights:
             cli_insights["data_quality_insights"] = []
 
-        cli_insights["data_quality_insights"].append(
-            f"Discovery enhancement completed: {', '.join(enhancements_made)}"
-        )
+        cli_insights["data_quality_insights"].append(f"Discovery enhancement completed: {', '.join(enhancements_made)}")
         discovery_data["cli_insights"] = cli_insights
 
     # Save enhanced discovery file
@@ -288,13 +263,9 @@ def enhance_discovery_with_sections(ticker: str, date_str: str) -> bool:
         print("   • {enhancement}")
 
     print("📊 Final quality scores:")
-    print(
-        f"   • Overall data quality: {discovery_data['cli_data_quality']['overall_data_quality']}"
-    )
+    print(f"   • Overall data quality: {discovery_data['cli_data_quality']['overall_data_quality']}")
     print("   • Discovery confidence: {discovery_data['discovery_confidence']}")
-    print(
-        f"   • Institutional grade: {discovery_data['institutional_grade_assessment']}"
-    )
+    print(f"   • Institutional grade: {discovery_data['institutional_grade_assessment']}")
 
     return True
 

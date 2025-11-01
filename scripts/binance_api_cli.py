@@ -13,9 +13,10 @@ Command-line interface for Binance API public market data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -41,7 +42,7 @@ class BinanceAPICLI(BaseFinancialCLI):
             self.service = create_binance_api_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Binance API service health check"""
         try:
             service = self._get_service(env)
@@ -55,7 +56,7 @@ class BinanceAPICLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -99,9 +100,7 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("24hr-ticker")
         def get_24hr_ticker_stats(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -132,9 +131,7 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("price")
         def get_symbol_price_ticker(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -165,9 +162,7 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("book-ticker")
         def get_order_book_ticker(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -176,9 +171,7 @@ class BinanceAPICLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_order_book_ticker(symbol)
-                self._output_result(
-                    result, output_format, f"Order Book Ticker: {symbol}"
-                )
+                self._output_result(result, output_format, f"Order Book Ticker: {symbol}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get order book ticker for {symbol}")
@@ -200,12 +193,8 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("orderbook")
         def get_order_book(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
-            limit: int = typer.Option(
-                100, help="Number of entries (5,10,20,50,100,500,1000,5000)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
+            limit: int = typer.Option(100, help="Number of entries (5,10,20,50,100,500,1000,5000)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -225,9 +214,7 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("recent-trades")
         def get_recent_trades(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             limit: int = typer.Option(500, help="Number of trades (max 1000)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
@@ -249,9 +236,7 @@ class BinanceAPICLI(BaseFinancialCLI):
 
         @self.app.command("historical-trades")
         def get_historical_trades(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             limit: int = typer.Option(500, help="Number of trades (max 1000)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
@@ -266,25 +251,19 @@ class BinanceAPICLI(BaseFinancialCLI):
                     limit = 1
 
                 result = service.get_historical_trades(symbol, limit)
-                self._output_result(
-                    result, output_format, f"Historical Trades: {symbol}"
-                )
+                self._output_result(result, output_format, f"Historical Trades: {symbol}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get historical trades for {symbol}")
 
         @self.app.command("klines")
         def get_klines(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             interval: str = typer.Option(
                 "1h",
                 help="Time interval (1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M)",
             ),
-            start_time: str = typer.Option(
-                "", help="Start time (milliseconds timestamp)"
-            ),
+            start_time: str = typer.Option("", help="Start time (milliseconds timestamp)"),
             end_time: str = typer.Option("", help="End time (milliseconds timestamp)"),
             limit: int = typer.Option(500, help="Number of klines (max 1000)"),
             env: str = typer.Option("dev", help="Environment"),
@@ -306,18 +285,14 @@ class BinanceAPICLI(BaseFinancialCLI):
                     end_time=end_time if end_time else None,
                     limit=limit,
                 )
-                self._output_result(
-                    result, output_format, f"Klines: {symbol} ({interval})"
-                )
+                self._output_result(result, output_format, f"Klines: {symbol} ({interval})")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get klines for {symbol}")
 
         @self.app.command("avg-price")
         def get_average_price(
-            symbol: str = typer.Option(
-                "BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"
-            ),
+            symbol: str = typer.Option("BTCUSDT", help="Trading symbol (e.g., BTCUSDT)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -361,18 +336,14 @@ class BinanceAPICLI(BaseFinancialCLI):
                     limit = 100
 
                 result = service.get_bitcoin_orderbook_analysis(limit)
-                self._output_result(
-                    result, output_format, "Bitcoin Order Book Analysis"
-                )
+                self._output_result(result, output_format, "Bitcoin Order Book Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get Bitcoin order book analysis")
 
         @self.app.command("market-summary")
         def get_market_summary(
-            symbols: str = typer.Option(
-                "", help="Comma-separated symbols (default: BTC,ETH,BNB,ADA,SOL)"
-            ),
+            symbols: str = typer.Option("", help="Comma-separated symbols (default: BTC,ETH,BNB,ADA,SOL)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -384,9 +355,7 @@ class BinanceAPICLI(BaseFinancialCLI):
                 if symbols:
                     symbol_list = [s.strip().upper() for s in symbols.split(",")]
                     # Ensure USDT pairs
-                    symbol_list = [
-                        s if s.endswith("USDT") else f"{s}USDT" for s in symbol_list
-                    ]
+                    symbol_list = [s if s.endswith("USDT") else f"{s}USDT" for s in symbol_list]
 
                 result = service.get_market_summary(symbol_list)
                 self._output_result(result, output_format, "Market Summary")
@@ -410,9 +379,7 @@ class BinanceAPICLI(BaseFinancialCLI):
                     days = 1
 
                 result = service.get_bitcoin_price_history(days)
-                self._output_result(
-                    result, output_format, f"Bitcoin Price History ({days} days)"
-                )
+                self._output_result(result, output_format, f"Bitcoin Price History ({days} days)")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get Bitcoin price history")

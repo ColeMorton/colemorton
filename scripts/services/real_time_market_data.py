@@ -21,14 +21,12 @@ Usage:
     vix_level = service.get_current_vix_level()
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
-import requests
 
 # Import configuration manager and service factories
 try:
@@ -49,7 +47,7 @@ logger = logging.getLogger(__name__)
 class MarketDataPoint:
     """Market data point with metadata"""
 
-    value: Union[float, int, str]
+    value: float | int | str
     timestamp: datetime
     source: str
     data_type: str
@@ -65,8 +63,8 @@ class DataSourceStatus:
     source_name: str
     is_available: bool
     response_time_ms: float
-    last_successful_fetch: Optional[datetime]
-    error_message: Optional[str]
+    last_successful_fetch: datetime | None
+    error_message: str | None
     reliability_score: float
 
 
@@ -78,7 +76,7 @@ class RealTimeMarketDataService:
     to configuration values when real-time data is unavailable.
     """
 
-    def __init__(self, config_manager: Optional[ConfigManager] = None):
+    def __init__(self, config_manager: ConfigManager | None = None):
         self.config = config_manager or ConfigManager()
         self.cache = {}
         self.cache_ttl = timedelta(minutes=5)  # 5-minute cache for real-time data
@@ -110,31 +108,23 @@ class RealTimeMarketDataService:
                 logger.info("✓ FRED service initialized")
             except Exception as e:
                 logger.warning(f"✗ FRED service unavailable: {e}")
-                self.source_status["fred"] = DataSourceStatus(
-                    "fred", False, 0.0, None, str(e), 0.0
-                )
+                self.source_status["fred"] = DataSourceStatus("fred", False, 0.0, None, str(e), 0.0)
 
             try:
                 # Alpha Vantage for market data
-                self.data_sources["alpha_vantage"] = create_alpha_vantage_service(
-                    "prod"
-                )
+                self.data_sources["alpha_vantage"] = create_alpha_vantage_service("prod")
                 self.source_status["alpha_vantage"] = DataSourceStatus(
                     source_name="alpha_vantage",
                     is_available=True,
                     response_time_ms=0.0,
                     last_successful_fetch=None,
                     error_message=None,
-                    reliability_score=self.config.get_data_source_reliability(
-                        "alpha_vantage"
-                    ),
+                    reliability_score=self.config.get_data_source_reliability("alpha_vantage"),
                 )
                 logger.info("✓ Alpha Vantage service initialized")
             except Exception as e:
                 logger.warning(f"✗ Alpha Vantage service unavailable: {e}")
-                self.source_status["alpha_vantage"] = DataSourceStatus(
-                    "alpha_vantage", False, 0.0, None, str(e), 0.0
-                )
+                self.source_status["alpha_vantage"] = DataSourceStatus("alpha_vantage", False, 0.0, None, str(e), 0.0)
 
             try:
                 # EIA Energy Data
@@ -150,16 +140,10 @@ class RealTimeMarketDataService:
                 logger.info("✓ EIA service initialized")
             except Exception as e:
                 logger.warning(f"✗ EIA service unavailable: {e}")
-                self.source_status["eia"] = DataSourceStatus(
-                    "eia", False, 0.0, None, str(e), 0.0
-                )
+                self.source_status["eia"] = DataSourceStatus("eia", False, 0.0, None, str(e), 0.0)
 
-        available_sources = len(
-            [s for s in self.source_status.values() if s.is_available]
-        )
-        logger.info(
-            f"Real-time data sources available: {available_sources}/{len(self.source_status)}"
-        )
+        available_sources = len([s for s in self.source_status.values() if s.is_available])
+        logger.info(f"Real-time data sources available: {available_sources}/{len(self.source_status)}")
 
     def get_current_fed_funds_rate(self) -> MarketDataPoint:
         """Get current Federal Reserve funds rate from FRED API"""
@@ -176,9 +160,7 @@ class RealTimeMarketDataService:
 
                 # Fetch latest Fed funds rate
                 service = self.data_sources["fred"]
-                result = service.get_economic_indicator(
-                    "FEDFUNDS", "3m"
-                )  # Last 3 months
+                result = service.get_economic_indicator("FEDFUNDS", "3m")  # Last 3 months
 
                 response_time = (time.time() - start_time) * 1000
                 self.source_status["fred"].response_time_ms = response_time
@@ -189,11 +171,7 @@ class RealTimeMarketDataService:
                     # Get most recent non-null observation
                     latest_obs = None
                     for obs in reversed(observations):
-                        if (
-                            obs.get("value")
-                            and obs["value"] != "."
-                            and obs["value"] is not None
-                        ):
+                        if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                             latest_obs = obs
                             break
 
@@ -215,9 +193,7 @@ class RealTimeMarketDataService:
                         # Cache the result
                         self._cache_data(cache_key, data_point)
 
-                        logger.info(
-                            f"✓ Real-time Fed funds rate: {fed_rate}% (age: {age_hours:.1f}h)"
-                        )
+                        logger.info(f"✓ Real-time Fed funds rate: {fed_rate}% (age: {age_hours:.1f}h)")
                         return data_point
 
         except Exception as e:
@@ -264,19 +240,13 @@ class RealTimeMarketDataService:
                     # Get most recent non-null observation
                     latest_obs = None
                     for obs in reversed(observations):
-                        if (
-                            obs.get("value")
-                            and obs["value"] != "."
-                            and obs["value"] is not None
-                        ):
+                        if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                             latest_obs = obs
                             break
 
                     if latest_obs:
                         # Balance sheet size in billions
-                        balance_sheet_size = (
-                            float(latest_obs["value"]) / 1000
-                        )  # Convert to billions
+                        balance_sheet_size = float(latest_obs["value"]) / 1000  # Convert to billions
                         obs_date = datetime.strptime(latest_obs["date"], "%Y-%m-%d")
                         age_hours = (datetime.now() - obs_date).total_seconds() / 3600
 
@@ -303,9 +273,7 @@ class RealTimeMarketDataService:
             self.source_status["fred"].error_message = str(e)
 
         # Fallback to configuration
-        fallback_size = self.config.get_market_data_fallback(
-            "balance_sheet_size", 7800.0
-        )
+        fallback_size = self.config.get_market_data_fallback("balance_sheet_size", 7800.0)
         logger.info(f"Using fallback balance sheet size: ${fallback_size}B")
 
         return MarketDataPoint(
@@ -412,9 +380,7 @@ class RealTimeMarketDataService:
                 # Cache the result
                 self._cache_data(cache_key, data_point)
 
-                logger.info(
-                    f"✓ Real-time natural gas price: ${mock_ng_price:.2f}/MMBtu"
-                )
+                logger.info(f"✓ Real-time natural gas price: ${mock_ng_price:.2f}/MMBtu")
                 return data_point
 
         except Exception as e:
@@ -434,7 +400,7 @@ class RealTimeMarketDataService:
             age_hours=0.0,
         )
 
-    def get_current_exchange_rates(self) -> Dict[str, MarketDataPoint]:
+    def get_current_exchange_rates(self) -> dict[str, MarketDataPoint]:
         """Get current major currency exchange rates"""
         cache_key = "exchange_rates"
 
@@ -446,10 +412,7 @@ class RealTimeMarketDataService:
         exchange_rates = {}
 
         try:
-            if (
-                "alpha_vantage" in self.data_sources
-                and self.source_status["alpha_vantage"].is_available
-            ):
+            if "alpha_vantage" in self.data_sources and self.source_status["alpha_vantage"].is_available:
                 start_time = time.time()
 
                 # Mock real-time exchange rate data
@@ -463,9 +426,7 @@ class RealTimeMarketDataService:
 
                 response_time = (time.time() - start_time) * 1000
                 self.source_status["alpha_vantage"].response_time_ms = response_time
-                self.source_status[
-                    "alpha_vantage"
-                ].last_successful_fetch = datetime.now()
+                self.source_status["alpha_vantage"].last_successful_fetch = datetime.now()
 
                 for pair, rate in mock_rates.items():
                     exchange_rates[pair] = MarketDataPoint(
@@ -473,9 +434,7 @@ class RealTimeMarketDataService:
                         timestamp=datetime.now(),
                         source="alpha_vantage",
                         data_type=f"fx_rate_{pair}",
-                        confidence=self.source_status[
-                            "alpha_vantage"
-                        ].reliability_score,
+                        confidence=self.source_status["alpha_vantage"].reliability_score,
                         is_real_time=True,
                         age_hours=0.1,  # Very recent FX data
                     )
@@ -483,9 +442,7 @@ class RealTimeMarketDataService:
                 # Cache the result
                 self._cache_data(cache_key, exchange_rates)
 
-                logger.info(
-                    f"✓ Real-time exchange rates updated: {len(exchange_rates)} pairs"
-                )
+                logger.info(f"✓ Real-time exchange rates updated: {len(exchange_rates)} pairs")
                 return exchange_rates
 
         except Exception as e:
@@ -524,10 +481,7 @@ class RealTimeMarketDataService:
             return cached_data
 
         try:
-            if (
-                "alpha_vantage" in self.data_sources
-                and self.source_status["alpha_vantage"].is_available
-            ):
+            if "alpha_vantage" in self.data_sources and self.source_status["alpha_vantage"].is_available:
                 start_time = time.time()
 
                 # In production, this would use Alpha Vantage or another financial data provider
@@ -543,9 +497,7 @@ class RealTimeMarketDataService:
 
                 response_time = (time.time() - start_time) * 1000
                 self.source_status["alpha_vantage"].response_time_ms = response_time
-                self.source_status[
-                    "alpha_vantage"
-                ].last_successful_fetch = datetime.now()
+                self.source_status["alpha_vantage"].last_successful_fetch = datetime.now()
 
                 data_point = MarketDataPoint(
                     value=mock_vix_level,
@@ -591,10 +543,7 @@ class RealTimeMarketDataService:
             return cached_data
 
         try:
-            if (
-                "alpha_vantage" in self.data_sources
-                and self.source_status["alpha_vantage"].is_available
-            ):
+            if "alpha_vantage" in self.data_sources and self.source_status["alpha_vantage"].is_available:
                 start_time = time.time()
 
                 # Mock real-time VSTOXX data
@@ -651,10 +600,7 @@ class RealTimeMarketDataService:
             return cached_data
 
         try:
-            if (
-                "alpha_vantage" in self.data_sources
-                and self.source_status["alpha_vantage"].is_available
-            ):
+            if "alpha_vantage" in self.data_sources and self.source_status["alpha_vantage"].is_available:
                 start_time = time.time()
 
                 # Mock real-time Nikkei volatility data
@@ -688,9 +634,7 @@ class RealTimeMarketDataService:
             logger.warning(f"Failed to fetch real-time Nikkei volatility data: {e}")
 
         # Fallback to configuration
-        fallback_nikkei = self.config.get_market_data_fallback(
-            "nikkei_volatility", 20.1
-        )
+        fallback_nikkei = self.config.get_market_data_fallback("nikkei_volatility", 20.1)
         logger.info(f"Using fallback Nikkei volatility: {fallback_nikkei}")
 
         return MarketDataPoint(
@@ -703,7 +647,7 @@ class RealTimeMarketDataService:
             age_hours=0.0,
         )
 
-    def get_current_gdp_data(self) -> Dict[str, MarketDataPoint]:
+    def get_current_gdp_data(self) -> dict[str, MarketDataPoint]:
         """Get current GDP growth data from FRED API"""
         cache_key = "gdp_data"
 
@@ -733,28 +677,16 @@ class RealTimeMarketDataService:
 
                         # Find latest observation
                         for obs in reversed(observations):
-                            if (
-                                obs.get("value")
-                                and obs["value"] != "."
-                                and obs["value"] is not None
-                            ):
+                            if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                                 latest_obs = obs
                                 break
 
                         # Find observation from ~4 quarters ago
                         if latest_obs:
-                            latest_date = datetime.strptime(
-                                latest_obs["date"], "%Y-%m-%d"
-                            )
+                            latest_date = datetime.strptime(latest_obs["date"], "%Y-%m-%d")
                             for obs in observations:
-                                if (
-                                    obs.get("value")
-                                    and obs["value"] != "."
-                                    and obs["value"] is not None
-                                ):
-                                    obs_date = datetime.strptime(
-                                        obs["date"], "%Y-%m-%d"
-                                    )
+                                if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
+                                    obs_date = datetime.strptime(obs["date"], "%Y-%m-%d")
                                     days_diff = (latest_date - obs_date).days
                                     if 350 <= days_diff <= 380:  # ~1 year ago
                                         year_ago_obs = obs
@@ -767,23 +699,18 @@ class RealTimeMarketDataService:
 
                             gdp_data["gdp_growth_rate"] = MarketDataPoint(
                                 value=gdp_growth,
-                                timestamp=datetime.strptime(
-                                    latest_obs["date"], "%Y-%m-%d"
-                                ),
+                                timestamp=datetime.strptime(latest_obs["date"], "%Y-%m-%d"),
                                 source="fred",
                                 data_type="gdp_growth_yoy",
                                 confidence=self.source_status["fred"].reliability_score,
                                 is_real_time=True,
                                 age_hours=(
-                                    datetime.now()
-                                    - datetime.strptime(latest_obs["date"], "%Y-%m-%d")
+                                    datetime.now() - datetime.strptime(latest_obs["date"], "%Y-%m-%d")
                                 ).total_seconds()
                                 / 3600,
                             )
 
-                            logger.info(
-                                f"✓ Real-time GDP growth rate: {gdp_growth:.2f}% YoY"
-                            )
+                            logger.info(f"✓ Real-time GDP growth rate: {gdp_growth:.2f}% YoY")
 
                 # GDP components - Consumption (PCE)
                 pce_result = service.get_economic_indicator("PCE", "1y")
@@ -856,10 +783,10 @@ class RealTimeMarketDataService:
             age_hours=0.0,
         )
 
-        logger.info(f"Using fallback GDP data")
+        logger.info("Using fallback GDP data")
         return gdp_data
 
-    def get_current_employment_data(self) -> Dict[str, MarketDataPoint]:
+    def get_current_employment_data(self) -> dict[str, MarketDataPoint]:
         """Get current employment data from FRED API"""
         cache_key = "employment_data"
 
@@ -883,11 +810,7 @@ class RealTimeMarketDataService:
                     # Get most recent observation
                     latest_obs = None
                     for obs in reversed(observations):
-                        if (
-                            obs.get("value")
-                            and obs["value"] != "."
-                            and obs["value"] is not None
-                        ):
+                        if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                             latest_obs = obs
                             break
 
@@ -902,13 +825,10 @@ class RealTimeMarketDataService:
                             data_type="unemployment_rate",
                             confidence=self.source_status["fred"].reliability_score,
                             is_real_time=True,
-                            age_hours=(datetime.now() - obs_date).total_seconds()
-                            / 3600,
+                            age_hours=(datetime.now() - obs_date).total_seconds() / 3600,
                         )
 
-                        logger.info(
-                            f"✓ Real-time unemployment rate: {unemployment_rate:.1f}%"
-                        )
+                        logger.info(f"✓ Real-time unemployment rate: {unemployment_rate:.1f}%")
 
                 # Non-farm payrolls (PAYEMS) - Monthly change
                 payroll_result = service.get_economic_indicator("PAYEMS", "1y")
@@ -918,11 +838,7 @@ class RealTimeMarketDataService:
                         # Get last two observations to calculate monthly change
                         recent_obs = []
                         for obs in reversed(observations):
-                            if (
-                                obs.get("value")
-                                and obs["value"] != "."
-                                and obs["value"] is not None
-                            ):
+                            if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                                 recent_obs.append(obs)
                                 if len(recent_obs) >= 2:
                                     break
@@ -930,31 +846,22 @@ class RealTimeMarketDataService:
                         if len(recent_obs) >= 2:
                             latest = float(recent_obs[0]["value"])
                             previous = float(recent_obs[1]["value"])
-                            payroll_change = (
-                                latest - previous
-                            ) * 1000  # Convert to jobs (data is in thousands)
+                            payroll_change = (latest - previous) * 1000  # Convert to jobs (data is in thousands)
 
                             employment_data["payroll_change"] = MarketDataPoint(
                                 value=payroll_change,
-                                timestamp=datetime.strptime(
-                                    recent_obs[0]["date"], "%Y-%m-%d"
-                                ),
+                                timestamp=datetime.strptime(recent_obs[0]["date"], "%Y-%m-%d"),
                                 source="fred",
                                 data_type="nonfarm_payrolls",
                                 confidence=self.source_status["fred"].reliability_score,
                                 is_real_time=True,
                                 age_hours=(
-                                    datetime.now()
-                                    - datetime.strptime(
-                                        recent_obs[0]["date"], "%Y-%m-%d"
-                                    )
+                                    datetime.now() - datetime.strptime(recent_obs[0]["date"], "%Y-%m-%d")
                                 ).total_seconds()
                                 / 3600,
                             )
 
-                            logger.info(
-                                f"✓ Real-time payroll change: {payroll_change:,.0f} jobs"
-                            )
+                            logger.info(f"✓ Real-time payroll change: {payroll_change:,.0f} jobs")
 
                 # Labor force participation rate (CIVPART)
                 participation_result = service.get_economic_indicator("CIVPART", "2y")
@@ -962,11 +869,7 @@ class RealTimeMarketDataService:
                     observations = participation_result["observations"]
                     latest_obs = None
                     for obs in reversed(observations):
-                        if (
-                            obs.get("value")
-                            and obs["value"] != "."
-                            and obs["value"] is not None
-                        ):
+                        if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                             latest_obs = obs
                             break
 
@@ -981,15 +884,12 @@ class RealTimeMarketDataService:
                             confidence=self.source_status["fred"].reliability_score,
                             is_real_time=True,
                             age_hours=(
-                                datetime.now()
-                                - datetime.strptime(latest_obs["date"], "%Y-%m-%d")
+                                datetime.now() - datetime.strptime(latest_obs["date"], "%Y-%m-%d")
                             ).total_seconds()
                             / 3600,
                         )
 
-                        logger.info(
-                            f"✓ Real-time participation rate: {participation_rate:.1f}%"
-                        )
+                        logger.info(f"✓ Real-time participation rate: {participation_rate:.1f}%")
 
                 response_time = (time.time() - start_time) * 1000
                 self.source_status["fred"].response_time_ms = response_time
@@ -1015,9 +915,7 @@ class RealTimeMarketDataService:
         )
 
         employment_data["payroll_change"] = MarketDataPoint(
-            value=self.config.get_market_data_fallback(
-                "monthly_payroll_change", 150000
-            ),
+            value=self.config.get_market_data_fallback("monthly_payroll_change", 150000),
             timestamp=datetime.now(),
             source="config_fallback",
             data_type="nonfarm_payrolls",
@@ -1036,12 +934,10 @@ class RealTimeMarketDataService:
             age_hours=0.0,
         )
 
-        logger.info(f"Using fallback employment data")
+        logger.info("Using fallback employment data")
         return employment_data
 
-    def get_current_consumer_confidence_data(
-        self, region: str = "US"
-    ) -> Dict[str, MarketDataPoint]:
+    def get_current_consumer_confidence_data(self, region: str = "US") -> dict[str, MarketDataPoint]:
         """Get current consumer confidence data by region from various sources"""
         cache_key = f"consumer_confidence_{region.lower()}"
 
@@ -1066,11 +962,7 @@ class RealTimeMarketDataService:
                         # Get most recent observation
                         latest_obs = None
                         for obs in reversed(observations):
-                            if (
-                                obs.get("value")
-                                and obs["value"] != "."
-                                and obs["value"] is not None
-                            ):
+                            if obs.get("value") and obs["value"] != "." and obs["value"] is not None:
                                 latest_obs = obs
                                 break
 
@@ -1085,13 +977,10 @@ class RealTimeMarketDataService:
                                 data_type="consumer_sentiment",
                                 confidence=self.source_status["fred"].reliability_score,
                                 is_real_time=True,
-                                age_hours=(datetime.now() - obs_date).total_seconds()
-                                / 3600,
+                                age_hours=(datetime.now() - obs_date).total_seconds() / 3600,
                             )
 
-                            logger.info(
-                                f"✓ Real-time US consumer confidence: {confidence_level:.1f}"
-                            )
+                            logger.info(f"✓ Real-time US consumer confidence: {confidence_level:.1f}")
 
                     # Consumer Confidence Index Current Conditions (CCCI)
                     # This would be Conference Board data if available
@@ -1101,9 +990,7 @@ class RealTimeMarketDataService:
                     # European consumer confidence would typically come from Eurostat
                     # Mock implementation for European Commission Consumer Confidence
                     confidence_data["consumer_confidence"] = MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "eu_consumer_confidence", -15.2
-                        ),
+                        value=self.config.get_market_data_fallback("eu_consumer_confidence", -15.2),
                         timestamp=datetime.now(),
                         source="eurostat_mock",
                         data_type="eu_consumer_confidence",
@@ -1119,9 +1006,7 @@ class RealTimeMarketDataService:
                 elif region.upper() == "ASIA":
                     # Asian consumer confidence composite (would aggregate multiple sources)
                     confidence_data["consumer_confidence"] = MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "asia_consumer_confidence", 102.3
-                        ),
+                        value=self.config.get_market_data_fallback("asia_consumer_confidence", 102.3),
                         timestamp=datetime.now(),
                         source="asia_composite_mock",
                         data_type="asia_consumer_confidence",
@@ -1143,32 +1028,22 @@ class RealTimeMarketDataService:
                     return confidence_data
 
         except Exception as e:
-            logger.warning(
-                f"Failed to fetch real-time consumer confidence data for {region}: {e}"
-            )
+            logger.warning(f"Failed to fetch real-time consumer confidence data for {region}: {e}")
             if "fred" in self.source_status:
                 self.source_status["fred"].error_message = str(e)
 
         # Fallback to configuration
         if region.upper() == "US":
-            fallback_value = self.config.get_market_data_fallback(
-                "us_consumer_confidence", 76.5
-            )
+            fallback_value = self.config.get_market_data_fallback("us_consumer_confidence", 76.5)
             data_type = "us_consumer_sentiment"
         elif region.upper() == "EUROPE":
-            fallback_value = self.config.get_market_data_fallback(
-                "eu_consumer_confidence", -15.2
-            )
+            fallback_value = self.config.get_market_data_fallback("eu_consumer_confidence", -15.2)
             data_type = "eu_consumer_confidence"
         elif region.upper() == "ASIA":
-            fallback_value = self.config.get_market_data_fallback(
-                "asia_consumer_confidence", 102.3
-            )
+            fallback_value = self.config.get_market_data_fallback("asia_consumer_confidence", 102.3)
             data_type = "asia_consumer_confidence"
         else:
-            fallback_value = self.config.get_market_data_fallback(
-                "global_consumer_confidence", 98.2
-            )
+            fallback_value = self.config.get_market_data_fallback("global_consumer_confidence", 98.2)
             data_type = "global_consumer_confidence"
 
         confidence_data["consumer_confidence"] = MarketDataPoint(
@@ -1181,14 +1056,10 @@ class RealTimeMarketDataService:
             age_hours=0.0,
         )
 
-        logger.info(
-            f"Using fallback consumer confidence for {region}: {fallback_value}"
-        )
+        logger.info(f"Using fallback consumer confidence for {region}: {fallback_value}")
         return confidence_data
 
-    def _get_cached_data(
-        self, cache_key: str
-    ) -> Optional[Union[MarketDataPoint, Dict[str, MarketDataPoint]]]:
+    def _get_cached_data(self, cache_key: str) -> MarketDataPoint | dict[str, MarketDataPoint] | None:
         """Get data from cache if still valid"""
         if cache_key in self.cache:
             cached_item = self.cache[cache_key]
@@ -1196,17 +1067,15 @@ class RealTimeMarketDataService:
                 return cached_item["data"]
         return None
 
-    def _cache_data(
-        self, cache_key: str, data: Union[MarketDataPoint, Dict[str, MarketDataPoint]]
-    ) -> None:
+    def _cache_data(self, cache_key: str, data: MarketDataPoint | dict[str, MarketDataPoint]) -> None:
         """Cache data with timestamp"""
         self.cache[cache_key] = {"data": data, "timestamp": datetime.now()}
 
-    def get_data_source_status(self) -> Dict[str, DataSourceStatus]:
+    def get_data_source_status(self) -> dict[str, DataSourceStatus]:
         """Get current status of all data sources"""
         return self.source_status.copy()
 
-    def refresh_all_market_data(self) -> Dict[str, Any]:
+    def refresh_all_market_data(self) -> dict[str, Any]:
         """Refresh all critical market data and return summary"""
         logger.info("Refreshing all real-time market data...")
 
@@ -1219,30 +1088,18 @@ class RealTimeMarketDataService:
 
         # Refresh key data points
         try:
-            refresh_summary["data_points"][
-                "fed_funds_rate"
-            ] = self.get_current_fed_funds_rate()
-            refresh_summary["data_points"][
-                "balance_sheet_size"
-            ] = self.get_current_balance_sheet_size()
-            refresh_summary["data_points"][
-                "wti_crude_price"
-            ] = self.get_current_wti_crude_price()
-            refresh_summary["data_points"][
-                "natural_gas_price"
-            ] = self.get_current_natural_gas_price()
+            refresh_summary["data_points"]["fed_funds_rate"] = self.get_current_fed_funds_rate()
+            refresh_summary["data_points"]["balance_sheet_size"] = self.get_current_balance_sheet_size()
+            refresh_summary["data_points"]["wti_crude_price"] = self.get_current_wti_crude_price()
+            refresh_summary["data_points"]["natural_gas_price"] = self.get_current_natural_gas_price()
 
             exchange_rates = self.get_current_exchange_rates()
             refresh_summary["data_points"].update(exchange_rates)
 
             # Add volatility data
             refresh_summary["data_points"]["vix_level"] = self.get_current_vix_level()
-            refresh_summary["data_points"][
-                "vstoxx_level"
-            ] = self.get_current_vstoxx_level()
-            refresh_summary["data_points"][
-                "nikkei_volatility"
-            ] = self.get_current_nikkei_volatility()
+            refresh_summary["data_points"]["vstoxx_level"] = self.get_current_vstoxx_level()
+            refresh_summary["data_points"]["nikkei_volatility"] = self.get_current_nikkei_volatility()
 
             # Add GDP data
             gdp_data = self.get_current_gdp_data()
@@ -1259,19 +1116,13 @@ class RealTimeMarketDataService:
             # Calculate real-time coverage
             total_points = len(refresh_summary["data_points"])
             real_time_points = sum(
-                1
-                for dp in refresh_summary["data_points"].values()
-                if hasattr(dp, "is_real_time") and dp.is_real_time
+                1 for dp in refresh_summary["data_points"].values() if hasattr(dp, "is_real_time") and dp.is_real_time
             )
-            refresh_summary["real_time_coverage"] = (
-                real_time_points / total_points if total_points > 0 else 0.0
-            )
+            refresh_summary["real_time_coverage"] = real_time_points / total_points if total_points > 0 else 0.0
 
             refresh_summary["source_status"] = self.get_data_source_status()
 
-            logger.info(
-                f"Market data refresh complete - {real_time_points}/{total_points} real-time sources"
-            )
+            logger.info(f"Market data refresh complete - {real_time_points}/{total_points} real-time sources")
 
         except Exception as e:
             logger.error(f"Market data refresh failed: {e}")
@@ -1281,7 +1132,7 @@ class RealTimeMarketDataService:
 
 
 def create_real_time_market_data_service(
-    config_manager: Optional[ConfigManager] = None,
+    config_manager: ConfigManager | None = None,
 ) -> RealTimeMarketDataService:
     """Factory function to create real-time market data service"""
     return RealTimeMarketDataService(config_manager)
@@ -1296,14 +1147,10 @@ if __name__ == "__main__":
 
         # Test real-time data fetching
         fed_rate = service.get_current_fed_funds_rate()
-        print(
-            f"Fed Funds Rate: {fed_rate.value}% (source: {fed_rate.source}, real-time: {fed_rate.is_real_time})"
-        )
+        print(f"Fed Funds Rate: {fed_rate.value}% (source: {fed_rate.source}, real-time: {fed_rate.is_real_time})")
 
         balance_sheet = service.get_current_balance_sheet_size()
-        print(
-            f"Balance Sheet: ${balance_sheet.value}B (source: {balance_sheet.source})"
-        )
+        print(f"Balance Sheet: ${balance_sheet.value}B (source: {balance_sheet.source})")
 
         wti_price = service.get_current_wti_crude_price()
         print("WTI Crude: ${wti_price.value}/bbl (source: {wti_price.source})")
@@ -1312,9 +1159,7 @@ if __name__ == "__main__":
         summary = service.refresh_all_market_data()
         print("\nRefresh Summary:")
         print("Real-time coverage: {summary['real_time_coverage']:.1%}")
-        print(
-            f"Data sources available: {len([s for s in summary['source_status'].values() if s.is_available])}"
-        )
+        print(f"Data sources available: {len([s for s in summary['source_status'].values() if s.is_available])}")
 
-    except Exception as e:
+    except Exception:
         print("Service test failed: {e}")

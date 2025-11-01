@@ -14,7 +14,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -42,8 +42,8 @@ class SyncReport:
     files_with_issues: int
     total_issues: int
     issues_fixed: int
-    issues_by_type: Dict[str, int] = field(default_factory=dict)
-    file_issues: Dict[str, List[PathIssue]] = field(default_factory=dict)
+    issues_by_type: dict[str, int] = field(default_factory=dict)
+    file_issues: dict[str, list[PathIssue]] = field(default_factory=dict)
     validation_passed: bool = False
 
 
@@ -102,7 +102,7 @@ class PathSynchronizer:
     def _load_path_variables(self):
         """Load path variables from registry"""
         if self.registry_path.exists():
-            with open(self.registry_path, "r") as f:
+            with open(self.registry_path) as f:
                 registry_data = json.load(f)
                 self.path_variables = registry_data.get("path_variables", {})
         else:
@@ -114,12 +114,12 @@ class PathSynchronizer:
                 "SCHEMAS_BASE": "scripts/schemas",
             }
 
-    def scan_file(self, file_path: Path) -> List[PathIssue]:
+    def scan_file(self, file_path: Path) -> list[PathIssue]:
         """Scan a single file for path issues"""
         issues = []
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 content = f.read()
                 lines = content.split("\n")
 
@@ -147,7 +147,7 @@ class PathSynchronizer:
             # Additional validation for specific patterns
             issues.extend(self._validate_variable_usage(file_path, content))
 
-        except Exception as e:
+        except Exception:
             print("Error scanning {file_path}: {e}")
 
         return issues
@@ -170,31 +170,23 @@ class PathSynchronizer:
 
         elif issue_type == "double_variable":
             # Fix double variable patterns
-            suggested = re.sub(
-                r"{SCRIPTS_BASE}/base_{SCRIPTS_BASE}/", "{SCRIPTS_BASE}/", original
-            )
+            suggested = re.sub(r"{SCRIPTS_BASE}/base_{SCRIPTS_BASE}/", "{SCRIPTS_BASE}/", original)
 
         elif issue_type == "redundant_path":
             # Fix redundant paths
             suggested = re.sub(r"{SCRIPTS_BASE}/scripts/", "{SCRIPTS_BASE}/", original)
-            suggested = re.sub(
-                r"{TEMPLATES_BASE}/templates/", "{TEMPLATES_BASE}/", suggested
-            )
+            suggested = re.sub(r"{TEMPLATES_BASE}/templates/", "{TEMPLATES_BASE}/", suggested)
             suggested = re.sub(r"{SCHEMAS_BASE}/schemas/", "{SCHEMAS_BASE}/", suggested)
 
         elif issue_type == "inverted_pattern":
             # Fix inverted patterns
             suggested = re.sub(r"scripts/{SCRIPTS_BASE}/", "{SCRIPTS_BASE}/", original)
-            suggested = re.sub(
-                r"templates/{TEMPLATES_BASE}/", "{TEMPLATES_BASE}/", suggested
-            )
+            suggested = re.sub(r"templates/{TEMPLATES_BASE}/", "{TEMPLATES_BASE}/", suggested)
             suggested = re.sub(r"schemas/{SCHEMAS_BASE}/", "{SCHEMAS_BASE}/", suggested)
 
         return suggested
 
-    def _validate_variable_usage(
-        self, file_path: Path, content: str
-    ) -> List[PathIssue]:
+    def _validate_variable_usage(self, file_path: Path, content: str) -> list[PathIssue]:
         """Validate correct variable usage in content"""
         issues = []
 
@@ -225,9 +217,7 @@ class PathSynchronizer:
                         # Potential incorrect usage
                         line_num = content[: match.start()].count("\n") + 1
                         lines = content.split("\n")
-                        line_content = (
-                            lines[line_num - 1] if line_num <= len(lines) else ""
-                        )
+                        line_content = lines[line_num - 1] if line_num <= len(lines) else ""
 
                         issues.append(
                             PathIssue(
@@ -235,9 +225,7 @@ class PathSynchronizer:
                                 line_number=line_num,
                                 issue_type="suspicious_variable_usage",
                                 original_text=match.group(0),
-                                suggested_fix=match.group(
-                                    0
-                                ),  # No auto-fix for suspicious usage
+                                suggested_fix=match.group(0),  # No auto-fix for suspicious usage
                                 context=line_content.strip(),
                             )
                         )
@@ -268,24 +256,20 @@ class PathSynchronizer:
 
                 # Count issues by type
                 for issue in issues:
-                    report.issues_by_type[issue.issue_type] = (
-                        report.issues_by_type.get(issue.issue_type, 0) + 1
-                    )
+                    report.issues_by_type[issue.issue_type] = report.issues_by_type.get(issue.issue_type, 0) + 1
 
         # Determine if validation passed
         report.validation_passed = report.total_issues == 0
 
         return report
 
-    def fix_file(
-        self, file_path: Path, issues: List[PathIssue], dry_run: bool = True
-    ) -> int:
+    def fix_file(self, file_path: Path, issues: list[PathIssue], dry_run: bool = True) -> int:
         """Fix path issues in a file"""
         if not issues:
             return 0
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 content = f.read()
 
             original_content = content
@@ -311,23 +295,17 @@ class PathSynchronizer:
 
                 print("  ✅ Fixed {fixes_applied} issues in {file_path.name}")
             elif fixes_applied > 0:
-                print(
-                    f"  🔍 Would fix {fixes_applied} issues in {file_path.name} (dry-run)"
-                )
+                print(f"  🔍 Would fix {fixes_applied} issues in {file_path.name} (dry-run)")
 
             return fixes_applied
 
-        except Exception as e:
+        except Exception:
             print("  ❌ Error fixing {file_path}: {e}")
             return 0
 
-    def synchronize_paths(
-        self, dry_run: bool = True, file_pattern: str = "*.txt"
-    ) -> SyncReport:
+    def synchronize_paths(self, dry_run: bool = True, file_pattern: str = "*.txt") -> SyncReport:
         """Run full path synchronization"""
-        print(
-            f"{'🔍' if dry_run else '🔧'} Path Synchronization {'(DRY RUN)' if dry_run else '(APPLYING FIXES)'}"
-        )
+        print(f"{'🔍' if dry_run else '🔧'} Path Synchronization {'(DRY RUN)' if dry_run else '(APPLYING FIXES)'}")
         print("=" * 70)
 
         # Scan for issues
@@ -358,9 +336,7 @@ class PathSynchronizer:
 
         if report.issues_by_type:
             print("\n📊 Issues by Type:")
-            for issue_type, count in sorted(
-                report.issues_by_type.items(), key=lambda x: x[1], reverse=True
-            ):
+            for issue_type, count in sorted(report.issues_by_type.items(), key=lambda x: x[1], reverse=True):
                 print("  {issue_type}: {count}")
 
         if report.file_issues:
@@ -379,9 +355,7 @@ class PathSynchronizer:
                 for issue_type, typed_issues in issues_by_type.items():
                     print("    {issue_type}:")
                     for issue in typed_issues[:3]:  # Show first 3 of each type
-                        print(
-                            f"      Line {issue.line_number}: {issue.original_text} → {issue.suggested_fix}"
-                        )
+                        print(f"      Line {issue.line_number}: {issue.original_text} → {issue.suggested_fix}")
                     if len(typed_issues) > 3:
                         print("      ... and {len(typed_issues) - 3} more")
 
@@ -396,9 +370,7 @@ class PathSynchronizer:
         """Export synchronization report to JSON"""
         if output_path is None:
             timestamp = report.timestamp.strftime("%Y%m%d_%H%M%S")
-            output_path = (
-                project_root / f"data/outputs/path_sync_report_{timestamp}.json"
-            )
+            output_path = project_root / f"data/outputs/path_sync_report_{timestamp}.json"
 
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -439,18 +411,14 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Automated Path Synchronizer")
-    parser.add_argument(
-        "--scan", action="store_true", help="Scan for path issues (dry-run)"
-    )
+    parser.add_argument("--scan", action="store_true", help="Scan for path issues (dry-run)")
     parser.add_argument("--fix", action="store_true", help="Apply fixes to path issues")
     parser.add_argument(
         "--validate",
         action="store_true",
         help="Quick validation check (returns exit code)",
     )
-    parser.add_argument(
-        "--pattern", default="*.txt", help="File pattern to scan (default: *.txt)"
-    )
+    parser.add_argument("--pattern", default="*.txt", help="File pattern to scan (default: *.txt)")
     parser.add_argument("--export", help="Export report to JSON file")
     parser.add_argument("--commands-dir", help="Commands directory path")
     parser.add_argument("--registry", help="Registry JSON path")
@@ -467,9 +435,7 @@ def main():
 
     elif args.fix:
         # Apply fixes mode
-        report = synchronizer.synchronize_paths(
-            dry_run=False, file_pattern=args.pattern
-        )
+        report = synchronizer.synchronize_paths(dry_run=False, file_pattern=args.pattern)
         synchronizer.print_report(report)
 
         if args.export:

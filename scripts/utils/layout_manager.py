@@ -7,11 +7,10 @@ supporting responsive grids, spacing, and component positioning.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.patches import Rectangle
 
 
@@ -21,11 +20,11 @@ class LayoutComponent:
 
     name: str
     component_type: str  # 'chart', 'metric', 'text'
-    position: Tuple[int, int]  # (row, col)
-    span: Tuple[int, int] = (1, 1)  # (row_span, col_span)
+    position: tuple[int, int]  # (row, col)
+    span: tuple[int, int] = (1, 1)  # (row_span, col_span)
     padding: float = 0.02
-    background_color: Optional[str] = None
-    border_color: Optional[str] = None
+    background_color: str | None = None
+    border_color: str | None = None
     border_width: float = 0
 
 
@@ -35,9 +34,9 @@ class GridConfig:
 
     rows: int
     cols: int
-    figure_size: Tuple[float, float]
-    height_ratios: Optional[List[float]] = None
-    width_ratios: Optional[List[float]] = None
+    figure_size: tuple[float, float]
+    height_ratios: list[float] | None = None
+    width_ratios: list[float] | None = None
     hspace: float = 0.3
     wspace: float = 0.2
     top_margin: float = 0.95
@@ -49,7 +48,7 @@ class GridConfig:
 class LayoutManager:
     """Advanced layout manager for dashboard generation."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize layout manager.
 
@@ -59,7 +58,7 @@ class LayoutManager:
         self.config = config
         self.layout_config = config.get("layout", {})
         self.grid_config = self._create_grid_config()
-        self.components: List[LayoutComponent] = []
+        self.components: list[LayoutComponent] = []
 
     def _create_grid_config(self) -> GridConfig:
         """Create grid configuration from layout config."""
@@ -76,11 +75,10 @@ class LayoutManager:
             top_margin=1.0 - self.layout_config.get("spacing", {}).get("padding", 0.05),
             bottom_margin=self.layout_config.get("spacing", {}).get("padding", 0.05),
             left_margin=self.layout_config.get("spacing", {}).get("padding", 0.05),
-            right_margin=1.0
-            - self.layout_config.get("spacing", {}).get("padding", 0.05),
+            right_margin=1.0 - self.layout_config.get("spacing", {}).get("padding", 0.05),
         )
 
-    def create_dashboard_figure(self) -> Tuple[plt.Figure, gridspec.GridSpec]:
+    def create_dashboard_figure(self) -> tuple[plt.Figure, gridspec.GridSpec]:
         """
         Create optimized dashboard figure with grid layout.
 
@@ -134,8 +132,8 @@ class LayoutManager:
         self,
         fig: plt.Figure,
         gs: gridspec.GridSpec,
-        position: Tuple[int, int],
-        span: Tuple[int, int] = (1, 1),
+        position: tuple[int, int],
+        span: tuple[int, int] = (1, 1),
     ) -> plt.Axes:
         """
         Create individual chart subplot with enhanced styling.
@@ -160,9 +158,7 @@ class LayoutManager:
 
         return ax
 
-    def add_component_background(
-        self, ax: plt.Axes, component: LayoutComponent, theme_colors: Dict[str, str]
-    ):
+    def add_component_background(self, ax: plt.Axes, component: LayoutComponent, theme_colors: dict[str, str]):
         """
         Add background styling to component.
 
@@ -176,9 +172,7 @@ class LayoutManager:
             bbox = ax.get_position()
 
             # Create background rectangle
-            bg_color = component.background_color or theme_colors.get(
-                "card_backgrounds", "white"
-            )
+            bg_color = component.background_color or theme_colors.get("card_backgrounds", "white")
             border_color = component.border_color or theme_colors.get("borders", "gray")
 
             rect = Rectangle(
@@ -197,8 +191,8 @@ class LayoutManager:
     def create_metric_cards(
         self,
         ax: plt.Axes,
-        metrics_data: List[Dict[str, Any]],
-        theme_colors: Dict[str, str],
+        metrics_data: list[dict[str, Any]],
+        theme_colors: dict[str, str],
     ) -> None:
         """
         Create sophisticated metric cards with enhanced styling.
@@ -276,9 +270,7 @@ class LayoutManager:
 
             # Optional indicator (small accent)
             if "indicator" in metric:
-                indicator_color = self._get_indicator_color(
-                    metric["indicator"], theme_colors
-                )
+                indicator_color = self._get_indicator_color(metric["indicator"], theme_colors)
                 indicator_y = y_pos + card_height * 0.85
                 ax.plot(
                     [center_x - 0.02, center_x + 0.02],
@@ -288,7 +280,7 @@ class LayoutManager:
                     zorder=3,
                 )
 
-    def _get_indicator_color(self, indicator: str, theme_colors: Dict[str, str]) -> str:
+    def _get_indicator_color(self, indicator: str, theme_colors: dict[str, str]) -> str:
         """Get color for metric indicators."""
         indicator_colors = {
             "positive": "#26c6da",  # Sensylate cyan
@@ -304,7 +296,7 @@ class LayoutManager:
         fig: plt.Figure,
         title: str,
         subtitle: str = "",
-        theme_colors: Dict[str, str] = None,
+        theme_colors: dict[str, str] = None,
     ) -> None:
         """
         Add enhanced title and subtitle to dashboard.
@@ -373,9 +365,7 @@ class LayoutManager:
             base_size: Base font size for scaling
         """
         fig_width, fig_height = ax.figure.get_size_inches()
-        scale_factor = min(
-            fig_width / 16, fig_height / 12
-        )  # Scale relative to 16x12 base
+        scale_factor = min(fig_width / 16, fig_height / 12)  # Scale relative to 16x12 base
 
         scaled_size = max(8, int(base_size * scale_factor))
 
@@ -401,7 +391,7 @@ class LayoutManager:
         )
 
 
-def create_layout_manager(config: Dict[str, Any]) -> LayoutManager:
+def create_layout_manager(config: dict[str, Any]) -> LayoutManager:
     """
     Factory function to create a LayoutManager instance.
 

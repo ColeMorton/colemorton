@@ -5,13 +5,13 @@ Publication workflow for transforming industry analysis to blog-ready content
 """
 
 import argparse
-import json
 import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -40,9 +40,7 @@ class ContentPublisherScript:
 
         # Template configuration
         self.templates_dir = Path(__file__).parent.parent / "templates"
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(str(self.templates_dir)), autoescape=True
-        )
+        self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
 
         # Content discovery paths
         self.source_paths = {
@@ -52,7 +50,7 @@ class ContentPublisherScript:
             "trade_history": "./data/outputs/trade_history/",
         }
 
-    def discover_content(self, content_type: str = "all") -> List[Dict[str, Any]]:
+    def discover_content(self, content_type: str = "all") -> list[dict[str, Any]]:
         """Discover unpublished content for publication"""
         discovered_content = []
 
@@ -71,10 +69,10 @@ class ContentPublisherScript:
         print("✅ Discovered {len(discovered_content)} content items for publication")
         return discovered_content
 
-    def _discover_industry_analysis(self) -> List[Dict[str, Any]]:
+    def _discover_industry_analysis(self) -> list[dict[str, Any]]:
         """Discover industry analysis markdown files"""
         industry_path = Path(self.source_paths["industry_analysis"])
-        discovered: List[Dict[str, Any]] = []
+        discovered: list[dict[str, Any]] = []
 
         if not industry_path.exists():
             return discovered
@@ -88,9 +86,7 @@ class ContentPublisherScript:
                 industry, date = match.groups()
 
                 # Check if already published
-                blog_filename = (
-                    f"{industry.lower().replace('_', '-')}-industry-analysis-{date}.md"
-                )
+                blog_filename = f"{industry.lower().replace('_', '-')}-industry-analysis-{date}.md"
                 blog_path = Path(self.output_dir) / blog_filename
 
                 if not blog_path.exists():
@@ -107,24 +103,22 @@ class ContentPublisherScript:
 
         return discovered
 
-    def _discover_fundamental_analysis(self) -> List[Dict[str, Any]]:
+    def _discover_fundamental_analysis(self) -> list[dict[str, Any]]:
         """Discover fundamental analysis files"""
         # Placeholder for fundamental analysis discovery
         return []
 
-    def _discover_sector_analysis(self) -> List[Dict[str, Any]]:
+    def _discover_sector_analysis(self) -> list[dict[str, Any]]:
         """Discover sector analysis files"""
         # Placeholder for sector analysis discovery
         return []
 
-    def _discover_trade_history(self) -> List[Dict[str, Any]]:
+    def _discover_trade_history(self) -> list[dict[str, Any]]:
         """Discover trade history files"""
         # Placeholder for trade history discovery
         return []
 
-    def publish_content(
-        self, content_items: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def publish_content(self, content_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Publish discovered content items to blog format"""
         published_results = []
 
@@ -157,11 +151,11 @@ class ContentPublisherScript:
 
         return published_results
 
-    def _publish_industry_analysis(self, item: Dict[str, Any]) -> Dict[str, Any]:
+    def _publish_industry_analysis(self, item: dict[str, Any]) -> dict[str, Any]:
         """Publish industry analysis to blog format with standardized frontmatter"""
         try:
             # Load source content
-            with open(item["source_file"], "r") as f:
+            with open(item["source_file"]) as f:
                 source_content = f.read()
 
             # Parse existing frontmatter and content
@@ -197,9 +191,7 @@ class ContentPublisherScript:
         except Exception as e:
             raise Exception(f"Industry analysis publication failed: {e}")
 
-    def _generate_industry_analysis_frontmatter(
-        self, item: Dict[str, Any], parsed: Dict[str, Any]
-    ) -> str:
+    def _generate_industry_analysis_frontmatter(self, item: dict[str, Any], parsed: dict[str, Any]) -> str:
         """Generate standardized frontmatter for industry analysis blog posts"""
 
         # Extract industry name for title
@@ -218,9 +210,7 @@ class ContentPublisherScript:
 
         # Try to extract recommendation and confidence
         recommendation_match = re.search(r"Recommendation: (\w+)", content)
-        recommendation = (
-            recommendation_match.group(1) if recommendation_match else "BUY"
-        )
+        recommendation = recommendation_match.group(1) if recommendation_match else "BUY"
 
         confidence_match = re.search(r"Confidence: ([0-9.]+)", content)
         confidence = confidence_match.group(1) if confidence_match else "9.0"
@@ -239,7 +229,7 @@ categories: ["Investing", "Analysis", "Industry Analysis", "{industry_name}", "M
 tags: ["{industry_slug}", "industry-analysis", "{recommendation.lower()}", "institutional-research", "economic-analysis"]
 draft: false
 industry_data:
-  industry: "{item['industry']}"
+  industry: "{item["industry"]}"
   analysis_date: "{date_str}"
   confidence: {float(confidence):.1f}
   recommendation: "{recommendation}"
@@ -248,7 +238,7 @@ industry_data:
 
         return frontmatter
 
-    def _publish_fundamental_analysis(self, item: Dict[str, Any]) -> Dict[str, Any]:
+    def _publish_fundamental_analysis(self, item: dict[str, Any]) -> dict[str, Any]:
         """Publish fundamental analysis to blog format"""
         # Placeholder implementation
         return {
@@ -256,7 +246,7 @@ industry_data:
             "message": "Fundamental analysis publishing not yet implemented",
         }
 
-    def _publish_sector_analysis(self, item: Dict[str, Any]) -> Dict[str, Any]:
+    def _publish_sector_analysis(self, item: dict[str, Any]) -> dict[str, Any]:
         """Publish sector analysis to blog format"""
         # Placeholder implementation
         return {
@@ -264,7 +254,7 @@ industry_data:
             "message": "Sector analysis publishing not yet implemented",
         }
 
-    def _publish_trade_history(self, item: Dict[str, Any]) -> Dict[str, Any]:
+    def _publish_trade_history(self, item: dict[str, Any]) -> dict[str, Any]:
         """Publish trade history to blog format"""
         # Placeholder implementation
         return {
@@ -272,7 +262,7 @@ industry_data:
             "message": "Trade history publishing not yet implemented",
         }
 
-    def _parse_markdown_frontmatter(self, content: str) -> Dict[str, Any]:
+    def _parse_markdown_frontmatter(self, content: str) -> dict[str, Any]:
         """Parse markdown content with YAML frontmatter"""
         parts = content.split("---")
 
@@ -288,7 +278,7 @@ industry_data:
                     "content": markdown_content,
                     "has_frontmatter": True,
                 }
-            except Exception as e:
+            except Exception:
                 print("Warning: Failed to parse frontmatter: {e}")
 
         return {"frontmatter": {}, "content": content, "has_frontmatter": False}
@@ -310,11 +300,9 @@ industry_data:
 
         return "\n".join(processed_lines).strip()
 
-    def validate_published_content(
-        self, published_results: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def validate_published_content(self, published_results: list[dict[str, Any]]) -> dict[str, Any]:
         """Validate published content meets standards"""
-        validation_results: Dict[str, Any] = {
+        validation_results: dict[str, Any] = {
             "total_published": len(published_results),
             "successful": 0,
             "failed": 0,
@@ -335,12 +323,12 @@ industry_data:
 
         return validation_results
 
-    def _validate_blog_file(self, file_path: str) -> List[str]:
+    def _validate_blog_file(self, file_path: str) -> list[str]:
         """Validate individual blog file meets standards"""
         issues = []
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 content = f.read()
 
             # Check for required frontmatter fields
@@ -379,7 +367,7 @@ industry_data:
 
         return issues
 
-    def execute_full_workflow(self, content_type: str = "all") -> Dict[str, Any]:
+    def execute_full_workflow(self, content_type: str = "all") -> dict[str, Any]:
         """Execute complete content publisher workflow"""
         print("\n📊 Starting content publisher workflow for: {content_type}")
 
@@ -415,17 +403,13 @@ industry_data:
             "published": validation["successful"],
             "failed": validation["failed"],
             "validation_issues": validation["validation_issues"],
-            "published_files": [
-                r.get("target_file") for r in published if r.get("status") == "success"
-            ],
+            "published_files": [r.get("target_file") for r in published if r.get("status") == "success"],
         }
 
 
 def main():
     """Main execution function"""
-    parser = argparse.ArgumentParser(
-        description="Content Publisher - Blog Publication Workflow"
-    )
+    parser = argparse.ArgumentParser(description="Content Publisher - Blog Publication Workflow")
     parser.add_argument(
         "--content-type",
         type=str,

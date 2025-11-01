@@ -207,9 +207,7 @@ class CacheImplementationReport:
         print("   • 7/7 services with working cache: 100% success rate")
         print("   • 7/7 CLI scripts using service layer: 100% compliance")
         print("   • 5/7 services using standard 15-minute TTL: 71% standardization")
-        print(
-            "   • 2/7 services using optimized longer TTLs: Appropriate for data type"
-        )
+        print("   • 2/7 services using optimized longer TTLs: Appropriate for data type")
         print()
 
         print("🏆 CONCLUSION:")

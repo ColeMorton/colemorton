@@ -11,7 +11,7 @@ Enhanced to support financial services configuration with:
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -22,20 +22,18 @@ class FinancialServiceConfig(BaseModel):
 
     name: str
     base_url: str
-    api_key: Optional[str] = None
+    api_key: str | None = None
     timeout_seconds: int = 30
     max_retries: int = 3
-    cache: Dict[str, Any] = Field(default_factory=dict)
-    rate_limit: Dict[str, Any] = Field(default_factory=dict)
-    headers: Dict[str, str] = Field(default_factory=dict)
+    cache: dict[str, Any] = Field(default_factory=dict)
+    rate_limit: dict[str, Any] = Field(default_factory=dict)
+    headers: dict[str, str] = Field(default_factory=dict)
 
 
 class ConfigLoader:
     """Loads and merges YAML configurations with environment support."""
 
-    def __init__(
-        self, config_dir: Optional[str] = None, auto_load_env: bool = True
-    ) -> None:
+    def __init__(self, config_dir: str | None = None, auto_load_env: bool = True) -> None:
         self.env_pattern = re.compile(r"\$\{([^}]+)\}")
         self.config_dir = Path(config_dir) if config_dir else Path.cwd() / "config"
 
@@ -50,9 +48,7 @@ class ConfigLoader:
             search_paths = [
                 Path.cwd(),  # Current working directory
                 Path.cwd().parent,  # Parent directory
-                Path(
-                    __file__
-                ).parent.parent.parent,  # Project root (3 levels up from utils)
+                Path(__file__).parent.parent.parent,  # Project root (3 levels up from utils)
             ]
 
             env_files_found = []
@@ -90,7 +86,7 @@ class ConfigLoader:
     def _load_env_file(self, env_file_path: Path) -> None:
         """Load environment variables from a .env file."""
         try:
-            with open(env_file_path, "r", encoding="utf-8") as f:
+            with open(env_file_path, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
 
@@ -118,7 +114,7 @@ class ConfigLoader:
             # Silently continue if env file loading fails
             pass
 
-    def load_config(self, config_path: str) -> Dict[str, Any]:
+    def load_config(self, config_path: str) -> dict[str, Any]:
         """Load a single YAML configuration file."""
         path = Path(config_path)
 
@@ -165,34 +161,26 @@ class ConfigLoader:
                 new_path = Path(path_str.replace("configs/", "config/"))
 
             if new_path.exists():
-                print(
-                    f"WARNING: Using deprecated path {config_path}. Please update to {new_path}"
-                )
+                print(f"WARNING: Using deprecated path {config_path}. Please update to {new_path}")
                 path = new_path
 
         if not path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-        with open(path, "r") as file:
+        with open(path) as file:
             config = yaml.safe_load(file)
 
         if not isinstance(config, dict):
-            raise ValueError(
-                f"Configuration file must contain a YAML dictionary: {config_path}"
-            )
+            raise ValueError(f"Configuration file must contain a YAML dictionary: {config_path}")
 
         return self._substitute_variables(config)
 
-    def load_with_environment(
-        self, config_path: str, env: str = "dev"
-    ) -> Dict[str, Any]:
+    def load_with_environment(self, config_path: str, env: str = "dev") -> dict[str, Any]:
         """Load base config and overlay environment-specific settings."""
         try:
             base_config = self.load_config(config_path)
         except Exception as e:
-            raise FileNotFoundError(
-                f"Failed to load base config from {config_path}: {e}"
-            )
+            raise FileNotFoundError(f"Failed to load base config from {config_path}: {e}")
 
         # Try to load environment-specific config (optional)
         config_dir = Path(config_path).parent
@@ -204,9 +192,7 @@ class ConfigLoader:
                 base_config = self._merge_configs(base_config, env_config)
             except Exception as e:
                 # Log warning but continue with base config
-                print(
-                    f"Warning: Failed to load environment config {env_config_path}: {e}"
-                )
+                print(f"Warning: Failed to load environment config {env_config_path}: {e}")
 
         # Load shared configs (optional)
         shared_dir = config_dir / "shared"
@@ -215,29 +201,25 @@ class ConfigLoader:
                 for shared_file in shared_dir.glob("*.yaml"):
                     shared_config = self.load_config(str(shared_file))
                     base_config = self._merge_configs(shared_config, base_config)
-            except Exception as e:
+            except Exception:
                 # Log warning but continue with base config
                 print("Warning: Failed to load shared config from {shared_dir}: {e}")
 
         return base_config
 
-    def _substitute_variables(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _substitute_variables(self, config: dict[str, Any]) -> dict[str, Any]:
         """Recursively substitute environment variables in config."""
         return self._substitute_variables_recursive(config)  # type: ignore
 
     def _substitute_variables_recursive(self, config: Any) -> Any:
         """Internal recursive substitution method."""
         if isinstance(config, dict):
-            return {
-                key: self._substitute_variables_recursive(value)
-                for key, value in config.items()
-            }
-        elif isinstance(config, list):
+            return {key: self._substitute_variables_recursive(value) for key, value in config.items()}
+        if isinstance(config, list):
             return [self._substitute_variables_recursive(item) for item in config]
-        elif isinstance(config, str):
+        if isinstance(config, str):
             return self._substitute_string_variables(config)
-        else:
-            return config
+        return config
 
     def _substitute_string_variables(self, value: str) -> str:
         """Substitute environment variables in a string."""
@@ -252,25 +234,19 @@ class ConfigLoader:
 
         return self.env_pattern.sub(replacer, value)
 
-    def _merge_configs(
-        self, base: Dict[str, Any], overlay: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _merge_configs(self, base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
         """Deep merge two configuration dictionaries."""
         result = base.copy()
 
         for key, value in overlay.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
 
         return result
 
-    def load_financial_services_config(self, env: str = "dev") -> Dict[str, Any]:
+    def load_financial_services_config(self, env: str = "dev") -> dict[str, Any]:
         """
         Load financial services configuration with environment overlay
 
@@ -286,15 +262,11 @@ class ConfigLoader:
             # Try old location for backward compatibility
             config_file = self.config_dir / "financial_services.yaml"
             if not config_file.exists():
-                raise FileNotFoundError(
-                    f"Financial services config not found: {config_file}"
-                )
+                raise FileNotFoundError(f"Financial services config not found: {config_file}")
 
         return self.load_with_environment(str(config_file), env)
 
-    def get_service_config(
-        self, service_name: str, env: str = "dev"
-    ) -> FinancialServiceConfig:
+    def get_service_config(self, service_name: str, env: str = "dev") -> FinancialServiceConfig:
         """
         Get configuration for a specific financial service
 
@@ -325,24 +297,24 @@ class ConfigLoader:
 
         return FinancialServiceConfig(**merged_config)
 
-    def get_orchestration_config(self, env: str = "dev") -> Dict[str, Any]:
+    def get_orchestration_config(self, env: str = "dev") -> dict[str, Any]:
         """Get orchestration configuration"""
         full_config = self.load_financial_services_config(env)
         return full_config.get("orchestration", {})
 
-    def get_cli_config(self, env: str = "dev") -> Dict[str, Any]:
+    def get_cli_config(self, env: str = "dev") -> dict[str, Any]:
         """Get CLI configuration"""
         full_config = self.load_financial_services_config(env)
         return full_config.get("cli", {})
 
-    def list_available_services(self, env: str = "dev") -> List[str]:
+    def list_available_services(self, env: str = "dev") -> list[str]:
         """List all available financial services"""
         full_config = self.load_financial_services_config(env)
         return list(full_config.get("services", {}).keys())
 
     def _merge_service_with_global(
-        self, service_config: Dict[str, Any], global_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, service_config: dict[str, Any], global_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Merge service-specific config with global defaults"""
 
         # Start with service config
@@ -362,7 +334,7 @@ class ConfigLoader:
 
         return merged
 
-    def validate_configuration(self, env: str = "dev") -> Dict[str, Any]:
+    def validate_configuration(self, env: str = "dev") -> dict[str, Any]:
         """
         Validate entire configuration and return validation results
 
@@ -391,24 +363,18 @@ class ConfigLoader:
                     validation_results["services_validated"] += 1
                 except Exception as e:
                     validation_results["valid"] = False
-                    validation_results["errors"].append(
-                        f"Service {service_name}: {str(e)}"
-                    )
+                    validation_results["errors"].append(f"Service {service_name}: {str(e)}")
 
             # Check for required environment variables
             self._check_required_env_vars(full_config, validation_results)
 
         except Exception as e:
             validation_results["valid"] = False
-            validation_results["errors"].append(
-                f"Configuration loading failed: {str(e)}"
-            )
+            validation_results["errors"].append(f"Configuration loading failed: {str(e)}")
 
         return validation_results
 
-    def _check_required_env_vars(
-        self, config: Dict[str, Any], validation_results: Dict[str, Any]
-    ) -> None:
+    def _check_required_env_vars(self, config: dict[str, Any], validation_results: dict[str, Any]) -> None:
         """Check for required environment variables"""
         required_env_vars = {
             "ALPHA_VANTAGE_API_KEY": "Alpha Vantage service",

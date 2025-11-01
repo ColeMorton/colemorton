@@ -12,7 +12,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -39,17 +39,15 @@ class ComprehensivePerformanceAnalyzer:
             # Ensure Return column is numeric
             self.df["Return"] = pd.to_numeric(self.df["Return"], errors="coerce")
             self.df["PnL"] = pd.to_numeric(self.df["PnL"], errors="coerce")
-            self.df["Duration_Days"] = pd.to_numeric(
-                self.df["Duration_Days"], errors="coerce"
-            )
+            self.df["Duration_Days"] = pd.to_numeric(self.df["Duration_Days"], errors="coerce")
 
             print("Loaded {len(self.df)} trades from {self.csv_file_path}")
 
-        except Exception as e:
+        except Exception:
             print("Error loading data: {e}")
             sys.exit(1)
 
-    def calculate_trade_counts(self) -> Dict[str, int]:
+    def calculate_trade_counts(self) -> dict[str, int]:
         """Calculate total trades by status."""
         total_trades = len(self.df)
         closed_trades = len(self.df[self.df["Status"] == "Closed"])
@@ -61,7 +59,7 @@ class ComprehensivePerformanceAnalyzer:
             "open_trades": open_trades,
         }
 
-    def calculate_win_loss_rates(self) -> Dict[str, float]:
+    def calculate_win_loss_rates(self) -> dict[str, float]:
         """Calculate win rate, loss rate, and breakeven rate."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
@@ -83,7 +81,7 @@ class ComprehensivePerformanceAnalyzer:
             "total_breakevens": breakevens,
         }
 
-    def calculate_average_returns(self) -> Dict[str, float]:
+    def calculate_average_returns(self) -> dict[str, float]:
         """Calculate average returns overall and by winners/losers."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
@@ -115,7 +113,7 @@ class ComprehensivePerformanceAnalyzer:
 
         return gross_profits / gross_losses
 
-    def calculate_biggest_winner_loser(self) -> Dict[str, Dict[str, Any]]:
+    def calculate_biggest_winner_loser(self) -> dict[str, dict[str, Any]]:
         """Calculate biggest winner and loser in both % and $."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
@@ -156,16 +154,14 @@ class ComprehensivePerformanceAnalyzer:
             },
         }
 
-    def calculate_strategy_breakdown(self) -> Dict[str, Dict[str, Any]]:
+    def calculate_strategy_breakdown(self) -> dict[str, dict[str, Any]]:
         """Calculate performance breakdown by strategy type (SMA vs EMA)."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
         strategies = {}
 
         for strategy_type in closed_trades["Strategy_Type"].unique():
-            strategy_trades = closed_trades[
-                closed_trades["Strategy_Type"] == strategy_type
-            ]
+            strategy_trades = closed_trades[closed_trades["Strategy_Type"] == strategy_type]
 
             winners = len(strategy_trades[strategy_trades["Return"] > 0])
             total = len(strategy_trades)
@@ -181,7 +177,7 @@ class ComprehensivePerformanceAnalyzer:
 
         return strategies
 
-    def calculate_average_holding_time(self) -> Dict[str, float]:
+    def calculate_average_holding_time(self) -> dict[str, float]:
         """Calculate average holding time."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
@@ -193,16 +189,14 @@ class ComprehensivePerformanceAnalyzer:
             "median_holding_days": closed_trades["Duration_Days"].median(),
         }
 
-    def calculate_trade_quality_distribution(self) -> Dict[str, int]:
+    def calculate_trade_quality_distribution(self) -> dict[str, int]:
         """Calculate distribution of trade quality."""
         quality_counts = self.df["Trade_Quality"].value_counts().to_dict()
         return quality_counts
 
-    def calculate_consecutive_wins_losses(self) -> Dict[str, int]:
+    def calculate_consecutive_wins_losses(self) -> dict[str, int]:
         """Calculate maximum consecutive wins and losses."""
-        closed_trades = self.df[self.df["Status"] == "Closed"].sort_values(
-            "Exit_Timestamp"
-        )
+        closed_trades = self.df[self.df["Status"] == "Closed"].sort_values("Exit_Timestamp")
 
         if len(closed_trades) == 0:
             return {"max_consecutive_wins": 0, "max_consecutive_losses": 0}
@@ -227,7 +221,7 @@ class ComprehensivePerformanceAnalyzer:
 
         return {"max_consecutive_wins": max_wins, "max_consecutive_losses": max_losses}
 
-    def calculate_return_statistics(self) -> Dict[str, float]:
+    def calculate_return_statistics(self) -> dict[str, float]:
         """Calculate return statistics including standard deviation."""
         closed_trades = self.df[self.df["Status"] == "Closed"]
 
@@ -280,7 +274,7 @@ class ComprehensivePerformanceAnalyzer:
         sqn = (avg_return / std_return) * np.sqrt(n_trades)
         return sqn
 
-    def calculate_monthly_performance(self) -> Dict[str, Dict[str, Any]]:
+    def calculate_monthly_performance(self) -> dict[str, dict[str, Any]]:
         """Calculate monthly performance breakdown."""
         closed_trades = self.df[self.df["Status"] == "Closed"].copy()
 
@@ -310,7 +304,7 @@ class ComprehensivePerformanceAnalyzer:
 
         return monthly_stats
 
-    def identify_open_trades(self) -> List[Dict[str, Any]]:
+    def identify_open_trades(self) -> list[dict[str, Any]]:
         """Identify all trades that are still open."""
         open_trades = self.df[self.df["Status"] == "Open"]
 
@@ -329,7 +323,7 @@ class ComprehensivePerformanceAnalyzer:
 
         return open_trade_list
 
-    def get_date_range_info(self) -> Dict[str, str]:
+    def get_date_range_info(self) -> dict[str, str]:
         """Get date range information from the data."""
         min_entry_date = self.df["Entry_Timestamp"].min()
         max_exit_date = self.df["Exit_Timestamp"].max()
@@ -342,7 +336,7 @@ class ComprehensivePerformanceAnalyzer:
             "data_span_days": (max_exit_date - min_entry_date).days,
         }
 
-    def run_comprehensive_analysis(self) -> Dict[str, Any]:
+    def run_comprehensive_analysis(self) -> dict[str, Any]:
         """Run comprehensive analysis and return all metrics."""
         print("Running comprehensive trade history analysis...")
 
@@ -370,17 +364,15 @@ class ComprehensivePerformanceAnalyzer:
 
 def main():
     """Main function to run the comprehensive analysis."""
-    parser = argparse.ArgumentParser(
-        description="Comprehensive Trade History Performance Analysis"
-    )
+    parser = argparse.ArgumentParser(description="Comprehensive Trade History Performance Analysis")
     parser.add_argument(
         "--csv-file",
-        default="/Users/colemorton/Projects/sensylate/data/raw/trade_history/live_signals.csv",
+        default="/Users/colemorton/Projects/colemorton/data/raw/trade_history/live_signals.csv",
         help="Path to the trade history CSV file",
     )
     parser.add_argument(
         "--output-file",
-        default="/Users/colemorton/Projects/sensylate/data/outputs/comprehensive_performance_analysis.json",
+        default="/Users/colemorton/Projects/colemorton/data/outputs/comprehensive_performance_analysis.json",
         help="Path to save the analysis results JSON file",
     )
 
@@ -419,12 +411,8 @@ def main():
     print("System Quality Number: {results['system_quality_number']:.2f}")
 
     biggest = results["biggest_winner_loser"]
-    print(
-        f"Biggest Winner: {biggest['biggest_winner']['return_pct']:.2%} ({biggest['biggest_winner']['ticker_pct']})"
-    )
-    print(
-        f"Biggest Loser: {biggest['biggest_loser']['return_pct']:.2%} ({biggest['biggest_loser']['ticker_pct']})"
-    )
+    print(f"Biggest Winner: {biggest['biggest_winner']['return_pct']:.2%} ({biggest['biggest_winner']['ticker_pct']})")
+    print(f"Biggest Loser: {biggest['biggest_loser']['return_pct']:.2%} ({biggest['biggest_loser']['ticker_pct']})")
 
     print("\nStrategy Performance:")
     for strategy, stats in results["strategy_breakdown"].items():

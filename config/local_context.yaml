@@ -3,7 +3,7 @@
 
 execution:
   environment: local
-  working_directory: /Users/colemorton/Projects/sensylate
+  working_directory: /Users/colemorton/Projects/colemorton
   timeout: 300
   session_management: true
 
@@ -35,7 +35,7 @@ mcp:
   # Server priorities for tool discovery
   server_priorities:
     - yahoo-finance
-    - sensylate-trading
+    - colemorton-trading
     - sec-edgar
     - fred-economic
     - content-automation

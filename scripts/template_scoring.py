@@ -11,7 +11,7 @@ Modular template scoring algorithms:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from error_handler import ErrorHandler
 from errors import TypeValidationError, ValidationError
@@ -47,11 +47,11 @@ class ScoringResult:
 
     template_variant: str
     score: float
-    criteria_scores: Dict[str, float] = field(default_factory=dict)
+    criteria_scores: dict[str, float] = field(default_factory=dict)
     confidence: float = 0.0
     explanation: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "template_variant": self.template_variant,
@@ -65,7 +65,7 @@ class ScoringResult:
 class BaseScoringAlgorithm(ABC):
     """Base class for scoring algorithms"""
 
-    def __init__(self, criteria: List[ScoringCriteria]):
+    def __init__(self, criteria: list[ScoringCriteria]):
         self.criteria = criteria
         self.error_handler = ErrorHandler()
         self.logger = TwitterSystemLogger(self.__class__.__name__)
@@ -90,13 +90,10 @@ class BaseScoringAlgorithm(ABC):
             )
 
     @abstractmethod
-    def calculate_score(
-        self, data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
-    ) -> ScoringResult:
+    def calculate_score(self, data: dict[str, Any], context: dict[str, Any] | None = None) -> ScoringResult:
         """Calculate template score based on data"""
-        pass
 
-    def validate_input_data(self, data: Dict[str, Any]) -> None:
+    def validate_input_data(self, data: dict[str, Any]) -> None:
         """Validate input data for scoring"""
         if not isinstance(data, dict):
             raise TypeValidationError(
@@ -120,9 +117,7 @@ class BaseScoringAlgorithm(ABC):
 class WeightedScoringAlgorithm(BaseScoringAlgorithm):
     """Weighted scoring algorithm with configurable criteria"""
 
-    def calculate_score(
-        self, data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
-    ) -> ScoringResult:
+    def calculate_score(self, data: dict[str, Any], context: dict[str, Any] | None = None) -> ScoringResult:
         """Calculate weighted score based on criteria"""
 
         self.validate_input_data(data)
@@ -139,9 +134,7 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
                 total_weight += criterion.weight
 
             except Exception as e:
-                self.logger.log_error(
-                    e, {"criterion": criterion.name, "data_keys": list(data.keys())}
-                )
+                self.logger.log_error(e, {"criterion": criterion.name, "data_keys": list(data.keys())})
                 # Continue with other criteria
                 criteria_scores[criterion.name] = 0.0
 
@@ -161,9 +154,9 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
 
     def _evaluate_criterion(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         criterion: ScoringCriteria,
-        context: Optional[Dict[str, Any]],
+        context: dict[str, Any] | None,
     ) -> float:
         """Evaluate a single scoring criterion"""
 
@@ -176,17 +169,11 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
                 return min(1.0, gap / criterion.threshold)
             return 0.0
 
-        elif criterion.name == "catalyst_count":
+        if criterion.name == "catalyst_count":
             # Check for catalyst list or catalyst_count field
             catalysts = data.get("catalysts", [])
-            catalyst_count = data.get(
-                "catalyst_count", len(catalysts) if catalysts else 0
-            )
-            return (
-                min(1.0, catalyst_count / criterion.threshold)
-                if criterion.threshold > 0
-                else 1.0
-            )
+            catalyst_count = data.get("catalyst_count", len(catalysts) if catalysts else 0)
+            return min(1.0, catalyst_count / criterion.threshold) if criterion.threshold > 0 else 1.0
 
         # Get criterion value from data
         value = data.get(criterion.name)
@@ -196,31 +183,20 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
 
         # Handle different value types
         if isinstance(value, (int, float)):
-            return (
-                min(1.0, max(0.0, value / criterion.threshold))
-                if criterion.threshold > 0
-                else 1.0
-            )
-        elif isinstance(value, bool):
+            return min(1.0, max(0.0, value / criterion.threshold)) if criterion.threshold > 0 else 1.0
+        if isinstance(value, bool):
             return 1.0 if value else 0.0
-        elif isinstance(value, list):
-            return (
-                min(1.0, len(value) / criterion.threshold)
-                if criterion.threshold > 0
-                else 1.0
-            )
-        elif isinstance(value, str):
+        if isinstance(value, list):
+            return min(1.0, len(value) / criterion.threshold) if criterion.threshold > 0 else 1.0
+        if isinstance(value, str):
             return 1.0 if value.strip() else 0.0
-        else:
-            return 0.5  # Default score for unknown types
+        return 0.5  # Default score for unknown types
 
-    def _calculate_confidence(
-        self, data: Dict[str, Any], scores: Dict[str, float]
-    ) -> float:
+    def _calculate_confidence(self, data: dict[str, Any], scores: dict[str, float]) -> float:
         """Calculate confidence in scoring result"""
 
         # Base confidence on data completeness
-        available_fields = len([k for k in data.keys() if data[k] is not None])
+        available_fields = len([k for k in data if data[k] is not None])
         total_fields = len(self.criteria)
 
         data_completeness = available_fields / total_fields if total_fields > 0 else 0.0
@@ -228,9 +204,9 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
         # Adjust for score variance
         score_values = list(scores.values())
         if score_values:
-            score_variance = sum(
-                (s - sum(score_values) / len(score_values)) ** 2 for s in score_values
-            ) / len(score_values)
+            score_variance = sum((s - sum(score_values) / len(score_values)) ** 2 for s in score_values) / len(
+                score_values
+            )
             variance_penalty = min(0.3, score_variance)
         else:
             variance_penalty = 0.3
@@ -238,19 +214,16 @@ class WeightedScoringAlgorithm(BaseScoringAlgorithm):
         confidence = data_completeness - variance_penalty
         return max(0.0, min(1.0, confidence))
 
-    def _generate_explanation(
-        self, scores: Dict[str, float], final_score: float
-    ) -> str:
+    def _generate_explanation(self, scores: dict[str, float], final_score: float) -> str:
         """Generate explanation for scoring result"""
 
         if final_score >= 0.8:
             return "Strong match across multiple criteria"
-        elif final_score >= 0.6:
+        if final_score >= 0.6:
             return "Good match with some missing elements"
-        elif final_score >= 0.4:
+        if final_score >= 0.4:
             return "Moderate match with significant gaps"
-        else:
-            return "Poor match with minimal criteria satisfied"
+        return "Poor match with minimal criteria satisfied"
 
 
 class TemplateScoringEngine:
@@ -265,7 +238,7 @@ class TemplateScoringEngine:
 
     def _initialize_scoring_algorithms(
         self,
-    ) -> Dict[str, Dict[str, BaseScoringAlgorithm]]:
+    ) -> dict[str, dict[str, BaseScoringAlgorithm]]:
         """Initialize scoring algorithms for each content type and template"""
 
         algorithms = {}
@@ -343,8 +316,8 @@ class TemplateScoringEngine:
         self,
         content_type: str,
         template_variant: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> ScoringResult:
         """Score a specific template variant"""
 
@@ -357,11 +330,7 @@ class TemplateScoringEngine:
         if template_variant not in self.scoring_algorithms[content_type]:
             raise ValidationError(
                 f"Unknown template variant '{template_variant}' for content type '{content_type}'",
-                context={
-                    "available_variants": list(
-                        self.scoring_algorithms[content_type].keys()
-                    )
-                },
+                context={"available_variants": list(self.scoring_algorithms[content_type].keys())},
             )
 
         algorithm = self.scoring_algorithms[content_type][template_variant]
@@ -388,9 +357,9 @@ class TemplateScoringEngine:
     def score_all_templates(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, ScoringResult]:
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, ScoringResult]:
         """Score all templates for a content type"""
 
         if content_type not in self.scoring_algorithms:
@@ -403,9 +372,7 @@ class TemplateScoringEngine:
 
         for template_variant in self.scoring_algorithms[content_type]:
             try:
-                result = self.score_template(
-                    content_type, template_variant, data, context
-                )
+                result = self.score_template(content_type, template_variant, data, context)
                 results[template_variant] = result
             except Exception as e:
                 self.logger.log_error(
@@ -419,9 +386,7 @@ class TemplateScoringEngine:
 
         return results
 
-    def get_scoring_criteria(
-        self, content_type: str, template_variant: str
-    ) -> List[ScoringCriteria]:
+    def get_scoring_criteria(self, content_type: str, template_variant: str) -> list[ScoringCriteria]:
         """Get scoring criteria for a specific template"""
 
         if content_type not in self.scoring_algorithms:
@@ -433,7 +398,7 @@ class TemplateScoringEngine:
         return self.scoring_algorithms[content_type][template_variant].criteria
 
     def update_scoring_criteria(
-        self, content_type: str, template_variant: str, criteria: List[ScoringCriteria]
+        self, content_type: str, template_variant: str, criteria: list[ScoringCriteria]
     ) -> None:
         """Update scoring criteria for a template"""
 
@@ -444,9 +409,7 @@ class TemplateScoringEngine:
             raise ValidationError(f"Unknown template variant: {template_variant}")
 
         # Create new algorithm with updated criteria
-        self.scoring_algorithms[content_type][
-            template_variant
-        ] = WeightedScoringAlgorithm(criteria)
+        self.scoring_algorithms[content_type][template_variant] = WeightedScoringAlgorithm(criteria)
 
         self.logger.log_operation(
             f"Updated scoring criteria for {content_type}/{template_variant}",

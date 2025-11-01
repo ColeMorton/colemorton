@@ -30,11 +30,10 @@ Usage:
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import numpy as np
 
 # Import analysis engines
 try:
@@ -50,9 +49,7 @@ except ImportError as e:
     logger.warning(f"Analysis engines not available: {e} - using analytical fallbacks")
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -93,18 +90,18 @@ class MacroEconomicAnalysis:
                 self.macro_service = None
                 self.regional_engine = None
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load and validate discovery data"""
         if not self.discovery_file.exists():
             raise FileNotFoundError(f"Discovery file not found: {self.discovery_file}")
 
-        with open(self.discovery_file, "r", encoding="utf-8") as f:
+        with open(self.discovery_file, encoding="utf-8") as f:
             discovery_data = json.load(f)
 
         logger.info(f"Loaded discovery data from: {self.discovery_file}")
         return discovery_data
 
-    def analyze_business_cycle_modeling(self) -> Dict[str, Any]:
+    def analyze_business_cycle_modeling(self) -> dict[str, Any]:
         """
         Advanced business cycle modeling with multi-dimensional phase identification
         """
@@ -131,16 +128,12 @@ class MacroEconomicAnalysis:
         logger.debug("Calculating recession probability...")
 
         # Extract leading indicators from discovery
-        leading_indicators = self.discovery_data.get("economic_indicators", {}).get(
-            "leading_indicators", {}
-        )
+        leading_indicators = self.discovery_data.get("economic_indicators", {}).get("leading_indicators", {})
 
         # Yield curve analysis (inverted curve increases recession probability)
         yield_curve = leading_indicators.get("yield_curve", {})
         yield_spread = yield_curve.get("current_spread", 0.5)
-        curve_signal = max(
-            0, (0.5 - yield_spread) * 0.4
-        )  # Inverted curve contributes to risk
+        curve_signal = max(0, (0.5 - yield_spread) * 0.4)  # Inverted curve contributes to risk
 
         # Consumer confidence (below 90 increases recession risk)
         consumer_conf = leading_indicators.get("consumer_confidence", {})
@@ -154,24 +147,18 @@ class MacroEconomicAnalysis:
 
         # Composite recession probability
         base_probability = 0.15  # Base recession probability
-        recession_probability = min(
-            base_probability + curve_signal + confidence_signal + market_signal, 0.85
-        )
+        recession_probability = min(base_probability + curve_signal + confidence_signal + market_signal, 0.85)
 
         logger.debug(f"Calculated recession probability: {recession_probability:.2%}")
         return recession_probability
 
-    def _calculate_phase_transition_probabilities(self) -> Dict[str, float]:
+    def _calculate_phase_transition_probabilities(self) -> dict[str, float]:
         """Calculate business cycle phase transition probabilities"""
         logger.debug("Calculating phase transition probabilities...")
 
-        current_phase = self.discovery_data.get("business_cycle_data", {}).get(
-            "current_phase", "expansion"
-        )
+        current_phase = self.discovery_data.get("business_cycle_data", {}).get("current_phase", "expansion")
         phase_duration = (
-            self.discovery_data.get("business_cycle_data", {})
-            .get("historical_context", {})
-            .get("phase_duration", 24)
+            self.discovery_data.get("business_cycle_data", {}).get("historical_context", {}).get("phase_duration", 24)
         )
 
         # Historical average phase durations (months)
@@ -186,37 +173,35 @@ class MacroEconomicAnalysis:
         if current_phase == "expansion":
             maturity_factor = min(phase_duration / avg_durations["expansion"], 1.0)
             return {
-                "expansion_to_peak": 0.08
-                + maturity_factor * 0.12,  # 8-20% depending on maturity
+                "expansion_to_peak": 0.08 + maturity_factor * 0.12,  # 8-20% depending on maturity
                 "peak_to_contraction": 0.05,
                 "contraction_to_trough": 0.02,
                 "trough_to_expansion": 0.02,
             }
-        elif current_phase == "peak":
+        if current_phase == "peak":
             return {
                 "expansion_to_peak": 0.05,
                 "peak_to_contraction": 0.60,  # High probability of moving to contraction
                 "contraction_to_trough": 0.10,
                 "trough_to_expansion": 0.05,
             }
-        elif current_phase == "contraction":
+        if current_phase == "contraction":
             maturity_factor = min(phase_duration / avg_durations["contraction"], 1.0)
             return {
                 "expansion_to_peak": 0.02,
                 "peak_to_contraction": 0.10,
-                "contraction_to_trough": 0.15
-                + maturity_factor * 0.25,  # Increases with duration
+                "contraction_to_trough": 0.15 + maturity_factor * 0.25,  # Increases with duration
                 "trough_to_expansion": 0.05,
             }
-        else:  # trough
-            return {
-                "expansion_to_peak": 0.05,
-                "peak_to_contraction": 0.05,
-                "contraction_to_trough": 0.10,
-                "trough_to_expansion": 0.50,  # High probability of recovery
-            }
+        # trough
+        return {
+            "expansion_to_peak": 0.05,
+            "peak_to_contraction": 0.05,
+            "contraction_to_trough": 0.10,
+            "trough_to_expansion": 0.50,  # High probability of recovery
+        }
 
-    def _analyze_interest_rate_sensitivity(self) -> Dict[str, Any]:
+    def _analyze_interest_rate_sensitivity(self) -> dict[str, Any]:
         """Analyze interest rate sensitivity and duration impact"""
         logger.debug("Analyzing interest rate sensitivity...")
 
@@ -235,7 +220,7 @@ class MacroEconomicAnalysis:
             },
         }
 
-    def _assess_inflation_hedge_characteristics(self) -> Dict[str, Any]:
+    def _assess_inflation_hedge_characteristics(self) -> dict[str, Any]:
         """Assess inflation hedging characteristics across asset classes"""
         logger.debug("Assessing inflation hedge characteristics...")
 
@@ -253,15 +238,13 @@ class MacroEconomicAnalysis:
             "cost_structure_flexibility": "Service sectors with high labor costs face margin compression during inflationary periods. Technology and IP-heavy sectors maintain better margin stability due to scalable cost structures.",
         }
 
-    def _analyze_gdp_growth_correlation(self) -> Dict[str, Any]:
+    def _analyze_gdp_growth_correlation(self) -> dict[str, Any]:
         """Analyze GDP growth correlation and economic sensitivity"""
         logger.debug("Analyzing GDP growth correlation...")
 
         # Extract GDP data from discovery
         gdp_data = (
-            self.discovery_data.get("cli_comprehensive_analysis", {})
-            .get("fred_economic_data", {})
-            .get("gdp_data", {})
+            self.discovery_data.get("cli_comprehensive_analysis", {}).get("fred_economic_data", {}).get("gdp_data", {})
         )
 
         return {
@@ -272,7 +255,7 @@ class MacroEconomicAnalysis:
             "leading_lagging_relationship": "Economic growth typically leads market performance by 3-6 months during expansions, but markets lead GDP by 6-9 months during contractions.",
         }
 
-    def analyze_liquidity_cycle_positioning(self) -> Dict[str, Any]:
+    def analyze_liquidity_cycle_positioning(self) -> dict[str, Any]:
         """
         Comprehensive liquidity environment assessment with central bank policy coordination
         """
@@ -283,9 +266,7 @@ class MacroEconomicAnalysis:
         global_context = self.discovery_data.get("global_economic_context", {})
 
         liquidity_positioning = {
-            "fed_policy_stance": monetary_policy.get("policy_stance", {}).get(
-                "current_stance", "restrictive"
-            ),
+            "fed_policy_stance": monetary_policy.get("policy_stance", {}).get("current_stance", "restrictive"),
             "credit_market_conditions": self._analyze_credit_market_conditions(),
             "money_supply_impact": self._analyze_money_supply_impact(),
             "liquidity_preferences": self._assess_liquidity_preferences(),
@@ -295,7 +276,7 @@ class MacroEconomicAnalysis:
 
         return liquidity_positioning
 
-    def _analyze_credit_market_conditions(self) -> Dict[str, Any]:
+    def _analyze_credit_market_conditions(self) -> dict[str, Any]:
         """Analyze credit market conditions and capital access"""
         logger.debug("Analyzing credit market conditions...")
 
@@ -306,7 +287,7 @@ class MacroEconomicAnalysis:
             "banking_standards": "Bank lending standards tightened moderately per Fed Senior Loan Officer Survey. C&I lending standards tightened for 35% of banks, most restrictive since 2020.",
         }
 
-    def _analyze_money_supply_impact(self) -> Dict[str, Any]:
+    def _analyze_money_supply_impact(self) -> dict[str, Any]:
         """Analyze money supply growth and velocity implications"""
         logger.debug("Analyzing money supply impact...")
 
@@ -316,7 +297,7 @@ class MacroEconomicAnalysis:
             "asset_price_inflation": "Reduced money supply growth decreases asset price inflation by 2-3 percentage points annually. Real estate and equity valuations normalize toward fundamental levels rather than liquidity-driven premiums.",
         }
 
-    def _assess_liquidity_preferences(self) -> Dict[str, Any]:
+    def _assess_liquidity_preferences(self) -> dict[str, Any]:
         """Assess sector allocation flows and risk appetite correlation"""
         logger.debug("Assessing liquidity preferences...")
 
@@ -325,7 +306,7 @@ class MacroEconomicAnalysis:
             "risk_appetite_correlation": "Risk-on/risk-off behavior amplified in restrictive liquidity environment. VIX correlation with credit spreads increased to 0.73 from historical 0.45, indicating flight-to-quality dynamics.",
         }
 
-    def _analyze_employment_sensitivity(self) -> Dict[str, Any]:
+    def _analyze_employment_sensitivity(self) -> dict[str, Any]:
         """Analyze employment sensitivity and labor market transmission"""
         logger.debug("Analyzing employment sensitivity...")
 
@@ -344,7 +325,7 @@ class MacroEconomicAnalysis:
             "consumer_spending_linkage": "Employment strength drives 65% of consumer discretionary spending growth. Each 100K payroll gain correlates with 0.25% increase in consumer spending growth rates.",
         }
 
-    def analyze_industry_dynamics_scorecard(self) -> Dict[str, Any]:
+    def analyze_industry_dynamics_scorecard(self) -> dict[str, Any]:
         """
         Economic sector and industry dynamics assessment with grading framework
         """
@@ -361,7 +342,7 @@ class MacroEconomicAnalysis:
 
         return scorecard
 
-    def _assess_profitability_environment(self) -> Dict[str, Any]:
+    def _assess_profitability_environment(self) -> dict[str, Any]:
         """Assess overall profitability environment for economic sectors"""
         logger.debug("Assessing profitability environment...")
 
@@ -372,7 +353,7 @@ class MacroEconomicAnalysis:
             "supporting_evidence": "S&P 500 net margins stable at 12.8% vs 11.5% long-term average. Operating leverage positive with 2.3% GDP growth supporting revenue expansion above cost inflation.",
         }
 
-    def _assess_balance_sheet_environment(self) -> Dict[str, Any]:
+    def _assess_balance_sheet_environment(self) -> dict[str, Any]:
         """Assess overall balance sheet health environment"""
         logger.debug("Assessing balance sheet environment...")
 
@@ -383,7 +364,7 @@ class MacroEconomicAnalysis:
             "liquidity_adequacy": "Corporate cash levels remain elevated at $2.8T aggregate. Credit line utilization at 35% provides adequate liquidity buffer for near-term operations and capital expenditure.",
         }
 
-    def _assess_competitive_environment(self) -> Dict[str, Any]:
+    def _assess_competitive_environment(self) -> dict[str, Any]:
         """Assess competitive moat strength in current environment"""
         logger.debug("Assessing competitive environment...")
 
@@ -394,7 +375,7 @@ class MacroEconomicAnalysis:
             "evidence": "Market share concentration increasing in technology (top 5 companies 65% of sector market cap) while decreasing in traditional sectors due to new entrant competition.",
         }
 
-    def _assess_regulatory_environment(self) -> Dict[str, Any]:
+    def _assess_regulatory_environment(self) -> dict[str, Any]:
         """Assess regulatory environment impact on industries"""
         logger.debug("Assessing regulatory environment...")
 
@@ -405,7 +386,7 @@ class MacroEconomicAnalysis:
             "industry_influence": "Financial services and healthcare maintain strong regulatory relationships. Technology sector facing increased scrutiny with limited policy influence compared to historical levels.",
         }
 
-    def analyze_multi_method_valuation(self) -> Dict[str, Any]:
+    def analyze_multi_method_valuation(self) -> dict[str, Any]:
         """
         Multi-method economic valuation framework combining DCF, relative, and technical analysis
         """
@@ -422,7 +403,7 @@ class MacroEconomicAnalysis:
 
         return valuation_analysis
 
-    def _perform_dcf_analysis(self) -> Dict[str, Any]:
+    def _perform_dcf_analysis(self) -> dict[str, Any]:
         """Perform discounted cash flow analysis for economic environment"""
         logger.debug("Performing DCF analysis...")
 
@@ -434,7 +415,7 @@ class MacroEconomicAnalysis:
             "weight": "40_percent",
         }
 
-    def _perform_relative_analysis(self) -> Dict[str, Any]:
+    def _perform_relative_analysis(self) -> dict[str, Any]:
         """Perform relative valuation analysis"""
         logger.debug("Performing relative analysis...")
 
@@ -446,7 +427,7 @@ class MacroEconomicAnalysis:
             "weight": "35_percent",
         }
 
-    def _perform_technical_analysis(self) -> Dict[str, Any]:
+    def _perform_technical_analysis(self) -> dict[str, Any]:
         """Perform technical analysis for market positioning"""
         logger.debug("Performing technical analysis...")
 
@@ -458,7 +439,7 @@ class MacroEconomicAnalysis:
             "weight": "25_percent",
         }
 
-    def _calculate_blended_valuation(self) -> Dict[str, Any]:
+    def _calculate_blended_valuation(self) -> dict[str, Any]:
         """Calculate probability-weighted blended valuation"""
         logger.debug("Calculating blended valuation...")
 
@@ -471,7 +452,7 @@ class MacroEconomicAnalysis:
             "scenario_weighting": "Base case 60% probability (4230 target), Bull case 25% (4400+ target), Bear case 15% (3900-4000 target)",
         }
 
-    def _analyze_policy_fair_value(self) -> Dict[str, Any]:
+    def _analyze_policy_fair_value(self) -> dict[str, Any]:
         """Analyze economic policy stance vs fair value positioning"""
         logger.debug("Analyzing policy vs fair value positioning...")
 
@@ -484,7 +465,7 @@ class MacroEconomicAnalysis:
             "policy_consistency": 0.75,  # Moderate consistency between policy stance and market levels
         }
 
-    def analyze_quantified_risk_assessment(self) -> Dict[str, Any]:
+    def analyze_quantified_risk_assessment(self) -> dict[str, Any]:
         """
         Comprehensive quantified risk assessment with probability/impact matrices
         """
@@ -500,7 +481,7 @@ class MacroEconomicAnalysis:
 
         return risk_assessment
 
-    def _build_risk_matrix(self) -> Dict[str, Any]:
+    def _build_risk_matrix(self) -> dict[str, Any]:
         """Build comprehensive risk matrix with probability/impact scoring"""
         logger.debug("Building risk matrix...")
 
@@ -534,7 +515,7 @@ class MacroEconomicAnalysis:
 
         return risk_matrix
 
-    def _perform_stress_testing(self) -> Dict[str, Any]:
+    def _perform_stress_testing(self) -> dict[str, Any]:
         """Perform comprehensive stress testing scenarios"""
         logger.debug("Performing stress testing...")
 
@@ -555,7 +536,7 @@ class MacroEconomicAnalysis:
             },
         }
 
-    def _perform_sensitivity_analysis(self) -> Dict[str, Any]:
+    def _perform_sensitivity_analysis(self) -> dict[str, Any]:
         """Perform sensitivity analysis on key economic variables"""
         logger.debug("Performing sensitivity analysis...")
 
@@ -580,13 +561,11 @@ class MacroEconomicAnalysis:
         }
 
         risk_matrix = self._build_risk_matrix()
-        aggregate_score = sum(
-            risk_matrix[risk]["risk_score"] * weights[risk] for risk in weights.keys()
-        )
+        aggregate_score = sum(risk_matrix[risk]["risk_score"] * weights[risk] for risk in weights)
 
         return round(aggregate_score, 2)
 
-    def analyze_enhanced_economic_sensitivity(self) -> Dict[str, Any]:
+    def analyze_enhanced_economic_sensitivity(self) -> dict[str, Any]:
         """
         Enhanced economic sensitivity analysis across key indicators
         """
@@ -611,12 +590,11 @@ class MacroEconomicAnalysis:
         if self.region.upper() == "EUROPE":
             # ECB deposit rate correlation with European assets
             return -0.72  # Slightly weaker than Fed due to fragmentation
-        elif self.region.upper() == "ASIA":
+        if self.region.upper() == "ASIA":
             # Regional central bank policy correlation
             return -0.65  # More diverse policy landscape
-        else:
-            # US Fed funds rate correlation (default)
-            return -0.78  # Strong negative correlation
+        # US Fed funds rate correlation (default)
+        return -0.78  # Strong negative correlation
 
     def _analyze_dxy_impact(self) -> str:
         """Analyze regional currency impact and correlation"""
@@ -624,11 +602,10 @@ class MacroEconomicAnalysis:
 
         if self.region.upper() == "EUROPE":
             return "EUR/USD dynamics show 0.45 correlation with European risk assets and -0.70 correlation with US exposure. EUR strength supports European asset performance while reducing USD-denominated returns. Current EUR/USD around 1.095 in middle of recent range with ECB policy supporting gradual appreciation."
-        elif self.region.upper() == "ASIA":
+        if self.region.upper() == "ASIA":
             return "Regional currency basket shows mixed correlations with local assets. USD strength generally headwind for Asian markets with -0.55 average correlation. Currency hedging strategies important for international investors given volatility."
-        else:
-            # Default US analysis
-            return "Dollar strength (DXY) shows -0.65 correlation with risk assets and -0.85 correlation with international exposure. Each 5% DXY increase correlates with 3% decline in S&P 500 and 8% decline in international equity performance. Current DXY at 104.5 represents strong dollar environment with headwinds for international diversification."
+        # Default US analysis
+        return "Dollar strength (DXY) shows -0.65 correlation with risk assets and -0.85 correlation with international exposure. Each 5% DXY increase correlates with 3% decline in S&P 500 and 8% decline in international equity performance. Current DXY at 104.5 represents strong dollar environment with headwinds for international diversification."
 
     def _analyze_yield_curve_sensitivity(self) -> str:
         """Analyze regional yield curve sensitivity and basis point impact"""
@@ -636,11 +613,10 @@ class MacroEconomicAnalysis:
 
         if self.region.upper() == "EUROPE":
             return "German Bund yield changes impact European equity valuations with 6.8 effective duration. Current 10Y Bund at ~2.3% creates moderate duration risk. Each 25bp Bund yield increase correlates with 1.6% European equity decline. ECB policy transmission through sovereign curves affects peripheral spreads and regional divergence."
-        elif self.region.upper() == "ASIA":
+        if self.region.upper() == "ASIA":
             return "Regional yield curves show varying sensitivity patterns. JGB influence limited due to BOJ control, while other regional curves more responsive to US Treasury movements. Average duration impact around 5.5 for regional equity markets."
-        else:
-            # Default US analysis
-            return "10-year Treasury yield changes impact equity valuations by duration-adjusted multiple. Current 10Y at 4.3% creates 7.2 effective duration for equity market. Each 25bp yield increase correlates with 1.8% equity decline, while curve steepening (2s10s widening) correlates with 0.65% equity outperformance per 10bp steepening."
+        # Default US analysis
+        return "10-year Treasury yield changes impact equity valuations by duration-adjusted multiple. Current 10Y at 4.3% creates 7.2 effective duration for equity market. Each 25bp yield increase correlates with 1.8% equity decline, while curve steepening (2s10s widening) correlates with 0.65% equity outperformance per 10bp steepening."
 
     def _calculate_crypto_correlation(self) -> float:
         """Calculate Bitcoin correlation coefficient"""
@@ -649,7 +625,7 @@ class MacroEconomicAnalysis:
         # Bitcoin increasingly correlated with risk assets, especially during stress
         return 0.73  # High correlation with risk assets
 
-    def _analyze_economic_indicator_sensitivity(self) -> Dict[str, float]:
+    def _analyze_economic_indicator_sensitivity(self) -> dict[str, float]:
         """Analyze sensitivity to key economic indicators"""
         logger.debug("Analyzing economic indicator sensitivity...")
 
@@ -659,7 +635,7 @@ class MacroEconomicAnalysis:
             "gdp_correlation": 0.78,  # Strong positive correlation
         }
 
-    def analyze_macroeconomic_risk_scoring(self) -> Dict[str, Any]:
+    def analyze_macroeconomic_risk_scoring(self) -> dict[str, Any]:
         """
         Integrated macroeconomic risk scoring with multi-indicator framework
         """
@@ -675,7 +651,7 @@ class MacroEconomicAnalysis:
 
         return macro_risk_scoring
 
-    def _assess_gdp_based_risks(self) -> Dict[str, Any]:
+    def _assess_gdp_based_risks(self) -> dict[str, Any]:
         """Assess GDP-based risk factors"""
         logger.debug("Assessing GDP-based risks...")
 
@@ -686,7 +662,7 @@ class MacroEconomicAnalysis:
             "early_warning_signals": "GDP nowcasting models, yield curve inversion duration, consumer confidence trends, and leading economic indicators composite provide 3-6 month forward visibility.",
         }
 
-    def _assess_employment_based_risks(self) -> Dict[str, Any]:
+    def _assess_employment_based_risks(self) -> dict[str, Any]:
         """Assess employment-based risk factors"""
         logger.debug("Assessing employment-based risks...")
 
@@ -697,7 +673,7 @@ class MacroEconomicAnalysis:
             "employment_cycle_risk": "Late-cycle employment dynamics with potential for rapid deterioration. Historical employment declines average 3-4 percentage points during recessions.",
         }
 
-    def _calculate_combined_macro_risk(self) -> Dict[str, Any]:
+    def _calculate_combined_macro_risk(self) -> dict[str, Any]:
         """Calculate combined macroeconomic risk assessment"""
         logger.debug("Calculating combined macro risk...")
 
@@ -708,9 +684,7 @@ class MacroEconomicAnalysis:
         gdp_risk = 0.35  # From GDP assessment
         employment_risk = 0.28  # From employment assessment
 
-        composite_risk = (gdp_risk * gdp_risk_weight) + (
-            employment_risk * employment_risk_weight
-        )
+        composite_risk = (gdp_risk * gdp_risk_weight) + (employment_risk * employment_risk_weight)
 
         return {
             "composite_risk_index": round(composite_risk, 3),
@@ -719,7 +693,7 @@ class MacroEconomicAnalysis:
             "stress_test_outcomes": "Combined GDP-employment stress test (2% GDP decline + 2pp unemployment increase) suggests 25-30% equity decline and 18-24 month recovery period.",
         }
 
-    def _design_early_warning_system(self) -> Dict[str, Any]:
+    def _design_early_warning_system(self) -> dict[str, Any]:
         """Design early warning system for macroeconomic risks"""
         logger.debug("Designing early warning system...")
 
@@ -747,7 +721,7 @@ class MacroEconomicAnalysis:
             ],
         }
 
-    def analyze_investment_recommendation_gap_analysis(self) -> Dict[str, Any]:
+    def analyze_investment_recommendation_gap_analysis(self) -> dict[str, Any]:
         """
         Investment recommendation gap analysis for synthesis preparation
         """
@@ -764,7 +738,7 @@ class MacroEconomicAnalysis:
 
         return investment_gap_analysis
 
-    def _analyze_portfolio_allocation_context(self) -> Dict[str, Any]:
+    def _analyze_portfolio_allocation_context(self) -> dict[str, Any]:
         """Analyze portfolio allocation context and sector weighting recommendations"""
         logger.debug("Analyzing portfolio allocation context...")
 
@@ -776,7 +750,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.82,
         }
 
-    def _analyze_economic_cycle_positioning(self) -> Dict[str, Any]:
+    def _analyze_economic_cycle_positioning(self) -> dict[str, Any]:
         """Analyze economic cycle investment positioning"""
         logger.debug("Analyzing economic cycle positioning...")
 
@@ -788,7 +762,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.85,
         }
 
-    def _calculate_risk_adjusted_metrics(self) -> Dict[str, Any]:
+    def _calculate_risk_adjusted_metrics(self) -> dict[str, Any]:
         """Calculate risk-adjusted investment metrics"""
         logger.debug("Calculating risk-adjusted metrics...")
 
@@ -800,7 +774,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.87,
         }
 
-    def _assess_investment_conclusion_confidence(self) -> Dict[str, Any]:
+    def _assess_investment_conclusion_confidence(self) -> dict[str, Any]:
         """Assess investment conclusion confidence methodology"""
         logger.debug("Assessing investment conclusion confidence...")
 
@@ -812,7 +786,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.83,
         }
 
-    def _analyze_sector_investment_characteristics(self) -> Dict[str, Any]:
+    def _analyze_sector_investment_characteristics(self) -> dict[str, Any]:
         """Analyze sector investment characteristics and style positioning"""
         logger.debug("Analyzing sector investment characteristics...")
 
@@ -824,7 +798,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.84,
         }
 
-    def _develop_policy_recommendation_framework(self) -> Dict[str, Any]:
+    def _develop_policy_recommendation_framework(self) -> dict[str, Any]:
         """Develop economic policy recommendation framework"""
         logger.debug("Developing policy recommendation framework...")
 
@@ -837,7 +811,7 @@ class MacroEconomicAnalysis:
             "confidence": 0.79,
         }
 
-    def calculate_analysis_quality_metrics(self) -> Dict[str, Any]:
+    def calculate_analysis_quality_metrics(self) -> dict[str, Any]:
         """Calculate analysis quality metrics for synthesis readiness"""
         logger.info("Calculating analysis quality metrics...")
 
@@ -853,9 +827,7 @@ class MacroEconomicAnalysis:
             "investment_recommendation_gap_analysis",
         ]
 
-        gap_coverage = len(required_components) / len(
-            required_components
-        )  # 100% coverage
+        gap_coverage = len(required_components) / len(required_components)  # 100% coverage
 
         # Inherit confidence from discovery
         discovery_confidence = (
@@ -873,7 +845,7 @@ class MacroEconomicAnalysis:
 
         return quality_metrics
 
-    def execute_analysis(self) -> Dict[str, Any]:
+    def execute_analysis(self) -> dict[str, Any]:
         """
         Execute the complete DASV Phase 2 analysis protocol for macro-economic template gap analysis
         """
@@ -902,9 +874,7 @@ class MacroEconomicAnalysis:
             macroeconomic_risk_scoring = self.analyze_macroeconomic_risk_scoring()
 
             # Phase 8: Investment Recommendation Gap Analysis
-            investment_recommendation_gap_analysis = (
-                self.analyze_investment_recommendation_gap_analysis()
-            )
+            investment_recommendation_gap_analysis = self.analyze_investment_recommendation_gap_analysis()
 
             # Phase 9: Analysis Quality Metrics
             analysis_quality_metrics = self.calculate_analysis_quality_metrics()
@@ -917,9 +887,7 @@ class MacroEconomicAnalysis:
                     "framework_phase": "analyze",
                     "region": self.region,
                     "analysis_methodology": "macro_template_gap_analysis",
-                    "discovery_file_reference": str(
-                        self.discovery_file.relative_to(Path.cwd())
-                    ),
+                    "discovery_file_reference": str(self.discovery_file.relative_to(Path.cwd())),
                     "confidence_threshold": self.confidence_threshold,
                 },
                 "business_cycle_modeling": business_cycle_modeling,
@@ -935,9 +903,7 @@ class MacroEconomicAnalysis:
 
             # Save output with proper naming
             region = self.discovery_data["metadata"]["region"]
-            discovery_date = self.discovery_data["metadata"]["execution_timestamp"][
-                :10
-            ].replace("-", "")
+            discovery_date = self.discovery_data["metadata"]["execution_timestamp"][:10].replace("-", "")
             output_filename = f"{region}_{discovery_date}_analysis.json"
             output_file = self.output_dir / output_filename
 
@@ -964,12 +930,8 @@ def main():
     """Main execution function."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Execute macro-economic analysis protocol"
-    )
-    parser.add_argument(
-        "--discovery-file", required=True, help="Path to discovery JSON file"
-    )
+    parser = argparse.ArgumentParser(description="Execute macro-economic analysis protocol")
+    parser.add_argument("--discovery-file", required=True, help="Path to discovery JSON file")
     parser.add_argument(
         "--confidence-threshold",
         type=float,
@@ -1018,24 +980,14 @@ def main():
         print("\nRISK ASSESSMENT:")
         risk = result["quantified_risk_assessment"]
         print("  Aggregate Risk Score: {risk['aggregate_risk_score']:.2f}")
-        print(
-            f"  Economic Recession Risk: {risk['risk_matrix']['economic_recession']['probability']:.1%}"
-        )
-        print(
-            f"  Interest Rate Shock Risk: {risk['risk_matrix']['interest_rate_shock']['probability']:.1%}"
-        )
+        print(f"  Economic Recession Risk: {risk['risk_matrix']['economic_recession']['probability']:.1%}")
+        print(f"  Interest Rate Shock Risk: {risk['risk_matrix']['interest_rate_shock']['probability']:.1%}")
 
         print("\nMACROECONOMIC RISK SCORING:")
         macro_risk = result["macroeconomic_risk_scoring"]
-        print(
-            f"  Combined Risk Index: {macro_risk['combined_macroeconomic_risk']['composite_risk_index']:.3f}"
-        )
-        print(
-            f"  GDP Risk Probability: {macro_risk['gdp_based_risk_assessment']['gdp_deceleration_probability']:.1%}"
-        )
-        print(
-            f"  Employment Risk: {macro_risk['employment_based_risk_assessment']['payroll_decline_probability']:.1%}"
-        )
+        print(f"  Combined Risk Index: {macro_risk['combined_macroeconomic_risk']['composite_risk_index']:.3f}")
+        print(f"  GDP Risk Probability: {macro_risk['gdp_based_risk_assessment']['gdp_deceleration_probability']:.1%}")
+        print(f"  Employment Risk: {macro_risk['employment_based_risk_assessment']['payroll_decline_probability']:.1%}")
 
         print("\nANALYSIS QUALITY:")
         quality = result["analysis_quality_metrics"]

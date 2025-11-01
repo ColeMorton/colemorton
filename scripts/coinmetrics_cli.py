@@ -12,9 +12,10 @@ Command-line interface for CoinMetrics institutional-grade cryptocurrency data w
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,7 +41,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
             self.service = create_coinmetrics_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform CoinMetrics service health check"""
         try:
             service = self._get_service(env)
@@ -54,7 +55,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -92,9 +93,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_available_metrics(asset)
-                self._output_result(
-                    result, output_format, f"Available Metrics: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Available Metrics: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get metrics for {asset}")
@@ -106,12 +105,8 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 "AdrActCnt,BlkCnt,TxCnt,TxTfrValUSD",
                 help="Comma-separated metrics (e.g., AdrActCnt,BlkCnt,TxCnt)",
             ),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -120,9 +115,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_network_data(asset, metrics, start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Network Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Network Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get network data for {asset}")
@@ -130,12 +123,8 @@ class CoinMetricsCLI(BaseFinancialCLI):
         @self.app.command("market-data")
         def get_market_data(
             asset: str = typer.Option("btc", help="Asset symbol (e.g., btc, eth)"),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -144,21 +133,15 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_market_data(asset, start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Market Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Market Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get market data for {asset}")
 
         @self.app.command("bitcoin-metrics")
         def get_bitcoin_cycle_metrics(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -175,12 +158,8 @@ class CoinMetricsCLI(BaseFinancialCLI):
         @self.app.command("nupl")
         def get_nupl_data(
             asset: str = typer.Option("btc", help="Asset symbol (default: btc)"),
-            start_date: str = typer.Option(
-                "2025-08-01", help="Start date for trend analysis (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2025-08-01", help="Start date for trend analysis (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -197,12 +176,8 @@ class CoinMetricsCLI(BaseFinancialCLI):
         @self.app.command("supply-data")
         def get_supply_data(
             asset: str = typer.Option("btc", help="Asset symbol (e.g., btc, eth)"),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -211,24 +186,16 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_supply_data(asset, start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Supply Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Supply Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get supply data for {asset}")
 
         @self.app.command("mining-data")
         def get_mining_data(
-            asset: str = typer.Option(
-                "btc", help="Asset symbol (currently supports btc)"
-            ),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            asset: str = typer.Option("btc", help="Asset symbol (currently supports btc)"),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -237,9 +204,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_mining_data(asset, start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Mining Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Mining Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get mining data for {asset}")
@@ -255,9 +220,7 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_exchange_data(asset)
-                self._output_result(
-                    result, output_format, f"Exchange Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Exchange Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get exchange data for {asset}")
@@ -273,24 +236,16 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_institutional_data(asset)
-                self._output_result(
-                    result, output_format, f"Institutional Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Institutional Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get institutional data for {asset}")
 
         @self.app.command("realizedcap")
         def get_realized_cap_data(
-            asset: str = typer.Option(
-                "btc", help="Asset symbol (currently supports btc)"
-            ),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            asset: str = typer.Option("btc", help="Asset symbol (currently supports btc)"),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -299,24 +254,16 @@ class CoinMetricsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_realized_cap_data(asset, start_date, end_date)
-                self._output_result(
-                    result, output_format, f"Realized Cap Data: {asset.upper()}"
-                )
+                self._output_result(result, output_format, f"Realized Cap Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get realized cap data for {asset}")
 
         @self.app.command("mvrv")
         def get_mvrv_data(
-            asset: str = typer.Option(
-                "btc", help="Asset symbol (currently supports btc)"
-            ),
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            asset: str = typer.Option("btc", help="Asset symbol (currently supports btc)"),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -324,24 +271,16 @@ class CoinMetricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_mvrv_data(
-                    asset, start_date, end_date if end_date else None
-                )
-                self._output_result(
-                    result, output_format, f"MVRV Data: {asset.upper()}"
-                )
+                result = service.get_mvrv_data(asset, start_date, end_date if end_date else None)
+                self._output_result(result, output_format, f"MVRV Data: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get MVRV data for {asset}")
 
         @self.app.command("enhanced-bitcoin-metrics")
         def get_enhanced_bitcoin_cycle_metrics(
-            start_date: str = typer.Option(
-                "2024-01-01", help="Start date (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            start_date: str = typer.Option("2024-01-01", help="Start date (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -349,27 +288,17 @@ class CoinMetricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_enhanced_bitcoin_cycle_metrics(
-                    start_date, end_date if end_date else None
-                )
-                self._output_result(
-                    result, output_format, "Enhanced Bitcoin Cycle Metrics"
-                )
+                result = service.get_enhanced_bitcoin_cycle_metrics(start_date, end_date if end_date else None)
+                self._output_result(result, output_format, "Enhanced Bitcoin Cycle Metrics")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get enhanced Bitcoin cycle metrics")
 
         @self.app.command("mvrv-zscore")
         def get_mvrv_z_score(
-            asset: str = typer.Option(
-                "btc", help="Asset symbol (currently supports btc)"
-            ),
-            start_date: str = typer.Option(
-                "2020-01-01", help="Start date for historical baseline (YYYY-MM-DD)"
-            ),
-            end_date: str = typer.Option(
-                "", help="End date (YYYY-MM-DD, default: latest)"
-            ),
+            asset: str = typer.Option("btc", help="Asset symbol (currently supports btc)"),
+            start_date: str = typer.Option("2020-01-01", help="Start date for historical baseline (YYYY-MM-DD)"),
+            end_date: str = typer.Option("", help="End date (YYYY-MM-DD, default: latest)"),
             lookback_days: int = typer.Option(
                 1460,
                 help="Days of historical data for Z-Score calculation (default: 4 years)",
@@ -388,21 +317,15 @@ class CoinMetricsCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_mvrv_z_score_data(
-                    asset, start_date, end_date if end_date else None, lookback_days
-                )
-                self._output_result(
-                    result, output_format, f"MVRV Z-Score Analysis: {asset.upper()}"
-                )
+                result = service.get_mvrv_z_score_data(asset, start_date, end_date if end_date else None, lookback_days)
+                self._output_result(result, output_format, f"MVRV Z-Score Analysis: {asset.upper()}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get MVRV Z-Score data for {asset}")
 
         @self.app.command("cycle-intelligence-mvrv")
         def get_cycle_intelligence_mvrv(
-            analysis_date: str = typer.Option(
-                "", help="Analysis date (YYYY-MM-DD, default: today)"
-            ),
+            analysis_date: str = typer.Option("", help="Analysis date (YYYY-MM-DD, default: today)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -436,16 +359,10 @@ class CoinMetricsCLI(BaseFinancialCLI):
                     "zone_classification": mvrv_analysis["zone_classification"],
                     "confidence": mvrv_analysis["confidence"],
                     "statistical_validation": {
-                        "data_points": mvrv_analysis["statistical_metrics"][
-                            "data_points"
-                        ],
-                        "baseline_period_days": mvrv_analysis["statistical_metrics"][
-                            "lookback_days"
-                        ],
+                        "data_points": mvrv_analysis["statistical_metrics"]["data_points"],
+                        "baseline_period_days": mvrv_analysis["statistical_metrics"]["lookback_days"],
                         "mean_mvrv": mvrv_analysis["statistical_metrics"]["mean"],
-                        "std_deviation": mvrv_analysis["statistical_metrics"][
-                            "std_dev"
-                        ],
+                        "std_deviation": mvrv_analysis["statistical_metrics"]["std_dev"],
                     },
                     "trend_analysis": mvrv_analysis["trend_analysis"],
                     "analysis_metadata": {

@@ -25,17 +25,16 @@ import logging
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
+
 
 logger = logging.getLogger(__name__)
 
 
 class ConfigurationError(Exception):
     """Raised when configuration loading or validation fails"""
-
-    pass
 
 
 class ConfigManager:
@@ -46,7 +45,7 @@ class ConfigManager:
     parameters with validation, environment overrides, and fail-fast behavior.
     """
 
-    def __init__(self, config_path: Optional[str] = None, environment: str = "prod"):
+    def __init__(self, config_path: str | None = None, environment: str = "prod"):
         """
         Initialize configuration manager
 
@@ -77,11 +76,9 @@ class ConfigManager:
         """Load configuration from YAML file with error handling"""
         try:
             if not self.config_path.exists():
-                raise ConfigurationError(
-                    f"Configuration file not found: {self.config_path}"
-                )
+                raise ConfigurationError(f"Configuration file not found: {self.config_path}")
 
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 self._config_cache = yaml.safe_load(f)
 
             self._last_reload = datetime.now()
@@ -108,9 +105,7 @@ class ConfigManager:
                 missing_sections.append(section)
 
         if missing_sections:
-            raise ConfigurationError(
-                f"Required configuration sections missing: {missing_sections}"
-            )
+            raise ConfigurationError(f"Required configuration sections missing: {missing_sections}")
 
         # Validate critical subsections
         self._validate_confidence_thresholds()
@@ -134,9 +129,7 @@ class ConfigManager:
 
             value = thresholds[threshold]
             if not isinstance(value, (int, float)) or value < 0 or value > 1:
-                raise ConfigurationError(
-                    f"Invalid confidence threshold {threshold}: {value} (must be 0-1)"
-                )
+                raise ConfigurationError(f"Invalid confidence threshold {threshold}: {value} (must be 0-1)")
 
     def _validate_data_sources(self) -> None:
         """Validate data sources configuration"""
@@ -149,9 +142,7 @@ class ConfigManager:
 
             source_config = sources[source]
             if "reliability_score" not in source_config:
-                raise ConfigurationError(
-                    f"Missing reliability_score for source: {source}"
-                )
+                raise ConfigurationError(f"Missing reliability_score for source: {source}")
 
     def reload_if_stale(self) -> bool:
         """Reload configuration if cache is stale"""
@@ -183,13 +174,11 @@ class ConfigManager:
 
         thresholds = self._config_cache.get("confidence_thresholds", {})
         if threshold_type not in thresholds:
-            raise ConfigurationError(
-                f"Unknown confidence threshold type: {threshold_type}"
-            )
+            raise ConfigurationError(f"Unknown confidence threshold type: {threshold_type}")
 
         return float(thresholds[threshold_type])
 
-    def get_data_validation_threshold(self, validation_type: str) -> Union[float, int]:
+    def get_data_validation_threshold(self, validation_type: str) -> float | int:
         """
         Get data validation threshold
 
@@ -203,9 +192,7 @@ class ConfigManager:
 
         validation = self._config_cache.get("data_validation", {})
         if validation_type not in validation:
-            raise ConfigurationError(
-                f"Unknown validation threshold type: {validation_type}"
-            )
+            raise ConfigurationError(f"Unknown validation threshold type: {validation_type}")
 
         return validation[validation_type]
 
@@ -223,13 +210,11 @@ class ConfigManager:
 
         business_cycle = self._config_cache.get("business_cycle", {})
         if parameter_name not in business_cycle:
-            raise ConfigurationError(
-                f"Unknown business cycle parameter: {parameter_name}"
-            )
+            raise ConfigurationError(f"Unknown business cycle parameter: {parameter_name}")
 
         return business_cycle[parameter_name]
 
-    def get_data_source_config(self, source_name: str) -> Dict[str, Any]:
+    def get_data_source_config(self, source_name: str) -> dict[str, Any]:
         """
         Get complete data source configuration
 
@@ -260,7 +245,7 @@ class ConfigManager:
         source_config = self.get_data_source_config(source_name)
         return float(source_config.get("reliability_score", 0.5))
 
-    def get_regional_indicators(self, region: str, indicator_type: str) -> List[str]:
+    def get_regional_indicators(self, region: str, indicator_type: str) -> list[str]:
         """
         Get regional economic indicators list
 
@@ -311,14 +296,10 @@ class ConfigManager:
         # This is derived from data_sources configuration
         sources = self._config_cache.get("data_sources", {})
         # Count sources with priority 1-4 (critical sources)
-        critical_sources = len(
-            [s for s in sources.values() if s.get("priority", 10) <= 4]
-        )
+        critical_sources = len([s for s in sources.values() if s.get("priority", 10) <= 4])
         return max(4, critical_sources)  # Minimum 4, or number of critical sources
 
-    def get_market_data_fallback(
-        self, data_type: str, default_value: Union[float, int, str] = None
-    ) -> Any:
+    def get_market_data_fallback(self, data_type: str, default_value: float | int | str = None) -> Any:
         """
         Get market data fallback values (replacing hardcoded values)
 
@@ -345,11 +326,9 @@ class ConfigManager:
             logger.warning(f"Using default fallback for {data_type}: {default_value}")
             return default_value
 
-        raise ConfigurationError(
-            f"No fallback configured for market data type: {data_type}"
-        )
+        raise ConfigurationError(f"No fallback configured for market data type: {data_type}")
 
-    def get_time_window(self, window_type: str) -> Union[int, str]:
+    def get_time_window(self, window_type: str) -> int | str:
         """
         Get time window configuration (replacing hardcoded time values)
 
@@ -383,9 +362,7 @@ class ConfigManager:
         }
 
         if window_type in defaults:
-            logger.warning(
-                f"Using default time window for {window_type}: {defaults[window_type]}"
-            )
+            logger.warning(f"Using default time window for {window_type}: {defaults[window_type]}")
             return defaults[window_type]
 
         raise ConfigurationError(f"Unknown time window type: {window_type}")
@@ -421,9 +398,7 @@ class ConfigManager:
 
         raise ConfigurationError(f"Unknown API performance metric: {metric_type}")
 
-    def validate_runtime_value(
-        self, value: Any, value_type: str, valid_range: Optional[tuple] = None
-    ) -> bool:
+    def validate_runtime_value(self, value: Any, value_type: str, valid_range: tuple | None = None) -> bool:
         """
         Validate runtime values against configuration constraints
 
@@ -440,16 +415,12 @@ class ConfigManager:
         """
         if value_type == "confidence_score":
             if not isinstance(value, (int, float)) or value < 0 or value > 1:
-                raise ConfigurationError(
-                    f"Invalid confidence score: {value} (must be 0-1)"
-                )
+                raise ConfigurationError(f"Invalid confidence score: {value} (must be 0-1)")
 
         elif value_type == "service_count":
             min_services = self.get_service_minimum_count()
             if not isinstance(value, int) or value < min_services:
-                raise ConfigurationError(
-                    f"Invalid service count: {value} (minimum {min_services})"
-                )
+                raise ConfigurationError(f"Invalid service count: {value} (minimum {min_services})")
 
         elif value_type == "percentage":
             if not isinstance(value, (int, float)) or value < 0 or value > 100:
@@ -462,13 +433,11 @@ class ConfigManager:
         if valid_range and isinstance(value, (int, float)):
             min_val, max_val = valid_range
             if value < min_val or value > max_val:
-                raise ConfigurationError(
-                    f"Value {value} out of range [{min_val}, {max_val}]"
-                )
+                raise ConfigurationError(f"Value {value} out of range [{min_val}, {max_val}]")
 
         return True
 
-    def get_full_config(self) -> Dict[str, Any]:
+    def get_full_config(self) -> dict[str, Any]:
         """
         Get complete configuration dictionary (for debugging/inspection)
 
@@ -478,9 +447,7 @@ class ConfigManager:
         self.reload_if_stale()
         return self._config_cache.copy()
 
-    def get_environment_override(
-        self, config_key: str, default_value: Any = None
-    ) -> Any:
+    def get_environment_override(self, config_key: str, default_value: Any = None) -> Any:
         """
         Get environment-specific configuration override
 
@@ -509,7 +476,7 @@ class ConfigManager:
 
         return default_value
 
-    def get_api_key(self, key_name: str, required: bool = False) -> Optional[str]:
+    def get_api_key(self, key_name: str, required: bool = False) -> str | None:
         """
         Get API key from environment variables with enhanced validation and security
 
@@ -529,21 +496,17 @@ class ConfigManager:
             # Validate key format for security
             if self._validate_api_key_format(key_name, env_value):
                 return env_value
-            else:
-                logger.warning(f"Invalid format for {key_name} from environment")
-                if required:
-                    raise ConfigurationError(f"Invalid API key format for {key_name}")
+            logger.warning(f"Invalid format for {key_name} from environment")
+            if required:
+                raise ConfigurationError(f"Invalid API key format for {key_name}")
 
         # Then check financial services configuration with environment substitution
         try:
             financial_services_path = (
-                Path(__file__).parent.parent.parent
-                / "config"
-                / "services"
-                / "financial_services.yaml"
+                Path(__file__).parent.parent.parent / "config" / "services" / "financial_services.yaml"
             )
             if financial_services_path.exists():
-                with open(financial_services_path, "r") as f:
+                with open(financial_services_path) as f:
                     config_content = f.read()
 
                 # Substitute environment variables
@@ -570,42 +533,30 @@ class ConfigManager:
                 }
 
                 service_name = service_mapping.get(key_name)
-                if service_name and service_name in financial_config.get(
-                    "services", {}
-                ):
+                if service_name and service_name in financial_config.get("services", {}):
                     api_key = financial_config["services"][service_name].get("api_key")
                     # Handle services that don't require API keys
                     if api_key is None or str(api_key).lower() in ["none", "null"]:
                         if required:
-                            raise ConfigurationError(
-                                f"Required API key {key_name} not configured"
-                            )
+                            raise ConfigurationError(f"Required API key {key_name} not configured")
                         return "not_required"
-                    elif api_key and self._validate_api_key_format(key_name, api_key):
+                    if api_key and self._validate_api_key_format(key_name, api_key):
                         return str(api_key)
-                    elif required:
-                        raise ConfigurationError(
-                            f"Invalid API key format for {key_name}"
-                        )
+                    if required:
+                        raise ConfigurationError(f"Invalid API key format for {key_name}")
 
         except yaml.YAMLError as e:
             logger.error(f"Invalid YAML in financial services config: {e}")
             if required:
                 raise ConfigurationError(f"Failed to load configuration for {key_name}")
         except Exception as e:
-            logger.warning(
-                f"Could not load financial services config for {key_name}: {e}"
-            )
+            logger.warning(f"Could not load financial services config for {key_name}: {e}")
             if required:
-                raise ConfigurationError(
-                    f"Failed to access configuration for {key_name}"
-                )
+                raise ConfigurationError(f"Failed to access configuration for {key_name}")
 
         # Check if key is required but not found
         if required:
-            raise ConfigurationError(
-                f"Required API key {key_name} not found in environment or configuration"
-            )
+            raise ConfigurationError(f"Required API key {key_name} not found in environment or configuration")
 
         return None
 
@@ -642,26 +593,22 @@ class ConfigManager:
             # Alpha Vantage keys are typically 16-20 alphanumeric characters
             return len(api_key) >= 10 and api_key.isalnum()
 
-        elif key_name == "FRED_API_KEY":
+        if key_name == "FRED_API_KEY":
             # FRED keys are typically 32 character hex strings
-            return len(api_key) == 32 and all(
-                c in "0123456789abcdef" for c in api_key.lower()
-            )
+            return len(api_key) == 32 and all(c in "0123456789abcdef" for c in api_key.lower())
 
-        elif key_name == "SEC_EDGAR_API_KEY":
+        if key_name == "SEC_EDGAR_API_KEY":
             # SEC EDGAR keys are long hex strings (64+ characters)
-            return len(api_key) >= 60 and all(
-                c in "0123456789abcdef" for c in api_key.lower()
-            )
+            return len(api_key) >= 60 and all(c in "0123456789abcdef" for c in api_key.lower())
 
-        elif key_name == "FMP_API_KEY":
+        if key_name == "FMP_API_KEY":
             # FMP keys are typically 32 alphanumeric characters
             return len(api_key) >= 20 and api_key.replace("-", "").isalnum()
 
         # Generic validation for other keys
         return len(api_key) >= 8
 
-    def get_api_key_status(self, key_name: str) -> Dict[str, Any]:
+    def get_api_key_status(self, key_name: str) -> dict[str, Any]:
         """
         Get detailed status information about an API key
 
@@ -678,8 +625,7 @@ class ConfigManager:
             "valid_format": False,
             "obfuscated_value": None,
             "length": 0,
-            "required": key_name
-            in ["ALPHA_VANTAGE_API_KEY", "FRED_API_KEY", "FMP_API_KEY"],
+            "required": key_name in ["ALPHA_VANTAGE_API_KEY", "FRED_API_KEY", "FMP_API_KEY"],
         }
 
         try:
@@ -687,17 +633,13 @@ class ConfigManager:
             if api_key and api_key != "not_required":
                 status["found"] = True
                 status["source"] = "environment" if os.getenv(key_name) else "config"
-                status["valid_format"] = self._validate_api_key_format(
-                    key_name, api_key
-                )
+                status["valid_format"] = self._validate_api_key_format(key_name, api_key)
                 status["length"] = len(api_key)
                 # Obfuscate key for security (show first 4 and last 4 characters)
                 if len(api_key) > 8:
                     status["obfuscated_value"] = f"{api_key[:4]}...{api_key[-4:]}"
                 else:
-                    status[
-                        "obfuscated_value"
-                    ] = f"{api_key[:2]}{'*' * (len(api_key)-4)}{api_key[-2:]}"
+                    status["obfuscated_value"] = f"{api_key[:2]}{'*' * (len(api_key) - 4)}{api_key[-2:]}"
             elif api_key == "not_required":
                 status["found"] = True
                 status["source"] = "config"
@@ -708,7 +650,7 @@ class ConfigManager:
 
         return status
 
-    def get_regional_volatility_parameters(self, region: str) -> Dict[str, Any]:
+    def get_regional_volatility_parameters(self, region: str) -> dict[str, Any]:
         """
         DEPRECATED: Volatility parameters are now calculated dynamically in discovery phase
 
@@ -727,9 +669,7 @@ class ConfigManager:
             f"Check discovery file: ./data/outputs/macro_analysis/discovery/{region.lower()}_YYYYMMDD_discovery.json"
         )
 
-    def get_volatility_parameter(
-        self, region: str, parameter_name: str
-    ) -> Union[float, str]:
+    def get_volatility_parameter(self, region: str, parameter_name: str) -> float | str:
         """
         DEPRECATED: Volatility parameters are now calculated dynamically in discovery phase
 
@@ -747,9 +687,7 @@ class ConfigManager:
             f"Use calculated values from discovery phase CLI market intelligence data."
         )
 
-    def validate_cross_regional_volatility_uniqueness(
-        self, tolerance: float = 0.02
-    ) -> Dict[str, Any]:
+    def validate_cross_regional_volatility_uniqueness(self, tolerance: float = 0.02) -> dict[str, Any]:
         """
         DEPRECATED: Volatility validation now handled by discovery file validation
 
@@ -764,18 +702,14 @@ class ConfigManager:
         """
         return {
             "template_artifacts_detected": False,
-            "warnings": [
-                "Method deprecated - volatility validation moved to discovery file validation"
-            ],
+            "warnings": ["Method deprecated - volatility validation moved to discovery file validation"],
             "issues": [],
             "parameter_analysis": {},
             "deprecated_notice": "Use calculated values from discovery files for volatility validation",
             "replacement_method": "validate_template_artifacts() in validate_macro_synthesis.py",
         }
 
-    def suggest_regional_volatility_adjustments(
-        self, base_region: str = "US"
-    ) -> Dict[str, Dict[str, float]]:
+    def suggest_regional_volatility_adjustments(self, base_region: str = "US") -> dict[str, dict[str, float]]:
         """
         DEPRECATED: Volatility adjustments now calculated dynamically in discovery phase
 
@@ -789,7 +723,7 @@ class ConfigManager:
             ConfigurationError: Always raises - method deprecated to prevent hardcoded values
         """
         raise ConfigurationError(
-            f"Regional volatility adjustments are no longer provided as hardcoded suggestions. "
-            f"Volatility parameters are calculated dynamically from real market data in the discovery phase. "
-            f"This method was deprecated to eliminate template artifacts caused by hardcoded values."
+            "Regional volatility adjustments are no longer provided as hardcoded suggestions. "
+            "Volatility parameters are calculated dynamically from real market data in the discovery phase. "
+            "This method was deprecated to eliminate template artifacts caused by hardcoded values."
         )

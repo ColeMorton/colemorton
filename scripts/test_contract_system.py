@@ -7,13 +7,10 @@ Bypasses complex CLI dependencies to verify core contract functionality
 import os
 import sys
 
+
 # Set environment variables
-os.environ[
-    "DATA_OUTPUTS_PATH"
-] = "/Users/colemorton/Projects/sensylate-command-system-enhancements/data/outputs"
-os.environ[
-    "TEMPLATES_PATH"
-] = "/Users/colemorton/Projects/sensylate-command-system-enhancements/templates"
+os.environ["DATA_OUTPUTS_PATH"] = "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs"
+os.environ["TEMPLATES_PATH"] = "/Users/colemorton/Projects/colemorton-command-system-enhancements/templates"
 
 # Test contract discovery
 try:
@@ -29,13 +26,11 @@ try:
 
     # Show contract details
     for contract in result.contracts:
-        print(
-            f"   - {contract.contract_id}: {len(contract.schema)} columns, {contract.row_count} rows"
-        )
+        print(f"   - {contract.contract_id}: {len(contract.schema)} columns, {contract.row_count} rows")
 
     print()
 
-except Exception as e:
+except Exception:
     print("❌ Contract Discovery failed: {e}")
     sys.exit(1)
 
@@ -65,7 +60,7 @@ try:
 
     print()
 
-except Exception as e:
+except Exception:
     print("❌ Compliance check failed: {e}")
 
 # Test data verification
@@ -75,10 +70,7 @@ try:
     # Check the fixed numpy issue
     trade_history_contract = None
     for contract in result.contracts:
-        if (
-            "trade-history" in contract.category
-            and "live_signals" in contract.contract_id
-        ):
+        if "trade-history" in contract.category and "live_signals" in contract.contract_id:
             trade_history_contract = contract
             break
 
@@ -91,31 +83,27 @@ try:
         if "X_Status" in df.columns:
             x_status_values = df["X_Status"].astype(str)
             max_length = max(len(str(val)) for val in x_status_values)
-            print(
-                f"✅ X_Status field: {max_length}-digit numbers (fixed from 18-19 digits)"
-            )
+            print(f"✅ X_Status field: {max_length}-digit numbers (fixed from 18-19 digits)")
 
             # Verify no int64 overflow
             try:
                 df["X_Status"].astype("int64")
                 print("✅ No int64 overflow issues detected")
-            except Exception as overflow_error:
+            except Exception:
                 print("❌ Int64 overflow still present: {overflow_error}")
 
         print("✅ Trade history data: {len(df)} rows, {len(df.columns)} columns")
 
     print()
 
-except Exception as e:
+except Exception:
     print("❌ Data quality check failed: {e}")
 
 print("🏆 Contract-First Data Pipeline System Status:")
 print("   📊 {len(result.contracts)} contracts discovered and validated")
 print("   🗂️  {len(result.categories)} data categories supported")
 print("   ✅ NumPy int64 overflow issue resolved")
-print(
-    f"   🎯 Contract fulfillment: {healthy_count}/{total_count} ({(healthy_count/total_count)*100:.1f}%)"
-)
+print(f"   🎯 Contract fulfillment: {healthy_count}/{total_count} ({(healthy_count / total_count) * 100:.1f}%)")
 
 if healthy_count == total_count:
     print("\n🎉 All systems operational! Contract-first pipeline working perfectly.")

@@ -16,15 +16,17 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 from scipy import stats
+
 
 # Add the trade_history directory to the path to import the unified engine
 sys.path.append(os.path.join(os.path.dirname(__file__), "trade_history"))
 
 from unified_calculation_engine import TradeOutcome, TradingCalculationEngine
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -41,26 +43,21 @@ class LiveSignalsAnalyzer:
         self.csv_file_path = csv_file_path
         self.engine = TradingCalculationEngine(csv_file_path)
         self.closed_trades = self.engine.get_closed_trades()
-        self.analysis_timestamp = datetime.datetime.now(datetime.timezone.utc)
+        self.analysis_timestamp = datetime.datetime.now(datetime.UTC)
 
-        logger.info(
-            f"✅ Initialized analyzer with {len(self.closed_trades)} closed trades"
-        )
+        logger.info(f"✅ Initialized analyzer with {len(self.closed_trades)} closed trades")
 
-    def calculate_confidence_penalty(
-        self, sample_size: int, base_confidence: float = 0.95
-    ) -> float:
+    def calculate_confidence_penalty(self, sample_size: int, base_confidence: float = 0.95) -> float:
         """Calculate confidence penalty for small sample sizes"""
         if sample_size >= 30:
             return base_confidence
-        elif sample_size >= 15:
+        if sample_size >= 15:
             return base_confidence * 0.85  # 15% penalty
-        elif sample_size >= 10:
+        if sample_size >= 10:
             return base_confidence * 0.70  # 30% penalty
-        else:
-            return base_confidence * 0.50  # 50% penalty for very small samples
+        return base_confidence * 0.50  # 50% penalty for very small samples
 
-    def calculate_system_quality_number(self, trades: List) -> Dict[str, Any]:
+    def calculate_system_quality_number(self, trades: list) -> dict[str, Any]:
         """Calculate System Quality Number (SQN) for trading system evaluation"""
         if len(trades) < 10:
             return {
@@ -99,7 +96,7 @@ class LiveSignalsAnalyzer:
             "trades_used": len(trades),
         }
 
-    def calculate_expectancy(self, trades: List) -> Dict[str, Any]:
+    def calculate_expectancy(self, trades: list) -> dict[str, Any]:
         """Calculate expectancy - average amount won per dollar risked"""
         if not trades:
             return {"expectancy": 0.0, "confidence": 0.0}
@@ -124,7 +121,7 @@ class LiveSignalsAnalyzer:
             "confidence": self.calculate_confidence_penalty(len(trades)),
         }
 
-    def calculate_drawdown_analysis(self, trades: List) -> Dict[str, Any]:
+    def calculate_drawdown_analysis(self, trades: list) -> dict[str, Any]:
         """Calculate maximum drawdown and drawdown periods"""
         if not trades:
             return {
@@ -134,9 +131,7 @@ class LiveSignalsAnalyzer:
             }
 
         # Sort trades by exit date for chronological analysis
-        sorted_trades = sorted(
-            trades, key=lambda t: t.exit_date if t.exit_date else t.entry_date
-        )
+        sorted_trades = sorted(trades, key=lambda t: t.exit_date if t.exit_date else t.entry_date)
 
         # Calculate cumulative returns
         cumulative_returns = []
@@ -155,7 +150,7 @@ class LiveSignalsAnalyzer:
             running_max.append(current_max)
 
         # Calculate drawdowns
-        drawdowns = [cum - peak for cum, peak in zip(cumulative_returns, running_max)]
+        drawdowns = [cum - peak for cum, peak in zip(cumulative_returns, running_max, strict=False)]
         max_drawdown = min(drawdowns) if drawdowns else 0.0
         current_drawdown = drawdowns[-1] if drawdowns else 0.0
 
@@ -176,23 +171,17 @@ class LiveSignalsAnalyzer:
             "max_drawdown": abs(max_drawdown),
             "max_drawdown_duration": max_drawdown_duration,
             "current_drawdown": abs(current_drawdown),
-            "recovery_factor": (
-                abs(cumulative_returns[-1] / max_drawdown)
-                if max_drawdown != 0
-                else float("inf")
-            ),
+            "recovery_factor": (abs(cumulative_returns[-1] / max_drawdown) if max_drawdown != 0 else float("inf")),
             "confidence": self.calculate_confidence_penalty(len(trades)),
         }
 
-    def calculate_consecutive_performance(self, trades: List) -> Dict[str, Any]:
+    def calculate_consecutive_performance(self, trades: list) -> dict[str, Any]:
         """Calculate consecutive wins/losses analysis"""
         if not trades:
             return {"max_consecutive_wins": 0, "max_consecutive_losses": 0}
 
         # Sort trades chronologically
-        sorted_trades = sorted(
-            trades, key=lambda t: t.exit_date if t.exit_date else t.entry_date
-        )
+        sorted_trades = sorted(trades, key=lambda t: t.exit_date if t.exit_date else t.entry_date)
 
         max_consecutive_wins = 0
         max_consecutive_losses = 0
@@ -215,16 +204,12 @@ class LiveSignalsAnalyzer:
         return {
             "max_consecutive_wins": max_consecutive_wins,
             "max_consecutive_losses": max_consecutive_losses,
-            "current_streak_type": (
-                "win"
-                if current_wins > 0
-                else ("loss" if current_losses > 0 else "neutral")
-            ),
+            "current_streak_type": ("win" if current_wins > 0 else ("loss" if current_losses > 0 else "neutral")),
             "current_streak_length": max(current_wins, current_losses),
             "confidence": self.calculate_confidence_penalty(len(trades)),
         }
 
-    def analyze_temporal_patterns(self, trades: List) -> Dict[str, Any]:
+    def analyze_temporal_patterns(self, trades: list) -> dict[str, Any]:
         """Analyze temporal patterns in trading performance"""
         if not trades:
             return {"monthly_performance": {}, "quarterly_performance": {}}
@@ -236,9 +221,7 @@ class LiveSignalsAnalyzer:
         for trade in trades:
             if trade.exit_date:
                 month_key = trade.exit_date.strftime("%Y-%m")
-                quarter_key = (
-                    f"{trade.exit_date.year}-Q{(trade.exit_date.month-1)//3 + 1}"
-                )
+                quarter_key = f"{trade.exit_date.year}-Q{(trade.exit_date.month - 1) // 3 + 1}"
 
                 # Monthly aggregation
                 if month_key not in monthly_performance:
@@ -281,15 +264,11 @@ class LiveSignalsAnalyzer:
         # Calculate win rates for each period
         for period_data in monthly_performance.values():
             decisive = period_data["wins"] + period_data["losses"]
-            period_data["win_rate"] = (
-                period_data["wins"] / decisive if decisive > 0 else 0.0
-            )
+            period_data["win_rate"] = period_data["wins"] / decisive if decisive > 0 else 0.0
 
         for period_data in quarterly_performance.values():
             decisive = period_data["wins"] + period_data["losses"]
-            period_data["win_rate"] = (
-                period_data["wins"] / decisive if decisive > 0 else 0.0
-            )
+            period_data["win_rate"] = period_data["wins"] / decisive if decisive > 0 else 0.0
 
         return {
             "monthly_performance": monthly_performance,
@@ -297,7 +276,7 @@ class LiveSignalsAnalyzer:
             "confidence": self.calculate_confidence_penalty(len(trades)),
         }
 
-    def calculate_position_correlations(self, trades: List) -> Dict[str, Any]:
+    def calculate_position_correlations(self, trades: list) -> dict[str, Any]:
         """Calculate position correlations and diversification metrics"""
         if len(trades) < 5:
             return {
@@ -316,30 +295,17 @@ class LiveSignalsAnalyzer:
 
         # Calculate correlations between tickers with sufficient data
         correlations = []
-        tickers_with_data = [
-            ticker for ticker, returns in ticker_returns.items() if len(returns) >= 2
-        ]
+        tickers_with_data = [ticker for ticker, returns in ticker_returns.items() if len(returns) >= 2]
 
         for i, ticker1 in enumerate(tickers_with_data):
             for ticker2 in tickers_with_data[i + 1 :]:
-                if (
-                    len(ticker_returns[ticker1]) >= 2
-                    and len(ticker_returns[ticker2]) >= 2
-                ):
+                if len(ticker_returns[ticker1]) >= 2 and len(ticker_returns[ticker2]) >= 2:
                     # Pad shorter series with zeros for correlation calculation
-                    max_len = max(
-                        len(ticker_returns[ticker1]), len(ticker_returns[ticker2])
-                    )
-                    padded1 = ticker_returns[ticker1] + [0.0] * (
-                        max_len - len(ticker_returns[ticker1])
-                    )
-                    padded2 = ticker_returns[ticker2] + [0.0] * (
-                        max_len - len(ticker_returns[ticker2])
-                    )
+                    max_len = max(len(ticker_returns[ticker1]), len(ticker_returns[ticker2]))
+                    padded1 = ticker_returns[ticker1] + [0.0] * (max_len - len(ticker_returns[ticker1]))
+                    padded2 = ticker_returns[ticker2] + [0.0] * (max_len - len(ticker_returns[ticker2]))
 
-                    if (
-                        len(set(padded1)) > 1 and len(set(padded2)) > 1
-                    ):  # Avoid constant sequences
+                    if len(set(padded1)) > 1 and len(set(padded2)) > 1:  # Avoid constant sequences
                         corr_coef = np.corrcoef(padded1, padded2)[0, 1]
                         if not np.isnan(corr_coef):
                             correlations.append(abs(corr_coef))
@@ -357,9 +323,7 @@ class LiveSignalsAnalyzer:
             avg_individual_vol = np.mean(individual_volatilities)
             all_returns = [r for returns in ticker_returns.values() for r in returns]
             portfolio_vol = np.std(all_returns, ddof=1) if len(all_returns) > 1 else 0.0
-            diversification_ratio = (
-                avg_individual_vol / portfolio_vol if portfolio_vol > 0 else 1.0
-            )
+            diversification_ratio = avg_individual_vol / portfolio_vol if portfolio_vol > 0 else 1.0
         else:
             diversification_ratio = 1.0
 
@@ -372,9 +336,7 @@ class LiveSignalsAnalyzer:
             "confidence": self.calculate_confidence_penalty(len(correlations) * 2),
         }
 
-    def identify_optimization_opportunities(
-        self, sma_trades: List, ema_trades: List
-    ) -> List[Dict[str, Any]]:
+    def identify_optimization_opportunities(self, sma_trades: list, ema_trades: list) -> list[dict[str, Any]]:
         """Identify quantified optimization opportunities"""
         opportunities = []
 
@@ -409,26 +371,18 @@ class LiveSignalsAnalyzer:
         # Duration optimization
         all_trades = sma_trades + ema_trades
         if all_trades:
-            durations = [
-                t.duration_days for t in all_trades if t.duration_days is not None
-            ]
+            durations = [t.duration_days for t in all_trades if t.duration_days is not None]
             returns = [t.return_csv for t in all_trades if t.duration_days is not None]
 
             if len(durations) >= 10:
                 # Analyze return per day efficiency
-                efficiency_ratios = [
-                    ret / max(dur, 1) for ret, dur in zip(returns, durations)
-                ]
+                efficiency_ratios = [ret / max(dur, 1) for ret, dur in zip(returns, durations, strict=False)]
                 high_efficiency_trades = [
-                    i
-                    for i, ratio in enumerate(efficiency_ratios)
-                    if ratio > np.percentile(efficiency_ratios, 75)
+                    i for i, ratio in enumerate(efficiency_ratios) if ratio > np.percentile(efficiency_ratios, 75)
                 ]
 
                 if high_efficiency_trades:
-                    avg_duration_efficient = np.mean(
-                        [durations[i] for i in high_efficiency_trades]
-                    )
+                    avg_duration_efficient = np.mean([durations[i] for i in high_efficiency_trades])
                     avg_duration_all = np.mean(durations)
 
                     if avg_duration_efficient < avg_duration_all * 0.8:  # 20% shorter
@@ -439,9 +393,7 @@ class LiveSignalsAnalyzer:
                                 "current_performance_gap": f"High-efficiency trades average {avg_duration_efficient:.1f} days vs {avg_duration_all:.1f} days overall",
                                 "quantified_impact": f"Potential {((avg_duration_all - avg_duration_efficient) / avg_duration_all * 100):.1f}% reduction in holding period",
                                 "implementation_difficulty": "High",
-                                "confidence": self.calculate_confidence_penalty(
-                                    len(high_efficiency_trades)
-                                ),
+                                "confidence": self.calculate_confidence_penalty(len(high_efficiency_trades)),
                                 "priority": "Medium",
                             }
                         )
@@ -451,11 +403,7 @@ class LiveSignalsAnalyzer:
             losses = [t for t in all_trades if t.outcome == TradeOutcome.LOSS]
             if losses:
                 loss_returns = [abs(t.return_csv) for t in losses]
-                large_losses = [
-                    loss
-                    for loss in loss_returns
-                    if loss > np.percentile(loss_returns, 75)
-                ]
+                large_losses = [loss for loss in loss_returns if loss > np.percentile(loss_returns, 75)]
 
                 if large_losses and len(large_losses) > 2:
                     avg_large_loss = np.mean(large_losses)
@@ -465,32 +413,24 @@ class LiveSignalsAnalyzer:
                         {
                             "opportunity_type": "Risk Management Enhancement",
                             "description": "Implement tighter stop-losses to reduce tail risk",
-                            "current_performance_gap": f"Top quartile losses average {avg_large_loss*100:.1f}% vs {avg_all_losses*100:.1f}% overall",
+                            "current_performance_gap": f"Top quartile losses average {avg_large_loss * 100:.1f}% vs {avg_all_losses * 100:.1f}% overall",
                             "quantified_impact": f"Potential {((avg_large_loss - avg_all_losses) * len(large_losses) * 100):.1f}% reduction in total loss amount",
                             "implementation_difficulty": "Low",
-                            "confidence": self.calculate_confidence_penalty(
-                                len(losses)
-                            ),
-                            "priority": (
-                                "High"
-                                if len(large_losses) > len(losses) * 0.3
-                                else "Medium"
-                            ),
+                            "confidence": self.calculate_confidence_penalty(len(losses)),
+                            "priority": ("High" if len(large_losses) > len(losses) * 0.3 else "Medium"),
                         }
                     )
 
         return opportunities
 
-    def generate_comprehensive_analysis(self) -> Dict[str, Any]:
+    def generate_comprehensive_analysis(self) -> dict[str, Any]:
         """Generate comprehensive statistical analysis following DASV Phase 2 requirements"""
 
         # Separate trades by strategy with confidence penalties
         sma_trades = [t for t in self.closed_trades if t.strategy_type == "SMA"]
         ema_trades = [t for t in self.closed_trades if t.strategy_type == "EMA"]
 
-        logger.info(
-            f"📊 Analyzing SMA: {len(sma_trades)} trades, EMA: {len(ema_trades)} trades"
-        )
+        logger.info(f"📊 Analyzing SMA: {len(sma_trades)} trades, EMA: {len(ema_trades)} trades")
 
         # Get base portfolio metrics from unified engine
         portfolio_metrics = self.engine.calculate_portfolio_performance()
@@ -502,33 +442,21 @@ class LiveSignalsAnalyzer:
                 "total_return": portfolio_metrics["total_return"],
                 "sharpe_ratio": portfolio_metrics["sharpe_ratio"],
                 "profit_factor": portfolio_metrics["profit_factor"],
-                "confidence": self.calculate_confidence_penalty(
-                    len(self.closed_trades), 0.95
-                ),
+                "confidence": self.calculate_confidence_penalty(len(self.closed_trades), 0.95),
             },
             "sma_strategy": {
                 "trade_count": len(sma_trades),
-                "win_rate": portfolio_metrics["strategy_performance"]["SMA"][
-                    "win_rate"
-                ],
+                "win_rate": portfolio_metrics["strategy_performance"]["SMA"]["win_rate"],
                 "total_return": sum(t.return_csv for t in sma_trades),
-                "avg_return": portfolio_metrics["strategy_performance"]["SMA"][
-                    "avg_return"
-                ],
+                "avg_return": portfolio_metrics["strategy_performance"]["SMA"]["avg_return"],
                 "confidence": self.calculate_confidence_penalty(len(sma_trades), 0.90),
             },
             "ema_strategy": {
                 "trade_count": len(ema_trades),
-                "win_rate": portfolio_metrics["strategy_performance"]["EMA"][
-                    "win_rate"
-                ],
+                "win_rate": portfolio_metrics["strategy_performance"]["EMA"]["win_rate"],
                 "total_return": sum(t.return_csv for t in ema_trades),
-                "avg_return": portfolio_metrics["strategy_performance"]["EMA"][
-                    "avg_return"
-                ],
-                "confidence": self.calculate_confidence_penalty(
-                    len(ema_trades), 0.90
-                ),  # Heavy penalty for 7 trades
+                "avg_return": portfolio_metrics["strategy_performance"]["EMA"]["avg_return"],
+                "confidence": self.calculate_confidence_penalty(len(ema_trades), 0.90),  # Heavy penalty for 7 trades
             },
         }
 
@@ -538,41 +466,19 @@ class LiveSignalsAnalyzer:
                 "overall": {
                     "mean": np.mean([t.return_csv for t in self.closed_trades]),
                     "median": np.median([t.return_csv for t in self.closed_trades]),
-                    "std_dev": np.std(
-                        [t.return_csv for t in self.closed_trades], ddof=1
-                    ),
+                    "std_dev": np.std([t.return_csv for t in self.closed_trades], ddof=1),
                     "skewness": stats.skew([t.return_csv for t in self.closed_trades]),
-                    "kurtosis": stats.kurtosis(
-                        [t.return_csv for t in self.closed_trades]
-                    ),
-                    "confidence": self.calculate_confidence_penalty(
-                        len(self.closed_trades)
-                    ),
+                    "kurtosis": stats.kurtosis([t.return_csv for t in self.closed_trades]),
+                    "confidence": self.calculate_confidence_penalty(len(self.closed_trades)),
                 },
                 "sma": {
-                    "mean": (
-                        np.mean([t.return_csv for t in sma_trades])
-                        if sma_trades
-                        else 0.0
-                    ),
-                    "std_dev": (
-                        np.std([t.return_csv for t in sma_trades], ddof=1)
-                        if len(sma_trades) > 1
-                        else 0.0
-                    ),
+                    "mean": (np.mean([t.return_csv for t in sma_trades]) if sma_trades else 0.0),
+                    "std_dev": (np.std([t.return_csv for t in sma_trades], ddof=1) if len(sma_trades) > 1 else 0.0),
                     "confidence": self.calculate_confidence_penalty(len(sma_trades)),
                 },
                 "ema": {
-                    "mean": (
-                        np.mean([t.return_csv for t in ema_trades])
-                        if ema_trades
-                        else 0.0
-                    ),
-                    "std_dev": (
-                        np.std([t.return_csv for t in ema_trades], ddof=1)
-                        if len(ema_trades) > 1
-                        else 0.0
-                    ),
+                    "mean": (np.mean([t.return_csv for t in ema_trades]) if ema_trades else 0.0),
+                    "std_dev": (np.std([t.return_csv for t in ema_trades], ddof=1) if len(ema_trades) > 1 else 0.0),
                     "confidence": self.calculate_confidence_penalty(len(ema_trades)),
                 },
             },
@@ -595,9 +501,7 @@ class LiveSignalsAnalyzer:
 
         # 4. Risk Assessment
         risk_assessment = {
-            "position_correlations": self.calculate_position_correlations(
-                self.closed_trades
-            ),
+            "position_correlations": self.calculate_position_correlations(self.closed_trades),
             "concentration_analysis": {
                 "unique_tickers": len(set(t.ticker for t in self.closed_trades)),
                 "max_ticker_exposure": max(
@@ -629,9 +533,7 @@ class LiveSignalsAnalyzer:
         }
 
         # 6. Optimization Opportunities
-        optimization_opportunities = self.identify_optimization_opportunities(
-            sma_trades, ema_trades
-        )
+        optimization_opportunities = self.identify_optimization_opportunities(sma_trades, ema_trades)
 
         # Calculate overall confidence score
         confidence_scores = [
@@ -677,10 +579,10 @@ class LiveSignalsAnalyzer:
 def main():
     """Main execution function"""
     # File paths
-    csv_file_path = (
-        "/Users/colemorton/Projects/sensylate/data/raw/trade_history/live_signals.csv"
+    csv_file_path = "/Users/colemorton/Projects/colemorton/data/raw/trade_history/live_signals.csv"
+    output_file_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analysis/live_signals_20250807.json"
     )
-    output_file_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analysis/live_signals_20250807.json"
 
     try:
         # Ensure output directory exists
@@ -698,18 +600,10 @@ def main():
             json.dump(analysis_result, f, indent=2, default=str)
 
         logger.info(f"✅ Analysis complete! Output saved to: {output_file_path}")
-        logger.info(
-            f"📊 Overall confidence score: {analysis_result['analysis_metadata']['overall_confidence']:.2f}"
-        )
-        logger.info(
-            f"🎯 Analyzed {analysis_result['analysis_metadata']['closed_trades_analyzed']} closed trades"
-        )
-        logger.info(
-            f"📈 SMA: {analysis_result['analysis_metadata']['sma_trades']} trades"
-        )
-        logger.info(
-            f"📉 EMA: {analysis_result['analysis_metadata']['ema_trades']} trades (small sample warning)"
-        )
+        logger.info(f"📊 Overall confidence score: {analysis_result['analysis_metadata']['overall_confidence']:.2f}")
+        logger.info(f"🎯 Analyzed {analysis_result['analysis_metadata']['closed_trades_analyzed']} closed trades")
+        logger.info(f"📈 SMA: {analysis_result['analysis_metadata']['sma_trades']} trades")
+        logger.info(f"📉 EMA: {analysis_result['analysis_metadata']['ema_trades']} trades (small sample warning)")
 
         return analysis_result
 

@@ -29,11 +29,10 @@ Usage:
 
 import json
 import logging
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -55,14 +54,12 @@ class DateTimeEncoder(json.JSONEncoder):
 
 # Import configuration manager and schema selector (always required)
 from utils.config_manager import ConfigManager, ConfigurationError
-from utils.schema_selector import create_schema_selector, get_schema_for_region
+from utils.schema_selector import create_schema_selector
 
 
 # ValidationError for fail-fast validation
 class ValidationError(Exception):
     """Raised when validation fails"""
-
-    pass
 
 
 # Import service discovery and CLI wrapper
@@ -92,9 +89,7 @@ except ImportError as e:
     logger.warning(f"Service imports not available: {e} - using direct CLI commands")
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -106,7 +101,7 @@ class MacroEconomicDiscovery:
         region: str,
         indicators: str = "all",
         timeframe: str = "5y",
-        config_manager: Optional[ConfigManager] = None,
+        config_manager: ConfigManager | None = None,
     ):
         self.region = region.upper()
         self.indicators = indicators
@@ -141,12 +136,8 @@ class MacroEconomicDiscovery:
             try:
                 self.business_cycle_engine = BusinessCycleEngine()
                 self.vix_analyzer = VIXVolatilityAnalyzer()
-                self.real_time_data_service = create_real_time_market_data_service(
-                    self.config
-                )
-                self.volatility_service = create_volatility_analysis_service(
-                    self.config
-                )
+                self.real_time_data_service = create_real_time_market_data_service(self.config)
+                self.volatility_service = create_volatility_analysis_service(self.config)
                 self.confidence_engine = create_dynamic_confidence_engine(self.config)
                 logger.info("Real-time market data service initialized")
                 logger.info("Volatility analysis service initialized")
@@ -218,10 +209,7 @@ class MacroEconomicDiscovery:
                 else:
                     # Generic access for other sections
                     config_section = self.config.get_market_data_fallback(section, {})
-                    if (
-                        not isinstance(config_section, dict)
-                        or key not in config_section
-                    ):
+                    if not isinstance(config_section, dict) or key not in config_section:
                         missing_configs.append(f"{section}.{key}")
                         continue
                     value = config_section[key]
@@ -246,45 +234,24 @@ class MacroEconomicDiscovery:
 
         # Validate confidence thresholds
         try:
-            discovery_threshold = self.config.get_confidence_threshold(
-                "discovery_minimum"
-            )
-            if (
-                not isinstance(discovery_threshold, (int, float))
-                or discovery_threshold < 0
-                or discovery_threshold > 1
-            ):
-                missing_configs.append(
-                    "confidence_thresholds.discovery_minimum (invalid value)"
-                )
+            discovery_threshold = self.config.get_confidence_threshold("discovery_minimum")
+            if not isinstance(discovery_threshold, (int, float)) or discovery_threshold < 0 or discovery_threshold > 1:
+                missing_configs.append("confidence_thresholds.discovery_minimum (invalid value)")
         except Exception as e:
-            missing_configs.append(
-                f"confidence_thresholds.discovery_minimum (error: {e})"
-            )
+            missing_configs.append(f"confidence_thresholds.discovery_minimum (error: {e})")
 
         # Warn about missing configurations but don't fail for Phase 2
         if missing_configs:
-            error_message = (
-                f"Some configuration values missing (using defaults): {missing_configs}"
-            )
+            error_message = f"Some configuration values missing (using defaults): {missing_configs}"
             logger.warning(error_message)
             # Only fail if absolutely critical values are missing
             critical_failures = [
-                config
-                for config in missing_configs
-                if "confidence_thresholds" in config or "data_sources" in config
+                config for config in missing_configs if "confidence_thresholds" in config or "data_sources" in config
             ]
             if critical_failures:
-                logger.error(
-                    f"Critical configuration validation failed: {critical_failures}"
-                )
-                raise ConfigurationError(
-                    f"Critical configuration validation failed: {critical_failures}"
-                )
-            else:
-                logger.info(
-                    "Non-critical configuration values missing - using defaults"
-                )
+                logger.error(f"Critical configuration validation failed: {critical_failures}")
+                raise ConfigurationError(f"Critical configuration validation failed: {critical_failures}")
+            logger.info("Non-critical configuration values missing - using defaults")
 
         logger.info("✓ Configuration validation completed successfully")
 
@@ -315,13 +282,9 @@ class MacroEconomicDiscovery:
                 status = self.config.get_api_key_status(key_name)
 
                 if status["found"] and status["valid_format"]:
-                    logger.debug(
-                        f"✓ API key validated: {key_name} ({status['source']}, {status['obfuscated_value']})"
-                    )
+                    logger.debug(f"✓ API key validated: {key_name} ({status['source']}, {status['obfuscated_value']})")
                 elif status["found"] and not status["valid_format"]:
-                    validation_warnings.append(
-                        f"{key_name}: Invalid format ({status['length']} chars)"
-                    )
+                    validation_warnings.append(f"{key_name}: Invalid format ({status['length']} chars)")
                     logger.warning(f"⚠️ API key format issue: {key_name}")
                 else:
                     validation_errors.append(key_name)
@@ -342,9 +305,7 @@ class MacroEconomicDiscovery:
         if validation_warnings:
             logger.warning(f"API key format warnings: {validation_warnings}")
 
-        logger.info(
-            f"✓ All {len(required_keys)} required API keys validated for {self.region}"
-        )
+        logger.info(f"✓ All {len(required_keys)} required API keys validated for {self.region}")
 
     def _validate_service_availability(self) -> None:
         """Validate which CLI services are actually available"""
@@ -371,9 +332,7 @@ class MacroEconomicDiscovery:
             except Exception as e:
                 logger.warning(f"✗ {service_name} unavailable: {e}")
 
-        logger.info(
-            f"Available services: {len(self.available_services)}/7 - {self.available_services}"
-        )
+        logger.info(f"Available services: {len(self.available_services)}/7 - {self.available_services}")
 
         min_services = self.config.get_service_minimum_count()
         if len(self.available_services) < min_services:
@@ -390,9 +349,7 @@ class MacroEconomicDiscovery:
 
         # FRED service is mandatory for data collection (but not necessarily for final output)
         if "fred_economic_cli" not in self.available_services:
-            raise Exception(
-                "FRED service is mandatory for institutional analysis - cannot proceed"
-            )
+            raise Exception("FRED service is mandatory for institutional analysis - cannot proceed")
 
         # Get minimum services from configuration
         min_services = self.config.get_service_minimum_count()
@@ -409,42 +366,28 @@ class MacroEconomicDiscovery:
 
         # Validate region parameter
         if not self.region:
-            raise ValidationError(
-                "Region parameter is required for institutional analysis"
-            )
+            raise ValidationError("Region parameter is required for institutional analysis")
 
         # Initialize schema selector and validate region support
         try:
             self.schema_selector = create_schema_selector()
             if not self.schema_selector.validate_region_support(self.region):
                 supported_regions = ["US", "EUROPE", "ASIA", "GLOBAL"]
-                raise ValidationError(
-                    f"Unsupported region '{self.region}'. Supported regions: {supported_regions}"
-                )
+                raise ValidationError(f"Unsupported region '{self.region}'. Supported regions: {supported_regions}")
 
             # Get regional requirements
-            self.regional_requirements = self.schema_selector.get_regional_requirements(
-                self.region
-            )
+            self.regional_requirements = self.schema_selector.get_regional_requirements(self.region)
             self.field_mappings = self.schema_selector.get_field_mapping(self.region)
 
-            logger.info(
-                f"✓ Region validation passed: {self.region} -> {self.regional_requirements['central_bank']}"
-            )
-            logger.info(
-                f"✓ Schema mapping configured: {self.regional_requirements['policy_rate_field']}"
-            )
+            logger.info(f"✓ Region validation passed: {self.region} -> {self.regional_requirements['central_bank']}")
+            logger.info(f"✓ Schema mapping configured: {self.regional_requirements['policy_rate_field']}")
 
         except Exception as e:
-            raise ValidationError(
-                f"Regional schema validation failed for {self.region}: {e}"
-            )
+            raise ValidationError(f"Regional schema validation failed for {self.region}: {e}")
 
         # Validate regional service requirements
         required_services = self.regional_requirements.get("required_services", [])
-        missing_services = [
-            srv for srv in required_services if srv not in self.available_services
-        ]
+        missing_services = [srv for srv in required_services if srv not in self.available_services]
 
         if missing_services:
             logger.warning(f"Missing regional services: {missing_services}")
@@ -464,7 +407,7 @@ class MacroEconomicDiscovery:
 
         logger.info(f"✓ Regional validation completed for {self.region}")
 
-    def execute_cli_comprehensive_analysis(self) -> Dict[str, Any]:
+    def execute_cli_comprehensive_analysis(self) -> dict[str, Any]:
         """
         Execute comprehensive CLI-driven economic analysis using multiple services
         """
@@ -502,16 +445,12 @@ class MacroEconomicDiscovery:
         validation_result = self._perform_cross_source_validation(cli_analysis)
         cli_analysis["cross_source_validation"] = validation_result
 
-        logger.info(
-            f"CLI comprehensive analysis complete. Services utilized: {len(self.cli_services_utilized)}"
-        )
+        logger.info(f"CLI comprehensive analysis complete. Services utilized: {len(self.cli_services_utilized)}")
         return cli_analysis
 
-    def _collect_regional_central_bank_data(self) -> Dict[str, Any]:
+    def _collect_regional_central_bank_data(self) -> dict[str, Any]:
         """Collect region-appropriate central bank economic data - MANDATORY for institutional certification"""
-        logger.info(
-            f"Collecting regional central bank data for {self.region} (MANDATORY)..."
-        )
+        logger.info(f"Collecting regional central bank data for {self.region} (MANDATORY)...")
 
         try:
             # Import and initialize RegionalCentralBankService
@@ -524,14 +463,10 @@ class MacroEconomicDiscovery:
             regional_service.validate_region(self.region)
             central_bank_info = regional_service.get_central_bank_info(self.region)
 
-            logger.info(
-                f"✓ Using {central_bank_info.name} data for {self.region} analysis"
-            )
+            logger.info(f"✓ Using {central_bank_info.name} data for {self.region} analysis")
 
             # Collect region-appropriate economic data
-            regional_data_result = regional_service.get_region_appropriate_data(
-                self.region, self.timeframe
-            )
+            regional_data_result = regional_service.get_region_appropriate_data(self.region, self.timeframe)
 
             # Transform to expected structure for compatibility
             regional_data = {
@@ -545,15 +480,9 @@ class MacroEconomicDiscovery:
                         "trajectory": "stable",
                         "central_bank": regional_data_result.central_bank,
                     },
-                    "balance_sheet_data": regional_data_result.monetary_policy_data.get(
-                        "balance_sheet_data", {}
-                    ),
-                    "forward_guidance": regional_data_result.monetary_policy_data.get(
-                        "forward_guidance", {}
-                    ),
-                    "confidence": regional_data_result.monetary_policy_data.get(
-                        "confidence", 0.90
-                    ),
+                    "balance_sheet_data": regional_data_result.monetary_policy_data.get("balance_sheet_data", {}),
+                    "forward_guidance": regional_data_result.monetary_policy_data.get("forward_guidance", {}),
+                    "confidence": regional_data_result.monetary_policy_data.get("confidence", 0.90),
                 },
                 "regional_info": {
                     "region": regional_data_result.region,
@@ -566,37 +495,26 @@ class MacroEconomicDiscovery:
 
             # Log successful collection with region-specific details
             logger.info(f"✓ Successfully collected {central_bank_info.name} data")
-            logger.info(
-                f"✓ Policy rate: {regional_data_result.policy_rate_name} = {regional_data_result.policy_rate}%"
-            )
+            logger.info(f"✓ Policy rate: {regional_data_result.policy_rate_name} = {regional_data_result.policy_rate}%")
             logger.info(f"✓ Overall confidence: {regional_data_result.confidence}/1.0")
 
             # Validate minimum confidence threshold
             if regional_data_result.confidence < 0.85:
-                logger.warning(
-                    f"Low confidence score for {self.region}: {regional_data_result.confidence}"
-                )
+                logger.warning(f"Low confidence score for {self.region}: {regional_data_result.confidence}")
 
             return regional_data
 
         except Exception as e:
-            logger.error(
-                f"Failed to collect regional central bank data for {self.region}: {e}"
-            )
+            logger.error(f"Failed to collect regional central bank data for {self.region}: {e}")
 
             # For US/AMERICAS regions, we can still fall back to FRED if regional service fails
             if self.region.upper() in ["US", "AMERICAS"]:
-                logger.warning(
-                    "Falling back to legacy FRED data collection for US/AMERICAS"
-                )
+                logger.warning("Falling back to legacy FRED data collection for US/AMERICAS")
                 return self._collect_legacy_fred_data()
-            else:
-                # For non-US regions, this is BLOCKING
-                raise Exception(
-                    f"MANDATORY regional central bank data collection failed for {self.region}: {e}"
-                )
+            # For non-US regions, this is BLOCKING
+            raise Exception(f"MANDATORY regional central bank data collection failed for {self.region}: {e}")
 
-    def _collect_legacy_fred_data(self) -> Dict[str, Any]:
+    def _collect_legacy_fred_data(self) -> dict[str, Any]:
         """Legacy FRED data collection as fallback for US/AMERICAS only"""
         logger.info("Using legacy FRED data collection as fallback...")
 
@@ -649,31 +567,23 @@ class MacroEconomicDiscovery:
                 # Basic GDP collection
                 gdp_result = service.get_economic_indicator("GDP", self.timeframe)
                 if gdp_result:
-                    fred_data["gdp_data"]["observations"] = gdp_result.get(
-                        "observations", []
-                    )
+                    fred_data["gdp_data"]["observations"] = gdp_result.get("observations", [])
                     fred_data["gdp_data"]["confidence"] = 0.85
 
                 # Basic employment collection
-                payroll_result = service.get_economic_indicator(
-                    "PAYEMS", self.timeframe
-                )
+                payroll_result = service.get_economic_indicator("PAYEMS", self.timeframe)
                 if payroll_result:
-                    fred_data["employment_data"]["payroll_data"][
-                        "observations"
-                    ] = payroll_result.get("observations", [])
-                    fred_data["employment_data"]["payroll_data"][
-                        "trend"
-                    ] = "payroll_growth"
+                    fred_data["employment_data"]["payroll_data"]["observations"] = payroll_result.get(
+                        "observations", []
+                    )
+                    fred_data["employment_data"]["payroll_data"]["trend"] = "payroll_growth"
                     fred_data["employment_data"]["confidence"] = 0.85
 
                 # Basic Fed funds rate
                 fed_funds_result = service.get_economic_indicator("FEDFUNDS", "1y")
                 if fed_funds_result and fed_funds_result.get("observations"):
                     latest_rate = fed_funds_result["observations"][-1]
-                    fred_data["monetary_policy_data"]["policy_rate"][
-                        "current_rate"
-                    ] = float(latest_rate)
+                    fred_data["monetary_policy_data"]["policy_rate"]["current_rate"] = float(latest_rate)
                     fred_data["monetary_policy_data"]["confidence"] = 0.85
 
         except Exception as e:
@@ -681,14 +591,12 @@ class MacroEconomicDiscovery:
 
         return fred_data
 
-    def _collect_imf_global_data(self) -> Dict[str, Any]:
+    def _collect_imf_global_data(self) -> dict[str, Any]:
         """Collect IMF global economic indicators"""
         logger.info("Collecting IMF global economic data...")
 
         if "imf_cli" not in self.available_services:
-            logger.warning(
-                "IMF service not available - generating basic global growth structure"
-            )
+            logger.warning("IMF service not available - generating basic global growth structure")
             # Use reduced confidence for unavailable service
             reduced_confidence = (
                 self.config.get_data_source_reliability("imf") * 0.5
@@ -721,9 +629,7 @@ class MacroEconomicDiscovery:
                 imf_data = {
                     "global_growth": {
                         "forecasts": {"2024": 3.2, "2025": 3.0},
-                        "confidence": self._calculate_dynamic_confidence(
-                            base_confidence, 1, ["institutional_source"]
-                        ),
+                        "confidence": self._calculate_dynamic_confidence(base_confidence, 1, ["institutional_source"]),
                     },
                     "country_risk": {
                         "assessments": {
@@ -742,15 +648,12 @@ class MacroEconomicDiscovery:
                             "direction": "to_developed",
                             "magnitude": "moderate",
                         },
-                        "confidence": self._calculate_dynamic_confidence(
-                            base_confidence, 1, ["institutional_source"]
-                        ),
+                        "confidence": self._calculate_dynamic_confidence(base_confidence, 1, ["institutional_source"]),
                     },
                     "service_status": "active",
                 }
                 return imf_data
-            else:
-                raise Exception("IMF service configuration unavailable")
+            raise Exception("IMF service configuration unavailable")
 
         except Exception as e:
             logger.warning(f"Failed to collect IMF data: {e}")
@@ -775,7 +678,7 @@ class MacroEconomicDiscovery:
                 "error": str(e),
             }
 
-    def _collect_alpha_vantage_market_data(self) -> Dict[str, Any]:
+    def _collect_alpha_vantage_market_data(self) -> dict[str, Any]:
         """Collect Alpha Vantage market sentiment and technical indicators"""
         logger.info("Collecting Alpha Vantage market data...")
 
@@ -803,15 +706,11 @@ class MacroEconomicDiscovery:
                 service = create_alpha_vantage_service("prod")
 
                 # Collect Alpha Vantage data with dynamic confidence based on service availability
-                base_confidence = self.config.get_data_source_reliability(
-                    "alpha_vantage"
-                )
+                base_confidence = self.config.get_data_source_reliability("alpha_vantage")
                 av_data = {
                     "market_sentiment": {
                         "sentiment_score": 0.65,
-                        "confidence": self._calculate_dynamic_confidence(
-                            base_confidence, 1, ["real_time_data"]
-                        ),
+                        "confidence": self._calculate_dynamic_confidence(base_confidence, 1, ["real_time_data"]),
                     },
                     "technical_indicators": {
                         "indicators": {
@@ -838,8 +737,7 @@ class MacroEconomicDiscovery:
                     "service_status": "active",
                 }
                 return av_data
-            else:
-                raise Exception("Alpha Vantage service configuration unavailable")
+            raise Exception("Alpha Vantage service configuration unavailable")
 
         except Exception as e:
             logger.warning(f"Failed to collect Alpha Vantage data: {e}")
@@ -861,7 +759,7 @@ class MacroEconomicDiscovery:
                 "error": str(e),
             }
 
-    def _collect_economic_calendar_data(self) -> Dict[str, Any]:
+    def _collect_economic_calendar_data(self) -> dict[str, Any]:
         """Collect economic calendar data with market impact analysis"""
         logger.info("Collecting economic calendar data...")
 
@@ -876,10 +774,7 @@ class MacroEconomicDiscovery:
         }
 
         try:
-            if (
-                SERVICES_AVAILABLE
-                and "economic_calendar_cli" in self.available_services
-            ):
+            if SERVICES_AVAILABLE and "economic_calendar_cli" in self.available_services:
                 service = create_economic_calendar_service("prod")
                 if "economic_calendar_cli" not in self.cli_services_utilized:
                     self.cli_services_utilized.append("economic_calendar_cli")
@@ -926,9 +821,7 @@ class MacroEconomicDiscovery:
                         }
                 else:
                     # For non-US regions, use generic central bank data
-                    logger.info(
-                        f"Skipping FOMC data collection for {self.region} region"
-                    )
+                    logger.info(f"Skipping FOMC data collection for {self.region} region")
                     calendar_data[f"{central_bank_prefix}_probabilities"] = {
                         "rate_change_probabilities": {
                             "hold": 0.7,
@@ -939,24 +832,16 @@ class MacroEconomicDiscovery:
                     }
 
                 # Get economic surprise index
-                lookback_days = self.config.get_time_window(
-                    "surprise_index_lookback_days"
-                )
+                lookback_days = self.config.get_time_window("surprise_index_lookback_days")
                 surprise_index = service.get_economic_surprise_index(lookback_days)
                 calendar_data["economic_surprise_index"] = surprise_index
 
                 # Market impact assessment
                 calendar_data["market_impact_assessment"] = {
-                    "high_impact_events_count": len(
-                        [e for e in upcoming_events if e.importance == "high"]
-                    ),
+                    "high_impact_events_count": len([e for e in upcoming_events if e.importance == "high"]),
                     "fomc_policy_surprise_risk": fomc_probs.policy_surprise_potential,
-                    "economic_surprise_momentum": surprise_index.get(
-                        "trend_analysis", {}
-                    ).get("momentum", 0.0),
-                    "sector_rotation_signals": surprise_index.get(
-                        "sector_allocation_signals", {}
-                    ),
+                    "economic_surprise_momentum": surprise_index.get("trend_analysis", {}).get("momentum", 0.0),
+                    "sector_rotation_signals": surprise_index.get("sector_allocation_signals", {}),
                 }
 
                 calendar_data["confidence"] = 0.90
@@ -965,9 +850,7 @@ class MacroEconomicDiscovery:
                 )
 
             else:
-                logger.warning(
-                    f"Using mock economic calendar data for region: {self.region}"
-                )
+                logger.warning(f"Using mock economic calendar data for region: {self.region}")
 
                 # Region-appropriate fallback mock data
                 if self.region == "EUROPE":
@@ -993,12 +876,7 @@ class MacroEconomicDiscovery:
                         {
                             "event_name": event_name,
                             "event_date": (
-                                datetime.now()
-                                + timedelta(
-                                    days=self.config.get_time_window(
-                                        "fomc_advance_days"
-                                    )
-                                )
+                                datetime.now() + timedelta(days=self.config.get_time_window("fomc_advance_days"))
                             ).isoformat(),
                             "event_type": "monetary_policy",
                             "importance": "high",
@@ -1033,7 +911,7 @@ class MacroEconomicDiscovery:
 
         return calendar_data
 
-    def _collect_global_liquidity_data(self) -> Dict[str, Any]:
+    def _collect_global_liquidity_data(self) -> dict[str, Any]:
         """Collect global liquidity monitoring data using available services"""
         logger.info("Collecting global liquidity data from multiple CLI sources...")
 
@@ -1056,9 +934,7 @@ class MacroEconomicDiscovery:
                 m2_result = service.get_economic_indicator("M2SL", "2y")
                 if m2_result:
                     liquidity_data["global_m2_analysis"]["us_m2"] = m2_result
-                    liquidity_data["global_liquidity_conditions"][
-                        "us_liquidity"
-                    ] = "expansive"
+                    liquidity_data["global_liquidity_conditions"]["us_liquidity"] = "expansive"
                     liquidity_data["confidence"] = 0.75
 
                 # Get federal funds rate for policy stance
@@ -1066,9 +942,7 @@ class MacroEconomicDiscovery:
                 if fed_funds_result:
                     # Get the most recent Fed funds rate value
                     latest_obs = (
-                        fed_funds_result.get("observations", [{}])[-1]
-                        if fed_funds_result.get("observations")
-                        else {}
+                        fed_funds_result.get("observations", [{}])[-1] if fed_funds_result.get("observations") else {}
                     )
                     fed_rate_value = latest_obs.get("value")
 
@@ -1077,17 +951,13 @@ class MacroEconomicDiscovery:
                         try:
                             fed_rate_value = self._get_real_fed_funds_rate_or_fail()
                         except ValueError:
-                            fed_rate_value = (
-                                4.375  # Current range midpoint if all else fails
-                            )
+                            fed_rate_value = 4.375  # Current range midpoint if all else fails
 
                     fed_rate_float = float(fed_rate_value)
 
                     liquidity_data["central_bank_analysis"]["fed_policy"] = {
                         "current_rate": fed_rate_float,
-                        "stance": (
-                            "restrictive" if fed_rate_float > 4.0 else "accommodative"
-                        ),
+                        "stance": ("restrictive" if fed_rate_float > 4.0 else "accommodative"),
                     }
 
             logger.info("Global liquidity data collected from available sources")
@@ -1098,7 +968,7 @@ class MacroEconomicDiscovery:
             liquidity_data["confidence"] = 0.5
             return liquidity_data
 
-    def _collect_sector_correlation_data(self) -> Dict[str, Any]:
+    def _collect_sector_correlation_data(self) -> dict[str, Any]:
         """Collect sector-economic correlation data using market indices analysis"""
         logger.info("Collecting sector correlation data from market indices...")
 
@@ -1117,9 +987,7 @@ class MacroEconomicDiscovery:
             if SERVICES_AVAILABLE:
                 # Try to calculate sector sensitivities from real data or fail fast
                 try:
-                    sector_sensitivities = (
-                        self._calculate_sector_sensitivities_or_fail()
-                    )
+                    sector_sensitivities = self._calculate_sector_sensitivities_or_fail()
                     if "error" in sector_sensitivities:
                         sector_data["sector_sensitivities"] = {
                             "error": "sector_sensitivity_calculation_failed",
@@ -1152,9 +1020,7 @@ class MacroEconomicDiscovery:
             sector_data["confidence"] = 0.5
             return sector_data
 
-    def _perform_cross_source_validation(
-        self, cli_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _perform_cross_source_validation(self, cli_data: dict[str, Any]) -> dict[str, Any]:
         """Perform cross-validation across CLI services"""
         logger.info("Performing cross-source validation...")
 
@@ -1168,15 +1034,11 @@ class MacroEconomicDiscovery:
         consistency_check = "passed" if successful_sources >= 2 else "failed"
 
         # Dynamic confidence based on validation results
-        quality_factors = (
-            ["cross_validated"] if consistency_check == "passed" else ["missing_data"]
-        )
+        quality_factors = ["cross_validated"] if consistency_check == "passed" else ["missing_data"]
         if successful_sources >= 3:
             quality_factors.append("complete_data_set")
 
-        dynamic_confidence = self._calculate_dynamic_confidence(
-            0.7, successful_sources, quality_factors
-        )
+        dynamic_confidence = self._calculate_dynamic_confidence(0.7, successful_sources, quality_factors)
 
         return {
             "validation_score": min(validation_score, 1.0),
@@ -1184,7 +1046,7 @@ class MacroEconomicDiscovery:
             "confidence": dynamic_confidence,
         }
 
-    def analyze_economic_indicators(self) -> Dict[str, Any]:
+    def analyze_economic_indicators(self) -> dict[str, Any]:
         """Analyze economic indicators with leading/coincident/lagging classification"""
         logger.info("Analyzing economic indicators...")
 
@@ -1255,7 +1117,7 @@ class MacroEconomicDiscovery:
 
         return indicators
 
-    def analyze_business_cycle_data(self) -> Dict[str, Any]:
+    def analyze_business_cycle_data(self) -> dict[str, Any]:
         """Analyze business cycle phase and positioning - NO FALLBACK VALUES, fail fast when data unavailable"""
         logger.info("Analyzing business cycle data...")
 
@@ -1264,14 +1126,12 @@ class MacroEconomicDiscovery:
 
         # If calculation failed, return the error structure
         if "error" in business_cycle_data:
-            logger.warning(
-                f"Business cycle analysis failed: {business_cycle_data.get('error')}"
-            )
+            logger.warning(f"Business cycle analysis failed: {business_cycle_data.get('error')}")
             return business_cycle_data
 
         return business_cycle_data
 
-    def analyze_monetary_policy_context(self) -> Dict[str, Any]:
+    def analyze_monetary_policy_context(self) -> dict[str, Any]:
         """Analyze monetary policy stance and transmission mechanisms - NO FALLBACK VALUES, fail fast when data unavailable"""
         logger.info("Analyzing monetary policy context...")
 
@@ -1290,9 +1150,7 @@ class MacroEconomicDiscovery:
 
         # If critical monetary policy data is unavailable, return schema-compliant structure with appropriate defaults
         if policy_rate is None and balance_sheet_size is None:
-            logger.warning(
-                "Core monetary policy data unavailable - using schema-compliant defaults"
-            )
+            logger.warning("Core monetary policy data unavailable - using schema-compliant defaults")
             return {
                 "policy_stance": {
                     "current_stance": "neutral",  # Schema requires non-null value
@@ -1339,9 +1197,7 @@ class MacroEconomicDiscovery:
 
         monetary_policy = {
             "policy_stance": {
-                "current_stance": (
-                    "restrictive" if policy_rate and policy_rate > 4.0 else "unknown"
-                ),
+                "current_stance": ("restrictive" if policy_rate and policy_rate > 4.0 else "unknown"),
                 "policy_rate": policy_rate,
                 "balance_sheet_size": balance_sheet_size,
                 "stance_assessment": (
@@ -1389,7 +1245,7 @@ class MacroEconomicDiscovery:
 
         return monetary_policy
 
-    def analyze_market_intelligence(self) -> Dict[str, Any]:
+    def analyze_market_intelligence(self) -> dict[str, Any]:
         """Analyze market-based intelligence and cross-asset dynamics"""
         logger.info("Analyzing market intelligence...")
 
@@ -1399,19 +1255,13 @@ class MacroEconomicDiscovery:
         market_intelligence = {
             "volatility_analysis": volatility_analysis,
             "cross_asset_correlations": {
-                "equity_bond": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get(
+                "equity_bond": self.config.get_market_data_fallback("cross_asset_correlations", {}).get(
                     "equity_bond", -0.3
                 ),  # Negative correlation indicates risk-off behavior
-                "dollar_commodities": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get(
+                "dollar_commodities": self.config.get_market_data_fallback("cross_asset_correlations", {}).get(
                     "dollar_commodities", -0.6
                 ),  # Strong negative correlation
-                "crypto_risk_assets": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get(
+                "crypto_risk_assets": self.config.get_market_data_fallback("cross_asset_correlations", {}).get(
                     "crypto_risk_assets", 0.75
                 ),  # High correlation with risk assets
             },
@@ -1427,15 +1277,13 @@ class MacroEconomicDiscovery:
             "market_regime": {
                 "regime_type": "consolidation",
                 "regime_probability": 0.80,
-                "duration_estimate": self.config.get_time_window(
-                    "market_regime_duration_days"
-                ),  # days
+                "duration_estimate": self.config.get_time_window("market_regime_duration_days"),  # days
             },
         }
 
         return market_intelligence
 
-    def analyze_global_economic_context(self) -> Dict[str, Any]:
+    def analyze_global_economic_context(self) -> dict[str, Any]:
         """Analyze international economic indicators and cross-country dynamics"""
         logger.info("Analyzing global economic context...")
 
@@ -1477,7 +1325,7 @@ class MacroEconomicDiscovery:
 
         return global_context
 
-    def analyze_energy_market_integration(self) -> Dict[str, Any]:
+    def analyze_energy_market_integration(self) -> dict[str, Any]:
         """Analyze energy market dynamics and economic implications"""
         logger.info("Analyzing energy market integration...")
 
@@ -1493,17 +1341,11 @@ class MacroEconomicDiscovery:
                     ),
                     "brent_current": real_time_energy_data.get(
                         "brent_current",
-                        self.config.get_market_data_fallback(
-                            "brent_crude_price", 76.80
-                        ),
+                        self.config.get_market_data_fallback("brent_crude_price", 76.80),
                     ),
                     "trend": "stable",
-                    "data_source": real_time_energy_data.get(
-                        "oil_data_source", "config_fallback"
-                    ),
-                    "is_real_time": real_time_energy_data.get(
-                        "oil_is_real_time", False
-                    ),
+                    "data_source": real_time_energy_data.get("oil_data_source", "config_fallback"),
+                    "is_real_time": real_time_energy_data.get("oil_is_real_time", False),
                 },
                 "supply_demand": {
                     "supply_outlook": "adequate",
@@ -1524,12 +1366,8 @@ class MacroEconomicDiscovery:
                     ),
                     "volatility": "high",
                     "trend": "seasonal",
-                    "data_source": real_time_energy_data.get(
-                        "gas_data_source", "config_fallback"
-                    ),
-                    "is_real_time": real_time_energy_data.get(
-                        "gas_is_real_time", False
-                    ),
+                    "data_source": real_time_energy_data.get("gas_data_source", "config_fallback"),
+                    "is_real_time": real_time_energy_data.get("gas_is_real_time", False),
                 },
                 "storage_levels": {
                     "current_level": 85.0,
@@ -1578,7 +1416,7 @@ class MacroEconomicDiscovery:
 
         return energy_integration
 
-    def _get_real_time_energy_data(self) -> Dict[str, Any]:
+    def _get_real_time_energy_data(self) -> dict[str, Any]:
         """Get real-time energy market data from integrated service"""
         energy_data = {}
 
@@ -1597,20 +1435,16 @@ class MacroEconomicDiscovery:
                 energy_data["gas_is_real_time"] = gas_data.is_real_time
 
                 # Mock Brent crude (would be added to real-time service)
-                energy_data["brent_current"] = (
-                    wti_data.value * 1.05
-                )  # Typical WTI-Brent spread
+                energy_data["brent_current"] = wti_data.value * 1.05  # Typical WTI-Brent spread
 
-                logger.info(
-                    f"✓ Real-time energy data: WTI ${wti_data.value:.2f}, NG ${gas_data.value:.2f}"
-                )
+                logger.info(f"✓ Real-time energy data: WTI ${wti_data.value:.2f}, NG ${gas_data.value:.2f}")
 
             except Exception as e:
                 logger.warning(f"Failed to fetch real-time energy data: {e}")
 
         return energy_data
 
-    def _get_real_time_currency_data(self) -> Dict[str, Any]:
+    def _get_real_time_currency_data(self) -> dict[str, Any]:
         """Get real-time currency and FX data from integrated service"""
 
         # Get real-time dollar index data first
@@ -1671,9 +1505,7 @@ class MacroEconomicDiscovery:
                     for pair in ["eur_usd", "usd_jpy", "gbp_usd", "dxy_level"]
                     if pair in fx_rates and fx_rates[pair].is_real_time
                 )
-                logger.info(
-                    f"✓ Real-time currency data: {real_time_pairs}/4 pairs live"
-                )
+                logger.info(f"✓ Real-time currency data: {real_time_pairs}/4 pairs live")
 
                 return currency_data
 
@@ -1695,78 +1527,61 @@ class MacroEconomicDiscovery:
             },
         }
 
-    def validate_cli_services(self) -> Dict[str, Any]:
+    def validate_cli_services(self) -> dict[str, Any]:
         """Validate CLI service health and reliability"""
         logger.info("Validating CLI service health...")
 
         service_validation = {
             "service_health_scores": {
-                "fred_economic_cli": self.config.get_market_data_fallback(
-                    "service_reliability", {}
-                ).get("fred_economic_cli", 0.95),
-                "imf_cli": self.config.get_market_data_fallback(
-                    "service_reliability", {}
-                ).get("imf_cli", 0.85),
-                "alpha_vantage_cli": self.config.get_market_data_fallback(
-                    "service_reliability", {}
-                ).get("alpha_vantage_cli", 0.90),
-                "eia_energy_cli": self.config.get_market_data_fallback(
-                    "service_reliability", {}
-                ).get("eia_energy_cli", 0.88),
-                "overall_health": self.config.get_market_data_fallback(
-                    "service_reliability", {}
-                ).get("overall_health_minimum", 0.90),
+                "fred_economic_cli": self.config.get_market_data_fallback("service_reliability", {}).get(
+                    "fred_economic_cli", 0.95
+                ),
+                "imf_cli": self.config.get_market_data_fallback("service_reliability", {}).get("imf_cli", 0.85),
+                "alpha_vantage_cli": self.config.get_market_data_fallback("service_reliability", {}).get(
+                    "alpha_vantage_cli", 0.90
+                ),
+                "eia_energy_cli": self.config.get_market_data_fallback("service_reliability", {}).get(
+                    "eia_energy_cli", 0.88
+                ),
+                "overall_health": self.config.get_market_data_fallback("service_reliability", {}).get(
+                    "overall_health_minimum", 0.90
+                ),
             },
             "api_response_times": {
-                "fred_economic_cli": self.config.get_api_performance_threshold(
-                    "fred_response_time_ms"
-                ),
-                "imf_cli": self.config.get_api_performance_threshold(
-                    "imf_response_time_ms"
-                ),
-                "alpha_vantage_cli": self.config.get_api_performance_threshold(
-                    "alpha_vantage_response_time_ms"
-                ),
-                "eia_energy_cli": self.config.get_api_performance_threshold(
-                    "eia_response_time_ms"
-                ),
+                "fred_economic_cli": self.config.get_api_performance_threshold("fred_response_time_ms"),
+                "imf_cli": self.config.get_api_performance_threshold("imf_response_time_ms"),
+                "alpha_vantage_cli": self.config.get_api_performance_threshold("alpha_vantage_response_time_ms"),
+                "eia_energy_cli": self.config.get_api_performance_threshold("eia_response_time_ms"),
             },
             "data_freshness": {
-                "overall_freshness": self.config.get_api_performance_threshold(
-                    "min_data_freshness"
-                ),
-                "stale_data_count": self.config.get_api_performance_threshold(
-                    "stale_data_count_threshold"
-                ),
+                "overall_freshness": self.config.get_api_performance_threshold("min_data_freshness"),
+                "stale_data_count": self.config.get_api_performance_threshold("stale_data_count_threshold"),
             },
         }
 
         return service_validation
 
-    def assess_data_quality(self) -> Dict[str, Any]:
+    def assess_data_quality(self) -> dict[str, Any]:
         """Comprehensive data quality assessment"""
         logger.info("Assessing data quality...")
 
         # Calculate overall quality based on CLI services and data completeness
         cli_services_count = len(self.cli_services_utilized)
-        required_threshold = (
-            self.config.get_service_minimum_count()
-        )  # Minimum required services from configuration
+        required_threshold = self.config.get_service_minimum_count()  # Minimum required services from configuration
 
         # Use dynamic confidence calculation for quality scoring
-        base_confidence = self.config.get_market_data_fallback(
-            "confidence_calculation", {}
-        ).get("base_confidence_adjustment", 0.6)
-        source_increment = self.config.get_market_data_fallback(
-            "confidence_calculation", {}
-        ).get("source_confidence_increment", 0.1)
-        max_multiplier = self.config.get_market_data_fallback(
-            "confidence_calculation", {}
-        ).get("max_source_multiplier", 1.0)
+        base_confidence = self.config.get_market_data_fallback("confidence_calculation", {}).get(
+            "base_confidence_adjustment", 0.6
+        )
+        source_increment = self.config.get_market_data_fallback("confidence_calculation", {}).get(
+            "source_confidence_increment", 0.1
+        )
+        max_multiplier = self.config.get_market_data_fallback("confidence_calculation", {}).get(
+            "max_source_multiplier", 1.0
+        )
 
         quality_score = min(
-            base_confidence
-            + (cli_services_count - required_threshold) * source_increment,
+            base_confidence + (cli_services_count - required_threshold) * source_increment,
             max_multiplier,
         )
 
@@ -1785,7 +1600,7 @@ class MacroEconomicDiscovery:
 
         return data_quality
 
-    def generate_cli_insights(self) -> Dict[str, Any]:
+    def generate_cli_insights(self) -> dict[str, Any]:
         """Generate key analytical insights from CLI analysis"""
         logger.info("Generating CLI insights...")
 
@@ -1823,37 +1638,37 @@ class MacroEconomicDiscovery:
                 {
                     "risk_type": "policy_error",
                     "severity": "medium",
-                    "probability": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("policy_error_probability", 0.25),
-                    "impact": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("policy_error_impact", "significant"),
+                    "probability": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "policy_error_probability", 0.25
+                    ),
+                    "impact": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "policy_error_impact", "significant"
+                    ),
                 },
                 {
                     "risk_type": "geopolitical",
                     "severity": "medium",
-                    "probability": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("geopolitical_risk_probability", 0.30),
-                    "impact": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("geopolitical_risk_impact", "moderate"),
+                    "probability": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "geopolitical_risk_probability", 0.30
+                    ),
+                    "impact": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "geopolitical_risk_impact", "moderate"
+                    ),
                 },
             ],
             "opportunity_identification": [
                 {
                     "opportunity_type": "duration_positioning",
-                    "probability": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("duration_positioning_probability", 0.70),
+                    "probability": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "duration_positioning_probability", 0.70
+                    ),
                     "time_horizon": "6m",
                 },
                 {
                     "opportunity_type": "emerging_market_allocation",
-                    "probability": self.config.get_market_data_fallback(
-                        "risk_assessment_parameters", {}
-                    ).get("em_allocation_probability", 0.55),
+                    "probability": self.config.get_market_data_fallback("risk_assessment_parameters", {}).get(
+                        "em_allocation_probability", 0.55
+                    ),
                     "time_horizon": "12m",
                 },
             ],
@@ -1861,21 +1676,19 @@ class MacroEconomicDiscovery:
 
         return insights
 
-    def analyze_cross_regional_data(self) -> Dict[str, Any]:
+    def analyze_cross_regional_data(self) -> dict[str, Any]:
         """Analyze cross-regional economic dynamics"""
         logger.info("Analyzing cross-regional data...")
 
         cross_regional = {
             "regional_correlations": {
-                "us_europe": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get("us_europe", 0.65),
-                "us_asia": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get("us_asia", 0.58),
-                "europe_asia": self.config.get_market_data_fallback(
-                    "cross_asset_correlations", {}
-                ).get("europe_asia", 0.72),
+                "us_europe": self.config.get_market_data_fallback("cross_asset_correlations", {}).get(
+                    "us_europe", 0.65
+                ),
+                "us_asia": self.config.get_market_data_fallback("cross_asset_correlations", {}).get("us_asia", 0.58),
+                "europe_asia": self.config.get_market_data_fallback("cross_asset_correlations", {}).get(
+                    "europe_asia", 0.72
+                ),
             },
             "relative_positioning": {
                 "growth_ranking": ["US", "Asia", "Europe"],
@@ -1894,9 +1707,7 @@ class MacroEconomicDiscovery:
 
         return cross_regional
 
-    def _calculate_comprehensive_confidence_analysis(
-        self, discovery_output: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_comprehensive_confidence_analysis(self, discovery_output: dict[str, Any]) -> dict[str, Any]:
         """Perform comprehensive confidence analysis using the dynamic confidence engine"""
 
         if not self.confidence_engine or not self.real_time_data_service:
@@ -1920,9 +1731,7 @@ class MacroEconomicDiscovery:
                 "analysis_type": "macro_discovery_comprehensive",
                 "region": self.region,
                 "service_count": len(self.cli_services_utilized),
-                "real_time_coverage": market_data_refresh.get(
-                    "real_time_coverage", 0.0
-                ),
+                "real_time_coverage": market_data_refresh.get("real_time_coverage", 0.0),
                 "discovery_sections": list(discovery_output.keys()),
             }
 
@@ -1936,54 +1745,39 @@ class MacroEconomicDiscovery:
                 if k in ["fed_funds_rate", "wti_crude_price", "vix_level", "eur_usd"]
             }
             if market_data_subset:
-                confidence_results[
-                    "market_data"
-                ] = self.confidence_engine.calculate_confidence(
+                confidence_results["market_data"] = self.confidence_engine.calculate_confidence(
                     market_data_subset, context, "market_data"
                 )
 
             # Economic indicators confidence (GDP, employment)
             economic_data_subset = {
-                k: v
-                for k, v in data_points.items()
-                if k in ["gdp_growth_rate", "unemployment_rate", "payroll_change"]
+                k: v for k, v in data_points.items() if k in ["gdp_growth_rate", "unemployment_rate", "payroll_change"]
             }
             if economic_data_subset:
-                confidence_results[
-                    "economic_indicators"
-                ] = self.confidence_engine.calculate_confidence(
+                confidence_results["economic_indicators"] = self.confidence_engine.calculate_confidence(
                     economic_data_subset, context, "economic_indicators"
                 )
 
             # Volatility analysis confidence
             volatility_data_subset = {
-                k: v
-                for k, v in data_points.items()
-                if "volatility" in k or k in ["vix_level", "vstoxx_level"]
+                k: v for k, v in data_points.items() if "volatility" in k or k in ["vix_level", "vstoxx_level"]
             }
             if volatility_data_subset:
-                confidence_results[
-                    "volatility_analysis"
-                ] = self.confidence_engine.calculate_confidence(
+                confidence_results["volatility_analysis"] = self.confidence_engine.calculate_confidence(
                     volatility_data_subset, context, "volatility_data"
                 )
 
             # Consumer confidence analysis
-            consumer_conf_subset = {
-                k: v for k, v in data_points.items() if "consumer_confidence" in k
-            }
+            consumer_conf_subset = {k: v for k, v in data_points.items() if "consumer_confidence" in k}
             if consumer_conf_subset:
-                confidence_results[
-                    "consumer_confidence"
-                ] = self.confidence_engine.calculate_confidence(
+                confidence_results["consumer_confidence"] = self.confidence_engine.calculate_confidence(
                     consumer_conf_subset, context, "consumer_confidence"
                 )
 
             # Calculate overall composite confidence
             if confidence_results:
                 individual_confidences = [
-                    result.get("composite_confidence", 0.5)
-                    for result in confidence_results.values()
+                    result.get("composite_confidence", 0.5) for result in confidence_results.values()
                 ]
                 overall_confidence = np.mean(individual_confidences)
 
@@ -2015,15 +1809,12 @@ class MacroEconomicDiscovery:
                         "analysis_comprehensiveness": len(confidence_results),
                     },
                 }
-            else:
-                return {
-                    "overall_confidence": 0.5,
-                    "confidence_level": "moderate",
-                    "analysis_quality": "limited_data",
-                    "recommendations": [
-                        "Insufficient data for comprehensive confidence analysis"
-                    ],
-                }
+            return {
+                "overall_confidence": 0.5,
+                "confidence_level": "moderate",
+                "analysis_quality": "limited_data",
+                "recommendations": ["Insufficient data for comprehensive confidence analysis"],
+            }
 
         except Exception as e:
             logger.error(f"Comprehensive confidence analysis failed: {e}")
@@ -2032,24 +1823,21 @@ class MacroEconomicDiscovery:
                 "confidence_level": "moderate",
                 "analysis_quality": "error_fallback",
                 "error": str(e),
-                "recommendations": [
-                    "Confidence analysis encountered errors - review data quality"
-                ],
+                "recommendations": ["Confidence analysis encountered errors - review data quality"],
             }
 
     def _get_region_central_bank_prefix(self) -> str:
         """Get region-appropriate central bank prefix for event naming"""
         if self.region == "EUROPE":
             return "ECB"
-        elif self.region in ["US", "AMERICAS"]:
+        if self.region in ["US", "AMERICAS"]:
             return "FOMC"
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return "BoJ"
-        else:
-            return "CB"
+        return "CB"
 
     def _calculate_dynamic_confidence(
-        self, base_confidence: float, data_sources: int, data_quality_factors: List[str]
+        self, base_confidence: float, data_sources: int, data_quality_factors: list[str]
     ) -> float:
         """Calculate dynamic confidence score based on data quality and sources"""
 
@@ -2071,23 +1859,15 @@ class MacroEconomicDiscovery:
                     }
 
                     # Calculate using advanced confidence engine
-                    confidence_result = self.confidence_engine.calculate_confidence(
-                        data_points, context, "market_data"
-                    )
+                    confidence_result = self.confidence_engine.calculate_confidence(data_points, context, "market_data")
 
-                    return confidence_result.get(
-                        "composite_confidence", base_confidence
-                    )
+                    return confidence_result.get("composite_confidence", base_confidence)
             except Exception as e:
-                logger.warning(
-                    f"Advanced confidence calculation failed, using fallback: {e}"
-                )
+                logger.warning(f"Advanced confidence calculation failed, using fallback: {e}")
 
         # Fallback to original calculation method
         # Base confidence adjustment based on number of data sources
-        source_multiplier = min(
-            1.0, 0.6 + (data_sources * 0.1)
-        )  # 0.6 base + 0.1 per source, max 1.0
+        source_multiplier = min(1.0, 0.6 + (data_sources * 0.1))  # 0.6 base + 0.1 per source, max 1.0
 
         # Quality factor adjustments
         quality_adjustment = 0.0
@@ -2109,9 +1889,7 @@ class MacroEconomicDiscovery:
         dynamic_confidence = base_confidence * source_multiplier + quality_adjustment
         return max(0.0, min(1.0, dynamic_confidence))  # Bound between 0 and 1
 
-    def _perform_automated_quality_validation(
-        self, discovery_output: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _perform_automated_quality_validation(self, discovery_output: dict[str, Any]) -> dict[str, Any]:
         """Perform automated quality validation on discovery output"""
         logger.info("Performing automated quality validation...")
 
@@ -2132,16 +1910,10 @@ class MacroEconomicDiscovery:
         # 1. Service Availability Check
         services_used = len(self.cli_services_utilized)
         if services_used >= 4:
-            validation_results["validation_checks"]["service_availability"][
-                "passed"
-            ] = True
-            validation_results["validation_checks"]["service_availability"][
-                "score"
-            ] = min(1.0, services_used / 7.0)
+            validation_results["validation_checks"]["service_availability"]["passed"] = True
+            validation_results["validation_checks"]["service_availability"]["score"] = min(1.0, services_used / 7.0)
         else:
-            validation_results["blocking_issues"].append(
-                f"Insufficient services: {services_used} < 4 required"
-            )
+            validation_results["blocking_issues"].append(f"Insufficient services: {services_used} < 4 required")
 
         # 2. Data Completeness Check
         required_sections = [
@@ -2151,19 +1923,13 @@ class MacroEconomicDiscovery:
             "monetary_policy_context",
         ]
         completed_sections = sum(
-            1
-            for section in required_sections
-            if section in discovery_output and discovery_output[section]
+            1 for section in required_sections if section in discovery_output and discovery_output[section]
         )
         completeness_score = completed_sections / len(required_sections)
 
         if completeness_score >= 0.9:
-            validation_results["validation_checks"]["data_completeness"][
-                "passed"
-            ] = True
-        validation_results["validation_checks"]["data_completeness"][
-            "score"
-        ] = completeness_score
+            validation_results["validation_checks"]["data_completeness"]["passed"] = True
+        validation_results["validation_checks"]["data_completeness"]["score"] = completeness_score
 
         # 3. Cross-Source Consistency Check
         consistency_score = (
@@ -2172,42 +1938,26 @@ class MacroEconomicDiscovery:
             .get("confidence", 0.0)
         )
         if consistency_score >= 0.8:
-            validation_results["validation_checks"]["cross_source_consistency"][
-                "passed"
-            ] = True
-        validation_results["validation_checks"]["cross_source_consistency"][
-            "score"
-        ] = consistency_score
+            validation_results["validation_checks"]["cross_source_consistency"]["passed"] = True
+        validation_results["validation_checks"]["cross_source_consistency"]["score"] = consistency_score
 
         # 4. Region Specificity Check
-        volatility_section = discovery_output.get("cli_market_intelligence", {}).get(
-            "volatility_analysis", {}
-        )
+        volatility_section = discovery_output.get("cli_market_intelligence", {}).get("volatility_analysis", {})
         consumer_confidence = (
-            discovery_output.get("economic_indicators", {})
-            .get("leading_indicators", {})
-            .get("consumer_confidence", {})
+            discovery_output.get("economic_indicators", {}).get("leading_indicators", {}).get("consumer_confidence", {})
         )
 
         region_specific_score = 0.0
         if self.region in str(volatility_section) or any(
-            region_key in volatility_section
-            for region_key in ["vstoxx", "nikkei", "global"]
+            region_key in volatility_section for region_key in ["vstoxx", "nikkei", "global"]
         ):
             region_specific_score += 0.5
-        if (
-            "survey_name" in consumer_confidence
-            and consumer_confidence["survey_name"] != "Generic Consumer Confidence"
-        ):
+        if "survey_name" in consumer_confidence and consumer_confidence["survey_name"] != "Generic Consumer Confidence":
             region_specific_score += 0.5
 
         if region_specific_score >= 0.8:
-            validation_results["validation_checks"]["region_specificity"][
-                "passed"
-            ] = True
-        validation_results["validation_checks"]["region_specificity"][
-            "score"
-        ] = region_specific_score
+            validation_results["validation_checks"]["region_specificity"]["passed"] = True
+        validation_results["validation_checks"]["region_specificity"]["score"] = region_specific_score
 
         # 5. Confidence Calibration Check
         confidence_scores = []
@@ -2218,55 +1968,33 @@ class MacroEconomicDiscovery:
         if confidence_scores:
             avg_confidence = sum(confidence_scores) / len(confidence_scores)
             # Check for variation (not all the same hardcoded value)
-            confidence_variation = (
-                len(set(round(score, 2) for score in confidence_scores)) > 1
-            )
+            confidence_variation = len(set(round(score, 2) for score in confidence_scores)) > 1
 
             if avg_confidence >= 0.8 and confidence_variation:
-                validation_results["validation_checks"]["confidence_calibration"][
-                    "passed"
-                ] = True
-                validation_results["validation_checks"]["confidence_calibration"][
-                    "score"
-                ] = avg_confidence
+                validation_results["validation_checks"]["confidence_calibration"]["passed"] = True
+                validation_results["validation_checks"]["confidence_calibration"]["score"] = avg_confidence
             else:
                 if not confidence_variation:
-                    validation_results["blocking_issues"].append(
-                        "Hardcoded confidence scores detected"
-                    )
+                    validation_results["blocking_issues"].append("Hardcoded confidence scores detected")
 
         # Calculate overall quality score
-        passed_checks = sum(
-            1
-            for check in validation_results["validation_checks"].values()
-            if check["passed"]
-        )
+        passed_checks = sum(1 for check in validation_results["validation_checks"].values() if check["passed"])
         total_checks = len(validation_results["validation_checks"])
         validation_results["overall_quality_score"] = passed_checks / total_checks
 
         # Institutional grade requires 8.5+ (0.85) overall score per documentation
-        validation_results["institutional_grade_achieved"] = (
-            validation_results["overall_quality_score"] >= 0.85
-        )
+        validation_results["institutional_grade_achieved"] = validation_results["overall_quality_score"] >= 0.85
 
         # Generate recommendations
         if not validation_results["institutional_grade_achieved"]:
-            validation_results["recommendations"].append(
-                "Increase service availability to improve institutional grade"
-            )
-            validation_results["recommendations"].append(
-                "Ensure region-specific analysis implementation"
-            )
-            validation_results["recommendations"].append(
-                "Implement dynamic confidence score calibration"
-            )
+            validation_results["recommendations"].append("Increase service availability to improve institutional grade")
+            validation_results["recommendations"].append("Ensure region-specific analysis implementation")
+            validation_results["recommendations"].append("Implement dynamic confidence score calibration")
 
-        logger.info(
-            f"Quality validation complete - Overall score: {validation_results['overall_quality_score']:.2f}"
-        )
+        logger.info(f"Quality validation complete - Overall score: {validation_results['overall_quality_score']:.2f}")
         return validation_results
 
-    def _get_real_time_gdp_indicators(self) -> Dict[str, Any]:
+    def _get_real_time_gdp_indicators(self) -> dict[str, Any]:
         """Get real-time GDP indicators with intelligent fallback"""
         try:
             if self.real_time_data_service:
@@ -2276,9 +2004,7 @@ class MacroEconomicDiscovery:
                 gdp_growth = gdp_data.get(
                     "gdp_growth_rate",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "gdp_growth_rate", 2.3
-                        ),
+                        value=self.config.get_market_data_fallback("gdp_growth_rate", 2.3),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="gdp_growth_yoy",
@@ -2291,9 +2017,7 @@ class MacroEconomicDiscovery:
                 consumption_growth = gdp_data.get(
                     "consumption_growth",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "consumption_growth", 2.1
-                        ),
+                        value=self.config.get_market_data_fallback("consumption_growth", 2.1),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="pce_growth",
@@ -2306,9 +2030,7 @@ class MacroEconomicDiscovery:
                 investment_growth = gdp_data.get(
                     "investment_growth",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "investment_growth", 1.8
-                        ),
+                        value=self.config.get_market_data_fallback("investment_growth", 1.8),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="investment_growth",
@@ -2320,11 +2042,7 @@ class MacroEconomicDiscovery:
 
                 # Determine sustainability based on growth rate
                 sustainability = (
-                    "strong"
-                    if gdp_growth.value > 3.0
-                    else "moderate"
-                    if gdp_growth.value > 2.0
-                    else "weak"
+                    "strong" if gdp_growth.value > 3.0 else "moderate" if gdp_growth.value > 2.0 else "weak"
                 )
 
                 return {
@@ -2338,50 +2056,37 @@ class MacroEconomicDiscovery:
                     "is_real_time": gdp_growth.is_real_time,
                     "data_age_hours": gdp_growth.age_hours,
                 }
-            else:
-                # Fallback when service unavailable
-                return {
-                    "current_growth": self.config.get_market_data_fallback(
-                        "gdp_growth_rate", 2.3
-                    ),
-                    "components": {
-                        "consumption": self.config.get_market_data_fallback(
-                            "consumption_growth", 2.1
-                        ),
-                        "investment": self.config.get_market_data_fallback(
-                            "investment_growth", 1.8
-                        ),
-                    },
-                    "sustainability": "moderate",
-                    "data_source": "config_fallback",
-                    "is_real_time": False,
-                }
+            # Fallback when service unavailable
+            return {
+                "current_growth": self.config.get_market_data_fallback("gdp_growth_rate", 2.3),
+                "components": {
+                    "consumption": self.config.get_market_data_fallback("consumption_growth", 2.1),
+                    "investment": self.config.get_market_data_fallback("investment_growth", 1.8),
+                },
+                "sustainability": "moderate",
+                "data_source": "config_fallback",
+                "is_real_time": False,
+            }
         except Exception as e:
             logger.warning(f"Failed to get real-time GDP data: {e}")
             return {
-                "current_growth": self.config.get_market_data_fallback(
-                    "gdp_growth_rate", 2.3
-                ),
+                "current_growth": self.config.get_market_data_fallback("gdp_growth_rate", 2.3),
                 "components": {"consumption": 2.1, "investment": 1.8},
                 "sustainability": "moderate",
                 "data_source": "fallback",
             }
 
-    def _get_real_time_employment_indicators(self) -> Dict[str, Any]:
+    def _get_real_time_employment_indicators(self) -> dict[str, Any]:
         """Get real-time employment indicators with intelligent fallback"""
         try:
             if self.real_time_data_service:
-                employment_data = (
-                    self.real_time_data_service.get_current_employment_data()
-                )
+                employment_data = self.real_time_data_service.get_current_employment_data()
 
                 # Extract values from MarketDataPoint objects
                 unemployment_rate = employment_data.get(
                     "unemployment_rate",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "unemployment_rate", 3.8
-                        ),
+                        value=self.config.get_market_data_fallback("unemployment_rate", 3.8),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="unemployment_rate",
@@ -2394,9 +2099,7 @@ class MacroEconomicDiscovery:
                 payroll_change = employment_data.get(
                     "payroll_change",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "monthly_payroll_change", 150000
-                        ),
+                        value=self.config.get_market_data_fallback("monthly_payroll_change", 150000),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="nonfarm_payrolls",
@@ -2409,9 +2112,7 @@ class MacroEconomicDiscovery:
                 participation_rate = employment_data.get(
                     "participation_rate",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "participation_rate", 63.2
-                        ),
+                        value=self.config.get_market_data_fallback("participation_rate", 63.2),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="labor_participation",
@@ -2429,13 +2130,7 @@ class MacroEconomicDiscovery:
                     if payroll_change.value > 50000
                     else "weakening"
                 )
-                quality = (
-                    "high"
-                    if all(
-                        [unemployment_rate.is_real_time, payroll_change.is_real_time]
-                    )
-                    else "moderate"
-                )
+                quality = "high" if all([unemployment_rate.is_real_time, payroll_change.is_real_time]) else "moderate"
 
                 return {
                     "current_data": {
@@ -2446,58 +2141,42 @@ class MacroEconomicDiscovery:
                     "trends": trends,
                     "quality": quality,
                     "data_source": unemployment_rate.source,
-                    "is_real_time": unemployment_rate.is_real_time
-                    and payroll_change.is_real_time,
-                    "data_age_hours": max(
-                        unemployment_rate.age_hours, payroll_change.age_hours
-                    ),
+                    "is_real_time": unemployment_rate.is_real_time and payroll_change.is_real_time,
+                    "data_age_hours": max(unemployment_rate.age_hours, payroll_change.age_hours),
                 }
-            else:
-                # Fallback when service unavailable
-                return {
-                    "current_data": {
-                        "payrolls": self.config.get_market_data_fallback(
-                            "monthly_payroll_change", 150000
-                        ),
-                        "rate": self.config.get_market_data_fallback(
-                            "unemployment_rate", 3.8
-                        ),
-                        "participation": self.config.get_market_data_fallback(
-                            "participation_rate", 63.2
-                        ),
-                    },
-                    "trends": "improving",
-                    "quality": "moderate",
-                    "data_source": "config_fallback",
-                    "is_real_time": False,
-                }
+            # Fallback when service unavailable
+            return {
+                "current_data": {
+                    "payrolls": self.config.get_market_data_fallback("monthly_payroll_change", 150000),
+                    "rate": self.config.get_market_data_fallback("unemployment_rate", 3.8),
+                    "participation": self.config.get_market_data_fallback("participation_rate", 63.2),
+                },
+                "trends": "improving",
+                "quality": "moderate",
+                "data_source": "config_fallback",
+                "is_real_time": False,
+            }
         except Exception as e:
             logger.warning(f"Failed to get real-time employment data: {e}")
             return {
                 "current_data": {
                     "payrolls": 150000,
-                    "rate": self.config.get_market_data_fallback(
-                        "unemployment_rate", 3.8
-                    ),
+                    "rate": self.config.get_market_data_fallback("unemployment_rate", 3.8),
                 },
                 "trends": "improving",
                 "quality": "high",
                 "data_source": "fallback",
             }
 
-    def _get_real_time_unemployment_lagging(self) -> Dict[str, Any]:
+    def _get_real_time_unemployment_lagging(self) -> dict[str, Any]:
         """Get real-time unemployment rate as lagging indicator"""
         try:
             if self.real_time_data_service:
-                employment_data = (
-                    self.real_time_data_service.get_current_employment_data()
-                )
+                employment_data = self.real_time_data_service.get_current_employment_data()
                 unemployment_rate = employment_data.get(
                     "unemployment_rate",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            "unemployment_rate", 3.8
-                        ),
+                        value=self.config.get_market_data_fallback("unemployment_rate", 3.8),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="unemployment_rate",
@@ -2531,39 +2210,32 @@ class MacroEconomicDiscovery:
                     "is_real_time": unemployment_rate.is_real_time,
                     "data_age_hours": unemployment_rate.age_hours,
                 }
-            else:
-                # Fallback when service unavailable
-                fallback_rate = self.config.get_market_data_fallback(
-                    "unemployment_rate", 3.8
-                )
-                return {
-                    "current_rate": fallback_rate,
-                    "duration": "short_term",
-                    "structural_factors": "minimal",
-                    "data_source": "config_fallback",
-                    "is_real_time": False,
-                }
+            # Fallback when service unavailable
+            fallback_rate = self.config.get_market_data_fallback("unemployment_rate", 3.8)
+            return {
+                "current_rate": fallback_rate,
+                "duration": "short_term",
+                "structural_factors": "minimal",
+                "data_source": "config_fallback",
+                "is_real_time": False,
+            }
         except Exception as e:
             logger.warning(f"Failed to get real-time unemployment lagging data: {e}")
             return {
-                "current_rate": self.config.get_market_data_fallback(
-                    "unemployment_rate", 3.8
-                ),
+                "current_rate": self.config.get_market_data_fallback("unemployment_rate", 3.8),
                 "duration": "short_term",
                 "structural_factors": "minimal",
                 "data_source": "fallback",
             }
 
-    def _get_region_specific_volatility(self) -> Dict[str, Any]:
+    def _get_region_specific_volatility(self) -> dict[str, Any]:
         """Get region-appropriate volatility measures with real-time analysis"""
         logger.info(f"Getting volatility analysis for region: {self.region}")
 
         # Try to get comprehensive volatility analysis from volatility service
         if hasattr(self, "volatility_service") and self.volatility_service:
             try:
-                volatility_analysis = self.volatility_service.analyze_volatility_regime(
-                    self.region
-                )
+                volatility_analysis = self.volatility_service.analyze_volatility_regime(self.region)
 
                 if "error" not in volatility_analysis:
                     # Extract key metrics from comprehensive analysis
@@ -2576,205 +2248,130 @@ class MacroEconomicDiscovery:
                         return {
                             "vix_analysis": {
                                 "current_level": current_metrics.get("level", 15.5),
-                                "percentile_rank": current_metrics.get(
-                                    "percentile_rankings", {}
-                                ).get("1y", 25.0),
-                                "trend": volatility_analysis.get(
-                                    "trend_analysis", {}
-                                ).get("short_term_trend", "stable"),
-                                "regime": current_metrics.get("regime", "normal"),
-                                "regime_probability": current_metrics.get(
-                                    "regime_probability", 0.8
+                                "percentile_rank": current_metrics.get("percentile_rankings", {}).get("1y", 25.0),
+                                "trend": volatility_analysis.get("trend_analysis", {}).get(
+                                    "short_term_trend", "stable"
                                 ),
+                                "regime": current_metrics.get("regime", "normal"),
+                                "regime_probability": current_metrics.get("regime_probability", 0.8),
                                 "is_real_time": True,
                             },
-                            "regime_classification": current_metrics.get(
-                                "regime", "normal"
-                            ),
+                            "regime_classification": current_metrics.get("regime", "normal"),
                             "mean_reversion": {
                                 "reversion_speed": mean_reversion.get(
                                     "reversion_speed",
-                                    self.config.get_volatility_parameter(
-                                        "US", "reversion_speed"
-                                    ),
+                                    self.config.get_volatility_parameter("US", "reversion_speed"),
                                 ),
                                 "long_term_mean": mean_reversion.get(
                                     "long_term_mean",
-                                    self.config.get_volatility_parameter(
-                                        "US", "long_term_mean"
-                                    ),
+                                    self.config.get_volatility_parameter("US", "long_term_mean"),
                                 ),
-                                "days_to_reversion": mean_reversion.get(
-                                    "days_to_80pct_reversion"
-                                ),
-                                "reversion_direction": mean_reversion.get(
-                                    "reversion_direction", "stable"
-                                ),
+                                "days_to_reversion": mean_reversion.get("days_to_80pct_reversion"),
+                                "reversion_direction": mean_reversion.get("reversion_direction", "stable"),
                             },
-                            "volatility_alerts": volatility_analysis.get(
-                                "volatility_alerts", []
-                            ),
-                            "analysis_confidence": volatility_analysis.get(
-                                "confidence_score", 0.85
-                            ),
+                            "volatility_alerts": volatility_analysis.get("volatility_alerts", []),
+                            "analysis_confidence": volatility_analysis.get("confidence_score", 0.85),
                         }
-                    elif self.region == "EUROPE":
+                    if self.region == "EUROPE":
                         return {
                             "vix_analysis": {
                                 "current_level": current_metrics.get("level", 18.2),
-                                "percentile_rank": current_metrics.get(
-                                    "percentile_rankings", {}
-                                ).get("1y", 35.0),
-                                "trend": volatility_analysis.get(
-                                    "trend_analysis", {}
-                                ).get("short_term_trend", "stable"),
-                                "regime": current_metrics.get("regime", "normal"),
-                                "regime_probability": current_metrics.get(
-                                    "regime_probability", 0.8
+                                "percentile_rank": current_metrics.get("percentile_rankings", {}).get("1y", 35.0),
+                                "trend": volatility_analysis.get("trend_analysis", {}).get(
+                                    "short_term_trend", "stable"
                                 ),
+                                "regime": current_metrics.get("regime", "normal"),
+                                "regime_probability": current_metrics.get("regime_probability", 0.8),
                                 "is_real_time": True,
                             },
-                            "regime_classification": current_metrics.get(
-                                "regime", "normal"
-                            ),
+                            "regime_classification": current_metrics.get("regime", "normal"),
                             "mean_reversion": {
                                 "reversion_speed": mean_reversion.get(
                                     "reversion_speed",
-                                    self.config.get_volatility_parameter(
-                                        "EUROPE", "reversion_speed"
-                                    ),
+                                    self.config.get_volatility_parameter("EUROPE", "reversion_speed"),
                                 ),
                                 "long_term_mean": mean_reversion.get(
                                     "long_term_mean",
-                                    self.config.get_volatility_parameter(
-                                        "EUROPE", "long_term_mean"
-                                    ),
+                                    self.config.get_volatility_parameter("EUROPE", "long_term_mean"),
                                 ),
-                                "days_to_reversion": mean_reversion.get(
-                                    "days_to_80pct_reversion"
-                                ),
-                                "reversion_direction": mean_reversion.get(
-                                    "reversion_direction", "stable"
-                                ),
+                                "days_to_reversion": mean_reversion.get("days_to_80pct_reversion"),
+                                "reversion_direction": mean_reversion.get("reversion_direction", "stable"),
                             },
                             "regional_factors": [
                                 "brexit_uncertainty",
                                 "energy_costs",
                                 "ecb_policy",
                             ],
-                            "volatility_alerts": volatility_analysis.get(
-                                "volatility_alerts", []
-                            ),
-                            "analysis_confidence": volatility_analysis.get(
-                                "confidence_score", 0.85
-                            ),
+                            "volatility_alerts": volatility_analysis.get("volatility_alerts", []),
+                            "analysis_confidence": volatility_analysis.get("confidence_score", 0.85),
                         }
-                    elif self.region == "ASIA":
+                    if self.region == "ASIA":
                         return {
                             "nikkei_volatility_analysis": {
                                 "current_level": current_metrics.get("level", 20.1),
-                                "percentile_rank": current_metrics.get(
-                                    "percentile_rankings", {}
-                                ).get("1y", 45.0),
-                                "trend": volatility_analysis.get(
-                                    "trend_analysis", {}
-                                ).get("short_term_trend", "stable"),
-                                "regime": current_metrics.get("regime", "normal"),
-                                "regime_probability": current_metrics.get(
-                                    "regime_probability", 0.8
+                                "percentile_rank": current_metrics.get("percentile_rankings", {}).get("1y", 45.0),
+                                "trend": volatility_analysis.get("trend_analysis", {}).get(
+                                    "short_term_trend", "stable"
                                 ),
+                                "regime": current_metrics.get("regime", "normal"),
+                                "regime_probability": current_metrics.get("regime_probability", 0.8),
                                 "is_real_time": True,
                             },
-                            "regime_classification": current_metrics.get(
-                                "regime", "normal"
-                            ),
+                            "regime_classification": current_metrics.get("regime", "normal"),
                             "mean_reversion": {
                                 "reversion_speed": mean_reversion.get(
                                     "reversion_speed",
-                                    self.config.get_volatility_parameter(
-                                        "ASIA", "reversion_speed"
-                                    ),
+                                    self.config.get_volatility_parameter("ASIA", "reversion_speed"),
                                 ),
                                 "long_term_mean": mean_reversion.get(
                                     "long_term_mean",
-                                    self.config.get_volatility_parameter(
-                                        "ASIA", "long_term_mean"
-                                    ),
+                                    self.config.get_volatility_parameter("ASIA", "long_term_mean"),
                                 ),
-                                "days_to_reversion": mean_reversion.get(
-                                    "days_to_80pct_reversion"
-                                ),
-                                "reversion_direction": mean_reversion.get(
-                                    "reversion_direction", "stable"
-                                ),
+                                "days_to_reversion": mean_reversion.get("days_to_80pct_reversion"),
+                                "reversion_direction": mean_reversion.get("reversion_direction", "stable"),
                             },
                             "regional_factors": [
                                 "china_policy",
                                 "trade_flows",
                                 "currency_volatility",
                             ],
-                            "volatility_alerts": volatility_analysis.get(
-                                "volatility_alerts", []
-                            ),
-                            "analysis_confidence": volatility_analysis.get(
-                                "confidence_score", 0.85
-                            ),
+                            "volatility_alerts": volatility_analysis.get("volatility_alerts", []),
+                            "analysis_confidence": volatility_analysis.get("confidence_score", 0.85),
                         }
-                    else:
-                        # Global composite analysis
-                        return {
-                            "global_volatility_composite": {
-                                "current_level": current_metrics.get("level", 17.2),
-                                "percentile_rank": current_metrics.get(
-                                    "percentile_rankings", {}
-                                ).get("1y", 30.0),
-                                "trend": volatility_analysis.get(
-                                    "trend_analysis", {}
-                                ).get("short_term_trend", "stable"),
-                                "regime": current_metrics.get("regime", "normal"),
-                                "is_real_time": True,
-                            },
-                            "regime_classification": current_metrics.get(
-                                "regime", "normal"
+                    # Global composite analysis
+                    return {
+                        "global_volatility_composite": {
+                            "current_level": current_metrics.get("level", 17.2),
+                            "percentile_rank": current_metrics.get("percentile_rankings", {}).get("1y", 30.0),
+                            "trend": volatility_analysis.get("trend_analysis", {}).get("short_term_trend", "stable"),
+                            "regime": current_metrics.get("regime", "normal"),
+                            "is_real_time": True,
+                        },
+                        "regime_classification": current_metrics.get("regime", "normal"),
+                        "mean_reversion": {
+                            "reversion_speed": mean_reversion.get(
+                                "reversion_speed",
+                                self.config.get_volatility_parameter("EMERGING_MARKETS", "reversion_speed"),
                             ),
-                            "mean_reversion": {
-                                "reversion_speed": mean_reversion.get(
-                                    "reversion_speed",
-                                    self.config.get_volatility_parameter(
-                                        "EMERGING_MARKETS", "reversion_speed"
-                                    ),
-                                ),
-                                "long_term_mean": mean_reversion.get(
-                                    "long_term_mean",
-                                    self.config.get_volatility_parameter(
-                                        "EMERGING_MARKETS", "long_term_mean"
-                                    ),
-                                ),
-                                "days_to_reversion": mean_reversion.get(
-                                    "days_to_80pct_reversion"
-                                ),
-                            },
-                            "regional_factors": [
-                                "global_liquidity",
-                                "geopolitical_risk",
-                                "policy_divergence",
-                            ],
-                            "cross_regional_analysis": volatility_analysis.get(
-                                "cross_regional_analysis", {}
+                            "long_term_mean": mean_reversion.get(
+                                "long_term_mean",
+                                self.config.get_volatility_parameter("EMERGING_MARKETS", "long_term_mean"),
                             ),
-                            "analysis_confidence": volatility_analysis.get(
-                                "confidence_score", 0.85
-                            ),
-                        }
+                            "days_to_reversion": mean_reversion.get("days_to_80pct_reversion"),
+                        },
+                        "regional_factors": [
+                            "global_liquidity",
+                            "geopolitical_risk",
+                            "policy_divergence",
+                        ],
+                        "cross_regional_analysis": volatility_analysis.get("cross_regional_analysis", {}),
+                        "analysis_confidence": volatility_analysis.get("confidence_score", 0.85),
+                    }
 
-                logger.info(
-                    f"✓ Real-time volatility analysis completed for {self.region}"
-                )
+                logger.info(f"✓ Real-time volatility analysis completed for {self.region}")
 
             except Exception as e:
-                logger.warning(
-                    f"Volatility service analysis failed: {e}, falling back to configuration"
-                )
+                logger.warning(f"Volatility service analysis failed: {e}, falling back to configuration")
 
         # Fallback to configuration-based analysis when real-time service unavailable
         logger.info(f"Using configuration-based volatility analysis for {self.region}")
@@ -2782,46 +2379,34 @@ class MacroEconomicDiscovery:
         if self.region == "US":
             return {
                 "vix_analysis": {
-                    "current_level": self.config.get_market_data_fallback(
-                        "vix_level", 15.5
+                    "current_level": self.config.get_market_data_fallback("vix_level", 15.5),
+                    "percentile_rank": self.config.get_market_data_fallback("volatility_parameters", {}).get(
+                        "vix_percentile_rank", 25.0
                     ),
-                    "percentile_rank": self.config.get_market_data_fallback(
-                        "volatility_parameters", {}
-                    ).get("vix_percentile_rank", 25.0),
                     "trend": "stable",
                     "is_real_time": False,
                 },
                 "regime_classification": "normal",
                 "mean_reversion": {
-                    "reversion_speed": self.config.get_volatility_parameter(
-                        "US", "reversion_speed"
-                    ),
-                    "long_term_mean": self.config.get_volatility_parameter(
-                        "US", "long_term_mean"
-                    ),
+                    "reversion_speed": self.config.get_volatility_parameter("US", "reversion_speed"),
+                    "long_term_mean": self.config.get_volatility_parameter("US", "long_term_mean"),
                 },
                 "analysis_confidence": 0.7,  # Lower confidence for fallback
             }
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return {
                 "vix_analysis": {
-                    "current_level": self.config.get_market_data_fallback(
-                        "vstoxx_level", 18.2
+                    "current_level": self.config.get_market_data_fallback("vstoxx_level", 18.2),
+                    "percentile_rank": self.config.get_market_data_fallback("volatility_parameters", {}).get(
+                        "vstoxx_percentile_rank", 35.0
                     ),
-                    "percentile_rank": self.config.get_market_data_fallback(
-                        "volatility_parameters", {}
-                    ).get("vstoxx_percentile_rank", 35.0),
                     "trend": "stable",
                     "is_real_time": False,
                 },
                 "regime_classification": "normal",
                 "mean_reversion": {
-                    "reversion_speed": self.config.get_volatility_parameter(
-                        "EUROPE", "reversion_speed"
-                    ),
-                    "long_term_mean": self.config.get_volatility_parameter(
-                        "EUROPE", "long_term_mean"
-                    ),
+                    "reversion_speed": self.config.get_volatility_parameter("EUROPE", "reversion_speed"),
+                    "long_term_mean": self.config.get_volatility_parameter("EUROPE", "long_term_mean"),
                 },
                 "regional_factors": [
                     "brexit_uncertainty",
@@ -2830,26 +2415,20 @@ class MacroEconomicDiscovery:
                 ],
                 "analysis_confidence": 0.7,
             }
-        elif self.region == "ASIA":
+        if self.region == "ASIA":
             return {
                 "nikkei_volatility_analysis": {
-                    "current_level": self.config.get_market_data_fallback(
-                        "nikkei_volatility", 20.1
+                    "current_level": self.config.get_market_data_fallback("nikkei_volatility", 20.1),
+                    "percentile_rank": self.config.get_market_data_fallback("volatility_parameters", {}).get(
+                        "nikkei_vol_percentile_rank", 45.0
                     ),
-                    "percentile_rank": self.config.get_market_data_fallback(
-                        "volatility_parameters", {}
-                    ).get("nikkei_vol_percentile_rank", 45.0),
                     "trend": "stable",
                     "is_real_time": False,
                 },
                 "regime_classification": "normal",
                 "mean_reversion": {
-                    "reversion_speed": self.config.get_volatility_parameter(
-                        "ASIA", "reversion_speed"
-                    ),
-                    "long_term_mean": self.config.get_volatility_parameter(
-                        "ASIA", "long_term_mean"
-                    ),
+                    "reversion_speed": self.config.get_volatility_parameter("ASIA", "reversion_speed"),
+                    "long_term_mean": self.config.get_volatility_parameter("ASIA", "long_term_mean"),
                 },
                 "regional_factors": [
                     "china_policy",
@@ -2858,52 +2437,41 @@ class MacroEconomicDiscovery:
                 ],
                 "analysis_confidence": 0.7,
             }
-        else:
-            # Global or other regions - use composite volatility measure
-            return {
-                "global_volatility_composite": {
-                    "current_level": 17.2,  # Composite of regional volatilities
-                    "percentile_rank": self.config.get_market_data_fallback(
-                        "volatility_parameters", {}
-                    ).get("global_vol_percentile_rank", 30.0),
-                    "trend": "stable",
-                    "is_real_time": False,
-                },
-                "regime_classification": "normal",
-                "mean_reversion": {
-                    "reversion_speed": self.config.get_volatility_parameter(
-                        "EMERGING_MARKETS", "reversion_speed"
-                    ),
-                    "long_term_mean": self.config.get_volatility_parameter(
-                        "EMERGING_MARKETS", "long_term_mean"
-                    ),
-                },
-                "regional_factors": [
-                    "global_liquidity",
-                    "geopolitical_risk",
-                    "policy_divergence",
-                ],
-                "analysis_confidence": 0.7,
-            }
+        # Global or other regions - use composite volatility measure
+        return {
+            "global_volatility_composite": {
+                "current_level": 17.2,  # Composite of regional volatilities
+                "percentile_rank": self.config.get_market_data_fallback("volatility_parameters", {}).get(
+                    "global_vol_percentile_rank", 30.0
+                ),
+                "trend": "stable",
+                "is_real_time": False,
+            },
+            "regime_classification": "normal",
+            "mean_reversion": {
+                "reversion_speed": self.config.get_volatility_parameter("EMERGING_MARKETS", "reversion_speed"),
+                "long_term_mean": self.config.get_volatility_parameter("EMERGING_MARKETS", "long_term_mean"),
+            },
+            "regional_factors": [
+                "global_liquidity",
+                "geopolitical_risk",
+                "policy_divergence",
+            ],
+            "analysis_confidence": 0.7,
+        }
 
-    def _get_region_specific_consumer_confidence(self) -> Dict[str, Any]:
+    def _get_region_specific_consumer_confidence(self) -> dict[str, Any]:
         """Get region-appropriate consumer confidence measures with real-time data"""
         logger.info(f"Getting consumer confidence for region: {self.region}")
 
         try:
             if self.real_time_data_service:
                 # Get real-time consumer confidence data for the region
-                confidence_data = (
-                    self.real_time_data_service.get_current_consumer_confidence_data(
-                        self.region
-                    )
-                )
+                confidence_data = self.real_time_data_service.get_current_consumer_confidence_data(self.region)
                 confidence_point = confidence_data.get(
                     "consumer_confidence",
                     MarketDataPoint(
-                        value=self.config.get_market_data_fallback(
-                            f"{self.region.lower()}_consumer_confidence", 76.5
-                        ),
+                        value=self.config.get_market_data_fallback(f"{self.region.lower()}_consumer_confidence", 76.5),
                         timestamp=datetime.now(),
                         source="config_fallback",
                         data_type="consumer_confidence",
@@ -2928,19 +2496,13 @@ class MacroEconomicDiscovery:
                 # Calculate historical percentile based on regional baselines
                 if self.region == "US":
                     baseline = 100.0  # US baseline
-                    percentile = min(
-                        95, max(5, (confidence_point.value / baseline) * 50)
-                    )
+                    percentile = min(95, max(5, (confidence_point.value / baseline) * 50))
                 elif self.region == "EUROPE":
                     baseline = -10.0  # EU uses different scale (negative = pessimistic)
-                    percentile = min(
-                        95, max(5, ((confidence_point.value - baseline) / 30) * 50 + 50)
-                    )
+                    percentile = min(95, max(5, ((confidence_point.value - baseline) / 30) * 50 + 50))
                 elif self.region == "ASIA":
                     baseline = 110.0  # Asia typically higher confidence
-                    percentile = min(
-                        95, max(5, (confidence_point.value / baseline) * 50)
-                    )
+                    percentile = min(95, max(5, (confidence_point.value / baseline) * 50))
                 else:
                     percentile = 50  # Neutral for global
 
@@ -2953,27 +2515,20 @@ class MacroEconomicDiscovery:
                     is_real_time=confidence_point.is_real_time,
                     data_age_hours=confidence_point.age_hours,
                 )
-            else:
-                # Fallback when service unavailable
-                return self._build_confidence_response(
-                    region=self.region,
-                    current_level=self.config.get_market_data_fallback(
-                        f"{self.region.lower()}_consumer_confidence", 76.5
-                    ),
-                    trend="stable",
-                    historical_percentile=50,
-                    data_source="config_fallback",
-                    is_real_time=False,
-                )
-        except Exception as e:
-            logger.warning(
-                f"Failed to get real-time consumer confidence for {self.region}: {e}"
-            )
+            # Fallback when service unavailable
             return self._build_confidence_response(
                 region=self.region,
-                current_level=self.config.get_market_data_fallback(
-                    f"{self.region.lower()}_consumer_confidence", 76.5
-                ),
+                current_level=self.config.get_market_data_fallback(f"{self.region.lower()}_consumer_confidence", 76.5),
+                trend="stable",
+                historical_percentile=50,
+                data_source="config_fallback",
+                is_real_time=False,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get real-time consumer confidence for {self.region}: {e}")
+            return self._build_confidence_response(
+                region=self.region,
+                current_level=self.config.get_market_data_fallback(f"{self.region.lower()}_consumer_confidence", 76.5),
                 trend="stable",
                 historical_percentile=50,
                 data_source="fallback",
@@ -2989,7 +2544,7 @@ class MacroEconomicDiscovery:
         data_source: str,
         is_real_time: bool,
         data_age_hours: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Build standardized consumer confidence response"""
 
         if region == "US":
@@ -3007,14 +2562,13 @@ class MacroEconomicDiscovery:
                 "is_real_time": is_real_time,
                 "data_age_hours": data_age_hours,
             }
-        elif region == "EUROPE":
+        if region == "EUROPE":
             return {
                 "survey_name": "European_Commission_Consumer_Confidence",
                 "current_level": current_level,
                 "trend": trend,
                 "components": {
-                    "financial_situation": current_level
-                    * 0.8,  # Components scaled appropriately
+                    "financial_situation": current_level * 0.8,  # Components scaled appropriately
                     "general_economic_situation": current_level * 1.2,
                     "major_purchases": current_level * 1.1,
                 },
@@ -3024,7 +2578,7 @@ class MacroEconomicDiscovery:
                 "is_real_time": is_real_time,
                 "data_age_hours": data_age_hours,
             }
-        elif region == "ASIA":
+        if region == "ASIA":
             return {
                 "survey_name": "Asia_Pacific_Consumer_Confidence_Composite",
                 "current_level": current_level,
@@ -3046,24 +2600,23 @@ class MacroEconomicDiscovery:
                 "is_real_time": is_real_time,
                 "data_age_hours": data_age_hours,
             }
-        else:
-            # Global composite
-            return {
-                "survey_name": "Global_Consumer_Confidence_Index",
-                "current_level": current_level,
-                "trend": trend,
-                "components": {
-                    "developed_markets": current_level * 0.84,
-                    "emerging_markets": current_level * 1.18,
-                },
-                "historical_percentile": historical_percentile,
-                "methodology": "GDP-weighted composite of major economies",
-                "data_source": data_source,
-                "is_real_time": is_real_time,
-                "data_age_hours": data_age_hours,
-            }
+        # Global composite
+        return {
+            "survey_name": "Global_Consumer_Confidence_Index",
+            "current_level": current_level,
+            "trend": trend,
+            "components": {
+                "developed_markets": current_level * 0.84,
+                "emerging_markets": current_level * 1.18,
+            },
+            "historical_percentile": historical_percentile,
+            "methodology": "GDP-weighted composite of major economies",
+            "data_source": data_source,
+            "is_real_time": is_real_time,
+            "data_age_hours": data_age_hours,
+        }
 
-    def generate_discovery_insights(self) -> Dict[str, Any]:
+    def generate_discovery_insights(self) -> dict[str, Any]:
         """Generate comprehensive discovery insights and themes"""
         logger.info("Generating discovery insights...")
 
@@ -3142,7 +2695,7 @@ class MacroEconomicDiscovery:
 
         return discovery_insights
 
-    def generate_data_quality_assessment(self) -> Dict[str, Any]:
+    def generate_data_quality_assessment(self) -> dict[str, Any]:
         """Generate overall data quality and reliability assessment"""
         logger.info("Generating data quality assessment...")
 
@@ -3171,7 +2724,7 @@ class MacroEconomicDiscovery:
 
         return quality_assessment
 
-    def generate_local_data_references(self) -> Dict[str, Any]:
+    def generate_local_data_references(self) -> dict[str, Any]:
         """Generate references to local economic data files and cache"""
         logger.info("Generating local data references...")
 
@@ -3181,9 +2734,7 @@ class MacroEconomicDiscovery:
         local_references = {
             "cached_economic_data": {},
             "historical_data_references": {
-                "business_cycle_history": [
-                    "./data/cache/business_cycle_nber_dates.json"
-                ],
+                "business_cycle_history": ["./data/cache/business_cycle_nber_dates.json"],
                 "policy_history": [
                     "./data/cache/fed_policy_timeline.json",
                     "./data/cache/ecb_policy_decisions.json",
@@ -3199,15 +2750,13 @@ class MacroEconomicDiscovery:
                     latest_file = max(indicator_files, key=lambda f: f.stat().st_mtime)
                     local_references["cached_economic_data"][indicator] = {
                         "file_path": str(latest_file.relative_to(Path.cwd())),
-                        "last_updated": datetime.fromtimestamp(
-                            latest_file.stat().st_mtime
-                        ).isoformat(),
+                        "last_updated": datetime.fromtimestamp(latest_file.stat().st_mtime).isoformat(),
                         "data_quality": 0.95,
                     }
 
         return local_references
 
-    def execute_discovery(self) -> Dict[str, Any]:
+    def execute_discovery(self) -> dict[str, Any]:
         """
         Execute the complete DASV Phase 1 discovery protocol for macro-economic analysis
         """
@@ -3305,20 +2854,16 @@ class MacroEconomicDiscovery:
             }
 
             # Phase 18: Automated Quality Validation
-            quality_validation = self._perform_automated_quality_validation(
-                discovery_output
-            )
+            quality_validation = self._perform_automated_quality_validation(discovery_output)
             discovery_output["automated_quality_validation"] = quality_validation
 
             # Update institutional certification based on validation
-            discovery_output["data_quality_assessment"][
-                "institutional_grade_certification"
-            ] = quality_validation["institutional_grade_achieved"]
+            discovery_output["data_quality_assessment"]["institutional_grade_certification"] = quality_validation[
+                "institutional_grade_achieved"
+            ]
 
             # Save output with proper naming
-            output_filename = (
-                f"{self.region}_{self.execution_date.strftime('%Y%m%d')}_discovery.json"
-            )
+            output_filename = f"{self.region}_{self.execution_date.strftime('%Y%m%d')}_discovery.json"
             output_file = self.output_dir / output_filename
 
             with open(output_file, "w", encoding="utf-8") as f:
@@ -3345,7 +2890,7 @@ class MacroEconomicDiscovery:
             logger.error(f"Macro-economic discovery failed: {e}")
             raise
 
-    def _calculate_business_cycle_scores_or_fail(self) -> Dict[str, Any]:
+    def _calculate_business_cycle_scores_or_fail(self) -> dict[str, Any]:
         """Calculate business cycle composite scores using BusinessCycleEngine or fail with explicit error"""
         try:
             if not SERVICES_AVAILABLE:
@@ -3369,35 +2914,21 @@ class MacroEconomicDiscovery:
                 spread_value = 0.51
 
             leading_indicators = {
-                "yield_curve_spread": {
-                    "observations": [{"value": spread_value}]
-                },  # Real-time 10Y-2Y spread
-                "consumer_confidence": {
-                    "observations": [{"value": 102.3}]
-                },  # Mock consumer confidence
-                "stock_market": {
-                    "observations": [{"value": 4890}]
-                },  # Mock S&P 500 level
+                "yield_curve_spread": {"observations": [{"value": spread_value}]},  # Real-time 10Y-2Y spread
+                "consumer_confidence": {"observations": [{"value": 102.3}]},  # Mock consumer confidence
+                "stock_market": {"observations": [{"value": 4890}]},  # Mock S&P 500 level
             }
 
             coincident_indicators = {
                 "gdp": {"observations": [{"value": 2.3}]},  # Mock GDP growth
-                "employment": {
-                    "observations": [{"value": 3.9}]
-                },  # Mock unemployment rate
-                "industrial_production": {
-                    "observations": [{"value": 104.2}]
-                },  # Mock industrial production index
+                "employment": {"observations": [{"value": 3.9}]},  # Mock unemployment rate
+                "industrial_production": {"observations": [{"value": 104.2}]},  # Mock industrial production index
             }
 
             lagging_indicators = {
-                "unemployment_rate": {
-                    "observations": [{"value": 3.9}]
-                },  # Mock unemployment
+                "unemployment_rate": {"observations": [{"value": 3.9}]},  # Mock unemployment
                 "cpi": {"observations": [{"value": 3.2}]},  # Mock CPI
-                "labor_cost": {
-                    "observations": [{"value": 4.1}]
-                },  # Mock labor cost index
+                "labor_cost": {"observations": [{"value": 4.1}]},  # Mock labor cost index
             }
 
             # Run business cycle analysis
@@ -3428,9 +2959,7 @@ class MacroEconomicDiscovery:
 
             # Cross-validate with market consensus
             try:
-                cross_validation = self._cross_validate_recession_probability(
-                    system_recession_prob
-                )
+                cross_validation = self._cross_validate_recession_probability(system_recession_prob)
                 final_recession_prob = cross_validation["adjusted_probability"]
                 validation_data = cross_validation
                 logger.info(
@@ -3459,7 +2988,7 @@ class MacroEconomicDiscovery:
                 "error_details": str(e),
             }
 
-    def _calculate_business_cycle_data_or_fail(self) -> Dict[str, Any]:
+    def _calculate_business_cycle_data_or_fail(self) -> dict[str, Any]:
         """Calculate business cycle data using real analysis or fail with explicit error"""
         try:
             if not SERVICES_AVAILABLE:
@@ -3490,9 +3019,7 @@ class MacroEconomicDiscovery:
                 # Fallback to current market estimate
                 yield_spread = 0.51
 
-            leading_indicators = {
-                "yield_curve": {"observations": [{"value": yield_spread}]}
-            }
+            leading_indicators = {"yield_curve": {"observations": [{"value": yield_spread}]}}
             coincident_indicators = {"gdp": {"observations": [{"value": 2.3}]}}
             lagging_indicators = {"unemployment": {"observations": [{"value": 3.9}]}}
 
@@ -3523,28 +3050,22 @@ class MacroEconomicDiscovery:
                 return {
                     "current_phase": phase_data.phase_name,
                     "transition_probabilities": {
-                        "next_6m": phase_data.transition_probability
-                        * 0.5,  # Scale for 6 months
+                        "next_6m": phase_data.transition_probability * 0.5,  # Scale for 6 months
                         "next_12m": phase_data.transition_probability,
                         "methodology": "NBER-style leading indicator composite with probabilistic modeling via BusinessCycleEngine",
                     },
                     "historical_context": {
                         "phase_duration": phase_data.duration_months,
-                        "comparison_to_average": (
-                            "longer" if phase_data.duration_months > 24 else "average"
-                        ),
-                        "cycle_maturity": (
-                            "late" if phase_data.duration_months > 36 else "mid"
-                        ),
+                        "comparison_to_average": ("longer" if phase_data.duration_months > 24 else "average"),
+                        "cycle_maturity": ("late" if phase_data.duration_months > 36 else "mid"),
                     },
                     "confidence": cycle_analysis.get("confidence_score", 0.85),
                 }
-            else:
-                return {
-                    "current_phase": "unknown",
-                    "error": "business_cycle_phase_data_missing",
-                    "confidence": 0.0,
-                }
+            return {
+                "current_phase": "unknown",
+                "error": "business_cycle_phase_data_missing",
+                "confidence": 0.0,
+            }
 
         except Exception as e:
             logger.error(f"Business cycle data calculation failed: {e}")
@@ -3574,24 +3095,16 @@ class MacroEconomicDiscovery:
                 raise ValueError("FRED service returned no Fed funds rate data")
 
             # Try to get from statistics first (most reliable)
-            if (
-                "statistics" in fed_funds_result
-                and "latest_value" in fed_funds_result["statistics"]
-            ):
+            if "statistics" in fed_funds_result and "latest_value" in fed_funds_result["statistics"]:
                 latest_rate = fed_funds_result["statistics"]["latest_value"]
             # Fallback to recent_observations
-            elif (
-                "recent_observations" in fed_funds_result
-                and fed_funds_result["recent_observations"]
-            ):
+            elif "recent_observations" in fed_funds_result and fed_funds_result["recent_observations"]:
                 observations = fed_funds_result["recent_observations"]
                 latest_rate = observations[-1].get("value")
                 if latest_rate is not None:
                     latest_rate = float(latest_rate)  # Convert string to float
             else:
-                raise ValueError(
-                    "FRED Fed funds rate data not found in expected format"
-                )
+                raise ValueError("FRED Fed funds rate data not found in expected format")
 
             if latest_rate is None:
                 raise ValueError("Latest Fed funds rate value is None")
@@ -3613,9 +3126,7 @@ class MacroEconomicDiscovery:
         """Get real Fed balance sheet size from CLI services or fail with explicit error"""
         try:
             if not SERVICES_AVAILABLE:
-                raise ValueError(
-                    "Balance sheet data service unavailable - failing fast"
-                )
+                raise ValueError("Balance sheet data service unavailable - failing fast")
 
             # Import FRED service for real-time Fed balance sheet data
             from services.fred_economic import create_fred_economic_service
@@ -3642,13 +3153,9 @@ class MacroEconomicDiscovery:
 
             # Validate size is in reasonable range (Fed balance sheet typically 1T-15T in billions)
             if not (1000.0 <= balance_sheet_size <= 15000.0):
-                raise ValueError(
-                    f"Fed balance sheet size ${balance_sheet_size}B outside reasonable range"
-                )
+                raise ValueError(f"Fed balance sheet size ${balance_sheet_size}B outside reasonable range")
 
-            logger.info(
-                f"✓ Real-time Fed balance sheet size retrieved: ${balance_sheet_size}B"
-            )
+            logger.info(f"✓ Real-time Fed balance sheet size retrieved: ${balance_sheet_size}B")
             return balance_sheet_size
 
         except Exception as e:
@@ -3674,24 +3181,16 @@ class MacroEconomicDiscovery:
                 raise ValueError("FRED service returned no 10Y Treasury rate data")
 
             # Try to get from statistics first (most reliable)
-            if (
-                "statistics" in treasury_result
-                and "latest_value" in treasury_result["statistics"]
-            ):
+            if "statistics" in treasury_result and "latest_value" in treasury_result["statistics"]:
                 latest_rate = treasury_result["statistics"]["latest_value"]
             # Fallback to recent_observations
-            elif (
-                "recent_observations" in treasury_result
-                and treasury_result["recent_observations"]
-            ):
+            elif "recent_observations" in treasury_result and treasury_result["recent_observations"]:
                 observations = treasury_result["recent_observations"]
                 latest_rate = observations[-1].get("value")
                 if latest_rate is not None:
                     latest_rate = float(latest_rate)  # Convert string to float
             else:
-                raise ValueError(
-                    "FRED 10Y Treasury rate data not found in expected format"
-                )
+                raise ValueError("FRED 10Y Treasury rate data not found in expected format")
 
             if latest_rate is None:
                 raise ValueError("Latest 10Y Treasury rate value is None")
@@ -3700,9 +3199,7 @@ class MacroEconomicDiscovery:
 
             # Validate rate is in reasonable range (10Y Treasury typically 0-15%)
             if not (0.0 <= treasury_rate <= 15.0):
-                raise ValueError(
-                    f"10Y Treasury rate {treasury_rate}% outside reasonable range"
-                )
+                raise ValueError(f"10Y Treasury rate {treasury_rate}% outside reasonable range")
 
             logger.info(f"✓ Real-time 10Y Treasury rate retrieved: {treasury_rate}%")
             return treasury_rate
@@ -3730,24 +3227,16 @@ class MacroEconomicDiscovery:
                 raise ValueError("FRED service returned no 2Y Treasury rate data")
 
             # Try to get from statistics first (most reliable)
-            if (
-                "statistics" in treasury_result
-                and "latest_value" in treasury_result["statistics"]
-            ):
+            if "statistics" in treasury_result and "latest_value" in treasury_result["statistics"]:
                 latest_rate = treasury_result["statistics"]["latest_value"]
             # Fallback to recent_observations
-            elif (
-                "recent_observations" in treasury_result
-                and treasury_result["recent_observations"]
-            ):
+            elif "recent_observations" in treasury_result and treasury_result["recent_observations"]:
                 observations = treasury_result["recent_observations"]
                 latest_rate = observations[-1].get("value")
                 if latest_rate is not None:
                     latest_rate = float(latest_rate)  # Convert string to float
             else:
-                raise ValueError(
-                    "FRED 2Y Treasury rate data not found in expected format"
-                )
+                raise ValueError("FRED 2Y Treasury rate data not found in expected format")
 
             if latest_rate is None:
                 raise ValueError("Latest 2Y Treasury rate value is None")
@@ -3756,9 +3245,7 @@ class MacroEconomicDiscovery:
 
             # Validate rate is in reasonable range (2Y Treasury typically 0-15%)
             if not (0.0 <= treasury_rate <= 15.0):
-                raise ValueError(
-                    f"2Y Treasury rate {treasury_rate}% outside reasonable range"
-                )
+                raise ValueError(f"2Y Treasury rate {treasury_rate}% outside reasonable range")
 
             logger.info(f"✓ Real-time 2Y Treasury rate retrieved: {treasury_rate}%")
             return treasury_rate
@@ -3767,7 +3254,7 @@ class MacroEconomicDiscovery:
             logger.error(f"2Y Treasury rate retrieval failed: {e}")
             raise ValueError(f"2y_treasury_rate_unavailable: {str(e)}")
 
-    def _get_real_yield_curve_spread_or_fail(self) -> Dict[str, Any]:
+    def _get_real_yield_curve_spread_or_fail(self) -> dict[str, Any]:
         """Get real yield curve spread (10Y-2Y) from CLI services or fail with explicit error"""
         try:
             # Get real-time Treasury rates
@@ -3802,16 +3289,14 @@ class MacroEconomicDiscovery:
                 "is_real_time": True,
             }
 
-            logger.info(
-                f"✓ Real-time yield curve spread: {spread:.2f}% ({spread*100:.0f} bps)"
-            )
+            logger.info(f"✓ Real-time yield curve spread: {spread:.2f}% ({spread * 100:.0f} bps)")
             return yield_curve_data
 
         except Exception as e:
             logger.error(f"Yield curve spread calculation failed: {e}")
             raise ValueError(f"yield_curve_data_unavailable: {str(e)}")
 
-    def _get_real_dollar_index_or_fail(self) -> Dict[str, Any]:
+    def _get_real_dollar_index_or_fail(self) -> dict[str, Any]:
         """Get real US Dollar Index from FRED CLI services or fail with explicit error"""
         try:
             if not SERVICES_AVAILABLE:
@@ -3830,16 +3315,10 @@ class MacroEconomicDiscovery:
                 raise ValueError("FRED service returned no dollar index data")
 
             # Try to get from statistics first (most reliable)
-            if (
-                "statistics" in dollar_result
-                and "latest_value" in dollar_result["statistics"]
-            ):
+            if "statistics" in dollar_result and "latest_value" in dollar_result["statistics"]:
                 latest_index = dollar_result["statistics"]["latest_value"]
             # Fallback to recent_observations
-            elif (
-                "recent_observations" in dollar_result
-                and dollar_result["recent_observations"]
-            ):
+            elif "recent_observations" in dollar_result and dollar_result["recent_observations"]:
                 observations = dollar_result["recent_observations"]
                 latest_index = observations[-1].get("value")
                 if latest_index is not None:
@@ -3854,9 +3333,7 @@ class MacroEconomicDiscovery:
 
             # Validate index is in reasonable range (FRED Broad Dollar Index typically 80-140)
             if not (70.0 <= dollar_index <= 150.0):
-                raise ValueError(
-                    f"Dollar index {dollar_index} outside reasonable range"
-                )
+                raise ValueError(f"Dollar index {dollar_index} outside reasonable range")
 
             # Determine trend based on recent movements (simplified)
             if dollar_index > 105.0:
@@ -3885,16 +3362,14 @@ class MacroEconomicDiscovery:
                 "is_real_time": True,
             }
 
-            logger.info(
-                f"✓ Real-time Dollar Index (DTWEXBGS) retrieved: {dollar_index:.2f}"
-            )
+            logger.info(f"✓ Real-time Dollar Index (DTWEXBGS) retrieved: {dollar_index:.2f}")
             return dollar_index_data
 
         except Exception as e:
             logger.error(f"Dollar index retrieval failed: {e}")
             raise ValueError(f"dollar_index_data_unavailable: {str(e)}")
 
-    def _get_market_consensus_recession_probability_or_fail(self) -> Dict[str, Any]:
+    def _get_market_consensus_recession_probability_or_fail(self) -> dict[str, Any]:
         """Get market consensus recession probability and cross-validate with system calculations"""
         try:
             # Market consensus data based on August 2025 research
@@ -3917,18 +3392,13 @@ class MacroEconomicDiscovery:
                 "yield_curve_models": 0.15,
             }
 
-            weighted_consensus = sum(
-                market_consensus[source] * weights[source]
-                for source in market_consensus
-            )
+            weighted_consensus = sum(market_consensus[source] * weights[source] for source in market_consensus)
 
             # Calculate consensus range
             consensus_values = list(market_consensus.values())
             consensus_min = min(consensus_values)
             consensus_max = max(consensus_values)
-            consensus_std = (
-                np.std(consensus_values) if len(consensus_values) > 1 else 0.0
-            )
+            consensus_std = np.std(consensus_values) if len(consensus_values) > 1 else 0.0
 
             recession_consensus = {
                 "market_consensus": round(weighted_consensus, 4),
@@ -3956,14 +3426,10 @@ class MacroEconomicDiscovery:
             return recession_consensus
 
         except Exception as e:
-            logger.error(
-                f"Market consensus recession probability retrieval failed: {e}"
-            )
+            logger.error(f"Market consensus recession probability retrieval failed: {e}")
             raise ValueError(f"recession_consensus_data_unavailable: {str(e)}")
 
-    def _cross_validate_recession_probability(
-        self, system_probability: float
-    ) -> Dict[str, Any]:
+    def _cross_validate_recession_probability(self, system_probability: float) -> dict[str, Any]:
         """Cross-validate system recession probability against market consensus"""
         try:
             # Get market consensus
@@ -3973,14 +3439,10 @@ class MacroEconomicDiscovery:
 
             # Calculate validation metrics
             absolute_deviation = abs(system_probability - market_consensus)
-            relative_deviation = (
-                absolute_deviation / market_consensus if market_consensus > 0 else 0.0
-            )
+            relative_deviation = absolute_deviation / market_consensus if market_consensus > 0 else 0.0
 
             # Determine if system probability is within consensus range
-            within_range = (
-                consensus_range["min"] <= system_probability <= consensus_range["max"]
-            )
+            within_range = consensus_range["min"] <= system_probability <= consensus_range["max"]
 
             # Calculate validation score (higher is better)
             if within_range:
@@ -4007,10 +3469,7 @@ class MacroEconomicDiscovery:
                 # Favor system calculation for validated cases
                 adjustment_weight = 0.30  # 30% consensus, 70% system
 
-            adjusted_probability = (
-                adjustment_weight * market_consensus
-                + (1 - adjustment_weight) * system_probability
-            )
+            adjusted_probability = adjustment_weight * market_consensus + (1 - adjustment_weight) * system_probability
 
             cross_validation = {
                 "system_probability": round(system_probability, 4),
@@ -4022,11 +3481,9 @@ class MacroEconomicDiscovery:
                 "validation_status": validation_status,
                 "validation_score": round(validation_score, 3),
                 "adjusted_probability": round(adjusted_probability, 4),
-                "adjustment_methodology": f"{int(adjustment_weight*100)}% consensus, {int((1-adjustment_weight)*100)}% system",
+                "adjustment_methodology": f"{int(adjustment_weight * 100)}% consensus, {int((1 - adjustment_weight) * 100)}% system",
                 "recommendation": (
-                    "use_adjusted_probability"
-                    if validation_status != "validated"
-                    else "use_system_probability"
+                    "use_adjusted_probability" if validation_status != "validated" else "use_system_probability"
                 ),
             }
 
@@ -4042,13 +3499,11 @@ class MacroEconomicDiscovery:
                 "system_probability": system_probability,
                 "market_consensus": 0.35,  # Fallback consensus estimate
                 "validation_status": "validation_failed",
-                "adjusted_probability": max(
-                    system_probability, 0.15
-                ),  # Ensure minimum reasonable probability
+                "adjusted_probability": max(system_probability, 0.15),  # Ensure minimum reasonable probability
                 "error": str(e),
             }
 
-    def _calculate_sector_sensitivities_or_fail(self) -> Dict[str, Any]:
+    def _calculate_sector_sensitivities_or_fail(self) -> dict[str, Any]:
         """Calculate sector sensitivities from real market data or fail with explicit error"""
         try:
             if not SERVICES_AVAILABLE:
@@ -4080,20 +3535,14 @@ def main():
     """Main execution function."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Execute macro-economic discovery protocol"
-    )
-    parser.add_argument(
-        "--region", required=True, help="Geographic region (US, GLOBAL, EUROPE, ASIA)"
-    )
+    parser = argparse.ArgumentParser(description="Execute macro-economic discovery protocol")
+    parser.add_argument("--region", required=True, help="Geographic region (US, GLOBAL, EUROPE, ASIA)")
     parser.add_argument(
         "--indicators",
         default="all",
         help="Economic indicators to analyze (gdp, employment, inflation, monetary_policy, business_cycle, all)",
     )
-    parser.add_argument(
-        "--timeframe", default="5y", help="Analysis timeframe (1y, 2y, 5y, 10y, full)"
-    )
+    parser.add_argument("--timeframe", default="5y", help="Analysis timeframe (1y, 2y, 5y, 10y, full)")
     parser.add_argument(
         "--output-format",
         choices=["json", "summary"],
@@ -4109,9 +3558,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Execute discovery
-    discovery = MacroEconomicDiscovery(
-        region=args.region, indicators=args.indicators, timeframe=args.timeframe
-    )
+    discovery = MacroEconomicDiscovery(region=args.region, indicators=args.indicators, timeframe=args.timeframe)
     result = discovery.execute_discovery()
 
     if args.output_format == "json":
@@ -4130,31 +3577,19 @@ def main():
         print("\nDATA QUALITY:")
         quality = result["cli_data_quality"]
         print("  Overall Quality Score: {quality['overall_quality_score']:.3f}")
-        print(
-            f"  Required Coverage: {quality['completeness_metrics']['required_indicators_coverage']:.1%}"
-        )
-        print(
-            f"  Cross-source Consistency: {quality['consistency_validation']['cross_source_consistency']:.1%}"
-        )
+        print(f"  Required Coverage: {quality['completeness_metrics']['required_indicators_coverage']:.1%}")
+        print(f"  Cross-source Consistency: {quality['consistency_validation']['cross_source_consistency']:.1%}")
 
         print("\nINSTITUTIONAL CERTIFICATION:")
         cert = result["data_quality_assessment"]
-        print(
-            f"  Institutional Grade: {'✓' if cert['institutional_grade_certification'] else '✗'}"
-        )
-        print(
-            f"  Discovery Confidence: {cert['confidence_scores']['discovery_confidence']:.3f}"
-        )
-        print(
-            f"  Analysis Readiness: {cert['confidence_scores']['analysis_readiness']:.3f}"
-        )
+        print(f"  Institutional Grade: {'✓' if cert['institutional_grade_certification'] else '✗'}")
+        print(f"  Discovery Confidence: {cert['confidence_scores']['discovery_confidence']:.3f}")
+        print(f"  Analysis Readiness: {cert['confidence_scores']['analysis_readiness']:.3f}")
 
         print("\nKEY INSIGHTS:")
         insights = result["cli_insights"]["primary_insights"]
         for i, insight in enumerate(insights[:3], 1):
-            print(
-                f"  {i}. {insight['insight'][:80]}... (confidence: {insight['confidence']:.2f})"
-            )
+            print(f"  {i}. {insight['insight'][:80]}... (confidence: {insight['confidence']:.2f})")
 
         print("\nOutput saved to: {discovery.output_dir}")
         print("=" * 60)

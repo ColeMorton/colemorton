@@ -10,6 +10,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 # Add scripts directory to path for imports
 scripts_dir = Path(__file__).parent
 sys.path.insert(0, str(scripts_dir))
@@ -27,13 +28,9 @@ class TwitterTemplateTest:
     def __init__(self):
         self.templates_dir = scripts_dir / "templates" / "twitter"
         if not self.templates_dir.exists():
-            raise FileNotFoundError(
-                f"Templates directory not found: {self.templates_dir}"
-            )
+            raise FileNotFoundError(f"Templates directory not found: {self.templates_dir}")
 
-        self.env = Environment(
-            loader=FileSystemLoader(str(self.templates_dir)), autoescape=True
-        )
+        self.env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
 
     def test_fundamental_valuation_template(self):
         """Test fundamental analysis valuation template (Template A)"""
@@ -61,9 +58,7 @@ class TwitterTemplateTest:
         }
 
         try:
-            template = self.env.get_template(
-                "fundamental/twitter_fundamental_A_valuation.j2"
-            )
+            template = self.env.get_template("fundamental/twitter_fundamental_A_valuation.j2")
             content = template.render(**context)
 
             # Validate content
@@ -72,10 +67,10 @@ class TwitterTemplateTest:
             print("Generated content preview:\n{content[:200]}...\n")
             return True
 
-        except TemplateNotFound as e:
+        except TemplateNotFound:
             print("❌ Template not found: {e}")
             return False
-        except Exception as e:
+        except Exception:
             print("❌ Template rendering failed: {e}")
             return False
 
@@ -120,7 +115,7 @@ class TwitterTemplateTest:
             # Debug: Try to render with minimal context first
             try:
                 content = template.render(**context)
-            except Exception as render_error:
+            except Exception:
                 print("❌ Template rendering failed: {render_error}")
                 # Try with just required variables
                 minimal_context = {
@@ -131,7 +126,7 @@ class TwitterTemplateTest:
                 try:
                     template.render(**minimal_context)
                     print("✅ Minimal context worked - issue is with data structure")
-                except Exception as minimal_error:
+                except Exception:
                     print("❌ Even minimal context failed: {minimal_error}")
                 return False
 
@@ -140,10 +135,10 @@ class TwitterTemplateTest:
             print("Generated content preview:\n{content[:200]}...\n")
             return True
 
-        except TemplateNotFound as e:
+        except TemplateNotFound:
             print("❌ Template not found: {e}")
             return False
-        except Exception as e:
+        except Exception:
             print("❌ Unexpected error: {e}")
             return False
 
@@ -164,11 +159,10 @@ class TwitterTemplateTest:
             if "Not financial advice" in content:
                 print("✅ Disclaimer macro test PASSED")
                 return True
-            else:
-                print("❌ Disclaimer macro test FAILED")
-                return False
+            print("❌ Disclaimer macro test FAILED")
+            return False
 
-        except Exception as e:
+        except Exception:
             print("❌ Base template macro test failed: {e}")
             return False
 
@@ -205,7 +199,7 @@ class TwitterTemplateTest:
             print("✅ Template inheritance structure test PASSED")
             return True
 
-        except Exception as e:
+        except Exception:
             print("❌ Template inheritance test failed: {e}")
             return False
 
@@ -225,7 +219,7 @@ class TwitterTemplateTest:
             try:
                 result = test()
                 results.append(result)
-            except Exception as e:
+            except Exception:
                 print("❌ Test failed with exception: {e}")
                 results.append(False)
             print()  # Add spacing between tests
@@ -239,9 +233,7 @@ class TwitterTemplateTest:
         if passed == total:
             print("🎉 All tests PASSED! Template integration is working correctly.")
         else:
-            print(
-                "⚠️  Some tests failed. Check template configuration and dependencies."
-            )
+            print("⚠️  Some tests failed. Check template configuration and dependencies.")
 
         return passed == total
 
@@ -252,7 +244,7 @@ def main():
         test_suite = TwitterTemplateTest()
         success = test_suite.run_all_tests()
         sys.exit(0 if success else 1)
-    except Exception as e:
+    except Exception:
         print("❌ Test suite failed to initialize: {e}")
         sys.exit(1)
 

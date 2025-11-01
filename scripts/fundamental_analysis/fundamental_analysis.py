@@ -9,9 +9,10 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
+
 
 # Real-time economic data service
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "services"))
@@ -24,7 +25,7 @@ class FundamentalAnalyzer:
     def __init__(
         self,
         ticker: str,
-        discovery_data: Optional[Dict[str, Any]] = None,
+        discovery_data: dict[str, Any] | None = None,
         output_dir: str = "./data/outputs/fundamental_analysis/analysis",
     ):
         """
@@ -56,7 +57,7 @@ class FundamentalAnalyzer:
             "default": {"profit_margin": 0.15, "roe": 0.20, "revenue_growth": 0.10},
         }
 
-    def load_discovery_data(self, discovery_file_path: Optional[str] = None) -> bool:
+    def load_discovery_data(self, discovery_file_path: str | None = None) -> bool:
         """Load discovery data from file if not provided"""
         if self.discovery_data is not None:
             return True
@@ -65,33 +66,26 @@ class FundamentalAnalyzer:
             # Try to find discovery file with today's date
             today = self.timestamp.strftime("%Y%m%d")
             discovery_dir = "./data/outputs/fundamental_analysis/discovery"
-            discovery_file_path = os.path.join(
-                discovery_dir, f"{self.ticker}_{today}_discovery.json"
-            )
+            discovery_file_path = os.path.join(discovery_dir, f"{self.ticker}_{today}_discovery.json")
 
         try:
             if os.path.exists(discovery_file_path):
-                with open(discovery_file_path, "r") as f:
+                with open(discovery_file_path) as f:
                     self.discovery_data = json.load(f)
                 print("📂 Loaded discovery data from: {discovery_file_path}")
                 return True
-            else:
-                print("❌ Discovery file not found: {discovery_file_path}")
-                return False
-        except Exception as e:
+            print("❌ Discovery file not found: {discovery_file_path}")
+            return False
+        except Exception:
             print("❌ Error loading discovery data: {str(e)}")
             return False
 
-    def get_industry_benchmarks(self) -> Dict[str, float]:
+    def get_industry_benchmarks(self) -> dict[str, float]:
         """Get industry-specific benchmarks for analysis"""
         if not self.discovery_data:
             return self.industry_benchmarks["default"]
 
-        industry = (
-            self.discovery_data.get("company_intelligence", {})
-            .get("industry", "")
-            .lower()
-        )
+        industry = self.discovery_data.get("company_intelligence", {}).get("industry", "").lower()
 
         for key, benchmarks in self.industry_benchmarks.items():
             if key in industry:
@@ -99,7 +93,7 @@ class FundamentalAnalyzer:
 
         return self.industry_benchmarks["default"]
 
-    def analyze_financial_health(self) -> Dict[str, Any]:
+    def analyze_financial_health(self) -> dict[str, Any]:
         """Comprehensive 4-dimensional financial health scorecard"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -122,9 +116,7 @@ class FundamentalAnalyzer:
         gross_profit = metrics.get("gross_profit", 0)
         revenue = metrics.get("revenue_ttm", 1)
         operating_margin = (gross_profit / revenue) if revenue > 0 else 0
-        profitability_scores.append(
-            min(operating_margin / (benchmarks["profit_margin"] * 1.3), 1.0)
-        )
+        profitability_scores.append(min(operating_margin / (benchmarks["profit_margin"] * 1.3), 1.0))
 
         profitability_score = np.mean(profitability_scores)
 
@@ -138,9 +130,7 @@ class FundamentalAnalyzer:
         # Earnings growth (estimated from forward metrics)
         forward_eps = metrics.get("forward_eps", 0)
         trailing_eps = metrics.get("earnings_per_share", 0)
-        earnings_growth = (
-            ((forward_eps - trailing_eps) / trailing_eps) if trailing_eps > 0 else 0
-        )
+        earnings_growth = ((forward_eps - trailing_eps) / trailing_eps) if trailing_eps > 0 else 0
         growth_scores.append(min(earnings_growth / benchmarks["revenue_growth"], 1.0))
 
         growth_score = np.mean(growth_scores)
@@ -167,30 +157,22 @@ class FundamentalAnalyzer:
 
         # P/E ratio assessment
         if pe_ratio > 0:
-            valuation_scores.append(
-                max(1 - (pe_ratio / 25), 0)
-            )  # 25 is reasonable, lower is better
+            valuation_scores.append(max(1 - (pe_ratio / 25), 0))  # 25 is reasonable, lower is better
 
         # P/B ratio assessment
         pb_ratio = metrics.get("price_to_book", 0)
         if pb_ratio > 0:
-            valuation_scores.append(
-                max(1 - (pb_ratio / 3), 0)
-            )  # 3 is reasonable, lower is better
+            valuation_scores.append(max(1 - (pb_ratio / 3), 0))  # 3 is reasonable, lower is better
 
         # P/S ratio assessment
         ps_ratio = metrics.get("price_to_sales", 0)
         if ps_ratio > 0:
-            valuation_scores.append(
-                max(1 - (ps_ratio / 5), 0)
-            )  # 5 is reasonable, lower is better
+            valuation_scores.append(max(1 - (ps_ratio / 5), 0))  # 5 is reasonable, lower is better
 
         valuation_score = np.mean(valuation_scores) if valuation_scores else 0.5
 
         # Overall health score
-        overall_score = np.mean(
-            [profitability_score, growth_score, stability_score, valuation_score]
-        )
+        overall_score = np.mean([profitability_score, growth_score, stability_score, valuation_score])
 
         return {
             "profitability_score": round(profitability_score, 3),
@@ -212,7 +194,7 @@ class FundamentalAnalyzer:
             },
         }
 
-    def analyze_competitive_position(self) -> Dict[str, Any]:
+    def analyze_competitive_position(self) -> dict[str, Any]:
         """Analyze competitive position and economic moat"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -226,9 +208,7 @@ class FundamentalAnalyzer:
         market_position = self._classify_market_position(market_cap)
 
         # Competitive advantages analysis
-        competitive_advantages = self._identify_competitive_advantages(
-            company_info, financial_metrics
-        )
+        competitive_advantages = self._identify_competitive_advantages(company_info, financial_metrics)
 
         # Moat strength assessment
         moat_strength = self._assess_moat_strength(financial_metrics, company_info)
@@ -244,12 +224,10 @@ class FundamentalAnalyzer:
             "competitive_strength_score": self._calculate_competitive_score(
                 market_position, competitive_advantages, moat_strength
             ),
-            "key_risks": self._identify_competitive_risks(
-                company_info, financial_metrics
-            ),
+            "key_risks": self._identify_competitive_risks(company_info, financial_metrics),
         }
 
-    def analyze_risk_profile(self) -> Dict[str, Any]:
+    def analyze_risk_profile(self) -> dict[str, Any]:
         """Comprehensive risk assessment matrix with quantified probability/impact analysis"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -259,16 +237,12 @@ class FundamentalAnalyzer:
         company_info = self.discovery_data.get("company_intelligence", {})
 
         # Enhanced quantified risk framework
-        quantified_risk_matrix = self._create_quantified_risk_matrix(
-            market_data, financial_metrics, company_info
-        )
+        quantified_risk_matrix = self._create_quantified_risk_matrix(market_data, financial_metrics, company_info)
 
         # Legacy risk assessments for compatibility
         market_risks = self._assess_market_risks(market_data)
         financial_risks = self._assess_financial_risks(financial_metrics)
-        operational_risks = self._assess_operational_risks(
-            company_info, financial_metrics
-        )
+        operational_risks = self._assess_operational_risks(company_info, financial_metrics)
 
         # Calculate aggregate risk score from quantified matrix
         total_risk_score = sum(risk["risk_score"] for risk in quantified_risk_matrix)
@@ -285,18 +259,14 @@ class FundamentalAnalyzer:
             "market_risks": market_risks,  # Legacy compatibility
             "financial_risks": financial_risks,  # Legacy compatibility
             "operational_risks": operational_risks,  # Legacy compatibility
-            "risk_summary": self._generate_enhanced_risk_summary(
-                quantified_risk_matrix
-            ),
+            "risk_summary": self._generate_enhanced_risk_summary(quantified_risk_matrix),
             "mitigation_strategies": self._identify_enhanced_risk_mitigations(
                 quantified_risk_matrix, financial_metrics, company_info
             ),
-            "monitoring_framework": self._create_risk_monitoring_framework(
-                quantified_risk_matrix
-            ),
+            "monitoring_framework": self._create_risk_monitoring_framework(quantified_risk_matrix),
         }
 
-    def analyze_economic_sensitivity(self) -> Dict[str, Any]:
+    def analyze_economic_sensitivity(self) -> dict[str, Any]:
         """Analyze economic sensitivity and macro-economic positioning"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -314,26 +284,20 @@ class FundamentalAnalyzer:
         )
 
         # Business cycle positioning
-        business_cycle_position = self._assess_business_cycle_positioning(
-            market_data, economic_indicators
-        )
+        business_cycle_position = self._assess_business_cycle_positioning(market_data, economic_indicators)
 
         # Interest rate sensitivity analysis
-        interest_rate_sensitivity = self._analyze_interest_rate_sensitivity(
-            financial_metrics, market_data
-        )
+        interest_rate_sensitivity = self._analyze_interest_rate_sensitivity(financial_metrics, market_data)
 
         return {
             "economic_sensitivity_matrix": sensitivity_matrix,
             "business_cycle_positioning": business_cycle_position,
             "interest_rate_sensitivity": interest_rate_sensitivity,
             "current_economic_context": economic_indicators,
-            "economic_risk_assessment": self._assess_economic_risks(
-                sensitivity_matrix, business_cycle_position
-            ),
+            "economic_risk_assessment": self._assess_economic_risks(sensitivity_matrix, business_cycle_position),
         }
 
-    def analyze_economic_stress_testing(self) -> Dict[str, Any]:
+    def analyze_economic_stress_testing(self) -> dict[str, Any]:
         """Analyze performance under various economic stress scenarios"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -352,20 +316,14 @@ class FundamentalAnalyzer:
         # Calculate impact for each scenario
         scenario_impacts = {}
         for scenario_name, scenario_data in stress_scenarios.items():
-            impact = self._calculate_scenario_impact(
-                scenario_data, sensitivity_matrix, financial_metrics, market_data
-            )
+            impact = self._calculate_scenario_impact(scenario_data, sensitivity_matrix, financial_metrics, market_data)
             scenario_impacts[scenario_name] = impact
 
         # Recovery timeline analysis
-        recovery_analysis = self._analyze_recovery_timelines(
-            scenario_impacts, company_info, financial_metrics
-        )
+        recovery_analysis = self._analyze_recovery_timelines(scenario_impacts, company_info, financial_metrics)
 
         # Stress test summary
-        stress_test_summary = self._generate_stress_test_summary(
-            scenario_impacts, recovery_analysis
-        )
+        stress_test_summary = self._generate_stress_test_summary(scenario_impacts, recovery_analysis)
 
         return {
             "stress_test_scenarios": stress_scenarios,
@@ -377,7 +335,7 @@ class FundamentalAnalyzer:
             ),
         }
 
-    def analyze_sector_positioning(self) -> Dict[str, Any]:
+    def analyze_sector_positioning(self) -> dict[str, Any]:
         """Analyze sector positioning and cross-sector relative performance"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -390,27 +348,19 @@ class FundamentalAnalyzer:
         sector = company_info.get("sector", "Unknown")
 
         # Cross-sector valuation analysis
-        cross_sector_analysis = self._analyze_cross_sector_valuation(
-            financial_metrics, sector
-        )
+        cross_sector_analysis = self._analyze_cross_sector_valuation(financial_metrics, sector)
 
         # Sector relative positioning
-        sector_relative_position = self._assess_sector_relative_position(
-            financial_metrics, market_data, sector
-        )
+        sector_relative_position = self._assess_sector_relative_position(financial_metrics, market_data, sector)
 
         # Sector rotation analysis
-        sector_rotation_assessment = self._analyze_sector_rotation_dynamics(
-            sector, market_data
-        )
+        sector_rotation_assessment = self._analyze_sector_rotation_dynamics(sector, market_data)
 
         return {
             "sector_identification": {
                 "primary_sector": sector,
                 "industry": company_info.get("industry", "Unknown"),
-                "market_cap_category": self._classify_market_position(
-                    market_data.get("market_cap", 0)
-                )["category"],
+                "market_cap_category": self._classify_market_position(market_data.get("market_cap", 0))["category"],
             },
             "cross_sector_valuation_analysis": cross_sector_analysis,
             "sector_relative_positioning": sector_relative_position,
@@ -422,7 +372,7 @@ class FundamentalAnalyzer:
             ),
         }
 
-    def generate_investment_metrics(self) -> Dict[str, Any]:
+    def generate_investment_metrics(self) -> dict[str, Any]:
         """Generate comprehensive investment decision metrics"""
         if not self.discovery_data:
             raise ValueError("Discovery data not available for analysis")
@@ -450,18 +400,14 @@ class FundamentalAnalyzer:
         # Growth metrics
         growth_metrics = {
             "revenue_growth": financial_metrics.get("revenue_growth", 0),
-            "estimated_earnings_growth": self._estimate_earnings_growth(
-                financial_metrics
-            ),
+            "estimated_earnings_growth": self._estimate_earnings_growth(financial_metrics),
             "free_cash_flow_growth": self._estimate_fcf_growth(financial_metrics),
         }
 
         # Quality metrics
         quality_metrics = {
             "earnings_quality": self._assess_earnings_quality(financial_metrics),
-            "balance_sheet_strength": self._assess_balance_sheet_strength(
-                financial_metrics
-            ),
+            "balance_sheet_strength": self._assess_balance_sheet_strength(financial_metrics),
             "cash_generation": self._assess_cash_generation(financial_metrics),
         }
 
@@ -475,9 +421,7 @@ class FundamentalAnalyzer:
             ),
         }
 
-    def execute_analysis(
-        self, discovery_file_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def execute_analysis(self, discovery_file_path: str | None = None) -> dict[str, Any]:
         """Execute complete fundamental analysis workflow"""
         print("📊 Starting fundamental analysis for {self.ticker}")
 
@@ -506,9 +450,7 @@ class FundamentalAnalyzer:
             }
 
             # Calculate overall analysis confidence
-            analysis_result[
-                "analysis_confidence"
-            ] = self._calculate_analysis_confidence(analysis_result)
+            analysis_result["analysis_confidence"] = self._calculate_analysis_confidence(analysis_result)
 
             # Save analysis results
             self._save_analysis_results(analysis_result)
@@ -526,20 +468,19 @@ class FundamentalAnalyzer:
         """Convert health score to letter grade"""
         if score >= 0.9:
             return "A+"
-        elif score >= 0.8:
+        if score >= 0.8:
             return "A"
-        elif score >= 0.7:
+        if score >= 0.7:
             return "B+"
-        elif score >= 0.6:
+        if score >= 0.6:
             return "B"
-        elif score >= 0.5:
+        if score >= 0.5:
             return "C+"
-        elif score >= 0.4:
+        if score >= 0.4:
             return "C"
-        else:
-            return "D"
+        return "D"
 
-    def _classify_market_position(self, market_cap: float) -> Dict[str, Any]:
+    def _classify_market_position(self, market_cap: float) -> dict[str, Any]:
         """Classify market position based on market cap"""
         if market_cap > 200_000_000_000:
             return {
@@ -547,34 +488,33 @@ class FundamentalAnalyzer:
                 "description": "Market leader with dominant position",
                 "score": 0.9,
             }
-        elif market_cap > 10_000_000_000:
+        if market_cap > 10_000_000_000:
             return {
                 "category": "Large-cap",
                 "description": "Established player with strong market presence",
                 "score": 0.8,
             }
-        elif market_cap > 2_000_000_000:
+        if market_cap > 2_000_000_000:
             return {
                 "category": "Mid-cap",
                 "description": "Growing company with expansion potential",
                 "score": 0.7,
             }
-        elif market_cap > 300_000_000:
+        if market_cap > 300_000_000:
             return {
                 "category": "Small-cap",
                 "description": "Emerging company with higher growth potential",
                 "score": 0.6,
             }
-        else:
-            return {
-                "category": "Micro-cap",
-                "description": "Early-stage company with significant risk",
-                "score": 0.4,
-            }
+        return {
+            "category": "Micro-cap",
+            "description": "Early-stage company with significant risk",
+            "score": 0.4,
+        }
 
     def _identify_competitive_advantages(
-        self, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]
-    ) -> List[str]:
+        self, company_info: dict[str, Any], financial_metrics: dict[str, Any]
+    ) -> list[str]:
         """Identify potential competitive advantages"""
         advantages = []
 
@@ -584,9 +524,7 @@ class FundamentalAnalyzer:
 
         # Strong ROE suggests efficient capital use
         if financial_metrics.get("return_on_equity", 0) > 0.25:
-            advantages.append(
-                "Strong return on equity demonstrating capital efficiency"
-            )
+            advantages.append("Strong return on equity demonstrating capital efficiency")
 
         # Industry-specific advantages
         industry = company_info.get("industry", "").lower()
@@ -599,9 +537,7 @@ class FundamentalAnalyzer:
 
         return advantages
 
-    def _assess_moat_strength(
-        self, financial_metrics: Dict[str, Any], company_info: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_moat_strength(self, financial_metrics: dict[str, Any], company_info: dict[str, Any]) -> dict[str, Any]:
         """Assess economic moat strength"""
         moat_indicators = []
 
@@ -627,18 +563,10 @@ class FundamentalAnalyzer:
         return {
             "strength_score": round(strength_score, 3),
             "moat_sources": moat_indicators,
-            "assessment": (
-                "Strong"
-                if strength_score > 0.7
-                else "Moderate"
-                if strength_score > 0.4
-                else "Weak"
-            ),
+            "assessment": ("Strong" if strength_score > 0.7 else "Moderate" if strength_score > 0.4 else "Weak"),
         }
 
-    def _analyze_industry_dynamics(
-        self, company_info: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_industry_dynamics(self, company_info: dict[str, Any]) -> dict[str, Any]:
         """Analyze industry dynamics and trends"""
         sector = company_info.get("sector", "").lower()
 
@@ -659,9 +587,9 @@ class FundamentalAnalyzer:
 
     def _calculate_competitive_score(
         self,
-        market_position: Dict[str, Any],
-        advantages: List[str],
-        moat_strength: Dict[str, Any],
+        market_position: dict[str, Any],
+        advantages: list[str],
+        moat_strength: dict[str, Any],
     ) -> float:
         """Calculate overall competitive strength score"""
         position_score = market_position.get("score", 0.5)
@@ -670,17 +598,13 @@ class FundamentalAnalyzer:
 
         return round(np.mean([position_score, advantage_score, moat_score]), 3)
 
-    def _identify_competitive_risks(
-        self, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_competitive_risks(self, company_info: dict[str, Any], financial_metrics: dict[str, Any]) -> list[str]:
         """Identify key competitive risks"""
         risks = []
 
         # High P/E suggests high expectations
         if financial_metrics.get("pe_ratio", 0) > 30:
-            risks.append(
-                "High valuation creates vulnerability to earnings disappointments"
-            )
+            risks.append("High valuation creates vulnerability to earnings disappointments")
 
         # Industry-specific risks
         industry = company_info.get("industry", "").lower()
@@ -691,7 +615,7 @@ class FundamentalAnalyzer:
 
         return risks
 
-    def _assess_market_risks(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_market_risks(self, market_data: dict[str, Any]) -> dict[str, Any]:
         """Assess market-related risks"""
         beta = market_data.get("beta", 1.0)
 
@@ -719,9 +643,7 @@ class FundamentalAnalyzer:
             ],
         }
 
-    def _assess_financial_risks(
-        self, financial_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_financial_risks(self, financial_metrics: dict[str, Any]) -> dict[str, Any]:
         """Assess financial-related risks"""
         risk_factors = []
         risk_score = 0.5  # Default moderate risk
@@ -744,20 +666,14 @@ class FundamentalAnalyzer:
         risk_score = min(risk_score, 1.0)
 
         return {
-            "financial_stability": (
-                "Low"
-                if risk_score > 0.7
-                else "Moderate"
-                if risk_score > 0.4
-                else "High"
-            ),
+            "financial_stability": ("Low" if risk_score > 0.7 else "Moderate" if risk_score > 0.4 else "High"),
             "risk_score": round(risk_score, 3),
             "risk_factors": risk_factors,
         }
 
     def _assess_operational_risks(
-        self, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, company_info: dict[str, Any], financial_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess operational and business model risks"""
         risk_factors = []
 
@@ -780,18 +696,17 @@ class FundamentalAnalyzer:
         """Convert risk score to risk grade"""
         if risk_score < 0.3:
             return "Low Risk"
-        elif risk_score < 0.5:
+        if risk_score < 0.5:
             return "Moderate Risk"
-        elif risk_score < 0.7:
+        if risk_score < 0.7:
             return "High Risk"
-        else:
-            return "Very High Risk"
+        return "Very High Risk"
 
     def _generate_risk_summary(
         self,
-        market_risks: Dict[str, Any],
-        financial_risks: Dict[str, Any],
-        operational_risks: Dict[str, Any],
+        market_risks: dict[str, Any],
+        financial_risks: dict[str, Any],
+        operational_risks: dict[str, Any],
     ) -> str:
         """Generate comprehensive risk summary"""
         risk_levels = [
@@ -801,9 +716,7 @@ class FundamentalAnalyzer:
         ]
         return f"Risk Profile - {', '.join(risk_levels)}"
 
-    def _identify_risk_mitigations(
-        self, financial_metrics: Dict[str, Any], company_info: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_risk_mitigations(self, financial_metrics: dict[str, Any], company_info: dict[str, Any]) -> list[str]:
         """Identify factors that mitigate risks"""
         mitigations = []
 
@@ -823,38 +736,35 @@ class FundamentalAnalyzer:
         return mitigations
 
     # Additional helper methods for investment metrics
-    def _calculate_roa(self, financial_metrics: Dict[str, Any]) -> float:
+    def _calculate_roa(self, financial_metrics: dict[str, Any]) -> float:
         """Calculate Return on Assets"""
         net_income = financial_metrics.get("net_income", 0)
         # Estimate total assets from enterprise value as proxy
         total_assets = financial_metrics.get("revenue_ttm", 1) * 1.5  # Rough estimate
         return (net_income / total_assets) if total_assets > 0 else 0
 
-    def _calculate_asset_turnover(self, financial_metrics: Dict[str, Any]) -> float:
+    def _calculate_asset_turnover(self, financial_metrics: dict[str, Any]) -> float:
         """Calculate Asset Turnover ratio"""
         revenue = financial_metrics.get("revenue_ttm", 0)
         # Estimate total assets from enterprise value as proxy
         total_assets = revenue * 1.5 if revenue > 0 else 1
         return (revenue / total_assets) if total_assets > 0 else 0
 
-    def _estimate_earnings_growth(self, financial_metrics: Dict[str, Any]) -> float:
+    def _estimate_earnings_growth(self, financial_metrics: dict[str, Any]) -> float:
         """Estimate earnings growth rate"""
         forward_eps = financial_metrics.get("forward_eps", 0)
         trailing_eps = financial_metrics.get("earnings_per_share", 0)
 
         if trailing_eps > 0 and forward_eps > 0:
             return (forward_eps - trailing_eps) / trailing_eps
-        else:
-            return financial_metrics.get(
-                "revenue_growth", 0
-            )  # Fallback to revenue growth
+        return financial_metrics.get("revenue_growth", 0)  # Fallback to revenue growth
 
-    def _estimate_fcf_growth(self, financial_metrics: Dict[str, Any]) -> float:
+    def _estimate_fcf_growth(self, financial_metrics: dict[str, Any]) -> float:
         """Estimate free cash flow growth"""
         # Without historical data, use revenue growth as proxy
         return financial_metrics.get("revenue_growth", 0)
 
-    def _assess_earnings_quality(self, financial_metrics: Dict[str, Any]) -> float:
+    def _assess_earnings_quality(self, financial_metrics: dict[str, Any]) -> float:
         """Assess earnings quality (0-1 scale)"""
         fcf = financial_metrics.get("free_cash_flow", 0)
         net_income = financial_metrics.get("net_income", 1)
@@ -865,15 +775,13 @@ class FundamentalAnalyzer:
             return max(0, quality_ratio)
         return 0.5
 
-    def _assess_balance_sheet_strength(
-        self, financial_metrics: Dict[str, Any]
-    ) -> float:
+    def _assess_balance_sheet_strength(self, financial_metrics: dict[str, Any]) -> float:
         """Assess balance sheet strength (0-1 scale)"""
         # Use cash ratio as proxy for balance sheet strength
         cash_ratio = financial_metrics.get("cash_ratio", 0)
         return min(cash_ratio / 2.0, 1.0)
 
-    def _assess_cash_generation(self, financial_metrics: Dict[str, Any]) -> float:
+    def _assess_cash_generation(self, financial_metrics: dict[str, Any]) -> float:
         """Assess cash generation capability (0-1 scale)"""
         fcf = financial_metrics.get("free_cash_flow", 0)
         revenue = financial_metrics.get("revenue_ttm", 1)
@@ -883,10 +791,10 @@ class FundamentalAnalyzer:
 
     def _calculate_investment_score(
         self,
-        valuation: Dict[str, Any],
-        efficiency: Dict[str, Any],
-        growth: Dict[str, Any],
-        quality: Dict[str, Any],
+        valuation: dict[str, Any],
+        efficiency: dict[str, Any],
+        growth: dict[str, Any],
+        quality: dict[str, Any],
     ) -> float:
         """Calculate overall investment attractiveness score"""
         # Valuation score (lower is better)
@@ -902,14 +810,12 @@ class FundamentalAnalyzer:
 
         # Quality score
         quality_score = (
-            quality["earnings_quality"]
-            + quality["balance_sheet_strength"]
-            + quality["cash_generation"]
+            quality["earnings_quality"] + quality["balance_sheet_strength"] + quality["cash_generation"]
         ) / 3
 
         return round(np.mean([val_score, eff_score, growth_score, quality_score]), 3)
 
-    def _generate_analysis_summary(self) -> Dict[str, Any]:
+    def _generate_analysis_summary(self) -> dict[str, Any]:
         """Generate executive summary of analysis"""
         return {
             "analysis_date": self.timestamp.strftime("%Y-%m-%d"),
@@ -927,7 +833,7 @@ class FundamentalAnalyzer:
             ],
         }
 
-    def _calculate_analysis_confidence(self, analysis_result: Dict[str, Any]) -> float:
+    def _calculate_analysis_confidence(self, analysis_result: dict[str, Any]) -> float:
         """Calculate institutional-grade confidence in analysis results (0.90+ standard)"""
         # Start with institutional baseline confidence
         base_confidence = 0.90  # Institutional minimum standard
@@ -935,36 +841,28 @@ class FundamentalAnalyzer:
 
         # Discovery data quality factor
         if self.discovery_data and "data_quality_assessment" in self.discovery_data:
-            data_quality = self.discovery_data["data_quality_assessment"].get(
-                "overall_data_quality", 0.90
-            )
+            data_quality = self.discovery_data["data_quality_assessment"].get("overall_data_quality", 0.90)
             confidence_factors.append(data_quality)
         else:
             confidence_factors.append(0.85)  # Penalize missing discovery data
 
         # Economic analysis integration factor
         if "economic_sensitivity_analysis" in analysis_result:
-            economic_confidence = analysis_result["economic_sensitivity_analysis"].get(
-                "confidence_score", 0.90
-            )
+            economic_confidence = analysis_result["economic_sensitivity_analysis"].get("confidence_score", 0.90)
             confidence_factors.append(economic_confidence)
         else:
             confidence_factors.append(0.88)
 
         # Sector positioning factor
         if "sector_positioning_analysis" in analysis_result:
-            sector_confidence = analysis_result["sector_positioning_analysis"].get(
-                "confidence_score", 0.90
-            )
+            sector_confidence = analysis_result["sector_positioning_analysis"].get("confidence_score", 0.90)
             confidence_factors.append(sector_confidence)
         else:
             confidence_factors.append(0.88)
 
         # Risk assessment factor
         if "risk_profile_analysis" in analysis_result:
-            risk_confidence = analysis_result["risk_profile_analysis"].get(
-                "confidence_score", 0.90
-            )
+            risk_confidence = analysis_result["risk_profile_analysis"].get("confidence_score", 0.90)
             confidence_factors.append(risk_confidence)
         else:
             confidence_factors.append(0.87)
@@ -985,7 +883,7 @@ class FundamentalAnalyzer:
 
         return round(final_confidence, 3)
 
-    def _save_analysis_results(self, analysis_result: Dict[str, Any]) -> str:
+    def _save_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Save analysis results to output directory"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -1000,7 +898,7 @@ class FundamentalAnalyzer:
         return filepath
 
     # Economic Sensitivity Analysis Helper Methods
-    def _get_current_economic_indicators(self) -> Dict[str, Any]:
+    def _get_current_economic_indicators(self) -> dict[str, Any]:
         """Get current economic indicators for analysis"""
         # For now, return sample/default economic indicators
         # In production, this would fetch from FRED CLI or API
@@ -1032,11 +930,11 @@ class FundamentalAnalyzer:
 
     def _calculate_economic_sensitivity_matrix(
         self,
-        market_data: Dict[str, Any],
-        financial_metrics: Dict[str, Any],
-        company_info: Dict[str, Any],
-        economic_indicators: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        market_data: dict[str, Any],
+        financial_metrics: dict[str, Any],
+        company_info: dict[str, Any],
+        economic_indicators: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate economic sensitivity matrix similar to sector analysis"""
 
         # Estimate correlations based on industry and company characteristics
@@ -1062,9 +960,7 @@ class FundamentalAnalyzer:
 
         return matrix
 
-    def _get_industry_economic_sensitivities(
-        self, sector: str, beta: float
-    ) -> Dict[str, float]:
+    def _get_industry_economic_sensitivities(self, sector: str, beta: float) -> dict[str, float]:
         """Get industry-specific economic sensitivity estimates"""
 
         # Base sensitivities by sector
@@ -1117,9 +1013,7 @@ class FundamentalAnalyzer:
         }
 
         # Get base sensitivities for sector
-        base_sensitivities = sector_sensitivities.get(
-            sector, sector_sensitivities["default"]
-        )
+        base_sensitivities = sector_sensitivities.get(sector, sector_sensitivities["default"])
 
         # Adjust based on beta (higher beta = higher sensitivity)
         beta_adjustment = beta / 1.0  # Normalize around 1.0
@@ -1135,8 +1029,8 @@ class FundamentalAnalyzer:
         return adjusted_sensitivities
 
     def _assess_business_cycle_positioning(
-        self, market_data: Dict[str, Any], economic_indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, market_data: dict[str, Any], economic_indicators: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess business cycle positioning"""
 
         gdp_growth = economic_indicators["gdp_growth_rate"]["value"]
@@ -1166,8 +1060,8 @@ class FundamentalAnalyzer:
         }
 
     def _analyze_interest_rate_sensitivity(
-        self, financial_metrics: Dict[str, Any], market_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, financial_metrics: dict[str, Any], market_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze interest rate sensitivity"""
 
         # Estimate duration based on sector and financial metrics
@@ -1189,20 +1083,16 @@ class FundamentalAnalyzer:
             "estimated_duration": round(estimated_duration, 1),
             "fed_funds_correlation": fed_correlation,
             "rate_sensitivity": (
-                "High"
-                if estimated_duration > 4.0
-                else "Moderate"
-                if estimated_duration > 2.0
-                else "Low"
+                "High" if estimated_duration > 4.0 else "Moderate" if estimated_duration > 2.0 else "Low"
             ),
             "current_rate_environment": self.econ_data.get_economic_environment_assessment(),
         }
 
     def _assess_economic_risks(
         self,
-        sensitivity_matrix: Dict[str, Any],
-        business_cycle_position: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sensitivity_matrix: dict[str, Any],
+        business_cycle_position: dict[str, Any],
+    ) -> dict[str, Any]:
         """Assess economic risks based on sensitivity and cycle position"""
 
         high_impact_correlations = []
@@ -1237,9 +1127,7 @@ class FundamentalAnalyzer:
         }
 
     # Sector Positioning Analysis Helper Methods
-    def _analyze_cross_sector_valuation(
-        self, financial_metrics: Dict[str, Any], sector: str
-    ) -> Dict[str, Any]:
+    def _analyze_cross_sector_valuation(self, financial_metrics: dict[str, Any], sector: str) -> dict[str, Any]:
         """Analyze valuation metrics across sectors"""
 
         # Get current stock valuation metrics
@@ -1278,8 +1166,7 @@ class FundamentalAnalyzer:
                 ((current_pe - sector_bench["pe"]) / sector_bench["pe"]) * 100, 1
             )
             valuation_comparison["pe_vs_market"] = round(
-                ((current_pe - market_benchmarks["pe"]) / market_benchmarks["pe"])
-                * 100,
+                ((current_pe - market_benchmarks["pe"]) / market_benchmarks["pe"]) * 100,
                 1,
             )
 
@@ -1288,8 +1175,7 @@ class FundamentalAnalyzer:
                 ((current_pb - sector_bench["pb"]) / sector_bench["pb"]) * 100, 1
             )
             valuation_comparison["pb_vs_market"] = round(
-                ((current_pb - market_benchmarks["pb"]) / market_benchmarks["pb"])
-                * 100,
+                ((current_pb - market_benchmarks["pb"]) / market_benchmarks["pb"]) * 100,
                 1,
             )
 
@@ -1298,8 +1184,7 @@ class FundamentalAnalyzer:
                 ((current_ps - sector_bench["ps"]) / sector_bench["ps"]) * 100, 1
             )
             valuation_comparison["ps_vs_market"] = round(
-                ((current_ps - market_benchmarks["ps"]) / market_benchmarks["ps"])
-                * 100,
+                ((current_ps - market_benchmarks["ps"]) / market_benchmarks["ps"]) * 100,
                 1,
             )
 
@@ -1312,17 +1197,15 @@ class FundamentalAnalyzer:
             "sector_benchmarks": sector_bench,
             "market_benchmarks": market_benchmarks,
             "relative_valuation": valuation_comparison,
-            "valuation_assessment": self._assess_valuation_attractiveness(
-                valuation_comparison
-            ),
+            "valuation_assessment": self._assess_valuation_attractiveness(valuation_comparison),
         }
 
     def _assess_sector_relative_position(
         self,
-        financial_metrics: Dict[str, Any],
-        market_data: Dict[str, Any],
+        financial_metrics: dict[str, Any],
+        market_data: dict[str, Any],
         sector: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Assess position relative to sector peers"""
 
         # Get key performance metrics
@@ -1347,19 +1230,13 @@ class FundamentalAnalyzer:
         performance_scores = {}
 
         if roe > 0:
-            performance_scores["roe_percentile"] = min(
-                (roe / sector_bench["roe"]) * 50, 95
-            )  # Scale to percentile
+            performance_scores["roe_percentile"] = min((roe / sector_bench["roe"]) * 50, 95)  # Scale to percentile
 
         if profit_margin > 0:
-            performance_scores["margin_percentile"] = min(
-                (profit_margin / sector_bench["margin"]) * 50, 95
-            )
+            performance_scores["margin_percentile"] = min((profit_margin / sector_bench["margin"]) * 50, 95)
 
         performance_scores["growth_percentile"] = (
-            min(max((revenue_growth / sector_bench["growth"]) * 50, 5), 95)
-            if sector_bench["growth"] > 0
-            else 50
+            min(max((revenue_growth / sector_bench["growth"]) * 50, 5), 95) if sector_bench["growth"] > 0 else 50
         )
 
         # Overall sector ranking
@@ -1382,9 +1259,7 @@ class FundamentalAnalyzer:
             "improvement_areas": self._identify_improvement_areas(performance_scores),
         }
 
-    def _analyze_sector_rotation_dynamics(
-        self, sector: str, market_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_sector_rotation_dynamics(self, sector: str, market_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze sector rotation dynamics and timing"""
 
         # Sector rotation characteristics
@@ -1428,9 +1303,7 @@ class FundamentalAnalyzer:
         }
 
         sector_key = sector.lower().replace(" ", "_").replace("services", "").strip()
-        rotation_profile = sector_rotation_profiles.get(
-            sector_key, sector_rotation_profiles["default"]
-        )
+        rotation_profile = sector_rotation_profiles.get(sector_key, sector_rotation_profiles["default"])
 
         # Current environment assessment
         current_environment = {
@@ -1440,25 +1313,19 @@ class FundamentalAnalyzer:
         }
 
         # Timing assessment
-        timing_score = self._calculate_sector_timing_score(
-            rotation_profile, current_environment
-        )
+        timing_score = self._calculate_sector_timing_score(rotation_profile, current_environment)
 
         return {
             "sector_rotation_profile": rotation_profile,
             "current_market_environment": current_environment,
             "sector_timing_score": timing_score,
-            "rotation_outlook": self._assess_rotation_outlook(
-                rotation_profile, current_environment
-            ),
+            "rotation_outlook": self._assess_rotation_outlook(rotation_profile, current_environment),
             "tactical_considerations": self._generate_tactical_considerations(
                 rotation_profile, current_environment, timing_score
             ),
         }
 
-    def _assess_valuation_attractiveness(
-        self, valuation_comparison: Dict[str, Any]
-    ) -> str:
+    def _assess_valuation_attractiveness(self, valuation_comparison: dict[str, Any]) -> str:
         """Assess overall valuation attractiveness"""
 
         discount_premium_scores = []
@@ -1476,47 +1343,38 @@ class FundamentalAnalyzer:
 
         if avg_score > 0.3:
             return "Attractive (Trading at discount)"
-        elif avg_score > 0.1:
+        if avg_score > 0.1:
             return "Moderate discount"
-        elif avg_score > -0.1:
+        if avg_score > -0.1:
             return "Fair value"
-        elif avg_score > -0.3:
+        if avg_score > -0.3:
             return "Moderate premium"
-        else:
-            return "Expensive (Significant premium)"
+        return "Expensive (Significant premium)"
 
-    def _identify_relative_strengths(
-        self, performance_scores: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_relative_strengths(self, performance_scores: dict[str, Any]) -> list[str]:
         """Identify areas where company outperforms sector"""
         strengths = []
 
         for metric, percentile in performance_scores.items():
             if percentile > 70:
-                metric_name = (
-                    metric.replace("_percentile", "").replace("_", " ").title()
-                )
+                metric_name = metric.replace("_percentile", "").replace("_", " ").title()
                 strengths.append(f"Strong {metric_name} (Top 30%)")
 
         return strengths
 
-    def _identify_improvement_areas(
-        self, performance_scores: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_improvement_areas(self, performance_scores: dict[str, Any]) -> list[str]:
         """Identify areas where company underperforms sector"""
         improvements = []
 
         for metric, percentile in performance_scores.items():
             if percentile < 30:
-                metric_name = (
-                    metric.replace("_percentile", "").replace("_", " ").title()
-                )
+                metric_name = metric.replace("_percentile", "").replace("_", " ").title()
                 improvements.append(f"Below average {metric_name} (Bottom 30%)")
 
         return improvements
 
     def _calculate_sector_timing_score(
-        self, rotation_profile: Dict[str, Any], current_environment: Dict[str, Any]
+        self, rotation_profile: dict[str, Any], current_environment: dict[str, Any]
     ) -> float:
         """Calculate sector timing score based on current environment"""
 
@@ -1546,28 +1404,25 @@ class FundamentalAnalyzer:
 
         return round(min(max(score, 1.0), 10.0), 1)
 
-    def _assess_rotation_outlook(
-        self, rotation_profile: Dict[str, Any], current_environment: Dict[str, Any]
-    ) -> str:
+    def _assess_rotation_outlook(self, rotation_profile: dict[str, Any], current_environment: dict[str, Any]) -> str:
         """Assess sector rotation outlook"""
 
         current_score = rotation_profile["rotation_score"]
 
         if current_score > 7.0:
             return "Favored for rotation"
-        elif current_score > 6.0:
+        if current_score > 6.0:
             return "Moderately favored"
-        elif current_score > 4.0:
+        if current_score > 4.0:
             return "Neutral rotation positioning"
-        else:
-            return "Rotation headwinds"
+        return "Rotation headwinds"
 
     def _generate_tactical_considerations(
         self,
-        rotation_profile: Dict[str, Any],
-        current_environment: Dict[str, Any],
+        rotation_profile: dict[str, Any],
+        current_environment: dict[str, Any],
         timing_score: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate tactical investment considerations"""
 
         considerations = []
@@ -1592,10 +1447,10 @@ class FundamentalAnalyzer:
 
     def _generate_sector_investment_implications(
         self,
-        cross_sector_analysis: Dict[str, Any],
-        sector_relative_position: Dict[str, Any],
-        sector_rotation_assessment: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        cross_sector_analysis: dict[str, Any],
+        sector_relative_position: dict[str, Any],
+        sector_rotation_assessment: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate investment implications from sector analysis"""
 
         valuation_assessment = cross_sector_analysis["valuation_assessment"]
@@ -1628,30 +1483,25 @@ class FundamentalAnalyzer:
                 f"Rotation outlook: {rotation_outlook}",
                 f"Timing score: {timing_score}/10",
             ],
-            "investment_thesis_impact": self._assess_sector_thesis_impact(
-                overall_attractiveness, timing_score
-            ),
+            "investment_thesis_impact": self._assess_sector_thesis_impact(overall_attractiveness, timing_score),
         }
 
-    def _assess_sector_thesis_impact(
-        self, attractiveness: str, timing_score: float
-    ) -> str:
+    def _assess_sector_thesis_impact(self, attractiveness: str, timing_score: float) -> str:
         """Assess how sector analysis impacts investment thesis"""
 
         if attractiveness == "High" and timing_score > 6.5:
             return "Sector dynamics provide significant support for investment thesis"
-        elif attractiveness == "Low" or timing_score < 4.0:
+        if attractiveness == "Low" or timing_score < 4.0:
             return "Sector dynamics create headwinds for investment thesis"
-        else:
-            return "Sector dynamics are neutral to investment thesis"
+        return "Sector dynamics are neutral to investment thesis"
 
     # Enhanced Quantified Risk Assessment Helper Methods
     def _create_quantified_risk_matrix(
         self,
-        market_data: Dict[str, Any],
-        financial_metrics: Dict[str, Any],
-        company_info: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
+        market_data: dict[str, Any],
+        financial_metrics: dict[str, Any],
+        company_info: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Create quantified risk matrix with probability/impact analysis"""
 
         risk_matrix = []
@@ -1688,9 +1538,7 @@ class FundamentalAnalyzer:
         )
 
         # Interest Rate Shock Risk
-        rate_risk_prob = self._calculate_interest_rate_risk_probability(
-            financial_metrics
-        )
+        rate_risk_prob = self._calculate_interest_rate_risk_probability(financial_metrics)
         rate_impact = self._calculate_interest_rate_impact(financial_metrics)
         risk_matrix.append(
             {
@@ -1705,9 +1553,7 @@ class FundamentalAnalyzer:
         )
 
         # Competitive Pressure Risk
-        competitive_risk_prob = self._calculate_competitive_pressure_probability(
-            financial_metrics, company_info
-        )
+        competitive_risk_prob = self._calculate_competitive_pressure_probability(financial_metrics, company_info)
         risk_matrix.append(
             {
                 "risk_factor": "Competitive Pressure",
@@ -1749,9 +1595,7 @@ class FundamentalAnalyzer:
         )
 
         # Financial Distress Risk
-        financial_risk_prob = self._calculate_financial_distress_probability(
-            financial_metrics
-        )
+        financial_risk_prob = self._calculate_financial_distress_probability(financial_metrics)
         financial_impact = self._calculate_financial_distress_impact(financial_metrics)
         risk_matrix.append(
             {
@@ -1767,9 +1611,7 @@ class FundamentalAnalyzer:
 
         return risk_matrix
 
-    def _calculate_gdp_deceleration_probability(
-        self, beta: float, company_info: Dict[str, Any]
-    ) -> float:
+    def _calculate_gdp_deceleration_probability(self, beta: float, company_info: dict[str, Any]) -> float:
         """Calculate probability of GDP deceleration impact"""
 
         base_probability = 0.35  # Base recession probability
@@ -1789,9 +1631,7 @@ class FundamentalAnalyzer:
         probability = base_probability + beta_adjustment + sector_adjustment
         return round(max(0.1, min(0.8, probability)), 2)
 
-    def _calculate_employment_risk_probability(
-        self, company_info: Dict[str, Any]
-    ) -> float:
+    def _calculate_employment_risk_probability(self, company_info: dict[str, Any]) -> float:
         """Calculate probability of employment deterioration impact"""
 
         base_probability = 0.25
@@ -1808,9 +1648,7 @@ class FundamentalAnalyzer:
         probability = base_probability + sector_adjustment
         return round(max(0.1, min(0.6, probability)), 2)
 
-    def _calculate_interest_rate_risk_probability(
-        self, financial_metrics: Dict[str, Any]
-    ) -> float:
+    def _calculate_interest_rate_risk_probability(self, financial_metrics: dict[str, Any]) -> float:
         """Calculate probability of interest rate shock"""
 
         # Higher probability if we're in restrictive environment
@@ -1828,7 +1666,7 @@ class FundamentalAnalyzer:
         probability = base_probability + rate_adjustment
         return round(max(0.2, min(0.7, probability)), 2)
 
-    def _calculate_interest_rate_impact(self, financial_metrics: Dict[str, Any]) -> int:
+    def _calculate_interest_rate_impact(self, financial_metrics: dict[str, Any]) -> int:
         """Calculate impact of interest rate changes (1-5 scale)"""
 
         pe_ratio = financial_metrics.get("pe_ratio", 15)
@@ -1837,15 +1675,14 @@ class FundamentalAnalyzer:
         # High growth, high multiple companies have higher duration
         if pe_ratio > 40 or growth_rate > 0.3:
             return 4  # High impact
-        elif pe_ratio > 25 or growth_rate > 0.15:
+        if pe_ratio > 25 or growth_rate > 0.15:
             return 3  # Moderate-high impact
-        elif pe_ratio < 15 and growth_rate < 0.05:
+        if pe_ratio < 15 and growth_rate < 0.05:
             return 2  # Low impact
-        else:
-            return 3  # Moderate impact
+        return 3  # Moderate impact
 
     def _calculate_competitive_pressure_probability(
-        self, financial_metrics: Dict[str, Any], company_info: Dict[str, Any]
+        self, financial_metrics: dict[str, Any], company_info: dict[str, Any]
     ) -> float:
         """Calculate probability of competitive pressure"""
 
@@ -1872,9 +1709,7 @@ class FundamentalAnalyzer:
         probability = base_probability + margin_adjustment + sector_adjustment
         return round(max(0.2, min(0.8, probability)), 2)
 
-    def _calculate_regulatory_risk_probability(
-        self, company_info: Dict[str, Any]
-    ) -> float:
+    def _calculate_regulatory_risk_probability(self, company_info: dict[str, Any]) -> float:
         """Calculate probability of regulatory changes"""
 
         base_probability = 0.3
@@ -1883,12 +1718,7 @@ class FundamentalAnalyzer:
         sector = company_info.get("sector", "").lower()
         industry = company_info.get("industry", "").lower()
 
-        if (
-            "financial" in sector
-            or "healthcare" in sector
-            or "energy" in sector
-            or "utilities" in sector
-        ):
+        if "financial" in sector or "healthcare" in sector or "energy" in sector or "utilities" in sector:
             sector_adjustment = 0.25  # Highly regulated sectors
         elif "technology" in sector and "internet" in industry:
             sector_adjustment = 0.15  # Increasing tech regulation
@@ -1910,9 +1740,7 @@ class FundamentalAnalyzer:
         probability = base_probability + beta_adjustment
         return round(max(0.4, min(0.8, probability)), 2)
 
-    def _calculate_financial_distress_probability(
-        self, financial_metrics: Dict[str, Any]
-    ) -> float:
+    def _calculate_financial_distress_probability(self, financial_metrics: dict[str, Any]) -> float:
         """Calculate probability of financial distress"""
 
         base_probability = 0.1  # Base low probability for established companies
@@ -1940,15 +1768,13 @@ class FundamentalAnalyzer:
         probability = base_probability + margin_adjustment + growth_adjustment
         return round(max(0.05, min(0.6, probability)), 2)
 
-    def _calculate_financial_distress_impact(
-        self, financial_metrics: Dict[str, Any]
-    ) -> int:
+    def _calculate_financial_distress_impact(self, financial_metrics: dict[str, Any]) -> int:
         """Calculate impact of financial distress (1-5 scale)"""
 
         # Financial distress is always high impact
         return 5
 
-    def _generate_enhanced_risk_summary(self, risk_matrix: List[Dict[str, Any]]) -> str:
+    def _generate_enhanced_risk_summary(self, risk_matrix: list[dict[str, Any]]) -> str:
         """Generate summary from quantified risk matrix"""
 
         high_risks = [r for r in risk_matrix if r["risk_score"] > 2.0]
@@ -1964,18 +1790,16 @@ class FundamentalAnalyzer:
 
         if high_risks:
             top_risk = max(high_risks, key=lambda x: x["risk_score"])
-            summary += (
-                f" | Top Risk: {top_risk['risk_factor']} ({top_risk['risk_score']:.1f})"
-            )
+            summary += f" | Top Risk: {top_risk['risk_factor']} ({top_risk['risk_score']:.1f})"
 
         return summary
 
     def _identify_enhanced_risk_mitigations(
         self,
-        risk_matrix: List[Dict[str, Any]],
-        financial_metrics: Dict[str, Any],
-        company_info: Dict[str, Any],
-    ) -> List[str]:
+        risk_matrix: list[dict[str, Any]],
+        financial_metrics: dict[str, Any],
+        company_info: dict[str, Any],
+    ) -> list[str]:
         """Identify risk mitigation strategies"""
 
         mitigations = []
@@ -1995,9 +1819,7 @@ class FundamentalAnalyzer:
 
         return mitigations
 
-    def _create_risk_monitoring_framework(
-        self, risk_matrix: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _create_risk_monitoring_framework(self, risk_matrix: list[dict[str, Any]]) -> dict[str, Any]:
         """Create risk monitoring framework"""
 
         monitoring_kpis = {}
@@ -2031,7 +1853,7 @@ class FundamentalAnalyzer:
         }
 
     # Economic Stress Testing Helper Methods
-    def _define_economic_stress_scenarios(self) -> Dict[str, Dict[str, Any]]:
+    def _define_economic_stress_scenarios(self) -> dict[str, dict[str, Any]]:
         """Define economic stress test scenarios similar to sector analysis"""
 
         scenarios = {
@@ -2099,11 +1921,11 @@ class FundamentalAnalyzer:
 
     def _calculate_scenario_impact(
         self,
-        scenario: Dict[str, Any],
-        sensitivity_matrix: Dict[str, Any],
-        financial_metrics: Dict[str, Any],
-        market_data: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        scenario: dict[str, Any],
+        sensitivity_matrix: dict[str, Any],
+        financial_metrics: dict[str, Any],
+        market_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate impact of stress scenario on the stock"""
 
         economic_changes = scenario["economic_changes"]
@@ -2129,9 +1951,7 @@ class FundamentalAnalyzer:
                 total_impact += factor_impact
 
         # Adjust for company-specific factors
-        company_adjustment = self._calculate_company_specific_adjustment(
-            scenario, financial_metrics, market_data
-        )
+        company_adjustment = self._calculate_company_specific_adjustment(scenario, financial_metrics, market_data)
 
         total_impact += company_adjustment
 
@@ -2157,9 +1977,9 @@ class FundamentalAnalyzer:
 
     def _calculate_company_specific_adjustment(
         self,
-        scenario: Dict[str, Any],
-        financial_metrics: Dict[str, Any],
-        market_data: Dict[str, Any],
+        scenario: dict[str, Any],
+        financial_metrics: dict[str, Any],
+        market_data: dict[str, Any],
     ) -> float:
         """Calculate company-specific adjustments to scenario impact"""
 
@@ -2205,10 +2025,10 @@ class FundamentalAnalyzer:
 
     def _analyze_recovery_timelines(
         self,
-        scenario_impacts: Dict[str, Dict[str, Any]],
-        company_info: Dict[str, Any],
-        financial_metrics: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        scenario_impacts: dict[str, dict[str, Any]],
+        company_info: dict[str, Any],
+        financial_metrics: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze recovery timelines for different scenarios"""
 
         recovery_timelines = {}
@@ -2228,9 +2048,7 @@ class FundamentalAnalyzer:
             "default": 1.0,
         }
 
-        sector_key = next(
-            (k for k in sector_recovery_speed.keys() if k in sector), "default"
-        )
+        sector_key = next((k for k in sector_recovery_speed if k in sector), "default")
         recovery_multiplier = sector_recovery_speed[sector_key]
 
         for scenario_name, impact_data in scenario_impacts.items():
@@ -2255,31 +2073,23 @@ class FundamentalAnalyzer:
                 fundamental_adjustment = 0.0
 
             # Adjust for sector characteristics
-            sector_adjusted_quarters = (
-                base_recovery_quarters * recovery_multiplier + fundamental_adjustment
-            )
+            sector_adjusted_quarters = base_recovery_quarters * recovery_multiplier + fundamental_adjustment
 
             recovery_timelines[scenario_name] = {
-                "estimated_recovery_quarters": round(
-                    max(1, sector_adjusted_quarters), 1
-                ),
+                "estimated_recovery_quarters": round(max(1, sector_adjusted_quarters), 1),
                 "recovery_confidence": 0.7,
-                "key_recovery_factors": self._identify_recovery_factors(
-                    financial_metrics, company_info, total_impact
-                ),
-                "recovery_risk_factors": self._identify_recovery_risks(
-                    financial_metrics, company_info, total_impact
-                ),
+                "key_recovery_factors": self._identify_recovery_factors(financial_metrics, company_info, total_impact),
+                "recovery_risk_factors": self._identify_recovery_risks(financial_metrics, company_info, total_impact),
             }
 
         return recovery_timelines
 
     def _identify_recovery_factors(
         self,
-        financial_metrics: Dict[str, Any],
-        company_info: Dict[str, Any],
+        financial_metrics: dict[str, Any],
+        company_info: dict[str, Any],
         impact_magnitude: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Identify factors that support recovery"""
 
         factors = []
@@ -2312,10 +2122,10 @@ class FundamentalAnalyzer:
 
     def _identify_recovery_risks(
         self,
-        financial_metrics: Dict[str, Any],
-        company_info: Dict[str, Any],
+        financial_metrics: dict[str, Any],
+        company_info: dict[str, Any],
         impact_magnitude: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Identify factors that could hinder recovery"""
 
         risks = []
@@ -2348,34 +2158,24 @@ class FundamentalAnalyzer:
 
     def _generate_stress_test_summary(
         self,
-        scenario_impacts: Dict[str, Dict[str, Any]],
-        recovery_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        scenario_impacts: dict[str, dict[str, Any]],
+        recovery_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate summary of stress test results"""
 
         # Calculate summary statistics
-        total_impacts = [
-            data["total_impact_percentage"] for data in scenario_impacts.values()
-        ]
-        expected_impacts = [
-            data["expected_impact"] for data in scenario_impacts.values()
-        ]
+        total_impacts = [data["total_impact_percentage"] for data in scenario_impacts.values()]
+        expected_impacts = [data["expected_impact"] for data in scenario_impacts.values()]
 
-        worst_case_scenario = min(
-            scenario_impacts.items(), key=lambda x: x[1]["total_impact_percentage"]
-        )
-        best_case_scenario = max(
-            scenario_impacts.items(), key=lambda x: x[1]["total_impact_percentage"]
-        )
+        worst_case_scenario = min(scenario_impacts.items(), key=lambda x: x[1]["total_impact_percentage"])
+        best_case_scenario = max(scenario_impacts.items(), key=lambda x: x[1]["total_impact_percentage"])
 
         avg_impact = np.mean(total_impacts)
         worst_impact = min(total_impacts)
         probability_weighted_impact = sum(expected_impacts)
 
         # Recovery summary
-        recovery_times = [
-            data["estimated_recovery_quarters"] for data in recovery_analysis.values()
-        ]
+        recovery_times = [data["estimated_recovery_quarters"] for data in recovery_analysis.values()]
         avg_recovery_time = np.mean(recovery_times)
         max_recovery_time = max(recovery_times)
 
@@ -2400,41 +2200,30 @@ class FundamentalAnalyzer:
                     "probability": best_case_scenario[1]["scenario_probability"],
                 },
             },
-            "risk_assessment": self._assess_overall_stress_test_risk(
-                avg_impact, worst_impact, avg_recovery_time
-            ),
+            "risk_assessment": self._assess_overall_stress_test_risk(avg_impact, worst_impact, avg_recovery_time),
             "key_vulnerabilities": self._identify_key_vulnerabilities(scenario_impacts),
             "stress_test_confidence": 0.75,
         }
 
-    def _assess_overall_stress_test_risk(
-        self, avg_impact: float, worst_impact: float, avg_recovery: float
-    ) -> str:
+    def _assess_overall_stress_test_risk(self, avg_impact: float, worst_impact: float, avg_recovery: float) -> str:
         """Assess overall risk level from stress tests"""
 
         # Risk scoring based on impact and recovery
         if abs(worst_impact) > 30 or avg_recovery > 5:
             return "High Risk - Significant vulnerability to economic stress"
-        elif abs(worst_impact) > 20 or avg_recovery > 4:
+        if abs(worst_impact) > 20 or avg_recovery > 4:
             return "Moderate-High Risk - Material impact from economic stress"
-        elif abs(worst_impact) > 10 or avg_recovery > 3:
+        if abs(worst_impact) > 10 or avg_recovery > 3:
             return "Moderate Risk - Manageable impact from economic stress"
-        else:
-            return "Low-Moderate Risk - Resilient to economic stress scenarios"
+        return "Low-Moderate Risk - Resilient to economic stress scenarios"
 
-    def _identify_key_vulnerabilities(
-        self, scenario_impacts: Dict[str, Dict[str, Any]]
-    ) -> List[str]:
+    def _identify_key_vulnerabilities(self, scenario_impacts: dict[str, dict[str, Any]]) -> list[str]:
         """Identify key vulnerabilities from stress test results"""
 
         vulnerabilities = []
 
         # Find scenarios with highest impact
-        high_impact_scenarios = {
-            k: v
-            for k, v in scenario_impacts.items()
-            if abs(v["total_impact_percentage"]) > 15
-        }
+        high_impact_scenarios = {k: v for k, v in scenario_impacts.items() if abs(v["total_impact_percentage"]) > 15}
 
         if "GDP_Contraction" in high_impact_scenarios:
             vulnerabilities.append("High sensitivity to economic recession")
@@ -2446,9 +2235,7 @@ class FundamentalAnalyzer:
             vulnerabilities.append("Significant interest rate sensitivity")
 
         # Check for consistent negative impacts
-        negative_scenarios = [
-            k for k, v in scenario_impacts.items() if v["total_impact_percentage"] < -5
-        ]
+        negative_scenarios = [k for k, v in scenario_impacts.items() if v["total_impact_percentage"] < -5]
 
         if len(negative_scenarios) >= 4:
             vulnerabilities.append("Broad-based economic sensitivity across scenarios")
@@ -2457,20 +2244,14 @@ class FundamentalAnalyzer:
 
     def _derive_portfolio_implications_from_stress_tests(
         self,
-        scenario_impacts: Dict[str, Dict[str, Any]],
-        recovery_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        scenario_impacts: dict[str, dict[str, Any]],
+        recovery_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Derive portfolio implications from stress test results"""
 
-        avg_impact = np.mean(
-            [data["total_impact_percentage"] for data in scenario_impacts.values()]
-        )
-        worst_impact = min(
-            [data["total_impact_percentage"] for data in scenario_impacts.values()]
-        )
-        avg_recovery = np.mean(
-            [data["estimated_recovery_quarters"] for data in recovery_analysis.values()]
-        )
+        avg_impact = np.mean([data["total_impact_percentage"] for data in scenario_impacts.values()])
+        worst_impact = min([data["total_impact_percentage"] for data in scenario_impacts.values()])
+        avg_recovery = np.mean([data["estimated_recovery_quarters"] for data in recovery_analysis.values()])
 
         # Position sizing recommendations based on stress tests
         if abs(worst_impact) > 25:
@@ -2486,26 +2267,18 @@ class FundamentalAnalyzer:
         # Hedging recommendations
         hedging_strategies = []
         if any(
-            "Interest_Rate" in k
-            for k in scenario_impacts.keys()
-            if abs(scenario_impacts[k]["total_impact_percentage"]) > 10
+            "Interest_Rate" in k for k in scenario_impacts if abs(scenario_impacts[k]["total_impact_percentage"]) > 10
         ):
             hedging_strategies.append("Consider interest rate hedging")
 
-        if any(
-            "GDP" in k
-            for k in scenario_impacts.keys()
-            if abs(scenario_impacts[k]["total_impact_percentage"]) > 15
-        ):
+        if any("GDP" in k for k in scenario_impacts if abs(scenario_impacts[k]["total_impact_percentage"]) > 15):
             hedging_strategies.append("Consider defensive portfolio allocation")
 
         return {
             "position_sizing_guidance": position_sizing,
             "risk_category": risk_category,
             "hedging_strategies": hedging_strategies,
-            "stress_test_score": round(
-                max(0, 100 + avg_impact), 0
-            ),  # 100 baseline, adjust for impact
+            "stress_test_score": round(max(0, 100 + avg_impact), 0),  # 100 baseline, adjust for impact
             "recovery_outlook": f"Average recovery: {avg_recovery:.1f} quarters",
             "portfolio_timing_considerations": [
                 "Monitor economic indicators for early warning signs",
@@ -2517,9 +2290,7 @@ class FundamentalAnalyzer:
 
 def main():
     """Command-line interface for fundamental analysis"""
-    parser = argparse.ArgumentParser(
-        description="Execute fundamental analysis for any stock ticker"
-    )
+    parser = argparse.ArgumentParser(description="Execute fundamental analysis for any stock ticker")
     parser.add_argument("ticker", help="Stock ticker symbol (e.g., AAPL, MSFT, MA)")
     parser.add_argument("--discovery-file", help="Path to discovery data file")
     parser.add_argument(

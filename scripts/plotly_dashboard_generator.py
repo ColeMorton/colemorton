@@ -11,12 +11,13 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -24,7 +25,6 @@ sys.path.insert(0, str(project_root))
 
 from scripts.utils.config_loader import ConfigLoader
 from scripts.utils.config_validator import (
-    ConfigValidationError,
     validate_dashboard_config,
     validate_input_file,
 )
@@ -37,16 +37,15 @@ from scripts.utils.dashboard_parser import (
 from scripts.utils.logging_setup import setup_logging
 from scripts.utils.plotly_theme_mapper import PlotlyThemeMapper
 from scripts.utils.scalability_manager import (
-    ScalabilityManager,
     create_scalability_manager,
 )
-from scripts.utils.theme_manager import ThemeManager, create_theme_manager
+from scripts.utils.theme_manager import create_theme_manager
 
 
 class PlotlyDashboardGenerator:
     """Plotly-native dashboard generation class."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize Plotly dashboard generator.
 
@@ -105,7 +104,7 @@ class PlotlyDashboardGenerator:
         self.logger.info(f"Plotly dashboard saved to {output_path}")
         return output_path
 
-    def _create_dashboard_figure(self, data: Dict[str, Any], mode: str) -> go.Figure:
+    def _create_dashboard_figure(self, data: dict[str, Any], mode: str) -> go.Figure:
         """
         Create the complete dashboard figure using Plotly subplots.
 
@@ -150,12 +149,8 @@ class PlotlyDashboardGenerator:
         self._add_custom_metrics_layout(fig, data["performance_metrics"], mode)
 
         # Add main charts (rows 2-3)
-        self._add_monthly_performance(
-            fig, data.get("monthly_performance", []), mode, row=2, col=1
-        )
-        self._add_quality_distribution(
-            fig, data.get("quality_distribution", []), mode, row=2, col=2
-        )
+        self._add_monthly_performance(fig, data.get("monthly_performance", []), mode, row=2, col=1)
+        self._add_quality_distribution(fig, data.get("quality_distribution", []), mode, row=2, col=2)
         self._add_trade_performance(fig, data.get("trades", []), mode, row=3, col=1)
         self._add_duration_scatter(fig, data.get("trades", []), mode, row=3, col=2)
 
@@ -180,9 +175,7 @@ class PlotlyDashboardGenerator:
                 "x": 0.375,
                 "title": "Total Return",
                 "value": f"{getattr(metrics, 'total_return', 0):+.1f}%",
-                "color": (
-                    "#26c6da" if getattr(metrics, "total_return", 0) >= 0 else "#ff7043"
-                ),
+                "color": ("#26c6da" if getattr(metrics, "total_return", 0) >= 0 else "#ff7043"),
             },
             {
                 "x": 0.625,
@@ -219,9 +212,7 @@ class PlotlyDashboardGenerator:
                 y=0.85,
                 text=metric["value"],
                 showarrow=False,
-                font=dict(
-                    size=32, color=metric["color"], family="Heebo", weight="bold"
-                ),
+                font=dict(size=32, color=metric["color"], family="Heebo", weight="bold"),
                 xref="paper",
                 yref="paper",
                 xanchor="center",
@@ -231,7 +222,7 @@ class PlotlyDashboardGenerator:
     def _add_monthly_performance(
         self,
         fig: go.Figure,
-        monthly_data: List[MonthlyPerformance],
+        monthly_data: list[MonthlyPerformance],
         mode: str,
         row: int,
         col: int,
@@ -251,12 +242,8 @@ class PlotlyDashboardGenerator:
 
         # Apply scalability optimizations
         if self.scalability_manager:
-            timeline_category = (
-                self.scalability_manager.detect_monthly_timeline_category(monthly_data)
-            )
-            months = self.scalability_manager.optimize_monthly_labels(
-                monthly_data, timeline_category
-            )
+            timeline_category = self.scalability_manager.detect_monthly_timeline_category(monthly_data)
+            months = self.scalability_manager.optimize_monthly_labels(monthly_data, timeline_category)
         else:
             months = [f"{data.month[:3]} {str(data.year)[2:]}" for data in monthly_data]
 
@@ -276,9 +263,7 @@ class PlotlyDashboardGenerator:
                 marker=dict(
                     color=bar_colors,
                     opacity=0.8,
-                    line=dict(
-                        color=self.theme_manager.get_theme_colors(mode).borders, width=1
-                    ),
+                    line=dict(color=self.theme_manager.get_theme_colors(mode).borders, width=1),
                 ),
                 text=[f"{rate:.0f}%" for rate in win_rates],
                 textposition="outside",
@@ -294,11 +279,7 @@ class PlotlyDashboardGenerator:
         performance_colors = self.theme_mapper.get_performance_colors_mapping()
 
         for i, ret in enumerate(returns):
-            return_color = (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
+            return_color = performance_colors["positive"] if ret >= 0 else performance_colors["negative"]
             fig.add_annotation(
                 x=months[i],
                 y=win_rates[i] / 2,
@@ -312,7 +293,7 @@ class PlotlyDashboardGenerator:
     def _add_quality_distribution(
         self,
         fig: go.Figure,
-        quality_data: List[QualityDistribution],
+        quality_data: list[QualityDistribution],
         mode: str,
         row: int,
         col: int,
@@ -354,9 +335,7 @@ class PlotlyDashboardGenerator:
             col=col,
         )
 
-    def _add_trade_performance(
-        self, fig: go.Figure, trades: List[TradeData], mode: str, row: int, col: int
-    ):
+    def _add_trade_performance(self, fig: go.Figure, trades: list[TradeData], mode: str, row: int, col: int):
         """Add trade performance waterfall or distribution chart based on trade count."""
         if not trades:
             fig.add_annotation(
@@ -383,42 +362,31 @@ class PlotlyDashboardGenerator:
             # Statistical distribution
             self._add_distribution_histogram(fig, trades, mode, row, col)
 
-    def _add_waterfall_chart(
-        self, fig: go.Figure, trades: List[TradeData], mode: str, row: int, col: int
-    ):
+    def _add_waterfall_chart(self, fig: go.Figure, trades: list[TradeData], mode: str, row: int, col: int):
         """Add individual trade waterfall chart."""
         returns = [trade.return_pct for trade in trades]
         cumulative_returns = np.cumsum([0] + returns)
 
         performance_colors = self.theme_mapper.get_performance_colors_mapping()
-        colors = [
-            (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
-            for ret in returns
-        ]
+        colors = [(performance_colors["positive"] if ret >= 0 else performance_colors["negative"]) for ret in returns]
 
         # Add waterfall bars
         for i, ret in enumerate(returns):
             fig.add_trace(
                 go.Bar(
-                    x=[f"T{i+1}"],
+                    x=[f"T{i + 1}"],
                     y=[ret],
                     base=cumulative_returns[i],
                     marker_color=colors[i],
-                    name=f"Trade {i+1}",
+                    name=f"Trade {i + 1}",
                     showlegend=False,
-                    hovertemplate=f"Trade {i+1}: {ret:+.1f}%<extra></extra>",
+                    hovertemplate=f"Trade {i + 1}: {ret:+.1f}%<extra></extra>",
                 ),
                 row=row,
                 col=col,
             )
 
-    def _add_performance_bands(
-        self, fig: go.Figure, trades: List[TradeData], mode: str, row: int, col: int
-    ):
+    def _add_performance_bands(self, fig: go.Figure, trades: list[TradeData], mode: str, row: int, col: int):
         """Add performance bands for medium datasets."""
         returns = [trade.return_pct for trade in trades]
 
@@ -444,9 +412,7 @@ class PlotlyDashboardGenerator:
             col=col,
         )
 
-    def _add_distribution_histogram(
-        self, fig: go.Figure, trades: List[TradeData], mode: str, row: int, col: int
-    ):
+    def _add_distribution_histogram(self, fig: go.Figure, trades: list[TradeData], mode: str, row: int, col: int):
         """Add statistical distribution histogram for large datasets."""
         returns = [trade.return_pct for trade in trades]
 
@@ -463,9 +429,7 @@ class PlotlyDashboardGenerator:
             col=col,
         )
 
-    def _add_duration_scatter(
-        self, fig: go.Figure, trades: List[TradeData], mode: str, row: int, col: int
-    ):
+    def _add_duration_scatter(self, fig: go.Figure, trades: list[TradeData], mode: str, row: int, col: int):
         """Add duration vs return scatter plot."""
         if not trades:
             fig.add_annotation(
@@ -496,14 +460,7 @@ class PlotlyDashboardGenerator:
 
         # Color by performance
         performance_colors = self.theme_mapper.get_performance_colors_mapping()
-        colors = [
-            (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
-            for ret in returns
-        ]
+        colors = [(performance_colors["positive"] if ret >= 0 else performance_colors["negative"]) for ret in returns]
 
         fig.add_trace(
             go.Scatter(
@@ -523,7 +480,7 @@ class PlotlyDashboardGenerator:
             col=col,
         )
 
-    def _apply_dashboard_theme(self, fig: go.Figure, data: Dict[str, Any], mode: str):
+    def _apply_dashboard_theme(self, fig: go.Figure, data: dict[str, Any], mode: str):
         """Apply theme and layout to the complete dashboard."""
         theme = self.theme_manager.get_theme_colors(mode)
 
@@ -549,17 +506,11 @@ class PlotlyDashboardGenerator:
 
         # Update subplot titles
         for i in range(1, 5):  # Update chart titles (skip metrics row)
-            fig.layout.annotations[i + 3].update(
-                font=dict(size=14, color=theme.primary_text, family="Heebo")
-            )
+            fig.layout.annotations[i + 3].update(font=dict(size=14, color=theme.primary_text, family="Heebo"))
 
         # Update axes for charts
-        fig.update_xaxes(
-            gridcolor=theme.borders, linecolor=theme.borders, tickcolor=theme.body_text
-        )
-        fig.update_yaxes(
-            gridcolor=theme.borders, linecolor=theme.borders, tickcolor=theme.body_text
-        )
+        fig.update_xaxes(gridcolor=theme.borders, linecolor=theme.borders, tickcolor=theme.body_text)
+        fig.update_yaxes(gridcolor=theme.borders, linecolor=theme.borders, tickcolor=theme.body_text)
 
     def _save_dashboard(self, fig: go.Figure, mode: str) -> Path:
         """Save the dashboard figure to file."""
@@ -567,9 +518,7 @@ class PlotlyDashboardGenerator:
         output_dir = Path(self.config["output"]["directory"])
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = self.config["output"]["filename_template"].format(
-            mode=mode, date=timestamp
-        )
+        filename = self.config["output"]["filename_template"].format(mode=mode, date=timestamp)
         output_path = output_dir / filename
 
         # Export with high-DPI settings
@@ -591,11 +540,11 @@ class PlotlyDashboardGenerator:
 
 
 def main(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     input_file: str,
     mode: str = "both",
-    output_dir: Optional[str] = None,
-) -> List[Path]:
+    output_dir: str | None = None,
+) -> list[Path]:
     """
     Main function for generating Plotly dashboards.
 
@@ -630,9 +579,7 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate Plotly-powered trading performance dashboards"
-    )
+    parser = argparse.ArgumentParser(description="Generate Plotly-powered trading performance dashboards")
     parser.add_argument("--input", required=True, help="Path to input markdown file")
     parser.add_argument(
         "--config",
@@ -646,9 +593,7 @@ if __name__ == "__main__":
         help="Dashboard mode",
     )
     parser.add_argument("--output-dir", help="Output directory override")
-    parser.add_argument(
-        "--env", choices=["dev", "staging", "prod"], default="dev", help="Environment"
-    )
+    parser.add_argument("--env", choices=["dev", "staging", "prod"], default="dev", help="Environment")
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],

@@ -13,11 +13,12 @@ Implements production-grade network resilience patterns including:
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 class CircuitBreakerState(Enum):
@@ -57,10 +58,10 @@ class HealthMetrics:
     successful_requests: int = 0
     failed_requests: int = 0
     circuit_breaker_trips: int = 0
-    last_success: Optional[datetime] = None
-    last_failure: Optional[datetime] = None
+    last_success: datetime | None = None
+    last_failure: datetime | None = None
     average_response_time: float = 0.0
-    response_times: List[float] = field(default_factory=list)
+    response_times: list[float] = field(default_factory=list)
 
     @property
     def success_rate(self) -> float:
@@ -74,12 +75,11 @@ class HealthMetrics:
         """Get availability status"""
         if self.success_rate >= 99.0:
             return "excellent"
-        elif self.success_rate >= 95.0:
+        if self.success_rate >= 95.0:
             return "good"
-        elif self.success_rate >= 90.0:
+        if self.success_rate >= 90.0:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
 
 class CircuitBreaker:
@@ -114,9 +114,7 @@ class CircuitBreaker:
                     self.logger.info(f"Circuit breaker {self.name} moving to HALF_OPEN")
                 else:
                     self.metrics.failed_requests += 1
-                    raise CircuitBreakerException(
-                        f"Circuit breaker {self.name} is OPEN"
-                    )
+                    raise CircuitBreakerException(f"Circuit breaker {self.name} is OPEN")
 
             start_time = time.time()
 
@@ -157,9 +155,7 @@ class CircuitBreaker:
                     self.state = CircuitBreakerState.CLOSED
                     self.failure_count = 0
                     self.success_count = 0
-                    self.logger.info(
-                        f"Circuit breaker {self.name} CLOSED after recovery"
-                    )
+                    self.logger.info(f"Circuit breaker {self.name} CLOSED after recovery")
             else:
                 self.failure_count = 0  # Reset failure count on success
 
@@ -175,10 +171,7 @@ class CircuitBreaker:
             self.last_failure_time = time.time()
 
             # Check if circuit should open
-            if (
-                self.state == CircuitBreakerState.CLOSED
-                and self.failure_count >= self.config.failure_threshold
-            ):
+            if self.state == CircuitBreakerState.CLOSED and self.failure_count >= self.config.failure_threshold:
                 self.state = CircuitBreakerState.OPEN
                 self.metrics.circuit_breaker_trips += 1
                 self.logger.warning(
@@ -187,9 +180,7 @@ class CircuitBreaker:
                 )
             elif self.state == CircuitBreakerState.HALF_OPEN:
                 self.state = CircuitBreakerState.OPEN
-                self.logger.warning(
-                    f"Circuit breaker {self.name} back to OPEN from HALF_OPEN"
-                )
+                self.logger.warning(f"Circuit breaker {self.name} back to OPEN from HALF_OPEN")
 
     def _update_response_time(self, execution_time: float):
         """Update response time metrics"""
@@ -201,11 +192,9 @@ class CircuitBreaker:
 
         # Calculate average response time
         if self.metrics.response_times:
-            self.metrics.average_response_time = sum(self.metrics.response_times) / len(
-                self.metrics.response_times
-            )
+            self.metrics.average_response_time = sum(self.metrics.response_times) / len(self.metrics.response_times)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get circuit breaker status and metrics"""
         with self.lock:
             return {
@@ -220,15 +209,9 @@ class CircuitBreaker:
                     "success_rate": round(self.metrics.success_rate, 2),
                     "availability": self.metrics.availability,
                     "circuit_breaker_trips": self.metrics.circuit_breaker_trips,
-                    "average_response_time": round(
-                        self.metrics.average_response_time, 3
-                    ),
-                    "last_success": self.metrics.last_success.isoformat()
-                    if self.metrics.last_success
-                    else None,
-                    "last_failure": self.metrics.last_failure.isoformat()
-                    if self.metrics.last_failure
-                    else None,
+                    "average_response_time": round(self.metrics.average_response_time, 3),
+                    "last_success": self.metrics.last_success.isoformat() if self.metrics.last_success else None,
+                    "last_failure": self.metrics.last_failure.isoformat() if self.metrics.last_failure else None,
                 },
                 "config": {
                     "failure_threshold": self.config.failure_threshold,
@@ -249,8 +232,6 @@ class CircuitBreaker:
 
 class CircuitBreakerException(Exception):
     """Exception thrown when circuit breaker is open"""
-
-    pass
 
 
 class RetryHandler:
@@ -273,10 +254,7 @@ class RetryHandler:
             try:
                 if attempt > 0:
                     delay = self._calculate_delay(attempt)
-                    self.logger.info(
-                        f"Retry attempt {attempt}/{self.config.max_retries} "
-                        f"after {delay:.2f}s delay"
-                    )
+                    self.logger.info(f"Retry attempt {attempt}/{self.config.max_retries} after {delay:.2f}s delay")
                     time.sleep(delay)
 
                 return func(*args, **kwargs)
@@ -293,9 +271,7 @@ class RetryHandler:
                 self.logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
 
         # All retries exhausted
-        raise RetryExhaustedException(
-            f"All {self.config.max_retries} retries failed"
-        ) from last_exception
+        raise RetryExhaustedException(f"All {self.config.max_retries} retries failed") from last_exception
 
     def _calculate_delay(self, attempt: int) -> float:
         """Calculate delay for retry attempt with exponential backoff and jitter"""
@@ -317,8 +293,6 @@ class RetryHandler:
 class RetryExhaustedException(Exception):
     """Exception thrown when all retries are exhausted"""
 
-    pass
-
 
 class NetworkResilienceManager:
     """
@@ -329,13 +303,11 @@ class NetworkResilienceManager:
     """
 
     def __init__(self):
-        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self.circuit_breakers: dict[str, CircuitBreaker] = {}
         self.retry_handler = RetryHandler()
         self.logger = logging.getLogger("network_resilience")
 
-    def get_circuit_breaker(
-        self, service_name: str, config: CircuitBreakerConfig = None
-    ) -> CircuitBreaker:
+    def get_circuit_breaker(self, service_name: str, config: CircuitBreakerConfig = None) -> CircuitBreaker:
         """Get or create circuit breaker for service"""
         if service_name not in self.circuit_breakers:
             self.circuit_breakers[service_name] = CircuitBreaker(service_name, config)
@@ -375,7 +347,7 @@ class NetworkResilienceManager:
 
         return retry_handler.execute_with_retry(resilient_call)
 
-    def get_all_status(self) -> Dict[str, Any]:
+    def get_all_status(self) -> dict[str, Any]:
         """Get status of all circuit breakers"""
         return {name: cb.get_status() for name, cb in self.circuit_breakers.items()}
 
@@ -410,9 +382,7 @@ def with_network_resilience(
         @wraps(func)
         def wrapper(*args, **kwargs):
             manager = NetworkResilienceManager()
-            return manager.execute_with_resilience(
-                service_name, func, circuit_config, retry_config, *args, **kwargs
-            )
+            return manager.execute_with_resilience(service_name, func, circuit_config, retry_config, *args, **kwargs)
 
         return wrapper
 

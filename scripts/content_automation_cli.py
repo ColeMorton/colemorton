@@ -16,10 +16,11 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import typer
 from jinja2 import Environment, FileSystemLoader, Template, TemplateNotFound
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -36,9 +37,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
             description="Content generation and optimization service CLI",
         )
         self.templates_dir = Path(__file__).parent / "templates"
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(str(self.templates_dir)), autoescape=True
-        )
+        self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
         self._add_service_commands()
 
     def _add_service_commands(self) -> None:
@@ -49,12 +48,8 @@ class ContentAutomationCLI(BaseFinancialCLI):
             content_type: str = typer.Argument(
                 ..., help="Content type (twitter_post, twitter_strategy, linkedin_post)"
             ),
-            data_source: str = typer.Option(
-                None, "--data-source", help="Path to data source file"
-            ),
-            template: str = typer.Option(
-                "default", "--template", help="Template name to use"
-            ),
+            data_source: str = typer.Option(None, "--data-source", help="Path to data source file"),
+            template: str = typer.Option("default", "--template", help="Template name to use"),
             ticker: str = typer.Option(None, "--ticker", help="Stock ticker symbol"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
@@ -86,24 +81,16 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 if output_file:
                     self._save_to_file(result, output_file)
                 else:
-                    self._output_result(
-                        result, output_format, f"Social Content: {content_type}"
-                    )
+                    self._output_result(result, output_format, f"Social Content: {content_type}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to generate social content: {content_type}"
-                )
+                self._handle_error(e, f"Failed to generate social content: {content_type}")
 
         @self.app.command("seo")
         def optimize_seo_content(
             content_file: str = typer.Argument(..., help="Path to content file"),
-            keywords: str = typer.Option(
-                "", "--keywords", help="Target keywords (comma-separated)"
-            ),
-            target_audience: str = typer.Option(
-                "retail_investors", "--audience", help="Target audience"
-            ),
+            keywords: str = typer.Option("", "--keywords", help="Target keywords (comma-separated)"),
+            target_audience: str = typer.Option("retail_investors", "--audience", help="Target audience"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
         ):
@@ -140,12 +127,8 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 help="Blog template type (fundamental_analysis, sector_analysis)",
             ),
             ticker: str = typer.Option(None, "--ticker", help="Stock ticker symbol"),
-            sector: str = typer.Option(
-                None, "--sector", help="Sector symbol (for sector analysis)"
-            ),
-            output_format: str = typer.Option(
-                "markdown", help="Output format (markdown, html, json)"
-            ),
+            sector: str = typer.Option(None, "--sector", help="Sector symbol (for sector analysis)"),
+            output_format: str = typer.Option("markdown", help="Output format (markdown, html, json)"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
         ):
             """Generate blog post from analysis data"""
@@ -154,34 +137,26 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 data = self._load_data_source(analysis_data)
 
                 # Generate blog post
-                result = self._generate_blog_post(
-                    data=data, template_type=template_type, ticker=ticker, sector=sector
-                )
+                result = self._generate_blog_post(data=data, template_type=template_type, ticker=ticker, sector=sector)
 
                 # Output result
                 if output_file:
                     self._save_to_file(result, output_file)
                 else:
-                    self._output_result(
-                        result, output_format, f"Blog Post: {template_type}"
-                    )
+                    self._output_result(result, output_format, f"Blog Post: {template_type}")
 
             except Exception as e:
                 self._handle_error(e, "Failed to generate blog post")
 
         @self.app.command("validate")
         def validate_content(
-            content_file: str = typer.Argument(
-                ..., help="Path to content file to validate"
-            ),
+            content_file: str = typer.Argument(..., help="Path to content file to validate"),
             content_type: str = typer.Option(
                 "auto",
                 "--type",
                 help="Content type (auto, twitter_fundamental, blog, twitter_post)",
             ),
-            template_name: str = typer.Option(
-                "auto", "--template", help="Template name used"
-            ),
+            template_name: str = typer.Option("auto", "--template", help="Template name used"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
         ):
@@ -206,21 +181,15 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 if output_file:
                     self._save_to_file(result, output_file)
                 else:
-                    self._output_result(
-                        result, output_format, "Content Validation Report"
-                    )
+                    self._output_result(result, output_format, "Content Validation Report")
 
             except Exception as e:
                 self._handle_error(e, "Failed to validate content")
 
         @self.app.command("validate-template")
         def validate_template(
-            template_file: str = typer.Argument(
-                ..., help="Path to template file to validate"
-            ),
-            content_type: str = typer.Option(
-                "auto", "--type", help="Content type for template"
-            ),
+            template_file: str = typer.Argument(..., help="Path to template file to validate"),
+            content_type: str = typer.Option("auto", "--type", help="Content type for template"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
         ):
@@ -244,9 +213,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 if output_file:
                     self._save_to_file(result, output_file)
                 else:
-                    self._output_result(
-                        result, output_format, "Template Validation Report"
-                    )
+                    self._output_result(result, output_format, "Template Validation Report")
 
             except Exception as e:
                 self._handle_error(e, "Failed to validate template")
@@ -260,15 +227,9 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 help="Analysis type (fundamental, sector, industry)",
             ),
             ticker: str = typer.Option(None, "--ticker", help="Stock ticker symbol"),
-            sector: str = typer.Option(
-                None, "--sector", help="Sector symbol (for sector analysis)"
-            ),
-            industry: str = typer.Option(
-                None, "--industry", help="Industry identifier (for industry analysis)"
-            ),
-            output_format: str = typer.Option(
-                "markdown", "--format", help="Output format (markdown, html, json)"
-            ),
+            sector: str = typer.Option(None, "--sector", help="Sector symbol (for sector analysis)"),
+            industry: str = typer.Option(None, "--industry", help="Industry identifier (for industry analysis)"),
+            output_format: str = typer.Option("markdown", "--format", help="Output format (markdown, html, json)"),
             output_file: str = typer.Option(None, "--output", help="Output file path"),
             validate_compliance: bool = typer.Option(
                 True,
@@ -299,14 +260,10 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 if output_file:
                     self._save_to_file(result, output_file)
                 else:
-                    self._output_result(
-                        result, output_format, f"Analysis Document: {analysis_type}"
-                    )
+                    self._output_result(result, output_format, f"Analysis Document: {analysis_type}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to generate analysis document: {analysis_type}"
-                )
+                self._handle_error(e, f"Failed to generate analysis document: {analysis_type}")
 
         @self.app.command("industry")
         def industry_analysis_workflow(
@@ -320,9 +277,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
             confidence_threshold: float = typer.Option(
                 9.0, "--confidence-threshold", help="Minimum confidence requirement"
             ),
-            output_format: str = typer.Option(
-                "json", "--output-format", help="Output format (json, yaml, table, csv)"
-            ),
+            output_format: str = typer.Option("json", "--output-format", help="Output format (json, yaml, table, csv)"),
         ):
             """Execute industry analysis DASV workflow"""
             try:
@@ -333,39 +288,25 @@ class ContentAutomationCLI(BaseFinancialCLI):
                     date = datetime.now().strftime("%Y%m%d")
 
                 if action == "discover":
-                    result = self._execute_industry_discovery(
-                        industry, sector, confidence_threshold
-                    )
+                    result = self._execute_industry_discovery(industry, sector, confidence_threshold)
                 elif action == "analyze":
-                    result = self._execute_industry_analysis(
-                        industry, date, confidence_threshold
-                    )
+                    result = self._execute_industry_analysis(industry, date, confidence_threshold)
                 elif action == "synthesize":
-                    result = self._execute_industry_synthesis(
-                        industry, date, confidence_threshold
-                    )
+                    result = self._execute_industry_synthesis(industry, date, confidence_threshold)
                 elif action == "validate":
-                    result = self._execute_industry_validation(
-                        industry, date, confidence_threshold
-                    )
+                    result = self._execute_industry_validation(industry, date, confidence_threshold)
                 elif action == "full_workflow":
-                    result = self._execute_full_industry_workflow(
-                        industry, sector, confidence_threshold
-                    )
+                    result = self._execute_full_industry_workflow(industry, sector, confidence_threshold)
                 else:
                     raise ValidationError(f"Invalid action: {action}")
 
                 # Output result
-                self._output_result(
-                    result, output_format, f"Industry {action.title()}: {industry}"
-                )
+                self._output_result(result, output_format, f"Industry {action.title()}: {industry}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to execute industry {action}: {industry}"
-                )
+                self._handle_error(e, f"Failed to execute industry {action}: {industry}")
 
-    def _load_data_source(self, file_path: str) -> Dict[str, Any]:
+    def _load_data_source(self, file_path: str) -> dict[str, Any]:
         """Load data from various file formats"""
         try:
             path = Path(file_path)
@@ -398,7 +339,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
         except Exception as e:
             raise ServiceError(f"Failed to load data source: {e}")
 
-    def _parse_markdown_with_frontmatter(self, content: str) -> Dict[str, Any]:
+    def _parse_markdown_with_frontmatter(self, content: str) -> dict[str, Any]:
         """Parse markdown content with YAML frontmatter"""
         parts = content.split("---")
         if len(parts) >= 3:
@@ -430,10 +371,10 @@ class ContentAutomationCLI(BaseFinancialCLI):
     def _generate_social_content(
         self,
         content_type: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         template: str,
-        ticker: Optional[str],
-    ) -> Dict[str, Any]:
+        ticker: str | None,
+    ) -> dict[str, Any]:
         """Generate social media content with template validation and selection"""
         try:
             # Intelligent template selection if template is "default" or "auto"
@@ -460,17 +401,13 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 context["analysis"] = data["fundamental_analysis"]
 
             # Validate data completeness before generation
-            data_validation = self._validate_data_completeness(
-                data, content_type, template
-            )
+            data_validation = self._validate_data_completeness(data, content_type, template)
 
             # Generate content
             content = template_obj.render(**context)
 
             # Perform institutional quality validation
-            quality_validation = self._validate_content_quality(
-                content, content_type, template
-            )
+            quality_validation = self._validate_content_quality(content, content_type, template)
 
             # Calculate engagement metrics
             engagement_score = self._calculate_engagement_score(content, content_type)
@@ -491,9 +428,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
         except Exception as e:
             raise ServiceError(f"Failed to generate social content: {e}")
 
-    def _optimize_seo_content(
-        self, content: str, keywords: List[str], target_audience: str
-    ) -> Dict[str, Any]:
+    def _optimize_seo_content(self, content: str, keywords: list[str], target_audience: str) -> dict[str, Any]:
         """Optimize content for SEO"""
         try:
             # Analyze current content
@@ -507,14 +442,10 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 keyword_density[keyword] = density
 
             # Generate SEO suggestions
-            suggestions = self._generate_seo_suggestions(
-                content, keywords, target_audience
-            )
+            suggestions = self._generate_seo_suggestions(content, keywords, target_audience)
 
             # Optimize content
-            optimized_content = self._apply_seo_optimizations(
-                content, keywords, suggestions
-            )
+            optimized_content = self._apply_seo_optimizations(content, keywords, suggestions)
 
             return {
                 "original_content": content,
@@ -523,9 +454,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 "keyword_density": keyword_density,
                 "suggestions": suggestions,
                 "word_count": word_count,
-                "readability_score": self._calculate_readability_score(
-                    optimized_content
-                ),
+                "readability_score": self._calculate_readability_score(optimized_content),
                 "seo_score": self._calculate_seo_score(optimized_content, keywords),
                 "optimized_at": datetime.now().isoformat(),
             }
@@ -535,11 +464,11 @@ class ContentAutomationCLI(BaseFinancialCLI):
 
     def _generate_blog_post(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         template_type: str,
-        ticker: Optional[str],
-        sector: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        ticker: str | None,
+        sector: str | None = None,
+    ) -> dict[str, Any]:
         """Generate blog post from analysis data with enhanced validation"""
         try:
             # Get template with validation
@@ -556,17 +485,13 @@ class ContentAutomationCLI(BaseFinancialCLI):
             }
 
             # Validate data completeness for blog content
-            data_validation = self._validate_data_completeness(
-                data, "blog", template_type
-            )
+            data_validation = self._validate_data_completeness(data, "blog", template_type)
 
             # Generate blog post
             content = template_obj.render(**context)
 
             # Perform content quality validation
-            quality_validation = self._validate_content_quality(
-                content, "blog", template_type
-            )
+            quality_validation = self._validate_content_quality(content, "blog", template_type)
 
             # Generate metadata
             metadata = self._generate_blog_metadata(data, ticker, template_type)
@@ -581,9 +506,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 "readability_score": self._calculate_readability_score(content),
                 "data_validation": data_validation,
                 "quality_validation": quality_validation,
-                "institutional_compliance": quality_validation.get(
-                    "institutional_certified", False
-                ),
+                "institutional_compliance": quality_validation.get("institutional_certified", False),
                 "generated_at": datetime.now().isoformat(),
             }
 
@@ -592,13 +515,13 @@ class ContentAutomationCLI(BaseFinancialCLI):
 
     def _generate_analysis_document(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         analysis_type: str,
-        ticker: Optional[str],
-        sector: Optional[str] = None,
-        industry: Optional[str] = None,
+        ticker: str | None,
+        sector: str | None = None,
+        industry: str | None = None,
         validate_compliance: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate institutional-quality analysis document using enhanced templates"""
         try:
             # Determine template name based on analysis type
@@ -632,9 +555,7 @@ class ContentAutomationCLI(BaseFinancialCLI):
 
             # Validate data completeness for institutional analysis
             if validate_compliance:
-                data_validation = self._validate_institutional_data_completeness(
-                    mapped_data, analysis_type
-                )
+                data_validation = self._validate_institutional_data_completeness(mapped_data, analysis_type)
                 if not data_validation.get("compliant", False):
                     print("Warning: Data validation issues detected")
                     for issue in data_validation.get("issues", []):
@@ -649,27 +570,19 @@ class ContentAutomationCLI(BaseFinancialCLI):
 
                 # Provide helpful debugging information
                 self.console.print("[yellow]Template: {template_name}[/yellow]")
-                self.console.print(
-                    f"[yellow]Context keys: {list(context.keys())}[/yellow]"
-                )
-                self.console.print(
-                    f"[yellow]Data sample keys: {list(context['data'].keys())[:10]}[/yellow]"
-                )
+                self.console.print(f"[yellow]Context keys: {list(context.keys())}[/yellow]")
+                self.console.print(f"[yellow]Data sample keys: {list(context['data'].keys())[:10]}[/yellow]")
 
                 raise ServiceError(f"Template rendering failed: {template_error}")
 
             # Perform institutional compliance validation if requested
             if validate_compliance:
-                compliance_validation = self._validate_institutional_compliance(
-                    content, analysis_type, data
-                )
+                compliance_validation = self._validate_institutional_compliance(content, analysis_type, data)
             else:
                 compliance_validation = {"compliant": True, "issues": []}
 
             # Generate enhanced metadata
-            metadata = self._generate_analysis_metadata(
-                data, ticker, sector, industry, analysis_type
-            )
+            metadata = self._generate_analysis_metadata(data, ticker, sector, industry, analysis_type)
 
             return {
                 "content": content.strip(),
@@ -680,12 +593,8 @@ class ContentAutomationCLI(BaseFinancialCLI):
                 "industry": industry,
                 "template_name": template_name,
                 "word_count": len(content.split()),
-                "institutional_compliance": compliance_validation.get(
-                    "compliant", False
-                ),
-                "compliance_score": compliance_validation.get(
-                    "overall_confidence", 0.0
-                ),
+                "institutional_compliance": compliance_validation.get("compliant", False),
+                "compliance_score": compliance_validation.get("overall_confidence", 0.0),
                 "data_validation": data_validation if validate_compliance else None,
                 "compliance_validation": compliance_validation,
                 "generated_at": datetime.now().isoformat(),
@@ -719,7 +628,7 @@ Generated: {{ timestamp }}"""
 
         return Template(template_content)
 
-    def _select_optimal_template(self, content_type: str, data: Dict[str, Any]) -> str:
+    def _select_optimal_template(self, content_type: str, data: dict[str, Any]) -> str:
         """Intelligently select the optimal template based on data characteristics"""
         try:
             if content_type == "twitter_fundamental":
@@ -773,7 +682,7 @@ Generated: {{ timestamp }}"""
                 # Fallback to valuation template
                 return "A_valuation"
 
-            elif content_type == "twitter_post":
+            if content_type == "twitter_post":
                 # Strategy post template selection (already has strategy template)
                 return "strategy"
 
@@ -781,14 +690,10 @@ Generated: {{ timestamp }}"""
             return "default"
 
         except Exception as e:
-            self.console.print(
-                f"[yellow]Warning: Template selection failed, using default: {e}[/yellow]"
-            )
+            self.console.print(f"[yellow]Warning: Template selection failed, using default: {e}[/yellow]")
             return "default"
 
-    def _map_analysis_data_for_template(
-        self, data: Dict[str, Any], analysis_type: str
-    ) -> Dict[str, Any]:
+    def _map_analysis_data_for_template(self, data: dict[str, Any], analysis_type: str) -> dict[str, Any]:
         """Map structured analysis data to template-expected flat format"""
         try:
             # Create flattened data structure for template compatibility
@@ -808,9 +713,7 @@ Generated: {{ timestamp }}"""
 
             # Quality metrics for synthesis
             quality_metrics = data.get("quality_metrics", {})
-            mapped_data["overall_confidence"] = quality_metrics.get(
-                "analysis_confidence", 0
-            )
+            mapped_data["overall_confidence"] = quality_metrics.get("analysis_confidence", 0)
             mapped_data["data_quality"] = quality_metrics.get("data_quality_impact", 0)
 
             # Financial health grades
@@ -820,9 +723,9 @@ Generated: {{ timestamp }}"""
             cash_flow = financial_health.get("cash_flow_analysis", {})
             capital_efficiency = financial_health.get("capital_efficiency", {})
 
-            mapped_data[
-                "financial_health_grade"
-            ] = f"{profitability.get('grade', 'N/A')}/{balance_sheet.get('grade', 'N/A')}/{cash_flow.get('grade', 'N/A')}/{capital_efficiency.get('grade', 'N/A')}"
+            mapped_data["financial_health_grade"] = (
+                f"{profitability.get('grade', 'N/A')}/{balance_sheet.get('grade', 'N/A')}/{cash_flow.get('grade', 'N/A')}/{capital_efficiency.get('grade', 'N/A')}"
+            )
 
             # Create investment thesis from analytical insights
             insights = data.get("analytical_insights", {})
@@ -830,16 +733,12 @@ Generated: {{ timestamp }}"""
             if key_findings:
                 mapped_data["investment_thesis"] = ". ".join(key_findings[:3]) + "."
             else:
-                mapped_data[
-                    "investment_thesis"
-                ] = "Investment thesis based on comprehensive fundamental analysis."
+                mapped_data["investment_thesis"] = "Investment thesis based on comprehensive fundamental analysis."
 
             # Generate recommendation based on financial health and competitive position
             # Default to moderate recommendation - would be enhanced by proper valuation analysis
             mapped_data["recommendation"] = "HOLD"
-            mapped_data["conviction"] = str(
-                quality_metrics.get("analysis_confidence", 0.85)
-            )
+            mapped_data["conviction"] = str(quality_metrics.get("analysis_confidence", 0.85))
 
             # Valuation estimates (would come from proper DCF/valuation model)
             current_price = market_data.get("current_price", 0)
@@ -851,9 +750,7 @@ Generated: {{ timestamp }}"""
                 mapped_data["fair_value_low"] = "N/A"
                 mapped_data["fair_value_high"] = "N/A"
 
-            mapped_data["valuation_confidence"] = str(
-                quality_metrics.get("analysis_confidence", 0.85)
-            )
+            mapped_data["valuation_confidence"] = str(quality_metrics.get("analysis_confidence", 0.85))
 
             # Add risk factor data for template macros
             risk_assessment = data.get("risk_assessment", {})
@@ -894,40 +791,24 @@ Generated: {{ timestamp }}"""
             for risk in macro_risks:
                 risk_name = risk.get("risk", "").lower().replace(" ", "_")
                 if "economic" in risk_name or "recession" in risk_name:
-                    mapped_data["gdp_risk_probability"] = str(
-                        risk.get("probability", 0.30)
-                    )
+                    mapped_data["gdp_risk_probability"] = str(risk.get("probability", 0.30))
                     mapped_data["gdp_risk_impact"] = str(risk.get("impact", 2))
-                    mapped_data["gdp_risk_score"] = str(
-                        risk.get("probability", 0.30) * risk.get("impact", 2)
-                    )
+                    mapped_data["gdp_risk_score"] = str(risk.get("probability", 0.30) * risk.get("impact", 2))
                 elif "currency" in risk_name:
-                    mapped_data["employment_risk_probability"] = str(
-                        risk.get("probability", 0.25)
-                    )
+                    mapped_data["employment_risk_probability"] = str(risk.get("probability", 0.25))
                     mapped_data["employment_risk_impact"] = str(risk.get("impact", 3))
-                    mapped_data["employment_risk_score"] = str(
-                        risk.get("probability", 0.25) * risk.get("impact", 3)
-                    )
+                    mapped_data["employment_risk_score"] = str(risk.get("probability", 0.25) * risk.get("impact", 3))
 
             for risk in financial_risks:
                 risk_name = risk.get("risk", "").lower()
                 if "leverage" in risk_name or "debt" in risk_name:
-                    mapped_data["financial_risk_probability"] = str(
-                        risk.get("probability", 0.80)
-                    )
+                    mapped_data["financial_risk_probability"] = str(risk.get("probability", 0.80))
                     mapped_data["financial_risk_impact"] = str(risk.get("impact", 4))
-                    mapped_data["financial_risk_score"] = str(
-                        risk.get("probability", 0.80) * risk.get("impact", 4)
-                    )
+                    mapped_data["financial_risk_score"] = str(risk.get("probability", 0.80) * risk.get("impact", 4))
                 elif "interest" in risk_name:
-                    mapped_data["rate_risk_probability"] = str(
-                        risk.get("probability", 0.60)
-                    )
+                    mapped_data["rate_risk_probability"] = str(risk.get("probability", 0.60))
                     mapped_data["rate_risk_impact"] = str(risk.get("impact", 2))
-                    mapped_data["rate_risk_score"] = str(
-                        risk.get("probability", 0.60) * risk.get("impact", 2)
-                    )
+                    mapped_data["rate_risk_score"] = str(risk.get("probability", 0.60) * risk.get("impact", 2))
 
             # Preserve the original structured data for template access
             mapped_data.update(data)
@@ -941,12 +822,8 @@ Generated: {{ timestamp }}"""
                 **data,
                 "company_name": data.get("company_overview", {}).get("name", "Unknown"),
                 "current_price": data.get("market_data", {}).get("current_price", 0),
-                "overall_confidence": data.get("quality_metrics", {}).get(
-                    "analysis_confidence", 0.85
-                ),
-                "data_quality": data.get("quality_metrics", {}).get(
-                    "data_quality_impact", 0.95
-                ),
+                "overall_confidence": data.get("quality_metrics", {}).get("analysis_confidence", 0.85),
+                "data_quality": data.get("quality_metrics", {}).get("data_quality_impact", 0.95),
                 "financial_health_grade": "B+/B/A-/B+",
                 "investment_thesis": "Investment opportunity based on fundamental analysis.",
                 "recommendation": "HOLD",
@@ -956,18 +833,14 @@ Generated: {{ timestamp }}"""
                 "valuation_confidence": "0.85",
             }
 
-    def _get_validated_template(
-        self, template_name: str, content_type: str
-    ) -> Template:
+    def _get_validated_template(self, template_name: str, content_type: str) -> Template:
         """Get template with institutional validation"""
         try:
             # Try to get the template
             template_obj = self.jinja_env.get_template(template_name)
 
             # Validate template meets institutional standards
-            validation_result = self._validate_template_standards(
-                template_obj, template_name, content_type
-            )
+            validation_result = self._validate_template_standards(template_obj, template_name, content_type)
 
             if not validation_result.get("compliant", False):
                 self.console.print(
@@ -984,16 +857,14 @@ Generated: {{ timestamp }}"""
 
     def _validate_template_standards(
         self, template_obj: Template, template_name: str, content_type: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate template meets institutional standards"""
         issues = []
         compliant = True
 
         try:
             # Get template source for validation
-            template_source = (
-                template_obj.source if hasattr(template_obj, "source") else ""
-            )
+            template_source = template_obj.source if hasattr(template_obj, "source") else ""
 
             if content_type == "twitter_fundamental":
                 # Check for required elements in Twitter fundamental templates
@@ -1011,9 +882,7 @@ Generated: {{ timestamp }}"""
 
                 # Check for NO BOLD FORMATTING rule
                 if "**" in template_source:
-                    issues.append(
-                        "Template contains bold formatting (**) - violates institutional standards"
-                    )
+                    issues.append("Template contains bold formatting (**) - violates institutional standards")
                     compliant = False
 
             elif content_type == "blog_fundamental":
@@ -1082,21 +951,13 @@ Generated: {{ timestamp }}"""
                         compliant = False
 
                 # Check for sector-specific customization
-                if (
-                    "sector ==" not in template_source
-                    and "data.sector ==" not in template_source
-                ):
+                if "sector ==" not in template_source and "data.sector ==" not in template_source:
                     issues.append("Missing sector-specific customization logic")
                     compliant = False
 
                 # Check for 280 character limit consideration
-                if (
-                    "280" not in template_source
-                    and content_type == "twitter_fundamental"
-                ):
-                    issues.append(
-                        "Template should consider 280 character Twitter limit"
-                    )
+                if "280" not in template_source and content_type == "twitter_fundamental":
+                    issues.append("Template should consider 280 character Twitter limit")
                     compliant = False
 
             elif content_type == "blog":
@@ -1130,9 +991,7 @@ Generated: {{ timestamp }}"""
                 "validation_timestamp": datetime.now().isoformat(),
             }
 
-    def _validate_data_completeness(
-        self, data: Dict[str, Any], content_type: str, template: str
-    ) -> Dict[str, Any]:
+    def _validate_data_completeness(self, data: dict[str, Any], content_type: str, template: str) -> dict[str, Any]:
         """Validate data completeness for optimal content generation"""
         issues = []
         completeness_score = 1.0
@@ -1169,8 +1028,7 @@ Generated: {{ timestamp }}"""
 
                 # Template-specific requirements
                 if template == "A_valuation" and not any(
-                    data.get(f)
-                    for f in ["fair_value", "dcf_value", "valuation_methods"]
+                    data.get(f) for f in ["fair_value", "dcf_value", "valuation_methods"]
                 ):
                     issues.append("Valuation template requires valuation data")
                     completeness_score -= 0.3
@@ -1207,13 +1065,7 @@ Generated: {{ timestamp }}"""
                 "data_quality": (
                     "excellent"
                     if completeness_score >= 0.9
-                    else (
-                        "good"
-                        if completeness_score >= 0.7
-                        else "fair"
-                        if completeness_score >= 0.5
-                        else "poor"
-                    )
+                    else ("good" if completeness_score >= 0.7 else "fair" if completeness_score >= 0.5 else "poor")
                 ),
                 "validation_timestamp": datetime.now().isoformat(),
             }
@@ -1226,9 +1078,7 @@ Generated: {{ timestamp }}"""
                 "validation_timestamp": datetime.now().isoformat(),
             }
 
-    def _validate_content_quality(
-        self, content: str, content_type: str, template: str
-    ) -> Dict[str, Any]:
+    def _validate_content_quality(self, content: str, content_type: str, template: str) -> dict[str, Any]:
         """Validate generated content meets institutional quality standards"""
         issues = []
         quality_score = 1.0
@@ -1239,9 +1089,7 @@ Generated: {{ timestamp }}"""
                 # Character count validation
                 char_count = len(content)
                 if char_count > 280:
-                    issues.append(
-                        f"Content exceeds 280 character Twitter limit ({char_count} chars)"
-                    )
+                    issues.append(f"Content exceeds 280 character Twitter limit ({char_count} chars)")
                     compliant = False
                     quality_score -= 0.3
 
@@ -1261,18 +1109,14 @@ Generated: {{ timestamp }}"""
 
                 # NO BOLD FORMATTING validation (critical institutional rule)
                 if "**" in content or re.search(r"\*[^*\s][^*]*\*", content):
-                    issues.append(
-                        "Content contains bold formatting (asterisks) - violates institutional standards"
-                    )
+                    issues.append("Content contains bold formatting (asterisks) - violates institutional standards")
                     quality_score -= 0.5
                     compliant = False
 
                 # Template-specific validation
                 if template == "A_valuation":
                     if not re.search(r"\$[\d,]+.*fair value", content, re.IGNORECASE):
-                        issues.append(
-                            "Valuation template should include fair value estimate"
-                        )
+                        issues.append("Valuation template should include fair value estimate")
                         quality_score -= 0.2
 
                 elif template == "B_catalyst":
@@ -1318,13 +1162,7 @@ Generated: {{ timestamp }}"""
                     else (
                         "B"
                         if quality_score >= 0.85
-                        else (
-                            "C"
-                            if quality_score >= 0.75
-                            else "D"
-                            if quality_score >= 0.60
-                            else "F"
-                        )
+                        else ("C" if quality_score >= 0.75 else "D" if quality_score >= 0.60 else "F")
                     )
                 ),
                 "institutional_certified": compliant and quality_score >= 0.90,
@@ -1342,9 +1180,7 @@ Generated: {{ timestamp }}"""
                 "validation_timestamp": datetime.now().isoformat(),
             }
 
-    def _validate_comprehensive_sections(
-        self, content: str, content_type: str
-    ) -> Dict[str, Any]:
+    def _validate_comprehensive_sections(self, content: str, content_type: str) -> dict[str, Any]:
         """Validate content has required comprehensive institutional sections"""
         results = {}
 
@@ -1400,13 +1236,7 @@ Generated: {{ timestamp }}"""
                 "grade": (
                     "A"
                     if compliance_rate >= 0.9
-                    else (
-                        "B"
-                        if compliance_rate >= 0.8
-                        else "C"
-                        if compliance_rate >= 0.7
-                        else "F"
-                    )
+                    else ("B" if compliance_rate >= 0.8 else "C" if compliance_rate >= 0.7 else "F")
                 ),
                 "status": (
                     "✅ INSTITUTIONAL"
@@ -1419,9 +1249,7 @@ Generated: {{ timestamp }}"""
 
         return results
 
-    def _validate_institutional_standards(
-        self, content: str, content_type: str
-    ) -> Dict[str, Any]:
+    def _validate_institutional_standards(self, content: str, content_type: str) -> dict[str, Any]:
         """Validate content meets comprehensive institutional standards"""
         standards = {}
 
@@ -1450,19 +1278,11 @@ Generated: {{ timestamp }}"""
             "yield curve",
             "economic",
         ]
-        economic_mentions = sum(
-            1
-            for indicator in economic_indicators
-            if indicator.lower() in content.lower()
-        )
+        economic_mentions = sum(1 for indicator in economic_indicators if indicator.lower() in content.lower())
         standards["economic_context"] = {
             "indicators_count": economic_mentions,
             "status": (
-                "✅ COMPREHENSIVE"
-                if economic_mentions >= 8
-                else "⚠️ BASIC"
-                if economic_mentions >= 4
-                else "❌ LIMITED"
+                "✅ COMPREHENSIVE" if economic_mentions >= 8 else "⚠️ BASIC" if economic_mentions >= 4 else "❌ LIMITED"
             ),
             "score": min(1.0, economic_mentions / 8),
         }
@@ -1475,18 +1295,10 @@ Generated: {{ timestamp }}"""
             "mitigation",
             "monitoring",
         ]
-        risk_mentions = sum(
-            1 for pattern in risk_patterns if pattern.lower() in content.lower()
-        )
+        risk_mentions = sum(1 for pattern in risk_patterns if pattern.lower() in content.lower())
         standards["risk_quantification"] = {
             "elements_count": risk_mentions,
-            "status": (
-                "✅ COMPREHENSIVE"
-                if risk_mentions >= 4
-                else "⚠️ BASIC"
-                if risk_mentions >= 2
-                else "❌ LIMITED"
-            ),
+            "status": ("✅ COMPREHENSIVE" if risk_mentions >= 4 else "⚠️ BASIC" if risk_mentions >= 2 else "❌ LIMITED"),
             "score": min(1.0, risk_mentions / 4),
         }
 
@@ -1503,11 +1315,7 @@ Generated: {{ timestamp }}"""
         standards["multi_source_validation"] = {
             "sources_count": source_mentions,
             "status": (
-                "✅ COMPREHENSIVE"
-                if source_mentions >= 4
-                else "⚠️ BASIC"
-                if source_mentions >= 2
-                else "❌ LIMITED"
+                "✅ COMPREHENSIVE" if source_mentions >= 4 else "⚠️ BASIC" if source_mentions >= 2 else "❌ LIMITED"
             ),
             "score": min(1.0, source_mentions / 4),
         }
@@ -1518,15 +1326,7 @@ Generated: {{ timestamp }}"""
         standards["overall_institutional"] = {
             "score": overall_score,
             "grade": (
-                "A"
-                if overall_score >= 0.9
-                else (
-                    "B"
-                    if overall_score >= 0.8
-                    else "C"
-                    if overall_score >= 0.7
-                    else "F"
-                )
+                "A" if overall_score >= 0.9 else ("B" if overall_score >= 0.8 else "C" if overall_score >= 0.7 else "F")
             ),
             "status": (
                 "✅ INSTITUTIONAL"
@@ -1548,9 +1348,8 @@ Generated: {{ timestamp }}"""
             if "twitter" in path.name.lower():
                 if "fundamental" in path.name.lower():
                     return "twitter_fundamental"
-                else:
-                    return "twitter_post"
-            elif "blog" in path.name.lower() or path.suffix == ".md":
+                return "twitter_post"
+            if "blog" in path.name.lower() or path.suffix == ".md":
                 return "blog"
 
             # Check content characteristics
@@ -1566,10 +1365,8 @@ Generated: {{ timestamp }}"""
                     ]
                 ):
                     return "twitter_fundamental"
-                else:
-                    return "twitter_post"
-            else:
-                return "blog"
+                return "twitter_post"
+            return "blog"
 
         except Exception:
             return "unknown"
@@ -1582,41 +1379,34 @@ Generated: {{ timestamp }}"""
 
             if "twitter_fundamental" in name:
                 return "twitter_fundamental"
-            elif "twitter_post" in name:
+            if "twitter_post" in name:
                 return "twitter_post"
-            elif "blog" in name:
+            if "blog" in name:
                 return "blog"
-            else:
-                return "unknown"
+            return "unknown"
 
         except Exception:
             return "unknown"
 
     def _validate_content_comprehensive(
         self, content: str, content_type: str, template_name: str, content_file: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform comprehensive content validation and generate report"""
         try:
             # Use validation framework template
             validation_template = self._get_template("validation_framework.j2")
 
             # Perform detailed validation
-            basic_validation = self._validate_content_quality(
-                content, content_type, template_name
-            )
+            basic_validation = self._validate_content_quality(content, content_type, template_name)
 
             # Enhanced validation data
             validation_data = {
                 "validation": {
                     "quality_score": basic_validation.get("quality_score", 0.80),
                     "quality_grade": basic_validation.get("quality_grade", "B"),
-                    "institutional_certified": basic_validation.get(
-                        "institutional_certified", False
-                    ),
+                    "institutional_certified": basic_validation.get("institutional_certified", False),
                     "character_count": len(content),
-                    "word_count": (
-                        len(content.split()) if content_type == "blog" else None
-                    ),
+                    "word_count": (len(content.split()) if content_type == "blog" else None),
                     # Template compliance
                     "template_structure": {
                         "status": "✅ PASS",
@@ -1629,24 +1419,14 @@ Generated: {{ timestamp }}"""
                         "issues": [],
                     },
                     "character_limits": {
-                        "status": (
-                            "✅ PASS"
-                            if len(content) <= 280 or content_type == "blog"
-                            else "❌ FAIL"
-                        ),
-                        "score": (
-                            1.0
-                            if len(content) <= 280 or content_type == "blog"
-                            else 0.5
-                        ),
+                        "status": ("✅ PASS" if len(content) <= 280 or content_type == "blog" else "❌ FAIL"),
+                        "score": (1.0 if len(content) <= 280 or content_type == "blog" else 0.5),
                         "issues": [],
                     },
                     "formatting_rules": {
                         "status": "✅ PASS" if "**" not in content else "⚠️ WARNING",
                         "score": 1.0 if "**" not in content else 0.7,
-                        "issues": (
-                            ["Bold formatting detected"] if "**" in content else []
-                        ),
+                        "issues": (["Bold formatting detected"] if "**" in content else []),
                     },
                     # Content quality standards
                     "accuracy": {
@@ -1700,8 +1480,7 @@ Generated: {{ timestamp }}"""
                         "notes": "Cross-validated across sources",
                     },
                     # Content-specific validation
-                    "stock_ticker_present": "$" in content
-                    and any(c.isupper() for c in content),
+                    "stock_ticker_present": "$" in content and any(c.isupper() for c in content),
                     "blog_link_present": "colemorton.com" in content,
                     "disclaimer_present": "not financial advice" in content.lower(),
                     "hashtags_present": "#" in content,
@@ -1795,7 +1574,7 @@ Generated: {{ timestamp }}"""
 
     def _validate_template_comprehensive(
         self, template_content: str, template_file: str, content_type: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform comprehensive template validation and generate report"""
         try:
             # Use template validation checklist
@@ -1840,11 +1619,9 @@ Generated: {{ timestamp }}"""
                     "char_limit_logic": "280" in template_content,
                     "ticker_variable": "{{ ticker }}" in template_content,
                     "blog_link_template": "colemorton.com" in template_content,
-                    "disclaimer_required": "not financial advice"
-                    in template_content.lower(),
+                    "disclaimer_required": "not financial advice" in template_content.lower(),
                     "no_bold_check": "**" not in template_content,
-                    "hashtag_integration": "#{{ ticker }}" in template_content
-                    or "#" in template_content,
+                    "hashtag_integration": "#{{ ticker }}" in template_content or "#" in template_content,
                     # Code quality metrics
                     "maintainability_score": 0.85,
                     "maintainability_grade": "B+",
@@ -1959,7 +1736,7 @@ Generated: {{ timestamp }}"""
 
         return max(0.0, min(1.0, score))
 
-    def _extract_keywords(self, content: str) -> List[str]:
+    def _extract_keywords(self, content: str) -> list[str]:
         """Extract keywords from content"""
         # Simple keyword extraction - could be enhanced with NLP
         words = re.findall(r"\b\w+\b", content.lower())
@@ -2004,13 +1781,9 @@ Generated: {{ timestamp }}"""
             "a",
             "an",
         }
-        return list(
-            set([word for word in words if word not in common_words and len(word) > 3])
-        )
+        return list(set([word for word in words if word not in common_words and len(word) > 3]))
 
-    def _generate_seo_suggestions(
-        self, content: str, keywords: List[str], target_audience: str
-    ) -> List[str]:
+    def _generate_seo_suggestions(self, content: str, keywords: list[str], target_audience: str) -> list[str]:
         """Generate SEO optimization suggestions"""
         suggestions = []
 
@@ -2019,9 +1792,7 @@ Generated: {{ timestamp }}"""
         for keyword in keywords:
             density = content.lower().count(keyword.lower()) / word_count * 100
             if density < 1:
-                suggestions.append(
-                    f"Consider adding more instances of '{keyword}' (current density: {density:.1f}%)"
-                )
+                suggestions.append(f"Consider adding more instances of '{keyword}' (current density: {density:.1f}%)")
             elif density > 3:
                 suggestions.append(
                     f"Reduce usage of '{keyword}' to avoid keyword stuffing (current density: {density:.1f}%)"
@@ -2029,9 +1800,7 @@ Generated: {{ timestamp }}"""
 
         # Check content length
         if word_count < 300:
-            suggestions.append(
-                "Consider expanding content to at least 300 words for better SEO"
-            )
+            suggestions.append("Consider expanding content to at least 300 words for better SEO")
 
         # Check for headings
         if not re.search(r"^#+\s", content, re.MULTILINE):
@@ -2039,9 +1808,7 @@ Generated: {{ timestamp }}"""
 
         return suggestions
 
-    def _apply_seo_optimizations(
-        self, content: str, keywords: List[str], suggestions: List[str]
-    ) -> str:
+    def _apply_seo_optimizations(self, content: str, keywords: list[str], suggestions: list[str]) -> str:
         """Apply basic SEO optimizations to content"""
         optimized = content
 
@@ -2053,14 +1820,10 @@ Generated: {{ timestamp }}"""
 
         return optimized
 
-    def _generate_blog_metadata(
-        self, data: Dict[str, Any], ticker: Optional[str], template_type: str
-    ) -> Dict[str, Any]:
+    def _generate_blog_metadata(self, data: dict[str, Any], ticker: str | None, template_type: str) -> dict[str, Any]:
         """Generate blog post metadata"""
         metadata = {
-            "title": data.get(
-                "title", f"Analysis Report - {ticker}" if ticker else "Analysis Report"
-            ),
+            "title": data.get("title", f"Analysis Report - {ticker}" if ticker else "Analysis Report"),
             "description": data.get("description", "Financial analysis and insights"),
             "author": "Cole Morton",
             "date": datetime.now().isoformat(),
@@ -2088,12 +1851,11 @@ Generated: {{ timestamp }}"""
         # Simple readability score (inverse of sentence length)
         if avg_sentence_length < 15:
             return 1.0
-        elif avg_sentence_length < 25:
+        if avg_sentence_length < 25:
             return 0.7
-        else:
-            return 0.4
+        return 0.4
 
-    def _calculate_seo_score(self, content: str, keywords: List[str]) -> float:
+    def _calculate_seo_score(self, content: str, keywords: list[str]) -> float:
         """Calculate SEO score"""
         score = 0.0
         word_count = len(content.split())
@@ -2117,7 +1879,7 @@ Generated: {{ timestamp }}"""
 
         return max(0.0, min(1.0, score))
 
-    def _save_to_file(self, content: Dict[str, Any], file_path: str):
+    def _save_to_file(self, content: dict[str, Any], file_path: str):
         """Save content to file"""
         try:
             path = Path(file_path)
@@ -2144,14 +1906,12 @@ Generated: {{ timestamp }}"""
         except Exception as e:
             raise ServiceError(f"Failed to save file: {e}")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform service-specific health check"""
         try:
             # Check templates directory
             templates_exist = self.templates_dir.exists()
-            templates_count = (
-                len(list(self.templates_dir.glob("*.j2"))) if templates_exist else 0
-            )
+            templates_count = len(list(self.templates_dir.glob("*.j2"))) if templates_exist else 0
 
             # Check Jinja2 environment
             jinja_working = True
@@ -2171,11 +1931,7 @@ Generated: {{ timestamp }}"""
             except Exception:
                 can_write = False
 
-            status = (
-                "healthy"
-                if all([templates_exist, jinja_working, can_write])
-                else "degraded"
-            )
+            status = "healthy" if all([templates_exist, jinja_working, can_write]) else "degraded"
 
             return {
                 "service": "content_automation",
@@ -2196,7 +1952,7 @@ Generated: {{ timestamp }}"""
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         try:
             # Content automation doesn't use traditional caching like financial services
@@ -2214,14 +1970,14 @@ Generated: {{ timestamp }}"""
                     "message": f"Cleared {len(temp_files)} temporary files",
                 }
 
-            elif action == "cleanup":
+            if action == "cleanup":
                 # Clean up old generated files (if any)
                 return {
                     "action": "cleanup",
                     "message": "Content automation cleanup completed",
                 }
 
-            elif action == "stats":
+            if action == "stats":
                 # Return template statistics
                 template_files = list(self.templates_dir.glob("*.j2"))
                 return {
@@ -2231,8 +1987,7 @@ Generated: {{ timestamp }}"""
                     "templates_directory": str(self.templates_dir),
                 }
 
-            else:
-                raise ValidationError(f"Unknown cache action: {action}")
+            raise ValidationError(f"Unknown cache action: {action}")
 
         except Exception as e:
             return {
@@ -2242,9 +1997,7 @@ Generated: {{ timestamp }}"""
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def _validate_institutional_data_completeness(
-        self, data: Dict[str, Any], analysis_type: str
-    ) -> Dict[str, Any]:
+    def _validate_institutional_data_completeness(self, data: dict[str, Any], analysis_type: str) -> dict[str, Any]:
         """Validate data completeness for institutional analysis"""
         issues = []
         compliant = True
@@ -2295,9 +2048,7 @@ Generated: {{ timestamp }}"""
                 try:
                     conf_val = float(data[field])
                     if not (0.0 <= conf_val <= 1.0):
-                        issues.append(
-                            f"{field} must be between 0.0 and 1.0, got {conf_val}"
-                        )
+                        issues.append(f"{field} must be between 0.0 and 1.0, got {conf_val}")
                         compliant = False
                 except (ValueError, TypeError):
                     issues.append(f"{field} must be a valid decimal number")
@@ -2311,8 +2062,8 @@ Generated: {{ timestamp }}"""
         }
 
     def _validate_institutional_compliance(
-        self, content: str, analysis_type: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, analysis_type: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate institutional compliance of generated content"""
         issues = []
         compliant = True
@@ -2388,12 +2139,12 @@ Generated: {{ timestamp }}"""
 
     def _generate_analysis_metadata(
         self,
-        data: Dict[str, Any],
-        ticker: Optional[str],
-        sector: Optional[str],
-        industry: Optional[str],
+        data: dict[str, Any],
+        ticker: str | None,
+        sector: str | None,
+        industry: str | None,
         analysis_type: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate enhanced metadata for institutional analysis"""
         return {
             "document_type": f"{analysis_type}_analysis",
@@ -2413,8 +2164,8 @@ Generated: {{ timestamp }}"""
         }
 
     def _execute_industry_discovery(
-        self, industry: str, sector: Optional[str], confidence_threshold: float
-    ) -> Dict[str, Any]:
+        self, industry: str, sector: str | None, confidence_threshold: float
+    ) -> dict[str, Any]:
         """Execute industry discovery workflow"""
         try:
             import subprocess
@@ -2441,7 +2192,7 @@ Generated: {{ timestamp }}"""
             discovery_file = f"./data/outputs/industry_analysis/discovery/{industry}_{date_str}_discovery.json"
 
             try:
-                with open(discovery_file, "r") as f:
+                with open(discovery_file) as f:
                     import json
 
                     discovery_data = json.load(f)
@@ -2450,9 +2201,9 @@ Generated: {{ timestamp }}"""
                         "phase": "discovery",
                         "industry": industry,
                         "output_file": discovery_file,
-                        "confidence": discovery_data.get(
-                            "discovery_quality_metrics", {}
-                        ).get("discovery_confidence", 9.0),
+                        "confidence": discovery_data.get("discovery_quality_metrics", {}).get(
+                            "discovery_confidence", 9.0
+                        ),
                         "summary": f"Industry discovery completed with {len(discovery_data.get('representative_companies', []))} representative companies analyzed",
                     }
             except FileNotFoundError:
@@ -2467,9 +2218,7 @@ Generated: {{ timestamp }}"""
         except subprocess.CalledProcessError as e:
             raise ServiceError(f"Industry discovery failed: {e.stderr}")
 
-    def _execute_industry_analysis(
-        self, industry: str, date: str, confidence_threshold: float
-    ) -> Dict[str, Any]:
+    def _execute_industry_analysis(self, industry: str, date: str, confidence_threshold: float) -> dict[str, Any]:
         """Execute industry analysis workflow"""
         try:
             import subprocess
@@ -2500,9 +2249,7 @@ Generated: {{ timestamp }}"""
         except subprocess.CalledProcessError as e:
             raise ServiceError(f"Industry analysis failed: {e.stderr}")
 
-    def _execute_industry_synthesis(
-        self, industry: str, date: str, confidence_threshold: float
-    ) -> Dict[str, Any]:
+    def _execute_industry_synthesis(self, industry: str, date: str, confidence_threshold: float) -> dict[str, Any]:
         """Execute industry synthesis workflow"""
         try:
             import subprocess
@@ -2537,9 +2284,7 @@ Generated: {{ timestamp }}"""
         except subprocess.CalledProcessError as e:
             raise ServiceError(f"Industry synthesis failed: {e.stderr}")
 
-    def _execute_industry_validation(
-        self, industry: str, date: str, confidence_threshold: float
-    ) -> Dict[str, Any]:
+    def _execute_industry_validation(self, industry: str, date: str, confidence_threshold: float) -> dict[str, Any]:
         """Execute industry validation workflow"""
         try:
             import subprocess
@@ -2571,8 +2316,8 @@ Generated: {{ timestamp }}"""
             raise ServiceError(f"Industry validation failed: {e.stderr}")
 
     def _execute_full_industry_workflow(
-        self, industry: str, sector: Optional[str], confidence_threshold: float
-    ) -> Dict[str, Any]:
+        self, industry: str, sector: str | None, confidence_threshold: float
+    ) -> dict[str, Any]:
         """Execute complete industry DASV workflow"""
         try:
             from datetime import datetime
@@ -2582,27 +2327,19 @@ Generated: {{ timestamp }}"""
             workflow_results = []
 
             # Phase 1: Discovery
-            discovery_result = self._execute_industry_discovery(
-                industry, sector, confidence_threshold
-            )
+            discovery_result = self._execute_industry_discovery(industry, sector, confidence_threshold)
             workflow_results.append(discovery_result)
 
             # Phase 2: Analysis
-            analysis_result = self._execute_industry_analysis(
-                industry, date, confidence_threshold
-            )
+            analysis_result = self._execute_industry_analysis(industry, date, confidence_threshold)
             workflow_results.append(analysis_result)
 
             # Phase 3: Synthesis
-            synthesis_result = self._execute_industry_synthesis(
-                industry, date, confidence_threshold
-            )
+            synthesis_result = self._execute_industry_synthesis(industry, date, confidence_threshold)
             workflow_results.append(synthesis_result)
 
             # Phase 4: Validation
-            validation_result = self._execute_industry_validation(
-                industry, date, confidence_threshold
-            )
+            validation_result = self._execute_industry_validation(industry, date, confidence_threshold)
             workflow_results.append(validation_result)
 
             return {

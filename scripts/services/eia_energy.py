@@ -14,7 +14,7 @@ Production-grade U.S. Energy Information Administration API integration with:
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -22,6 +22,7 @@ from .base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -100,16 +101,14 @@ class EIAEnergyService(BaseFinancialService):
             },
         }
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate EIA response data"""
         if not isinstance(data, dict):
             raise ValidationError(f"Invalid response format for {endpoint}")
 
         # Check for EIA API errors
         if "error" in data:
-            raise DataNotFoundError(
-                f"EIA API error: {data.get('error', 'Unknown error')}"
-            )
+            raise DataNotFoundError(f"EIA API error: {data.get('error', 'Unknown error')}")
 
         # Add timestamp if not present
         if "timestamp" not in data:
@@ -117,9 +116,7 @@ class EIAEnergyService(BaseFinancialService):
 
         return data
 
-    def _make_request_with_retry(
-        self, endpoint: str, params: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def _make_request_with_retry(self, endpoint: str, params: dict[str, Any] = None) -> dict[str, Any]:
         """Override to use EIA API parameter format"""
         if params is None:
             params = {}
@@ -133,9 +130,7 @@ class EIAEnergyService(BaseFinancialService):
 
         return super()._make_request_with_retry(endpoint, params)
 
-    def get_oil_prices(
-        self, period: str = "1y", price_type: str = "all"
-    ) -> Dict[str, Any]:
+    def get_oil_prices(self, period: str = "1y", price_type: str = "all") -> dict[str, Any]:
         """
         Get comprehensive oil price data
 
@@ -172,9 +167,7 @@ class EIAEnergyService(BaseFinancialService):
                 oil_series = {price_type: oil_series[price_type]}
             elif price_type != "all":
                 available_types = list(oil_series.keys())
-                raise ValidationError(
-                    f"Price type '{price_type}' not supported. Available: {available_types}"
-                )
+                raise ValidationError(f"Price type '{price_type}' not supported. Available: {available_types}")
 
             # Collect oil price data
             oil_data = {}
@@ -206,7 +199,7 @@ class EIAEnergyService(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to get oil prices: {str(e)}")
 
-    def get_natural_gas_data(self, period: str = "1y") -> Dict[str, Any]:
+    def get_natural_gas_data(self, period: str = "1y") -> dict[str, Any]:
         """
         Get comprehensive natural gas market data
 
@@ -261,7 +254,7 @@ class EIAEnergyService(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to get natural gas data: {str(e)}")
 
-    def get_electricity_generation_analysis(self, period: str = "1y") -> Dict[str, Any]:
+    def get_electricity_generation_analysis(self, period: str = "1y") -> dict[str, Any]:
         """
         Get electricity generation analysis by fuel type
 
@@ -314,11 +307,9 @@ class EIAEnergyService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to get electricity generation analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to get electricity generation analysis: {str(e)}")
 
-    def get_energy_consumption_trends(self, period: str = "2y") -> Dict[str, Any]:
+    def get_energy_consumption_trends(self, period: str = "2y") -> dict[str, Any]:
         """
         Get comprehensive energy consumption trends analysis
 
@@ -362,12 +353,8 @@ class EIAEnergyService(BaseFinancialService):
                 "energy_consumption": consumption_data,
                 "consumption_trends": trends_analysis,
                 "fuel_mix_evolution": self._analyze_fuel_mix_changes(consumption_data),
-                "efficiency_indicators": self._calculate_efficiency_metrics(
-                    consumption_data
-                ),
-                "seasonal_consumption": self._analyze_seasonal_consumption(
-                    consumption_data
-                ),
+                "efficiency_indicators": self._calculate_efficiency_metrics(consumption_data),
+                "seasonal_consumption": self._analyze_seasonal_consumption(consumption_data),
                 "period": period,
                 "date_range": f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}",
                 "data_source": "EIA Energy Consumption Data",
@@ -375,13 +362,9 @@ class EIAEnergyService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to get energy consumption trends: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to get energy consumption trends: {str(e)}")
 
-    def get_series_data(
-        self, series_id: str, start_date: str = None, end_date: str = None
-    ) -> Dict[str, Any]:
+    def get_series_data(self, series_id: str, start_date: str = None, end_date: str = None) -> dict[str, Any]:
         """
         Get time series data for a specific EIA series
 
@@ -415,7 +398,7 @@ class EIAEnergyService(BaseFinancialService):
 
         return result
 
-    def get_comprehensive_energy_analysis(self) -> Dict[str, Any]:
+    def get_comprehensive_energy_analysis(self) -> dict[str, Any]:
         """
         Get comprehensive energy market analysis combining all data sources
 
@@ -440,12 +423,8 @@ class EIAEnergyService(BaseFinancialService):
                 "natural_gas_analysis": gas_analysis,
                 "electricity_analysis": electricity_analysis,
                 "consumption_analysis": consumption_analysis,
-                "market_correlations": self._analyze_energy_correlations(
-                    oil_analysis, gas_analysis
-                ),
-                "investment_implications": self._derive_energy_investment_implications(
-                    market_synthesis
-                ),
+                "market_correlations": self._analyze_energy_correlations(oil_analysis, gas_analysis),
+                "investment_implications": self._derive_energy_investment_implications(market_synthesis),
                 "risk_assessment": self._assess_energy_market_risks(market_synthesis),
                 "analysis_timestamp": datetime.now().isoformat(),
                 "data_sources": [
@@ -458,12 +437,10 @@ class EIAEnergyService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform comprehensive energy analysis: {str(e)}"
-            )
+            raise DataNotFoundError(f"Failed to perform comprehensive energy analysis: {str(e)}")
 
     # Helper methods for data processing and analysis
-    def _process_price_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_price_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Process and analyze price data"""
         # Extract price series and calculate statistics
         return {
@@ -475,7 +452,7 @@ class EIAEnergyService(BaseFinancialService):
             "trend": "neutral",
         }
 
-    def _process_gas_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_gas_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Process natural gas data"""
         return {
             "latest_value": 3.25,  # Placeholder
@@ -483,7 +460,7 @@ class EIAEnergyService(BaseFinancialService):
             "seasonality": "winter_premium",
         }
 
-    def _process_generation_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_generation_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Process electricity generation data"""
         return {
             "latest_generation": 400000,  # MWh placeholder
@@ -491,7 +468,7 @@ class EIAEnergyService(BaseFinancialService):
             "capacity_factor": 0.65,
         }
 
-    def _process_consumption_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_consumption_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Process energy consumption data"""
         return {
             "latest_consumption": 95000,  # Trillion BTU placeholder
@@ -499,7 +476,7 @@ class EIAEnergyService(BaseFinancialService):
             "efficiency_trend": "improving",
         }
 
-    def _analyze_oil_market(self, oil_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_oil_market(self, oil_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze oil market conditions"""
         return {
             "market_condition": "balanced",
@@ -509,9 +486,7 @@ class EIAEnergyService(BaseFinancialService):
             "crack_spreads": "elevated",
         }
 
-    def _calculate_price_correlations(
-        self, oil_data: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def _calculate_price_correlations(self, oil_data: dict[str, Any]) -> dict[str, float]:
         """Calculate correlations between different oil prices"""
         return {
             "wti_brent_correlation": 0.95,
@@ -519,7 +494,7 @@ class EIAEnergyService(BaseFinancialService):
             "crude_diesel_correlation": 0.82,
         }
 
-    def _analyze_oil_volatility(self, oil_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_oil_volatility(self, oil_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze oil price volatility"""
         return {
             "current_volatility": "moderate",
@@ -528,7 +503,7 @@ class EIAEnergyService(BaseFinancialService):
             "risk_metrics": {"var_95": -2.5, "expected_shortfall": -3.8},
         }
 
-    def _analyze_gas_market(self, gas_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_gas_market(self, gas_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze natural gas market conditions"""
         return {
             "market_balance": "oversupplied",
@@ -537,7 +512,7 @@ class EIAEnergyService(BaseFinancialService):
             "lng_exports": "strong",
         }
 
-    def _analyze_supply_demand(self, gas_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_supply_demand(self, gas_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze natural gas supply/demand balance"""
         return {
             "production_trend": "increasing",
@@ -546,7 +521,7 @@ class EIAEnergyService(BaseFinancialService):
             "import_export_balance": "net_exporter",
         }
 
-    def _analyze_seasonal_patterns(self, gas_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_seasonal_patterns(self, gas_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze seasonal patterns in natural gas"""
         return {
             "seasonal_strength": "moderate",
@@ -554,7 +529,7 @@ class EIAEnergyService(BaseFinancialService):
             "storage_injection_season": "active",
         }
 
-    def _analyze_storage_levels(self, gas_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_storage_levels(self, gas_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze natural gas storage levels"""
         return {
             "current_storage": "3500_bcf",  # Placeholder
@@ -563,9 +538,7 @@ class EIAEnergyService(BaseFinancialService):
             "capacity_utilization": 0.75,
         }
 
-    def _analyze_generation_mix(
-        self, generation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_generation_mix(self, generation_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze electricity generation fuel mix"""
         return {
             "dominant_fuel": "natural_gas",
@@ -575,13 +548,11 @@ class EIAEnergyService(BaseFinancialService):
             "mix_evolution": "gas_and_renewables_growing",
         }
 
-    def _calculate_renewable_share(self, generation_data: Dict[str, Any]) -> float:
+    def _calculate_renewable_share(self, generation_data: dict[str, Any]) -> float:
         """Calculate renewable energy share"""
         return 0.25  # 25% placeholder
 
-    def _analyze_fuel_switching(
-        self, generation_data: Dict[str, Any]
-    ) -> Dict[str, str]:
+    def _analyze_fuel_switching(self, generation_data: dict[str, Any]) -> dict[str, str]:
         """Analyze fuel switching trends in electricity generation"""
         return {
             "coal_to_gas": "ongoing",
@@ -589,9 +560,7 @@ class EIAEnergyService(BaseFinancialService):
             "nuclear_retirements": "selective",
         }
 
-    def _estimate_carbon_intensity(
-        self, generation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _estimate_carbon_intensity(self, generation_data: dict[str, Any]) -> dict[str, Any]:
         """Estimate carbon intensity of electricity generation"""
         return {
             "current_intensity": "850_lbs_co2_per_mwh",
@@ -599,9 +568,7 @@ class EIAEnergyService(BaseFinancialService):
             "improvement_rate": "2_percent_annually",
         }
 
-    def _analyze_consumption_trends(
-        self, consumption_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_consumption_trends(self, consumption_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze energy consumption trends"""
         return {
             "total_consumption_trend": "stable",
@@ -610,9 +577,7 @@ class EIAEnergyService(BaseFinancialService):
             "industrial_demand": "stable",
         }
 
-    def _analyze_fuel_mix_changes(
-        self, consumption_data: Dict[str, Any]
-    ) -> Dict[str, str]:
+    def _analyze_fuel_mix_changes(self, consumption_data: dict[str, Any]) -> dict[str, str]:
         """Analyze changes in fuel consumption mix"""
         return {
             "oil_share": "declining",
@@ -621,18 +586,14 @@ class EIAEnergyService(BaseFinancialService):
             "coal_share": "declining",
         }
 
-    def _calculate_efficiency_metrics(
-        self, consumption_data: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def _calculate_efficiency_metrics(self, consumption_data: dict[str, Any]) -> dict[str, float]:
         """Calculate energy efficiency metrics"""
         return {
             "energy_intensity_gdp": 5.5,  # Thousand BTU per dollar of GDP
             "efficiency_improvement_rate": 0.02,  # 2% annually
         }
 
-    def _analyze_seasonal_consumption(
-        self, consumption_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_seasonal_consumption(self, consumption_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze seasonal consumption patterns"""
         return {
             "winter_peak": "heating_demand",
@@ -642,11 +603,11 @@ class EIAEnergyService(BaseFinancialService):
 
     def _synthesize_energy_markets(
         self,
-        oil_analysis: Dict[str, Any],
-        gas_analysis: Dict[str, Any],
-        electricity_analysis: Dict[str, Any],
-        consumption_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        oil_analysis: dict[str, Any],
+        gas_analysis: dict[str, Any],
+        electricity_analysis: dict[str, Any],
+        consumption_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Synthesize comprehensive energy market view"""
         return {
             "overall_energy_environment": "balanced_with_transitions",
@@ -663,8 +624,8 @@ class EIAEnergyService(BaseFinancialService):
         }
 
     def _analyze_energy_correlations(
-        self, oil_analysis: Dict[str, Any], gas_analysis: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, oil_analysis: dict[str, Any], gas_analysis: dict[str, Any]
+    ) -> dict[str, float]:
         """Analyze correlations between energy commodities"""
         return {
             "oil_gas_correlation": 0.45,
@@ -672,9 +633,7 @@ class EIAEnergyService(BaseFinancialService):
             "gas_electricity_correlation": 0.65,
         }
 
-    def _derive_energy_investment_implications(
-        self, synthesis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _derive_energy_investment_implications(self, synthesis: dict[str, Any]) -> dict[str, Any]:
         """Derive investment implications from energy analysis"""
         return {
             "sector_outlook": {
@@ -695,7 +654,7 @@ class EIAEnergyService(BaseFinancialService):
             ],
         }
 
-    def _assess_energy_market_risks(self, synthesis: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_energy_market_risks(self, synthesis: dict[str, Any]) -> dict[str, Any]:
         """Assess energy market risks"""
         return {
             "supply_disruption_risk": "moderate",
@@ -706,7 +665,7 @@ class EIAEnergyService(BaseFinancialService):
             "weather_risk": "seasonal",
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with WTI crude oil price

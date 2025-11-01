@@ -19,17 +19,17 @@ Usage:
     sla_status = monitor.get_sla_status()
 """
 
-import json
 import logging
 import sys
 import threading
 import time
-from collections import defaultdict, deque
-from dataclasses import asdict, dataclass
+from collections import deque
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 
 # Add utils directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -80,7 +80,7 @@ class ValidationEvent:
     ready_for_publication: bool
     issues_count: int
     critical_issues_count: int
-    source_validated: List[str]
+    source_validated: list[str]
 
 
 @dataclass
@@ -107,8 +107,8 @@ class Alert:
     level: AlertLevel
     component: str
     message: str
-    threshold_exceeded: Optional[str]
-    current_value: Optional[Union[float, str]]
+    threshold_exceeded: str | None
+    current_value: float | str | None
     recommended_action: str
 
 
@@ -120,7 +120,7 @@ class ValidationMonitoringService:
     with configurable SLA thresholds and automated alerting.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         # SLA Configuration
         self.sla_thresholds = {
             "data_freshness_hours": SLAThreshold(
@@ -193,9 +193,7 @@ class ValidationMonitoringService:
 
         # Background monitoring thread
         self._monitoring_active = True
-        self._monitoring_thread = threading.Thread(
-            target=self._background_monitoring, daemon=True
-        )
+        self._monitoring_thread = threading.Thread(target=self._background_monitoring, daemon=True)
         self._monitoring_thread.start()
 
         logger.info("Validation monitoring service initialized with SLA tracking")
@@ -207,9 +205,7 @@ class ValidationMonitoringService:
             event = ValidationEvent(
                 timestamp=datetime.now(),
                 post_path=getattr(validation_result, "post_path", "unknown"),
-                validation_time_seconds=validation_result.overall_assessment.get(
-                    "validation_time_seconds", 0.0
-                ),
+                validation_time_seconds=validation_result.overall_assessment.get("validation_time_seconds", 0.0),
                 data_freshness_hours=validation_result.real_time_validation.data_freshness_hours,
                 overall_score=validation_result.overall_reliability_score,
                 is_blocking=validation_result.is_blocking,
@@ -219,8 +215,7 @@ class ValidationMonitoringService:
                     [
                         i
                         for i in validation_result.real_time_validation.issues
-                        if hasattr(i, "severity")
-                        and str(i.severity).endswith("CRITICAL")
+                        if hasattr(i, "severity") and str(i.severity).endswith("CRITICAL")
                     ]
                 ),
                 source_validated=validation_result.real_time_validation.sources_validated,
@@ -235,9 +230,7 @@ class ValidationMonitoringService:
             # Check SLA compliance
             self._check_sla_compliance(event)
 
-            logger.debug(
-                f"Tracked validation event: {event.post_path} - Score: {event.overall_score:.1f}"
-            )
+            logger.debug(f"Tracked validation event: {event.post_path} - Score: {event.overall_score:.1f}")
 
         except Exception as e:
             logger.error(f"Failed to track validation event: {e}")
@@ -268,15 +261,11 @@ class ValidationMonitoringService:
 
         # Accuracy score average
         current_avg_score = self.statistics["average_accuracy_score"]
-        self.statistics["average_accuracy_score"] = (
-            current_avg_score * (total - 1) + event.overall_score
-        ) / total
+        self.statistics["average_accuracy_score"] = (current_avg_score * (total - 1) + event.overall_score) / total
 
         # Update current metrics
         self.current_metrics.timestamp = event.timestamp
-        self.current_metrics.current_validation_time_seconds = (
-            event.validation_time_seconds
-        )
+        self.current_metrics.current_validation_time_seconds = event.validation_time_seconds
         self.current_metrics.current_data_freshness_hours = event.data_freshness_hours
         self.current_metrics.current_accuracy_score = event.overall_score
 
@@ -364,9 +353,7 @@ class ValidationMonitoringService:
                 self.statistics["critical_alerts_last_24h"] += 1
             self.statistics["alerts_last_24h"] += 1
 
-            logger.warning(
-                f"{alert.level.value.upper()} ALERT - {alert.component}: {alert.message}"
-            )
+            logger.warning(f"{alert.level.value.upper()} ALERT - {alert.component}: {alert.message}")
 
         # Update overall SLA status
         individual_statuses = [
@@ -423,7 +410,7 @@ class ValidationMonitoringService:
                 timestamp=datetime.now(),
                 level=AlertLevel.WARNING,
                 component="system_resources",
-                message=f'High memory usage: {health_event["memory_usage_mb"]:.1f}MB',
+                message=f"High memory usage: {health_event['memory_usage_mb']:.1f}MB",
                 threshold_exceeded="memory_threshold",
                 current_value=health_event["memory_usage_mb"],
                 recommended_action="Monitor memory usage and consider cleanup",
@@ -467,7 +454,7 @@ class ValidationMonitoringService:
             # Fallback if psutil not available
             return 0.0
 
-    def get_sla_status(self) -> Dict[str, Any]:
+    def get_sla_status(self) -> dict[str, Any]:
         """Get current SLA status and metrics"""
         return {
             "overall_sla_status": self.current_metrics.overall_sla_status.value,
@@ -475,33 +462,25 @@ class ValidationMonitoringService:
                 "data_freshness": {
                     "status": self.current_metrics.data_freshness_sla_status.value,
                     "current_value": self.current_metrics.current_data_freshness_hours,
-                    "threshold": self.sla_thresholds[
-                        "data_freshness_hours"
-                    ].critical_threshold,
+                    "threshold": self.sla_thresholds["data_freshness_hours"].critical_threshold,
                     "unit": "hours",
                 },
                 "validation_time": {
                     "status": self.current_metrics.validation_time_sla_status.value,
                     "current_value": self.current_metrics.current_validation_time_seconds,
-                    "threshold": self.sla_thresholds[
-                        "validation_time_seconds"
-                    ].critical_threshold,
+                    "threshold": self.sla_thresholds["validation_time_seconds"].critical_threshold,
                     "unit": "seconds",
                 },
                 "accuracy_score": {
                     "status": self.current_metrics.accuracy_sla_status.value,
                     "current_value": self.current_metrics.current_accuracy_score,
-                    "threshold": self.sla_thresholds[
-                        "accuracy_score"
-                    ].critical_threshold,
+                    "threshold": self.sla_thresholds["accuracy_score"].critical_threshold,
                     "unit": "score",
                 },
                 "service_availability": {
                     "status": self.current_metrics.availability_sla_status.value,
                     "current_value": self.current_metrics.service_availability_percent,
-                    "threshold": self.sla_thresholds[
-                        "service_availability"
-                    ].critical_threshold,
+                    "threshold": self.sla_thresholds["service_availability"].critical_threshold,
                     "unit": "percent",
                 },
             },
@@ -517,7 +496,7 @@ class ValidationMonitoringService:
             ],
         }
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get detailed performance metrics"""
         if not self.validation_events:
             return {"message": "No validation events recorded yet"}
@@ -535,40 +514,26 @@ class ValidationMonitoringService:
                 "min_time_seconds": min(validation_times),
                 "max_time_seconds": max(validation_times),
                 "p95_time_seconds": (
-                    sorted(validation_times)[int(len(validation_times) * 0.95)]
-                    if validation_times
-                    else 0
+                    sorted(validation_times)[int(len(validation_times) * 0.95)] if validation_times else 0
                 ),
             },
             "data_freshness": {
                 "average_hours": sum(data_freshness) / len(data_freshness),
                 "min_hours": min(data_freshness),
                 "max_hours": max(data_freshness),
-                "p95_hours": (
-                    sorted(data_freshness)[int(len(data_freshness) * 0.95)]
-                    if data_freshness
-                    else 0
-                ),
+                "p95_hours": (sorted(data_freshness)[int(len(data_freshness) * 0.95)] if data_freshness else 0),
             },
             "accuracy_metrics": {
                 "average_score": sum(accuracy_scores) / len(accuracy_scores),
                 "min_score": min(accuracy_scores),
                 "max_score": max(accuracy_scores),
-                "p95_score": (
-                    sorted(accuracy_scores)[int(len(accuracy_scores) * 0.95)]
-                    if accuracy_scores
-                    else 0
-                ),
+                "p95_score": (sorted(accuracy_scores)[int(len(accuracy_scores) * 0.95)] if accuracy_scores else 0),
             },
             "event_counts": {
                 "total_events": len(recent_events),
-                "successful_events": len(
-                    [e for e in recent_events if e.ready_for_publication]
-                ),
+                "successful_events": len([e for e in recent_events if e.ready_for_publication]),
                 "blocked_events": len([e for e in recent_events if e.is_blocking]),
-                "events_with_issues": len(
-                    [e for e in recent_events if e.issues_count > 0]
-                ),
+                "events_with_issues": len([e for e in recent_events if e.issues_count > 0]),
             },
         }
 
@@ -618,9 +583,7 @@ if __name__ == "__main__":
     monitor.track_validation_event(MockValidationResult(9.5, 1.0, 5.0))
 
     # Test SLA violation
-    monitor.track_validation_event(
-        MockValidationResult(8.0, 10.0, 35.0, is_blocking=True)
-    )
+    monitor.track_validation_event(MockValidationResult(8.0, 10.0, 35.0, is_blocking=True))
 
     time.sleep(2)
 
@@ -630,8 +593,6 @@ if __name__ == "__main__":
     print("Recent alerts: {len(sla_status['recent_alerts'])}")
 
     performance = monitor.get_performance_metrics()
-    print(
-        f"Average validation time: {performance['validation_performance']['average_time_seconds']:.1f}s"
-    )
+    print(f"Average validation time: {performance['validation_performance']['average_time_seconds']:.1f}s")
 
     monitor.shutdown()

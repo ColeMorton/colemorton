@@ -1,9 +1,9 @@
-# 📖 Sensylate User Manual
+# 📖 Colemorton User Manual
 
 **Version**: 2.1 | **Last Updated**: 2024-09-07 | **Status**: Active
 **Authority**: Documentation Owner | **Audience**: All Users
 
-> **Complete guide to using Sensylate's multi-modal platform for trading analysis, content creation, and AI command collaboration.**
+> **Complete guide to using Colemorton's multi-modal platform for trading analysis, content creation, and AI command collaboration.**
 
 ## 🎯 Quick Navigation
 
@@ -32,7 +32,7 @@
 1. **Clone and Install**:
    ```bash
    git clone [repository-url]
-   cd sensylate
+   cd colemorton
 
    # Frontend setup
    cd frontend/
@@ -222,7 +222,7 @@ data/outputs/{analysis_type}/
 
 ### Data Processing Pipeline
 
-Sensylate provides a complete trading analysis framework:
+Colemorton provides a complete trading analysis framework:
 
 #### 1. Data Extraction
 ```bash
@@ -580,7 +580,7 @@ The frontend automatically integrates with your trading analysis:
 #### Site Settings (`src/config/config.json`)
 ```json
 {
-  "title": "Sensylate Trading Analysis",
+  "title": "Colemorton Trading Analysis",
   "description": "Multi-modal trading strategy platform",
   "author": "Your Name",
   "social": {
@@ -685,7 +685,7 @@ LOG_LEVEL=debug
 ```bash
 # .env.production
 NODE_ENV=production
-API_BASE_URL=https://api.sensylate.com
+API_BASE_URL=https://api.colemorton.com
 LOG_LEVEL=info
 ```
 
@@ -736,10 +736,10 @@ backtesting:
 ```json
 {
   "site": {
-    "title": "Sensylate",
+    "title": "Colemorton",
     "description": "Multi-modal trading analysis platform",
     "author": "Cole Morton",
-    "url": "https://sensylate.com"
+    "url": "https://colemorton.com"
   },
   "features": {
     "darkMode": true,
@@ -748,8 +748,8 @@ backtesting:
     "analytics": true
   },
   "social": {
-    "twitter": "@sensylate",
-    "github": "sensylate/platform"
+    "twitter": "@colemorton",
+    "github": "colemorton/platform"
   }
 }
 ```
@@ -794,7 +794,7 @@ command_integration:
 
 #### Template System (`templates/` and `scripts/templates/`)
 
-**Hybrid Template System**: Sensylate uses a sophisticated hybrid template system that combines authoritative markdown specifications with functional Jinja2 implementations:
+**Hybrid Template System**: Colemorton uses a sophisticated hybrid template system that combines authoritative markdown specifications with functional Jinja2 implementations:
 
 ```yaml
 template_architecture:
@@ -1031,4 +1031,4 @@ cat data/outputs/fundamental_analysis/*/analysis.json
 
 ---
 
-**🎉 You're ready to use Sensylate!** This platform combines powerful trading analysis with intelligent AI collaboration to deliver superior insights and content. Start with the Quick Start guide above, then explore the advanced features as you become comfortable with the system.
+**🎉 You're ready to use Colemorton!** This platform combines powerful trading analysis with intelligent AI collaboration to deliver superior insights and content. Start with the Quick Start guide above, then explore the advanced features as you become comfortable with the system.

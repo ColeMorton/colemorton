@@ -8,6 +8,7 @@ This script validates that the Puppeteer DOM manipulation properly hides photo-b
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -66,9 +67,7 @@ def test_dom_manipulation_placement():
 
     # Check order: charts wait -> DOM manipulation -> screenshot
     if not (charts_wait_pos < dom_manipulation_pos < screenshot_pos):
-        print(
-            "❌ DOM manipulation not in correct order (should be: charts wait -> hide controls -> screenshot)"
-        )
+        print("❌ DOM manipulation not in correct order (should be: charts wait -> hide controls -> screenshot)")
         return False
 
     print("✅ DOM manipulation is correctly placed in script flow")
@@ -96,9 +95,7 @@ def test_component_structure_unchanged():
     """Test that PhotoBoothDisplay component structure is unchanged."""
     print("🔍 Testing that component structure is unchanged...")
 
-    component_path = (
-        project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
-    )
+    component_path = project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
     with open(component_path) as f:
         content = f.read()
 
@@ -164,7 +161,7 @@ def main():
                 passed += 1
             else:
                 failed += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -192,9 +189,8 @@ def main():
         print("- No control panels, selectors, or UI elements")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

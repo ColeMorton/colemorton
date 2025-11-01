@@ -16,13 +16,14 @@ portfolio performance assessment.
 
 import json
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy import stats
+
 
 warnings.filterwarnings("ignore")
 
@@ -33,11 +34,11 @@ class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
-        elif isinstance(obj, np.floating):
+        if isinstance(obj, np.floating):
             return float(obj)
-        elif isinstance(obj, np.ndarray):
+        if isinstance(obj, np.ndarray):
             return obj.tolist()
-        elif isinstance(obj, np.bool_):
+        if isinstance(obj, np.bool_):
             return bool(obj)
         return super().default(obj)
 
@@ -53,7 +54,7 @@ class LiveSignalsStatisticalAnalyzer:
     def __init__(
         self,
         csv_path: str,
-        output_dir: str = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analysis",
+        output_dir: str = "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analysis",
     ):
         """Initialize analyzer with data path and output configuration."""
         self.csv_path = Path(csv_path)
@@ -84,27 +85,19 @@ class LiveSignalsStatisticalAnalyzer:
 
             # Critical validation: All trades must be closed
             if "Status" not in self.df.columns:
-                raise ValueError(
-                    "CRITICAL: CSV missing 'Status' column for trade validation"
-                )
+                raise ValueError("CRITICAL: CSV missing 'Status' column for trade validation")
 
             status_counts = self.df["Status"].value_counts()
             closed_trades = status_counts.get("Closed", 0)
             active_trades = status_counts.get("Active", 0)
 
             if active_trades > 0:
-                raise ValueError(
-                    f"CRITICAL: Found {active_trades} active trades. Analysis requires ALL closed trades."
-                )
+                raise ValueError(f"CRITICAL: Found {active_trades} active trades. Analysis requires ALL closed trades.")
 
             if closed_trades != len(self.df):
-                raise ValueError(
-                    f"CRITICAL: Expected {len(self.df)} closed trades, found {closed_trades}"
-                )
+                raise ValueError(f"CRITICAL: Expected {len(self.df)} closed trades, found {closed_trades}")
 
-            print(
-                f"✅ Validation passed: {closed_trades} closed trades, {active_trades} active trades"
-            )
+            print(f"✅ Validation passed: {closed_trades} closed trades, {active_trades} active trades")
 
             # Validate required columns
             required_columns = [
@@ -120,13 +113,9 @@ class LiveSignalsStatisticalAnalyzer:
                 "Trade_Quality",
             ]
 
-            missing_columns = [
-                col for col in required_columns if col not in self.df.columns
-            ]
+            missing_columns = [col for col in required_columns if col not in self.df.columns]
             if missing_columns:
-                raise ValueError(
-                    f"CRITICAL: Missing required columns: {missing_columns}"
-                )
+                raise ValueError(f"CRITICAL: Missing required columns: {missing_columns}")
 
             # Validate PnL column integrity
             pnl_nulls = self.df["PnL"].isnull().sum()
@@ -142,11 +131,11 @@ class LiveSignalsStatisticalAnalyzer:
             print("✅ Data validation completed successfully")
             return True
 
-        except Exception as e:
+        except Exception:
             print("❌ CRITICAL DATA VALIDATION FAILURE: {e}")
             raise
 
-    def analyze_strategy_performance(self) -> Dict[str, Any]:
+    def analyze_strategy_performance(self) -> dict[str, Any]:
         """
         Analyze performance by strategy type with sample size validation.
 
@@ -194,9 +183,7 @@ class LiveSignalsStatisticalAnalyzer:
                 consistency_bonus = 0.05 if strategy_data["Return"].std() < 0.2 else 0
                 confidence = min(0.95, base_confidence + consistency_bonus)
             else:
-                confidence = max(
-                    0.55, 0.4 + (trade_count / self.MIN_TRADES_STRATEGY) * 0.15
-                )
+                confidence = max(0.55, 0.4 + (trade_count / self.MIN_TRADES_STRATEGY) * 0.15)
 
             strategy_analysis[strategy] = {
                 "win_rate": round(win_rate, 4),
@@ -212,7 +199,7 @@ class LiveSignalsStatisticalAnalyzer:
 
         return strategy_analysis
 
-    def calculate_statistical_metrics(self) -> Dict[str, Any]:
+    def calculate_statistical_metrics(self) -> dict[str, Any]:
         """
         Calculate comprehensive statistical performance metrics.
 
@@ -239,29 +226,21 @@ class LiveSignalsStatisticalAnalyzer:
         significant_at_95 = p_value < 0.05
 
         # 95% confidence interval for mean return
-        confidence_interval = stats.t.interval(
-            0.95, len(returns) - 1, loc=mean_return, scale=stats.sem(returns)
-        )
+        confidence_interval = stats.t.interval(0.95, len(returns) - 1, loc=mean_return, scale=stats.sem(returns))
 
         # Risk-adjusted metrics
         excess_returns = returns - (self.RISK_FREE_RATE / 252)  # Daily risk-free rate
         sharpe_ratio = (
-            float(
-                np.mean(excess_returns) / np.std(excess_returns, ddof=1) * np.sqrt(252)
-            )
+            float(np.mean(excess_returns) / np.std(excess_returns, ddof=1) * np.sqrt(252))
             if np.std(excess_returns) > 0
             else 0
         )
 
         # Downside deviation (Sortino ratio component)
         negative_returns = returns[returns < 0]
-        downside_deviation = (
-            float(np.std(negative_returns, ddof=1)) if len(negative_returns) > 1 else 0
-        )
+        downside_deviation = float(np.std(negative_returns, ddof=1)) if len(negative_returns) > 1 else 0
         sortino_ratio = (
-            float((mean_return * 252) / (downside_deviation * np.sqrt(252)))
-            if downside_deviation > 0
-            else 0
+            float((mean_return * 252) / (downside_deviation * np.sqrt(252))) if downside_deviation > 0 else 0
         )
 
         # System Quality Number (SQN)
@@ -279,18 +258,14 @@ class LiveSignalsStatisticalAnalyzer:
         loss_count = len(losers)
 
         profit_factor = (
-            float(np.sum(winners) / abs(np.sum(losers)))
-            if len(losers) > 0 and np.sum(losers) != 0
-            else float("inf")
+            float(np.sum(winners) / abs(np.sum(losers))) if len(losers) > 0 and np.sum(losers) != 0 else float("inf")
         )
         expectancy = float(total_pnl / len(pnl_values))
 
         # Confidence assessment
         sample_confidence = min(0.95, 0.7 + (len(returns) / 50) * 0.25)
         distribution_confidence = 0.9 if normality_p_value > 0.05 else 0.75
-        overall_confidence = min(
-            0.95, (sample_confidence + distribution_confidence) / 2
-        )
+        overall_confidence = min(0.95, (sample_confidence + distribution_confidence) / 2)
 
         return {
             "statistical_analysis": {
@@ -323,29 +298,19 @@ class LiveSignalsStatisticalAnalyzer:
                 },
             },
             "performance_metrics": {
-                "win_rate": (
-                    round(win_count / (win_count + loss_count), 4)
-                    if (win_count + loss_count) > 0
-                    else 0
-                ),
+                "win_rate": (round(win_count / (win_count + loss_count), 4) if (win_count + loss_count) > 0 else 0),
                 "total_wins": win_count,
                 "total_losses": loss_count,
                 "total_pnl": round(total_pnl, 2),
-                "profit_factor": (
-                    round(profit_factor, 4) if profit_factor != float("inf") else 999.99
-                ),
+                "profit_factor": (round(profit_factor, 4) if profit_factor != float("inf") else 999.99),
                 "expectancy": round(expectancy, 4),
                 "sample_size": len(pnl_values),
                 "confidence": round(overall_confidence, 3),
             },
             "advanced_statistical_metrics": {
                 "pnl_std_dev_overall": round(float(np.std(pnl_values, ddof=1)), 4),
-                "pnl_std_dev_winners": (
-                    round(float(np.std(winners, ddof=1)), 4) if len(winners) > 1 else 0
-                ),
-                "pnl_std_dev_losers": (
-                    round(float(np.std(losers, ddof=1)), 4) if len(losers) > 1 else 0
-                ),
+                "pnl_std_dev_winners": (round(float(np.std(winners, ddof=1)), 4) if len(winners) > 1 else 0),
+                "pnl_std_dev_losers": (round(float(np.std(losers, ddof=1)), 4) if len(losers) > 1 else 0),
                 "system_quality_number": round(sqn, 4),
                 "return_distribution_skewness": round(skewness, 4),
                 "return_distribution_kurtosis": round(kurtosis, 4),
@@ -353,7 +318,7 @@ class LiveSignalsStatisticalAnalyzer:
             },
         }
 
-    def analyze_trade_patterns(self) -> Dict[str, Any]:
+    def analyze_trade_patterns(self) -> dict[str, Any]:
         """
         Analyze trade patterns, quality classification, and temporal patterns.
 
@@ -377,11 +342,7 @@ class LiveSignalsStatisticalAnalyzer:
                 characteristics.append("Strong exit efficiency")
             if quality_trades["Duration_Days"].mean() < 30:
                 characteristics.append("Efficient trade duration")
-            if (
-                len(quality_trades[quality_trades["Max_Adverse_Excursion"] < 0.05])
-                / len(quality_trades)
-                > 0.5
-            ):
+            if len(quality_trades[quality_trades["Max_Adverse_Excursion"] < 0.05]) / len(quality_trades) > 0.5:
                 characteristics.append("Limited downside exposure")
 
             if not characteristics:
@@ -416,15 +377,13 @@ class LiveSignalsStatisticalAnalyzer:
         return {
             "trade_quality_classification": quality_classification,
             "pattern_recognition": {
-                "signal_temporal_patterns": {
-                    "monthly_effectiveness": monthly_performance
-                },
+                "signal_temporal_patterns": {"monthly_effectiveness": monthly_performance},
                 "sample_size": total_trades,
                 "confidence": round(pattern_confidence, 3),
             },
         }
 
-    def analyze_risk_metrics(self) -> Dict[str, Any]:
+    def analyze_risk_metrics(self) -> dict[str, Any]:
         """
         Comprehensive risk analysis including drawdown and portfolio metrics.
 
@@ -439,24 +398,16 @@ class LiveSignalsStatisticalAnalyzer:
         drawdown = (cumulative_returns - rolling_max) / rolling_max
 
         max_drawdown = float(np.min(drawdown))
-        avg_drawdown = (
-            float(np.mean(drawdown[drawdown < 0]))
-            if len(drawdown[drawdown < 0]) > 0
-            else 0
-        )
+        avg_drawdown = float(np.mean(drawdown[drawdown < 0])) if len(drawdown[drawdown < 0]) > 0 else 0
 
         # Downside deviation
         negative_returns = returns[returns < 0]
-        downside_deviation = (
-            float(np.std(negative_returns, ddof=1)) if len(negative_returns) > 1 else 0
-        )
+        downside_deviation = float(np.std(negative_returns, ddof=1)) if len(negative_returns) > 1 else 0
 
         # Portfolio concentration analysis
         ticker_counts = self.df["Ticker"].value_counts()
         # max_position_concentration = ticker_counts.max() / len(self.df)
-        diversification_metric = 1 - (
-            sum((count / len(self.df)) ** 2 for count in ticker_counts)
-        )
+        diversification_metric = 1 - (sum((count / len(self.df)) ** 2 for count in ticker_counts))
 
         risk_confidence = 0.9 if len(self.df) >= 25 else 0.75
 
@@ -474,9 +425,7 @@ class LiveSignalsStatisticalAnalyzer:
             },
         }
 
-    def generate_optimization_opportunities(
-        self, strategy_analysis: Dict, statistical_metrics: Dict
-    ) -> Dict[str, Any]:
+    def generate_optimization_opportunities(self, strategy_analysis: dict, statistical_metrics: dict) -> dict[str, Any]:
         """
         Generate optimization opportunities based on analysis results.
 
@@ -497,13 +446,8 @@ class LiveSignalsStatisticalAnalyzer:
         sma_performance = strategy_analysis.get("SMA", {})
         ema_performance = strategy_analysis.get("EMA", {})
 
-        if sma_performance.get("sample_size_adequacy", False) and ema_performance.get(
-            "sample_size_adequacy", False
-        ):
-            if (
-                sma_performance.get("win_rate", 0)
-                > ema_performance.get("win_rate", 0) * 1.1
-            ):
+        if sma_performance.get("sample_size_adequacy", False) and ema_performance.get("sample_size_adequacy", False):
+            if sma_performance.get("win_rate", 0) > ema_performance.get("win_rate", 0) * 1.1:
                 opportunities["entry_signal_enhancements"].append(
                     {
                         "opportunity": "Increase allocation to SMA strategy signals",
@@ -528,9 +472,7 @@ class LiveSignalsStatisticalAnalyzer:
             )
 
         # Statistical significance optimization
-        p_value = statistical_metrics["statistical_analysis"][
-            "statistical_significance"
-        ]["return_vs_zero"]["p_value"]
+        p_value = statistical_metrics["statistical_analysis"]["statistical_significance"]["return_vs_zero"]["p_value"]
         if p_value > 0.05:
             opportunities["strategy_parameter_optimization"].append(
                 {
@@ -544,7 +486,7 @@ class LiveSignalsStatisticalAnalyzer:
 
         return opportunities
 
-    def calculate_additional_metrics(self) -> Dict[str, Any]:
+    def calculate_additional_metrics(self) -> dict[str, Any]:
         """
         Calculate additional comprehensive metrics required by the schema.
 
@@ -561,12 +503,8 @@ class LiveSignalsStatisticalAnalyzer:
         breakevens = pnl_values[pnl_values == 0]
 
         comprehensive_pnl = {
-            "biggest_profit_dollar": (
-                float(np.max(winners_pnl)) if len(winners_pnl) > 0 else 0
-            ),
-            "biggest_loss_dollar": (
-                float(np.min(losers_pnl)) if len(losers_pnl) > 0 else 0
-            ),
+            "biggest_profit_dollar": (float(np.max(winners_pnl)) if len(winners_pnl) > 0 else 0),
+            "biggest_loss_dollar": (float(np.min(losers_pnl)) if len(losers_pnl) > 0 else 0),
             "profit_loss_ratio": (
                 float(np.mean(winners_pnl) / abs(np.mean(losers_pnl)))
                 if len(losers_pnl) > 0 and np.mean(losers_pnl) != 0
@@ -622,14 +560,10 @@ class LiveSignalsStatisticalAnalyzer:
         consecutive_performance = {
             "max_consecutive_wins": max_consecutive_wins,
             "max_consecutive_losses": max_consecutive_losses,
-            "consecutive_win_performance": (
-                round(float(np.mean(winners_pnl)), 4) if len(winners_pnl) > 0 else 0
-            ),
+            "consecutive_win_performance": (round(float(np.mean(winners_pnl)), 4) if len(winners_pnl) > 0 else 0),
             "consecutive_loss_recovery": round(float(max_consecutive_losses + 1), 1),
             "momentum_persistence": round(momentum_persistence, 4),
-            "streak_impact_analysis": round(
-                float(np.mean(winners_pnl) - np.mean(pnl_values)), 4
-            ),
+            "streak_impact_analysis": round(float(np.mean(winners_pnl) - np.mean(pnl_values)), 4),
             "confidence": 0.81,
         }
 
@@ -643,25 +577,13 @@ class LiveSignalsStatisticalAnalyzer:
         long_term = len(duration_days[duration_days > 30])
         total_duration_trades = len(duration_days)
 
-        correlation_coef = (
-            np.corrcoef(duration_days, returns)[0, 1] if len(duration_days) > 1 else 0
-        )
+        correlation_coef = np.corrcoef(duration_days, returns)[0, 1] if len(duration_days) > 1 else 0
 
         hold_time_analysis = {
-            "average_win_hold_time": (
-                round(float(np.mean(winners_duration)), 2)
-                if len(winners_duration) > 0
-                else 0
-            ),
-            "average_loss_hold_time": (
-                round(float(np.mean(losers_duration)), 2)
-                if len(losers_duration) > 0
-                else 0
-            ),
+            "average_win_hold_time": (round(float(np.mean(winners_duration)), 2) if len(winners_duration) > 0 else 0),
+            "average_loss_hold_time": (round(float(np.mean(losers_duration)), 2) if len(losers_duration) > 0 else 0),
             "average_breakeven_hold_time": (
-                round(float(np.mean(breakevens_duration)), 2)
-                if len(breakevens_duration) > 0
-                else 0
+                round(float(np.mean(breakevens_duration)), 2) if len(breakevens_duration) > 0 else 0
             ),
             "optimal_hold_period": (
                 round(float(np.mean(winners_duration)), 2)
@@ -683,9 +605,7 @@ class LiveSignalsStatisticalAnalyzer:
         position_analysis = {
             "total_shares_traded": round(float(np.sum(position_sizes)), 2),
             "average_position_size": round(float(np.mean(position_sizes)), 2),
-            "return_per_share": round(
-                float(np.sum(pnl_values) / np.sum(position_sizes)), 4
-            ),
+            "return_per_share": round(float(np.sum(pnl_values) / np.sum(position_sizes)), 4),
             "size_consistency": "Uniform position sizing (1.0 shares per trade)",
             "scaling_opportunities": "Consider dynamic position sizing based on signal confidence",
             "confidence": 0.95,
@@ -695,9 +615,7 @@ class LiveSignalsStatisticalAnalyzer:
         long_trades = self.df[self.df["Direction"] == "Long"]
         long_performance = {
             "trade_count": len(long_trades),
-            "win_rate": round(
-                len(long_trades[long_trades["PnL"] > 0]) / len(long_trades), 4
-            ),
+            "win_rate": round(len(long_trades[long_trades["PnL"] > 0]) / len(long_trades), 4),
             "average_return": round(float(long_trades["Return"].mean()), 4),
         }
 
@@ -722,7 +640,7 @@ class LiveSignalsStatisticalAnalyzer:
             "directional_performance_analysis": directional_analysis,
         }
 
-    def run_comprehensive_analysis(self) -> Dict[str, Any]:
+    def run_comprehensive_analysis(self) -> dict[str, Any]:
         """
         Execute the complete statistical analysis pipeline.
 
@@ -750,28 +668,18 @@ class LiveSignalsStatisticalAnalyzer:
         risk_analysis = self.analyze_risk_metrics()
 
         print("\n🎯 Generating optimization opportunities...")
-        optimization_opportunities = self.generate_optimization_opportunities(
-            strategy_analysis, statistical_metrics
-        )
+        optimization_opportunities = self.generate_optimization_opportunities(strategy_analysis, statistical_metrics)
 
         print("\n📋 Calculating additional comprehensive metrics...")
         additional_metrics = self.calculate_additional_metrics()
 
         # Calculate overall analysis quality and confidence
-        strategy_confidences = [
-            s.get("confidence", 0.5) for s in strategy_analysis.values()
-        ]
-        avg_strategy_confidence = (
-            np.mean(strategy_confidences) if strategy_confidences else 0.5
-        )
+        strategy_confidences = [s.get("confidence", 0.5) for s in strategy_analysis.values()]
+        avg_strategy_confidence = np.mean(strategy_confidences) if strategy_confidences else 0.5
 
-        statistical_confidence = statistical_metrics["statistical_analysis"][
-            "risk_adjusted_metrics"
-        ]["confidence"]
+        statistical_confidence = statistical_metrics["statistical_analysis"]["risk_adjusted_metrics"]["confidence"]
 
-        overall_confidence = min(
-            0.92, (avg_strategy_confidence + statistical_confidence + 0.85) / 3
-        )
+        overall_confidence = min(0.92, (avg_strategy_confidence + statistical_confidence + 0.85) / 3)
 
         # Determine critical findings
         critical_findings = []
@@ -780,30 +688,21 @@ class LiveSignalsStatisticalAnalyzer:
 
         total_pnl = statistical_metrics["performance_metrics"]["total_pnl"]
         if total_pnl > 500:
-            critical_findings.append(
-                f"Strong portfolio performance: ${total_pnl:,.2f} total P&L"
-            )
+            critical_findings.append(f"Strong portfolio performance: ${total_pnl:,.2f} total P&L")
 
         sma_data = strategy_analysis.get("SMA", {})
-        if (
-            sma_data.get("sample_size_adequacy", False)
-            and sma_data.get("win_rate", 0) > 0.6
-        ):
-            critical_findings.append(
-                "SMA strategy shows institutional-grade performance"
-            )
+        if sma_data.get("sample_size_adequacy", False) and sma_data.get("win_rate", 0) > 0.6:
+            critical_findings.append("SMA strategy shows institutional-grade performance")
 
         ema_data = strategy_analysis.get("EMA", {})
         if not ema_data.get("sample_size_adequacy", False):
-            critical_findings.append(
-                "EMA strategy requires larger sample size for robust analysis"
-            )
+            critical_findings.append("EMA strategy requires larger sample size for robust analysis")
 
         # Determine report focus areas
         focus_areas = []
-        if statistical_metrics["statistical_analysis"]["statistical_significance"][
-            "return_vs_zero"
-        ]["significant_at_95"]:
+        if statistical_metrics["statistical_analysis"]["statistical_significance"]["return_vs_zero"][
+            "significant_at_95"
+        ]:
             focus_areas.append("statistical_performance_validation")
         else:
             focus_areas.append("strategy_parameter_tuning")
@@ -817,15 +716,15 @@ class LiveSignalsStatisticalAnalyzer:
         analysis_result = {
             "portfolio": "live_signals",
             "analysis_metadata": {
-                "execution_timestamp": datetime.now(timezone.utc).isoformat(),
+                "execution_timestamp": datetime.now(UTC).isoformat(),
                 "protocol_version": "DASV_Phase_2_Statistical_Analysis",
                 "confidence_score": round(overall_confidence, 3),
                 "sample_size_adequacy": 1.0,
                 "statistical_significance": (
                     0.95
-                    if statistical_metrics["statistical_analysis"][
-                        "statistical_significance"
-                    ]["return_vs_zero"]["significant_at_95"]
+                    if statistical_metrics["statistical_analysis"]["statistical_significance"]["return_vs_zero"][
+                        "significant_at_95"
+                    ]
                     else 0.05
                 ),
                 "signal_effectiveness_confidence": round(avg_strategy_confidence, 3),
@@ -846,16 +745,9 @@ class LiveSignalsStatisticalAnalyzer:
                 },
                 "exit_signal_analysis": {
                     "exit_efficiency_metrics": {
-                        "overall_exit_efficiency": round(
-                            float(self.df["Exit_Efficiency_Fixed"].mean()), 4
-                        ),
+                        "overall_exit_efficiency": round(float(self.df["Exit_Efficiency_Fixed"].mean()), 4),
                         "mfe_capture_rate": round(
-                            float(
-                                (
-                                    self.df["Return"]
-                                    / self.df["Max_Favourable_Excursion"]
-                                ).mean()
-                            ),
+                            float((self.df["Return"] / self.df["Max_Favourable_Excursion"]).mean()),
                             4,
                         ),
                         "sample_size": len(self.df),
@@ -864,9 +756,7 @@ class LiveSignalsStatisticalAnalyzer:
                 },
             },
             "statistical_analysis": statistical_metrics,
-            "advanced_statistical_metrics": statistical_metrics[
-                "advanced_statistical_metrics"
-            ],
+            "advanced_statistical_metrics": statistical_metrics["advanced_statistical_metrics"],
             "pattern_recognition": pattern_analysis,
             "optimization_opportunities": optimization_opportunities,
             "risk_assessment": risk_analysis,
@@ -886,7 +776,7 @@ class LiveSignalsStatisticalAnalyzer:
             "next_phase_inputs": {
                 "synthesis_ready": True,
                 "confidence_threshold_met": overall_confidence >= 0.8,
-                "analysis_package_path": f"/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analysis/live_signals_{datetime.now().strftime('%Y%m%d')}.json",
+                "analysis_package_path": f"/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analysis/live_signals_{datetime.now().strftime('%Y%m%d')}.json",
                 "critical_findings": critical_findings,
                 "report_focus_areas": focus_areas,
             },
@@ -903,7 +793,7 @@ class LiveSignalsStatisticalAnalyzer:
 
         return analysis_result
 
-    def save_analysis(self, analysis_result: Dict[str, Any]) -> str:
+    def save_analysis(self, analysis_result: dict[str, Any]) -> str:
         """
         Save analysis results to JSON file.
 
@@ -917,9 +807,7 @@ class LiveSignalsStatisticalAnalyzer:
         output_file = self.output_dir / f"live_signals_{timestamp}.json"
 
         with open(output_file, "w") as f:
-            json.dump(
-                analysis_result, f, indent=2, ensure_ascii=False, cls=NumpyEncoder
-            )
+            json.dump(analysis_result, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
 
         print("\n💾 Analysis saved to: {output_file}")
         return str(output_file)
@@ -931,7 +819,7 @@ def main():
     """
     try:
         # Initialize analyzer
-        csv_path = "/Users/colemorton/Projects/sensylate/data/raw/trade_history/live_signals.csv"
+        csv_path = "/Users/colemorton/Projects/colemorton/data/raw/trade_history/live_signals.csv"
         analyzer = LiveSignalsStatisticalAnalyzer(csv_path)
 
         # Run comprehensive analysis
@@ -945,16 +833,14 @@ def main():
         print("=" * 70)
         print("📄 Analysis Report: {output_path}")
         print("🔢 Trades Analyzed: {results['sample_validation']['total_trades']}")
-        print(
-            f"📈 Overall Confidence: {results['analysis_metadata']['confidence_score']:.1%}"
-        )
+        print(f"📈 Overall Confidence: {results['analysis_metadata']['confidence_score']:.1%}")
         print(
             f"✅ Institutional Threshold: {'MET' if results['next_phase_inputs']['confidence_threshold_met'] else 'NOT MET'}"
         )
 
         return output_path
 
-    except Exception as e:
+    except Exception:
         print("\n❌ CRITICAL ANALYSIS FAILURE: {e}")
         import traceback
 

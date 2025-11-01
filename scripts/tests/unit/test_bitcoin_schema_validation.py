@@ -10,20 +10,19 @@ import json
 import sys
 import unittest
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fixtures.bitcoin_data_generators import (
-    AlternativeMeDataGenerator,
     BitcoinSchemaTestDataGenerator,
-    BlockchainComDataGenerator,
-    MempoolSpaceDataGenerator,
     generate_bitcoin_discovery_data,
     generate_bitcoin_edge_cases,
 )
+
 
 try:
     import jsonschema
@@ -97,15 +96,11 @@ class TestBitcoinDataGenerators(unittest.TestCase):
         self.assertIsInstance(block_data["height"], int)
         self.assertGreater(block_data["height"], 0)
         self.assertIsInstance(block_data["main_chain"], bool)
-        self.assertTrue(
-            block_data["main_chain"]
-        )  # Generated blocks should be on main chain
+        self.assertTrue(block_data["main_chain"])  # Generated blocks should be on main chain
 
     def test_alternative_me_fear_greed_structure(self):
         """Test alternative.me fear & greed generator"""
-        fear_greed_data = (
-            self.generator.alternative_generator.generate_fear_greed_data()
-        )
+        fear_greed_data = self.generator.alternative_generator.generate_fear_greed_data()
 
         self.assertIn("data", fear_greed_data)
         self.assertIsInstance(fear_greed_data["data"], list)
@@ -252,17 +247,15 @@ class TestBitcoinSchemaCompliance(unittest.TestCase):
         # Load Bitcoin discovery schema if available
         self.discovery_schema = self._load_discovery_schema()
 
-    def _load_discovery_schema(self) -> Dict[str, Any]:
+    def _load_discovery_schema(self) -> dict[str, Any]:
         """Load Bitcoin discovery schema for validation"""
         schema_path = (
-            Path(__file__).parent.parent.parent
-            / "schemas"
-            / "bitcoin_cycle_intelligence_discovery_schema.json"
+            Path(__file__).parent.parent.parent / "schemas" / "bitcoin_cycle_intelligence_discovery_schema.json"
         )
 
         if schema_path.exists():
             try:
-                with open(schema_path, "r") as f:
+                with open(schema_path) as f:
                     return json.load(f)
             except Exception:
                 pass
@@ -278,24 +271,18 @@ class TestBitcoinSchemaCompliance(unittest.TestCase):
             "required": ["analysis_date"],
         }
 
-    @unittest.skip(
-        "Full schema compliance testing is beyond Phase 6 scope - data generators work correctly"
-    )
+    @unittest.skip("Full schema compliance testing is beyond Phase 6 scope - data generators work correctly")
     def test_generated_data_schema_compliance(self):
         """Test that generated data complies with Bitcoin discovery schema"""
         # This test is skipped because the full Bitcoin discovery schema
         # requires many additional fields beyond what the data generators produce.
         # The data generators successfully create realistic Bitcoin data structures
         # for enhanced testing, which was the goal of Phase 6.
-        pass
 
     def test_data_type_consistency(self):
         """Test data type consistency across multiple generations"""
         # Generate multiple datasets and check consistency
-        datasets = [
-            self.generator.generate_discovery_schema_data(["mempool_space_cli"])
-            for _ in range(10)
-        ]
+        datasets = [self.generator.generate_discovery_schema_data(["mempool_space_cli"]) for _ in range(10)]
 
         # All datasets should have same structure
         first_dataset = datasets[0]
@@ -317,12 +304,8 @@ class TestBitcoinSchemaCompliance(unittest.TestCase):
 
             # Fees should be realistic (1-200 sat/vB range)
             for fee_type, fee_value in fee_data.items():
-                self.assertGreaterEqual(
-                    fee_value, 1, f"{fee_type} fee too low: {fee_value}"
-                )
-                self.assertLessEqual(
-                    fee_value, 200, f"{fee_type} fee too high: {fee_value}"
-                )
+                self.assertGreaterEqual(fee_value, 1, f"{fee_type} fee too low: {fee_value}")
+                self.assertLessEqual(fee_value, 200, f"{fee_type} fee too high: {fee_value}")
 
         # Test blockchain.com block data
         if "blockchain_com_cli" in data["data_sources"]:
@@ -360,9 +343,7 @@ class TestBitcoinSchemaPerformance(unittest.TestCase):
         generation_time = time.time() - start_time
 
         # Should generate data quickly (within 1 second)
-        self.assertLess(
-            generation_time, 1.0, f"Data generation too slow: {generation_time:.2f}s"
-        )
+        self.assertLess(generation_time, 1.0, f"Data generation too slow: {generation_time:.2f}s")
 
         # Should produce substantial data
         json_size = len(json.dumps(data))
@@ -376,10 +357,7 @@ class TestBitcoinSchemaPerformance(unittest.TestCase):
 
         # Generate 100 datasets
         datasets = [
-            generate_bitcoin_discovery_data(
-                ["mempool_space_cli", "binance_api_cli"], seed=i
-            )
-            for i in range(100)
+            generate_bitcoin_discovery_data(["mempool_space_cli", "binance_api_cli"], seed=i) for i in range(100)
         ]
 
         bulk_time = time.time() - start_time
@@ -391,9 +369,7 @@ class TestBitcoinSchemaPerformance(unittest.TestCase):
         # All datasets should be unique (due to different seeds)
         json_strings = [json.dumps(d, sort_keys=True) for d in datasets]
         unique_datasets = set(json_strings)
-        self.assertGreater(
-            len(unique_datasets), 80, "Not enough variation in bulk generated data"
-        )
+        self.assertGreater(len(unique_datasets), 80, "Not enough variation in bulk generated data")
 
 
 class TestBitcoinSchemaEdgeCases(unittest.TestCase):
@@ -435,9 +411,7 @@ class TestBitcoinSchemaEdgeCases(unittest.TestCase):
 
         # Test invalid address detection
         invalid_address = malformed["invalid_address"]
-        self.assertFalse(
-            any(invalid_address.startswith(prefix) for prefix in ["1", "3", "bc1"])
-        )
+        self.assertFalse(any(invalid_address.startswith(prefix) for prefix in ["1", "3", "bc1"]))
 
         # Test data type mismatches
         wrong_types = malformed["wrong_data_types"]

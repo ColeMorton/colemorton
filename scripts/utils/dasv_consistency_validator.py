@@ -8,12 +8,12 @@ drift detection, and automated consistency maintenance.
 """
 
 import json
-import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -31,9 +31,9 @@ class ValidationResult:
     check_name: str
     status: str  # "pass", "warning", "fail"
     score: float  # 0.0 to 1.0
-    issues: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -42,10 +42,10 @@ class SystemConsistencyReport:
 
     timestamp: datetime
     overall_score: float
-    validation_results: Dict[str, ValidationResult] = field(default_factory=dict)
-    summary: Dict[str, Any] = field(default_factory=dict)
-    action_items: List[str] = field(default_factory=list)
-    drift_indicators: List[str] = field(default_factory=list)
+    validation_results: dict[str, ValidationResult] = field(default_factory=dict)
+    summary: dict[str, Any] = field(default_factory=dict)
+    action_items: list[str] = field(default_factory=list)
+    drift_indicators: list[str] = field(default_factory=list)
 
 
 class DASVConsistencyValidator:
@@ -84,7 +84,7 @@ class DASVConsistencyValidator:
         """Load system configuration and standards"""
         registry_path = self.project_root / "scripts" / "command_script_registry.json"
         if registry_path.exists():
-            with open(registry_path, "r") as f:
+            with open(registry_path) as f:
                 self.registry_data = json.load(f)
         else:
             self.registry_data = {}
@@ -133,23 +133,17 @@ class DASVConsistencyValidator:
         recommendations = []
 
         # Check coverage
-        expected_schemas = len(self.system_standards["analysis_domains"]) * len(
-            self.system_standards["dasv_phases"]
-        )
+        expected_schemas = len(self.system_standards["analysis_domains"]) * len(self.system_standards["dasv_phases"])
         actual_schemas = schema_report.total_schemas
         coverage = actual_schemas / expected_schemas if expected_schemas > 0 else 0
 
         if coverage < 0.8:
-            issues.append(
-                f"Schema coverage low: {actual_schemas}/{expected_schemas} schemas"
-            )
+            issues.append(f"Schema coverage low: {actual_schemas}/{expected_schemas} schemas")
 
         # Add schema-specific issues
         for domain_phase, schema_issues in schema_report.inconsistencies.items():
             if len(schema_issues) > 3:
-                issues.append(
-                    f"High inconsistency count in {domain_phase}: {len(schema_issues)} issues"
-                )
+                issues.append(f"High inconsistency count in {domain_phase}: {len(schema_issues)} issues")
 
         # Add recommendations
         recommendations.extend(schema_report.recommendations)
@@ -197,9 +191,7 @@ class DASVConsistencyValidator:
             if any("base_" in inc for inc in analysis.includes_extends)
         )
         base_usage_rate = (
-            base_template_usage / template_report.total_templates
-            if template_report.total_templates > 0
-            else 0
+            base_template_usage / template_report.total_templates if template_report.total_templates > 0 else 0
         )
 
         if base_usage_rate < 0.6:
@@ -207,14 +199,10 @@ class DASVConsistencyValidator:
 
         # Check macro consistency
         templates_with_macros = sum(
-            1
-            for analysis in self.template_optimizer.template_analyses
-            if analysis.macro_imports
+            1 for analysis in self.template_optimizer.template_analyses if analysis.macro_imports
         )
         macro_usage_rate = (
-            templates_with_macros / template_report.total_templates
-            if template_report.total_templates > 0
-            else 0
+            templates_with_macros / template_report.total_templates if template_report.total_templates > 0 else 0
         )
 
         if macro_usage_rate < 0.7:
@@ -223,9 +211,7 @@ class DASVConsistencyValidator:
         # Add template-specific issues
         for template, template_issues in template_report.inconsistencies.items():
             if len(template_issues) > 2:
-                issues.append(
-                    f"High inconsistency count in {template}: {len(template_issues)} issues"
-                )
+                issues.append(f"High inconsistency count in {template}: {len(template_issues)} issues")
 
         recommendations.extend(template_report.recommendations)
 
@@ -258,17 +244,13 @@ class DASVConsistencyValidator:
                 status="fail",
                 score=0.0,
                 issues=["Registry data not loaded"],
-                recommendations=[
-                    "Ensure command_script_registry.json exists and is valid"
-                ],
+                recommendations=["Ensure command_script_registry.json exists and is valid"],
             )
 
         command_mappings = self.registry_data.get("command_mappings", {})
 
         # Check coverage across domains and phases
-        total_expected = len(self.system_standards["analysis_domains"]) * len(
-            self.system_standards["dasv_phases"]
-        )
+        total_expected = len(self.system_standards["analysis_domains"]) * len(self.system_standards["dasv_phases"])
         total_actual = 0
 
         for domain in self.system_standards["analysis_domains"]:
@@ -290,9 +272,7 @@ class DASVConsistencyValidator:
 
                         for field in required_fields:
                             if field not in mapping:
-                                issues.append(
-                                    f"Missing {field} in {domain}:{phase} mapping"
-                                )
+                                issues.append(f"Missing {field} in {domain}:{phase} mapping")
                     else:
                         issues.append(f"Missing phase {phase} in {domain} mapping")
             else:
@@ -317,14 +297,10 @@ class DASVConsistencyValidator:
             status = "fail"
 
         if coverage < 1.0:
-            recommendations.append(
-                f"Improve command mapping coverage from {coverage:.1%} to 100%"
-            )
+            recommendations.append(f"Improve command mapping coverage from {coverage:.1%} to 100%")
 
         if path_issues:
-            recommendations.append(
-                "Standardize path references using {VARIABLE} syntax"
-            )
+            recommendations.append("Standardize path references using {VARIABLE} syntax")
 
         return ValidationResult(
             check_name="Command Mapping Integrity",
@@ -340,7 +316,7 @@ class DASVConsistencyValidator:
             },
         )
 
-    def _validate_path_references(self, command_mappings: Dict[str, Any]) -> List[str]:
+    def _validate_path_references(self, command_mappings: dict[str, Any]) -> list[str]:
         """Validate path references use consistent variable syntax"""
         path_issues = []
         expected_variables = set(self.system_standards["required_path_variables"])
@@ -349,29 +325,21 @@ class DASVConsistencyValidator:
             for phase, mapping in phases.items():
                 # Check script paths
                 script_path = mapping.get("primary_script", "")
-                if script_path and not any(
-                    f"{{{var}}}" in script_path for var in expected_variables
-                ):
+                if script_path and not any(f"{{{var}}}" in script_path for var in expected_variables):
                     if "scripts/" in script_path:
                         path_issues.append(f"Hardcoded script path in {domain}:{phase}")
 
                 # Check schema paths
                 schema_path = mapping.get("schema", "")
-                if schema_path and not any(
-                    f"{{{var}}}" in schema_path for var in expected_variables
-                ):
+                if schema_path and not any(f"{{{var}}}" in schema_path for var in expected_variables):
                     if "schemas/" in schema_path:
                         path_issues.append(f"Hardcoded schema path in {domain}:{phase}")
 
                 # Check template paths
                 template_path = mapping.get("template", "")
-                if template_path and not any(
-                    f"{{{var}}}" in template_path for var in expected_variables
-                ):
+                if template_path and not any(f"{{{var}}}" in template_path for var in expected_variables):
                     if "templates/" in template_path:
-                        path_issues.append(
-                            f"Hardcoded template path in {domain}:{phase}"
-                        )
+                        path_issues.append(f"Hardcoded template path in {domain}:{phase}")
 
         return path_issues
 
@@ -398,29 +366,21 @@ class DASVConsistencyValidator:
         )
 
         if confidence_coverage < 0.9:
-            issues.append(
-                f"Low confidence scoring coverage in schemas: {confidence_coverage:.1%}"
-            )
+            issues.append(f"Low confidence scoring coverage in schemas: {confidence_coverage:.1%}")
 
         # Check template quality standards
         template_report = self.template_optimizer.analyze_all_templates()
 
         # Check for quality indicators in templates
         templates_with_quality = sum(
-            1
-            for analysis in self.template_optimizer.template_analyses
-            if analysis.quality_indicators
+            1 for analysis in self.template_optimizer.template_analyses if analysis.quality_indicators
         )
         quality_coverage = (
-            templates_with_quality / template_report.total_templates
-            if template_report.total_templates > 0
-            else 0
+            templates_with_quality / template_report.total_templates if template_report.total_templates > 0 else 0
         )
 
         if quality_coverage < 0.8:
-            issues.append(
-                f"Low quality indicator coverage in templates: {quality_coverage:.1%}"
-            )
+            issues.append(f"Low quality indicator coverage in templates: {quality_coverage:.1%}")
 
         # Calculate overall quality score
         quality_score = (confidence_coverage + quality_coverage) / 2
@@ -536,16 +496,8 @@ class DASVConsistencyValidator:
                 validation_results[result.check_name] = result
 
                 # Print immediate feedback
-                status_emoji = (
-                    "✅"
-                    if result.status == "pass"
-                    else "⚠️"
-                    if result.status == "warning"
-                    else "❌"
-                )
-                print(
-                    f"{status_emoji} {result.check_name}: {result.status} ({result.score:.2f})"
-                )
+                status_emoji = "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+                print(f"{status_emoji} {result.check_name}: {result.status} ({result.score:.2f})")
 
                 if result.issues:
                     for issue in result.issues[:2]:  # Show first 2 issues
@@ -555,9 +507,7 @@ class DASVConsistencyValidator:
 
             except Exception as e:
                 error_result = ValidationResult(
-                    check_name=check.__name__.replace("validate_", "")
-                    .replace("_", " ")
-                    .title(),
+                    check_name=check.__name__.replace("validate_", "").replace("_", " ").title(),
                     status="fail",
                     score=0.0,
                     issues=[f"Validation check failed: {e}"],
@@ -573,26 +523,14 @@ class DASVConsistencyValidator:
         # Generate summary
         summary = {
             "total_checks": len(validation_results),
-            "passed_checks": sum(
-                1 for r in validation_results.values() if r.status == "pass"
-            ),
-            "warning_checks": sum(
-                1 for r in validation_results.values() if r.status == "warning"
-            ),
-            "failed_checks": sum(
-                1 for r in validation_results.values() if r.status == "fail"
-            ),
+            "passed_checks": sum(1 for r in validation_results.values() if r.status == "pass"),
+            "warning_checks": sum(1 for r in validation_results.values() if r.status == "warning"),
+            "failed_checks": sum(1 for r in validation_results.values() if r.status == "fail"),
             "overall_score": overall_score,
             "system_health": (
                 "excellent"
                 if overall_score >= 0.9
-                else (
-                    "good"
-                    if overall_score >= 0.8
-                    else "needs_attention"
-                    if overall_score >= 0.7
-                    else "critical"
-                )
+                else ("good" if overall_score >= 0.8 else "needs_attention" if overall_score >= 0.7 else "critical")
             ),
         }
 
@@ -600,9 +538,7 @@ class DASVConsistencyValidator:
         action_items = []
         for result in validation_results.values():
             if result.status in ["fail", "warning"]:
-                action_items.extend(
-                    result.recommendations[:2]
-                )  # Top 2 recommendations per check
+                action_items.extend(result.recommendations[:2])  # Top 2 recommendations per check
 
         # Detect drift indicators
         drift_indicators = []
@@ -613,9 +549,7 @@ class DASVConsistencyValidator:
 
         for result in validation_results.values():
             if result.status == "fail":
-                drift_indicators.append(
-                    f"{result.check_name} failing - immediate attention required"
-                )
+                drift_indicators.append(f"{result.check_name} failing - immediate attention required")
 
         return SystemConsistencyReport(
             timestamp=datetime.now(),
@@ -632,9 +566,7 @@ class DASVConsistencyValidator:
         print("DASV SYSTEM CONSISTENCY VALIDATION REPORT")
         print("=" * 70)
         print("📅 Generated: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-        print(
-            f"🎯 Overall Score: {report.overall_score:.2f}/1.0 ({report.summary['system_health'].upper()})"
-        )
+        print(f"🎯 Overall Score: {report.overall_score:.2f}/1.0 ({report.summary['system_health'].upper()})")
 
         # Summary
         print("\n📊 Summary:")
@@ -646,16 +578,8 @@ class DASVConsistencyValidator:
         # Detailed results
         print("\n🔍 Detailed Results:")
         for check_name, result in report.validation_results.items():
-            status_emoji = (
-                "✅"
-                if result.status == "pass"
-                else "⚠️"
-                if result.status == "warning"
-                else "❌"
-            )
-            print(
-                f"  {status_emoji} {check_name}: {result.score:.2f} ({result.status})"
-            )
+            status_emoji = "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+            print(f"  {status_emoji} {check_name}: {result.score:.2f} ({result.status})")
 
             if result.metadata:
                 key_metrics = list(result.metadata.items())[:2]  # Show top 2 metrics
@@ -679,28 +603,17 @@ class DASVConsistencyValidator:
         if report.overall_score >= 0.9:
             print("  🎉 System is performing excellently - maintain current standards")
         elif report.overall_score >= 0.8:
-            print(
-                "  ✨ System is in good shape - address warnings to achieve excellence"
-            )
+            print("  ✨ System is in good shape - address warnings to achieve excellence")
         elif report.overall_score >= 0.7:
-            print(
-                "  🔧 System needs attention - prioritize failed checks and high-impact improvements"
-            )
+            print("  🔧 System needs attention - prioritize failed checks and high-impact improvements")
         else:
-            print(
-                "  🚨 System requires immediate attention - focus on critical failures"
-            )
+            print("  🚨 System requires immediate attention - focus on critical failures")
 
-    def export_validation_report(
-        self, report: SystemConsistencyReport, output_path: str = None
-    ):
+    def export_validation_report(self, report: SystemConsistencyReport, output_path: str = None):
         """Export validation report to JSON file"""
         if output_path is None:
             timestamp = report.timestamp.strftime("%Y%m%d_%H%M%S")
-            output_path = (
-                self.project_root
-                / f"data/outputs/system_consistency_report_{timestamp}.json"
-            )
+            output_path = self.project_root / f"data/outputs/system_consistency_report_{timestamp}.json"
 
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -742,13 +655,9 @@ def main():
         default="all",
         help="Specific check to run",
     )
-    parser.add_argument(
-        "--export", action="store_true", help="Export validation report to JSON"
-    )
+    parser.add_argument("--export", action="store_true", help="Export validation report to JSON")
     parser.add_argument("--output", help="Output file path for report")
-    parser.add_argument(
-        "--quiet", action="store_true", help="Minimize output (scores only)"
-    )
+    parser.add_argument("--quiet", action="store_true", help="Minimize output (scores only)")
 
     args = parser.parse_args()
 

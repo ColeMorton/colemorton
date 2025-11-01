@@ -12,7 +12,7 @@ Standardized data structures for all Twitter content types:
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class ContentType(Enum):
@@ -53,7 +53,7 @@ class BaseMetadata:
     generated_by: str = "unified_twitter_system"
     institutional_compliant: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "content_type": self.content_type.value,
@@ -69,11 +69,11 @@ class ValidationResult:
     """Standard validation result structure"""
 
     score: float
-    issues: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "score": self.score,
@@ -93,7 +93,7 @@ class OverallAssessment:
     compliance_status: ValidationStatus
     ready_for_publication: bool
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "overall_reliability_score": f"{self.overall_reliability_score:.1f}/10.0",
@@ -108,12 +108,12 @@ class OverallAssessment:
 class CriticalFindingsMatrix:
     """Critical findings matrix structure"""
 
-    verified_accurate_claims: List[str] = field(default_factory=list)
-    questionable_assertions: List[str] = field(default_factory=list)
-    inaccurate_statements: List[str] = field(default_factory=list)
-    unverifiable_claims: List[str] = field(default_factory=list)
+    verified_accurate_claims: list[str] = field(default_factory=list)
+    questionable_assertions: list[str] = field(default_factory=list)
+    inaccurate_statements: list[str] = field(default_factory=list)
+    unverifiable_claims: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "verified_accurate_claims": self.verified_accurate_claims,
@@ -127,21 +127,21 @@ class CriticalFindingsMatrix:
 class ActionableRecommendations:
     """Actionable recommendations structure"""
 
-    required_corrections: Dict[str, List[str]] = field(
+    required_corrections: dict[str, list[str]] = field(
         default_factory=lambda: {
             "high_priority": [],
             "medium_priority": [],
             "low_priority": [],
         }
     )
-    optimization_opportunities: Dict[str, List[str]] = field(
+    optimization_opportunities: dict[str, list[str]] = field(
         default_factory=lambda: {
             "engagement_improvements": [],
             "accuracy_enhancements": [],
             "compliance_reinforcement": [],
         }
     )
-    monitoring_requirements: Dict[str, str] = field(
+    monitoring_requirements: dict[str, str] = field(
         default_factory=lambda: {
             "real_time_validation": "",
             "performance_tracking": "",
@@ -149,7 +149,7 @@ class ActionableRecommendations:
         }
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "required_corrections": self.required_corrections,
@@ -165,56 +165,56 @@ class FundamentalDataSchema:
     # Core identification
     ticker: str
     date: str
-    company_name: Optional[str] = None
-    sector: Optional[str] = None
-    industry: Optional[str] = None
+    company_name: str | None = None
+    sector: str | None = None
+    industry: str | None = None
 
     # Market data
-    current_price: Optional[float] = None
-    market_cap: Optional[float] = None
-    beta: Optional[float] = None
+    current_price: float | None = None
+    market_cap: float | None = None
+    beta: float | None = None
 
     # Valuation data
-    fair_value: Optional[float] = None
-    fair_value_low: Optional[float] = None
-    fair_value_high: Optional[float] = None
-    weighted_fair_value: Optional[float] = None
-    dcf_value: Optional[float] = None
-    valuation_methods: List[Dict[str, Any]] = field(default_factory=list)
-    valuation_confidence: Optional[float] = None
+    fair_value: float | None = None
+    fair_value_low: float | None = None
+    fair_value_high: float | None = None
+    weighted_fair_value: float | None = None
+    dcf_value: float | None = None
+    valuation_methods: list[dict[str, Any]] = field(default_factory=list)
+    valuation_confidence: float | None = None
 
     # Investment thesis
-    investment_thesis: Optional[str] = None
-    recommendation: Optional[str] = None
-    conviction: Optional[float] = None
+    investment_thesis: str | None = None
+    recommendation: str | None = None
+    conviction: float | None = None
 
     # Catalysts
-    catalysts: List[Dict[str, Any]] = field(default_factory=list)
-    catalyst_count: Optional[int] = None
-    total_catalyst_impact: Optional[float] = None
+    catalysts: list[dict[str, Any]] = field(default_factory=list)
+    catalyst_count: int | None = None
+    total_catalyst_impact: float | None = None
 
     # Moat analysis
-    moat_strength: Optional[float] = None
-    competitive_advantages: List[Dict[str, Any]] = field(default_factory=list)
-    pricing_power: Optional[str] = None
+    moat_strength: float | None = None
+    competitive_advantages: list[dict[str, Any]] = field(default_factory=list)
+    pricing_power: str | None = None
 
     # Contrarian analysis
-    contrarian_insight: Optional[str] = None
-    common_perception: Optional[str] = None
-    mispricing_percentage: Optional[float] = None
+    contrarian_insight: str | None = None
+    common_perception: str | None = None
+    mispricing_percentage: float | None = None
 
     # Financial health
-    financial_health_score: Optional[float] = None
-    profitability_grade: Optional[str] = None
-    balance_sheet_grade: Optional[str] = None
-    cash_flow_grade: Optional[str] = None
-    financial_grades: Optional[Dict[str, Any]] = None
+    financial_health_score: float | None = None
+    profitability_grade: str | None = None
+    balance_sheet_grade: str | None = None
+    cash_flow_grade: str | None = None
+    financial_grades: dict[str, Any] | None = None
 
     # Quality metrics
-    overall_confidence: Optional[float] = None
-    data_quality: Optional[float] = None
+    overall_confidence: float | None = None
+    data_quality: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "ticker": self.ticker,
@@ -263,50 +263,50 @@ class StrategyDataSchema:
     date: str
 
     # Strategy parameters
-    strategy_type: Optional[str] = None
-    short_window: Optional[int] = None
-    long_window: Optional[int] = None
-    period: Optional[str] = None
+    strategy_type: str | None = None
+    short_window: int | None = None
+    long_window: int | None = None
+    period: str | None = None
 
     # Performance metrics
-    net_performance: Optional[float] = None
-    win_rate: Optional[float] = None
-    total_trades: Optional[int] = None
-    avg_win: Optional[float] = None
-    avg_loss: Optional[float] = None
-    reward_risk_ratio: Optional[float] = None
-    max_drawdown: Optional[float] = None
-    buy_hold_drawdown: Optional[float] = None
-    sharpe: Optional[float] = None
-    sortino: Optional[float] = None
-    exposure: Optional[float] = None
-    avg_trade_length: Optional[float] = None
-    expectancy: Optional[float] = None
+    net_performance: float | None = None
+    win_rate: float | None = None
+    total_trades: int | None = None
+    avg_win: float | None = None
+    avg_loss: float | None = None
+    reward_risk_ratio: float | None = None
+    max_drawdown: float | None = None
+    buy_hold_drawdown: float | None = None
+    sharpe: float | None = None
+    sortino: float | None = None
+    exposure: float | None = None
+    avg_trade_length: float | None = None
+    expectancy: float | None = None
 
     # Seasonality data
-    current_month: Optional[str] = None
-    current_month_performance: Optional[float] = None
-    current_month_avg: Optional[float] = None
-    best_months: Optional[str] = None
-    best_months_performance: Optional[float] = None
-    worst_months: Optional[str] = None
-    worst_months_performance: Optional[float] = None
-    seasonality_strength: Optional[str] = None
+    current_month: str | None = None
+    current_month_performance: float | None = None
+    current_month_avg: float | None = None
+    best_months: str | None = None
+    best_months_performance: float | None = None
+    worst_months: str | None = None
+    worst_months_performance: float | None = None
+    seasonality_strength: str | None = None
 
     # Live signal context
-    signal_triggered: Optional[bool] = None
-    current_price: Optional[float] = None
-    technical_setup: Optional[str] = None
-    fundamental_catalyst: Optional[str] = None
-    market_context: Optional[str] = None
-    risk_management: Optional[str] = None
+    signal_triggered: bool | None = None
+    current_price: float | None = None
+    technical_setup: str | None = None
+    fundamental_catalyst: str | None = None
+    market_context: str | None = None
+    risk_management: str | None = None
 
     # Additional context
-    hook: Optional[str] = None
-    key_insight: Optional[str] = None
-    conviction_level: Optional[str] = None
+    hook: str | None = None
+    key_insight: str | None = None
+    conviction_level: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "ticker": self.ticker,
@@ -357,42 +357,42 @@ class SectorDataSchema:
     date: str
 
     # Sector positioning
-    allocation_recommendation: Optional[str] = None
-    overweight_underweight: Optional[str] = None
-    conviction_level: Optional[float] = None
+    allocation_recommendation: str | None = None
+    overweight_underweight: str | None = None
+    conviction_level: float | None = None
 
     # Performance metrics
-    relative_performance: Optional[float] = None
-    outperformance: Optional[float] = None
-    ytd_return: Optional[float] = None
-    performance_ranking: Optional[int] = None
+    relative_performance: float | None = None
+    outperformance: float | None = None
+    ytd_return: float | None = None
+    performance_ranking: int | None = None
 
     # Rotation analysis
-    rotation_signal: Optional[bool] = None
-    rotation_score: Optional[float] = None
-    economic_cycle_position: Optional[str] = None
+    rotation_signal: bool | None = None
+    rotation_score: float | None = None
+    economic_cycle_position: str | None = None
 
     # Valuation metrics
-    relative_valuation: Optional[float] = None
-    pe_vs_spy: Optional[float] = None
-    pb_vs_tech: Optional[float] = None
-    sector_rank: Optional[int] = None
+    relative_valuation: float | None = None
+    pe_vs_spy: float | None = None
+    pb_vs_tech: float | None = None
+    sector_rank: int | None = None
 
     # Economic sensitivity
-    gdp_correlation: Optional[float] = None
-    employment_beta: Optional[float] = None
-    interest_rate_sensitivity: Optional[float] = None
+    gdp_correlation: float | None = None
+    employment_beta: float | None = None
+    interest_rate_sensitivity: float | None = None
 
     # ETF data
-    etf_symbol: Optional[str] = None
-    etf_price: Optional[float] = None
-    etf_flows: Optional[str] = None
+    etf_symbol: str | None = None
+    etf_price: float | None = None
+    etf_flows: str | None = None
 
     # Quality metrics
-    overall_confidence: Optional[float] = None
-    data_quality: Optional[float] = None
+    overall_confidence: float | None = None
+    data_quality: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "sector_name": self.sector_name,
@@ -431,36 +431,36 @@ class TradeHistoryDataSchema:
     date: str
 
     # Performance metrics
-    period_return: Optional[float] = None
-    ytd_return: Optional[float] = None
-    win_rate: Optional[float] = None
-    total_trades: Optional[int] = None
-    avg_win: Optional[float] = None
-    avg_loss: Optional[float] = None
-    profit_factor: Optional[float] = None
+    period_return: float | None = None
+    ytd_return: float | None = None
+    win_rate: float | None = None
+    total_trades: int | None = None
+    avg_win: float | None = None
+    avg_loss: float | None = None
+    profit_factor: float | None = None
 
     # Portfolio context
-    current_holdings: Optional[List[Dict[str, Any]]] = None
-    portfolio_value: Optional[float] = None
-    cash_position: Optional[float] = None
+    current_holdings: list[dict[str, Any]] | None = None
+    portfolio_value: float | None = None
+    cash_position: float | None = None
 
     # Top performers
-    best_trades: Optional[List[Dict[str, Any]]] = None
-    worst_trades: Optional[List[Dict[str, Any]]] = None
+    best_trades: list[dict[str, Any]] | None = None
+    worst_trades: list[dict[str, Any]] | None = None
 
     # Transparency level
-    transparency_level: Optional[str] = None
-    full_disclosure: Optional[bool] = None
+    transparency_level: str | None = None
+    full_disclosure: bool | None = None
 
     # Narrative focus
-    narrative_focus: Optional[str] = None
-    key_insights: Optional[List[str]] = None
+    narrative_focus: str | None = None
+    key_insights: list[str] | None = None
 
     # Quality metrics
-    data_quality_score: Optional[float] = None
-    performance_data_quality: Optional[float] = None
+    data_quality_score: float | None = None
+    performance_data_quality: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "analysis_name": self.analysis_name,
@@ -492,12 +492,12 @@ class UnifiedValidationOutput:
 
     metadata: BaseMetadata
     overall_assessment: OverallAssessment
-    validation_breakdown: Dict[str, Dict[str, ValidationResult]]
+    validation_breakdown: dict[str, dict[str, ValidationResult]]
     critical_findings_matrix: CriticalFindingsMatrix
     actionable_recommendations: ActionableRecommendations
-    methodology_notes: Dict[str, Any]
+    methodology_notes: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         # Convert validation breakdown
         validation_breakdown_dict = {}
@@ -530,12 +530,7 @@ class UnifiedDataSchema:
 
     def create_data_schema(
         self, content_type: ContentType, **kwargs
-    ) -> Union[
-        FundamentalDataSchema,
-        StrategyDataSchema,
-        SectorDataSchema,
-        TradeHistoryDataSchema,
-    ]:
+    ) -> FundamentalDataSchema | StrategyDataSchema | SectorDataSchema | TradeHistoryDataSchema:
         """Create a data schema instance"""
         schema_class = self.schema_registry.get(content_type)
         if not schema_class:
@@ -543,9 +538,7 @@ class UnifiedDataSchema:
 
         return schema_class(**kwargs)
 
-    def validate_data_schema(
-        self, data: Dict[str, Any], content_type: ContentType
-    ) -> Dict[str, Any]:
+    def validate_data_schema(self, data: dict[str, Any], content_type: ContentType) -> dict[str, Any]:
         """Validate data against schema"""
         schema_class = self.schema_registry.get(content_type)
         if not schema_class:
@@ -577,9 +570,7 @@ class UnifiedDataSchema:
 
         return validation_result
 
-    def normalize_data(
-        self, data: Dict[str, Any], content_type: ContentType
-    ) -> Dict[str, Any]:
+    def normalize_data(self, data: dict[str, Any], content_type: ContentType) -> dict[str, Any]:
         """Normalize data to schema format"""
         schema_class = self.schema_registry.get(content_type)
         if not schema_class:
@@ -587,9 +578,7 @@ class UnifiedDataSchema:
 
         # Create schema instance with available data
         try:
-            schema_instance = schema_class(
-                **{k: v for k, v in data.items() if k in schema_class.__annotations__}
-            )
+            schema_instance = schema_class(**{k: v for k, v in data.items() if k in schema_class.__annotations__})
             return schema_instance.to_dict()
         except Exception:
             # Return original data if normalization fails
@@ -599,39 +588,35 @@ class UnifiedDataSchema:
         self,
         content_type: ContentType,
         overall_score: float,
-        validation_results: Dict[str, Any],
-        findings: Optional[Dict[str, Any]] = None,
-        recommendations: Optional[Dict[str, Any]] = None,
+        validation_results: dict[str, Any],
+        findings: dict[str, Any] | None = None,
+        recommendations: dict[str, Any] | None = None,
     ) -> UnifiedValidationOutput:
         """Create unified validation output"""
 
         # Create metadata
-        metadata = BaseMetadata(
-            content_type=content_type, institutional_compliant=overall_score >= 9.0
-        )
+        metadata = BaseMetadata(content_type=content_type, institutional_compliant=overall_score >= 9.0)
 
         # Create overall assessment
         def score_to_grade(score: float) -> QualityGrade:
             if score >= 9.5:
                 return QualityGrade.A_PLUS
-            elif score >= 9.0:
+            if score >= 9.0:
                 return QualityGrade.A
-            elif score >= 8.5:
+            if score >= 8.5:
                 return QualityGrade.B_PLUS
-            elif score >= 8.0:
+            if score >= 8.0:
                 return QualityGrade.B
-            elif score >= 7.0:
+            if score >= 7.0:
                 return QualityGrade.C
-            else:
-                return QualityGrade.F
+            return QualityGrade.F
 
         def score_to_status(score: float) -> ValidationStatus:
             if score >= 9.5:
                 return ValidationStatus.COMPLIANT
-            elif score >= 8.5:
+            if score >= 8.5:
                 return ValidationStatus.FLAGGED
-            else:
-                return ValidationStatus.NON_COMPLIANT
+            return ValidationStatus.NON_COMPLIANT
 
         overall_assessment = OverallAssessment(
             overall_reliability_score=overall_score,
@@ -669,12 +654,8 @@ class UnifiedDataSchema:
         if recommendations:
             actionable_recommendations = ActionableRecommendations(
                 required_corrections=recommendations.get("required_corrections", {}),
-                optimization_opportunities=recommendations.get(
-                    "optimization_opportunities", {}
-                ),
-                monitoring_requirements=recommendations.get(
-                    "monitoring_requirements", {}
-                ),
+                optimization_opportunities=recommendations.get("optimization_opportunities", {}),
+                monitoring_requirements=recommendations.get("monitoring_requirements", {}),
             )
 
         # Create methodology notes
@@ -694,7 +675,7 @@ class UnifiedDataSchema:
             methodology_notes=methodology_notes,
         )
 
-    def get_schema_definition(self, content_type: ContentType) -> Dict[str, Any]:
+    def get_schema_definition(self, content_type: ContentType) -> dict[str, Any]:
         """Get schema definition for content type"""
         schema_class = self.schema_registry.get(content_type)
         if not schema_class:
@@ -707,22 +688,18 @@ class UnifiedDataSchema:
             "required_fields": self._get_required_fields(content_type),
         }
 
-    def _get_required_fields(self, content_type: ContentType) -> List[str]:
+    def _get_required_fields(self, content_type: ContentType) -> list[str]:
         """Get required fields for content type"""
         if content_type == ContentType.FUNDAMENTAL:
             return ["ticker", "date"]
-        elif content_type == ContentType.STRATEGY:
+        if content_type == ContentType.STRATEGY:
             return ["ticker", "date", "strategy_type"]
-        elif content_type == ContentType.SECTOR:
+        if content_type == ContentType.SECTOR:
             return ["sector_name", "date"]
-        elif content_type == ContentType.TRADE_HISTORY:
+        if content_type == ContentType.TRADE_HISTORY:
             return ["analysis_name", "date"]
-        else:
-            return []
+        return []
 
-    def get_available_schemas(self) -> List[Dict[str, Any]]:
+    def get_available_schemas(self) -> list[dict[str, Any]]:
         """Get list of available schemas"""
-        return [
-            self.get_schema_definition(content_type)
-            for content_type in self.schema_registry.keys()
-        ]
+        return [self.get_schema_definition(content_type) for content_type in self.schema_registry.keys()]

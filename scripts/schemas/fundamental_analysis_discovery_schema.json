@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/fundamental_analysis_discovery.json",
+  "$id": "https://colemorton.com/schemas/fundamental_analysis_discovery.json",
   "title": "Fundamental Analysis Discovery Schema",
   "description": "Comprehensive validation schema for fundamental analysis discovery JSON outputs from CLI-enhanced analyst framework",
   "type": "object",

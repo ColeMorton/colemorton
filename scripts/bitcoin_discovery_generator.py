@@ -11,7 +11,8 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -60,14 +61,14 @@ class BitcoinDiscoveryGenerator:
                     self.cli_services[service_name] = service_factory(env)
                     self.cli_service_health[service_name] = True
                     print("✅ Initialized {service_name}")
-                except Exception as e:
+                except Exception:
                     print("⚠️  Failed to initialize {service_name}: {e}")
                     self.cli_service_health[service_name] = False
 
-        except Exception as e:
+        except Exception:
             print("❌ Error initializing CLI services: {e}")
 
-    def search_local_data_domain(self) -> Dict[str, Any]:
+    def search_local_data_domain(self) -> dict[str, Any]:
         """Execute systematic search of ./data/ domain for related files"""
         try:
             import os
@@ -124,32 +125,20 @@ class BitcoinDiscoveryGenerator:
                                 for file_path in files:
                                     if file_path and os.path.isfile(file_path):
                                         # Determine relevance score
-                                        relevance_score = (
-                                            self._calculate_file_relevance(
-                                                file_path, pattern
-                                            )
-                                        )
+                                        relevance_score = self._calculate_file_relevance(file_path, pattern)
                                         if relevance_score >= 0.7:  # Minimum threshold
                                             discovered_files.append(
                                                 {
                                                     "filepath": file_path,
                                                     "relevance_score": relevance_score,
-                                                    "relationship_type": self._determine_relationship_type(
-                                                        file_path
-                                                    ),
-                                                    "file_description": self._generate_file_description(
-                                                        file_path
-                                                    ),
+                                                    "relationship_type": self._determine_relationship_type(file_path),
+                                                    "file_description": self._generate_file_description(file_path),
                                                     "accessibility_verified": True,
-                                                    "file_type": self._classify_file_type(
-                                                        file_path
-                                                    ),
-                                                    "date_relevance": self._assess_date_relevance(
-                                                        file_path
-                                                    ),
+                                                    "file_type": self._classify_file_type(file_path),
+                                                    "date_relevance": self._assess_date_relevance(file_path),
                                                 }
                                             )
-                        except Exception as e:
+                        except Exception:
                             print("⚠️  Search error for pattern {pattern}: {e}")
 
             return {
@@ -167,13 +156,10 @@ class BitcoinDiscoveryGenerator:
                     "search_confidence": 0.90,
                 },
                 "relevance_assessment": {
-                    "high_relevance_files": len(
-                        [f for f in discovered_files if f["relevance_score"] >= 0.9]
-                    ),
+                    "high_relevance_files": len([f for f in discovered_files if f["relevance_score"] >= 0.9]),
                     "total_relevant_files": len(discovered_files),
                     "average_relevance_score": (
-                        sum(f["relevance_score"] for f in discovered_files)
-                        / len(discovered_files)
+                        sum(f["relevance_score"] for f in discovered_files) / len(discovered_files)
                         if discovered_files
                         else 0.8
                     ),
@@ -233,14 +219,13 @@ class BitcoinDiscoveryGenerator:
 
         if "bitcoin" in path_lower or "btc" in path_lower:
             return "direct_analysis"
-        elif "gold" in path_lower or "gld" in path_lower:
+        if "gold" in path_lower or "gld" in path_lower:
             return "supporting_data"  # Store of value comparison
-        elif "validation" in path_lower:
+        if "validation" in path_lower:
             return "validation_data"
-        elif "energy" in path_lower:
+        if "energy" in path_lower:
             return "sector_context"  # Bitcoin mining energy consumption
-        else:
-            return "cross_reference"
+        return "cross_reference"
 
     def _generate_file_description(self, file_path: str) -> str:
         """Generate description of file content and relevance"""
@@ -248,42 +233,35 @@ class BitcoinDiscoveryGenerator:
 
         if "bitcoin" in filename.lower():
             return f"Direct Bitcoin analysis file: {filename}"
-        elif "gold" in filename.lower() or "gld" in filename.lower():
-            return (
-                f"Alternative store-of-value asset analysis for comparison: {filename}"
-            )
-        elif "validation" in filename.lower():
+        if "gold" in filename.lower() or "gld" in filename.lower():
+            return f"Alternative store-of-value asset analysis for comparison: {filename}"
+        if "validation" in filename.lower():
             return f"Validation framework reference for quality assurance: {filename}"
-        elif "energy" in filename.lower():
-            return (
-                f"Energy sector analysis relevant to Bitcoin mining context: {filename}"
-            )
-        else:
-            return f"Supporting analysis file with potential relevance: {filename}"
+        if "energy" in filename.lower():
+            return f"Energy sector analysis relevant to Bitcoin mining context: {filename}"
+        return f"Supporting analysis file with potential relevance: {filename}"
 
     def _classify_file_type(self, file_path: str) -> str:
         """Classify file content type"""
         if "discovery" in file_path:
             return "discovery"
-        elif "analysis" in file_path:
+        if "analysis" in file_path:
             return "analysis"
-        elif "validation" in file_path:
+        if "validation" in file_path:
             return "validation"
-        elif file_path.endswith(".md"):
+        if file_path.endswith(".md"):
             return "report"
-        else:
-            return "data"
+        return "data"
 
     def _assess_date_relevance(self, file_path: str) -> str:
         """Assess temporal relevance of file"""
         if "2025" in file_path:
             return "current"
-        elif "2024" in file_path:
+        if "2024" in file_path:
             return "recent"
-        else:
-            return "historical"
+        return "historical"
 
-    def collect_bitcoin_data(self) -> Dict[str, Any]:
+    def collect_bitcoin_data(self) -> dict[str, Any]:
         """Collect comprehensive Bitcoin data from CoinGecko"""
         try:
             if "coingecko" not in self.cli_services:
@@ -322,7 +300,7 @@ class BitcoinDiscoveryGenerator:
                 "error": str(e),
             }
 
-    def collect_economic_indicators(self) -> Dict[str, Any]:
+    def collect_economic_indicators(self) -> dict[str, Any]:
         """Collect economic indicators relevant to Bitcoin"""
         try:
             if "fred_economic" not in self.cli_services:
@@ -338,13 +316,9 @@ class BitcoinDiscoveryGenerator:
             indicators = {}
 
             # Federal Funds Rate
-            fed_funds = service.get_series_data(
-                "FEDFUNDS", start_date=start_date, end_date=end_date
-            )
+            fed_funds = service.get_series_data("FEDFUNDS", start_date=start_date, end_date=end_date)
             if fed_funds and "observations" in fed_funds:
-                latest_fed_funds = (
-                    fed_funds["observations"][-1] if fed_funds["observations"] else {}
-                )
+                latest_fed_funds = fed_funds["observations"][-1] if fed_funds["observations"] else {}
                 indicators["federal_funds_rate"] = {
                     "value": latest_fed_funds.get("value", "N/A"),
                     "date": latest_fed_funds.get("date", "N/A"),
@@ -352,15 +326,9 @@ class BitcoinDiscoveryGenerator:
                 }
 
             # Unemployment Rate
-            unemployment = service.get_series_data(
-                "UNRATE", start_date=start_date, end_date=end_date
-            )
+            unemployment = service.get_series_data("UNRATE", start_date=start_date, end_date=end_date)
             if unemployment and "observations" in unemployment:
-                latest_unemployment = (
-                    unemployment["observations"][-1]
-                    if unemployment["observations"]
-                    else {}
-                )
+                latest_unemployment = unemployment["observations"][-1] if unemployment["observations"] else {}
                 indicators["unemployment_rate"] = {
                     "value": latest_unemployment.get("value", "N/A"),
                     "date": latest_unemployment.get("date", "N/A"),
@@ -368,13 +336,9 @@ class BitcoinDiscoveryGenerator:
                 }
 
             # 10-Year Treasury
-            ten_year = service.get_series_data(
-                "DGS10", start_date=start_date, end_date=end_date
-            )
+            ten_year = service.get_series_data("DGS10", start_date=start_date, end_date=end_date)
             if ten_year and "observations" in ten_year:
-                latest_ten_year = (
-                    ten_year["observations"][-1] if ten_year["observations"] else {}
-                )
+                latest_ten_year = ten_year["observations"][-1] if ten_year["observations"] else {}
                 indicators["ten_year_treasury"] = {
                     "value": latest_ten_year.get("value", "N/A"),
                     "date": latest_ten_year.get("date", "N/A"),
@@ -382,15 +346,9 @@ class BitcoinDiscoveryGenerator:
                 }
 
             # 3-Month Treasury
-            three_month = service.get_series_data(
-                "DGS3MO", start_date=start_date, end_date=end_date
-            )
+            three_month = service.get_series_data("DGS3MO", start_date=start_date, end_date=end_date)
             if three_month and "observations" in three_month:
-                latest_three_month = (
-                    three_month["observations"][-1]
-                    if three_month["observations"]
-                    else {}
-                )
+                latest_three_month = three_month["observations"][-1] if three_month["observations"] else {}
                 indicators["three_month_treasury"] = {
                     "value": latest_three_month.get("value", "N/A"),
                     "date": latest_three_month.get("date", "N/A"),
@@ -414,7 +372,7 @@ class BitcoinDiscoveryGenerator:
                 "error": str(e),
             }
 
-    def generate_discovery_output(self) -> Dict[str, Any]:
+    def generate_discovery_output(self) -> dict[str, Any]:
         """Generate complete discovery output conforming to schema"""
 
         # Collect data from services
@@ -426,9 +384,7 @@ class BitcoinDiscoveryGenerator:
         sentiment_data = bitcoin_data_result.get("sentiment_analysis", {})
 
         # Current price for cross-validation
-        current_price = bitcoin_data.get(
-            "current_price", 119313.0
-        )  # Fallback from earlier collection
+        current_price = bitcoin_data.get("current_price", 119313.0)  # Fallback from earlier collection
 
         discovery_output = {
             "metadata": {
@@ -438,9 +394,7 @@ class BitcoinDiscoveryGenerator:
                 "ticker": "BITCOIN",  # Cryptocurrency format adapted for schema
                 "data_collection_methodology": "production_cli_services_unified_access",
                 "cli_services_utilized": [
-                    f"{name}_cli"
-                    for name, healthy in self.cli_service_health.items()
-                    if healthy
+                    f"{name}_cli" for name, healthy in self.cli_service_health.items() if healthy
                 ],
                 "api_keys_configured": "production_keys_from_config/financial_services.yaml",
             },
@@ -524,9 +478,7 @@ class BitcoinDiscoveryGenerator:
                 "economic_indicators": economic_data.get("fred_indicators", {}),
                 "cryptocurrency_market": {
                     "bitcoin_dominance": "55_percent_of_total_crypto_market_cap",
-                    "market_sentiment": sentiment_data.get(
-                        "market_sentiment", "neutral"
-                    ),
+                    "market_sentiment": sentiment_data.get("market_sentiment", "neutral"),
                     "institutional_adoption": "increasing_treasury_reserve_allocation",
                 },
                 "market_summary": "restrictive_monetary_policy_driving_digital_store_of_value_demand",
@@ -552,22 +504,17 @@ class BitcoinDiscoveryGenerator:
             },
             "cli_service_validation": {
                 "service_health": {
-                    f"{name}_cli": "100%" if healthy else "0%"
-                    for name, healthy in self.cli_service_health.items()
+                    f"{name}_cli": "100%" if healthy else "0%" for name, healthy in self.cli_service_health.items()
                 },
                 "health_score": 1.0,
-                "services_operational": sum(
-                    1 for healthy in self.cli_service_health.values() if healthy
-                ),
+                "services_operational": sum(1 for healthy in self.cli_service_health.values() if healthy),
                 "services_healthy": all(self.cli_service_health.values()),
             },
             "cli_data_quality": {
                 "overall_data_quality": 0.95,
                 "cli_service_health": 1.0,
                 "institutional_grade": True,
-                "data_sources_via_cli": [
-                    name for name, healthy in self.cli_service_health.items() if healthy
-                ],
+                "data_sources_via_cli": [name for name, healthy in self.cli_service_health.items() if healthy],
                 "cli_integration_status": "operational",
             },
             "cli_insights": {
@@ -675,7 +622,7 @@ class BitcoinDiscoveryGenerator:
 
         return discovery_output
 
-    def save_discovery_output(self, discovery_data: Dict[str, Any]) -> str:
+    def save_discovery_output(self, discovery_data: dict[str, Any]) -> str:
         """Save discovery output to appropriate directory"""
         # Create output directory
         output_dir = "./data/outputs/fundamental_analysis/discovery"
@@ -712,12 +659,8 @@ def main():
     print("📁 Output saved to: {filepath}")
     print("📈 Market Cap: ${discovery_data['market_data']['market_cap']:,.0f}")
     print("💰 Current Price: ${discovery_data['market_data']['current_price']:,.2f}")
-    print(
-        f"🏥 CLI Services Health: {discovery_data['cli_service_validation']['health_score']:.1%}"
-    )
-    print(
-        f"📊 Data Quality: {discovery_data['cli_data_quality']['overall_data_quality']:.1%}"
-    )
+    print(f"🏥 CLI Services Health: {discovery_data['cli_service_validation']['health_score']:.1%}")
+    print(f"📊 Data Quality: {discovery_data['cli_data_quality']['overall_data_quality']:.1%}")
 
     return discovery_data
 

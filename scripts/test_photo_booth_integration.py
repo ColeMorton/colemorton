@@ -9,6 +9,7 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -45,9 +46,7 @@ def test_configuration():
             print("❌ No active dashboards configured")
             return False
 
-        enabled_dashboards = [
-            d for d in config["active_dashboards"] if d.get("enabled", False)
-        ]
+        enabled_dashboards = [d for d in config["active_dashboards"] if d.get("enabled", False)]
         if not enabled_dashboards:
             print("❌ No enabled dashboards found")
             return False
@@ -55,7 +54,7 @@ def test_configuration():
         print("✅ Configuration valid - {len(enabled_dashboards)} enabled dashboards")
         return True
 
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("❌ Invalid JSON in configuration: {e}")
         return False
 
@@ -71,9 +70,7 @@ def test_page_files():
         return False
 
     # Check component
-    component_path = (
-        project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
-    )
+    component_path = project_root / "frontend/src/layouts/shortcodes/PhotoBoothDisplay.tsx"
     if not component_path.exists():
         print("❌ PhotoBoothDisplay component not found: {component_path}")
         return False
@@ -127,9 +124,7 @@ def test_yarn_scripts():
             package = json.load(f)
 
         scripts = package.get("scripts", {})
-        photo_booth_scripts = [
-            key for key in scripts.keys() if key.startswith("photo-booth:")
-        ]
+        photo_booth_scripts = [key for key in scripts.keys() if key.startswith("photo-booth:")]
 
         if not photo_booth_scripts:
             print("❌ No photo-booth yarn scripts found")
@@ -138,7 +133,7 @@ def test_yarn_scripts():
         print("✅ Found {len(photo_booth_scripts)} photo-booth yarn scripts")
         return True
 
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("❌ Invalid JSON in package.json: {e}")
         return False
 
@@ -180,7 +175,7 @@ def test_dependencies():
         print("✅ Dependencies check passed")
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Error checking dependencies: {e}")
         return False
 
@@ -261,7 +256,7 @@ def main():
                 passed += 1
             else:
                 failed += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -276,9 +271,8 @@ def main():
         print("2. Visit http://localhost:4321/photo-booth")
         print("3. Generate screenshots: yarn photo-booth:generate")
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

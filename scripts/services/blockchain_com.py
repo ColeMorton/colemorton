@@ -13,7 +13,7 @@ Production-grade Blockchain.com API integration with:
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -21,9 +21,9 @@ from .base_financial_service import (
     ServiceConfig,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 class BlockchainComService(BaseFinancialService):
@@ -45,8 +45,8 @@ class BlockchainComService(BaseFinancialService):
             self.config.base_url = "https://blockchain.info"
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate Blockchain.com response data"""
 
         if not data:
@@ -55,13 +55,13 @@ class BlockchainComService(BaseFinancialService):
         # Blockchain.com returns clean data, minimal validation needed
         return data
 
-    def get_latest_block(self) -> Dict[str, Any]:
+    def get_latest_block(self) -> dict[str, Any]:
         """Get latest block information"""
         endpoint = "/latestblock"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "latest block")
 
-    def get_block_info(self, block_hash: str) -> Dict[str, Any]:
+    def get_block_info(self, block_hash: str) -> dict[str, Any]:
         """Get detailed information about a specific block"""
         # Handle both block hash and block height
         if block_hash.isdigit():
@@ -72,20 +72,20 @@ class BlockchainComService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"block {block_hash}")
 
-    def get_block_height(self, height: int) -> Dict[str, Any]:
+    def get_block_height(self, height: int) -> dict[str, Any]:
         """Get block information by height"""
         endpoint = f"/block-height/{height}"
         params = {"format": "json"}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"block height {height}")
 
-    def get_transaction_info(self, tx_hash: str) -> Dict[str, Any]:
+    def get_transaction_info(self, tx_hash: str) -> dict[str, Any]:
         """Get detailed information about a specific transaction"""
         endpoint = f"/rawtx/{tx_hash}"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"transaction {tx_hash}")
 
-    def get_address_info(self, address: str, limit: int = 50) -> Dict[str, Any]:
+    def get_address_info(self, address: str, limit: int = 50) -> dict[str, Any]:
         """Get address information including balance and transactions"""
         if limit > 100:
             limit = 100
@@ -97,7 +97,7 @@ class BlockchainComService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"address {address}")
 
-    def get_address_balance(self, address: str) -> Dict[str, Any]:
+    def get_address_balance(self, address: str) -> dict[str, Any]:
         """Get address balance only"""
         endpoint = f"/q/addressbalance/{address}"
         balance = self._make_request_with_retry(endpoint)
@@ -110,32 +110,32 @@ class BlockchainComService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_multiple_addresses_balance(self, addresses: List[str]) -> Dict[str, Any]:
+    def get_multiple_addresses_balance(self, addresses: list[str]) -> dict[str, Any]:
         """Get balances for multiple addresses"""
         if len(addresses) > 100:
             addresses = addresses[:100]
 
         address_string = "|".join(addresses)
-        endpoint = f"/balance"
+        endpoint = "/balance"
         params = {"active": address_string}
         data = self._make_request_with_retry(endpoint, params=params)
-        return self._validate_response(data, f"multiple addresses balance")
+        return self._validate_response(data, "multiple addresses balance")
 
-    def get_unspent_outputs(self, address: str) -> Dict[str, Any]:
+    def get_unspent_outputs(self, address: str) -> dict[str, Any]:
         """Get unspent transaction outputs for an address"""
-        endpoint = f"/unspent"
+        endpoint = "/unspent"
         params = {"active": address}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"unspent outputs for {address}")
 
-    def get_network_stats(self) -> Dict[str, Any]:
+    def get_network_stats(self) -> dict[str, Any]:
         """Get Bitcoin network statistics"""
         endpoint = "/stats"
         params = {"format": "json"}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, "network stats")
 
-    def get_mempool_info(self) -> Dict[str, Any]:
+    def get_mempool_info(self) -> dict[str, Any]:
         """Get mempool statistics"""
         endpoint = "/q/unconfirmedcount"
         unconfirmed_count = self._make_request_with_retry(endpoint)
@@ -148,14 +148,12 @@ class BlockchainComService(BaseFinancialService):
             mempool_size = 0
 
         return {
-            "unconfirmed_transactions": unconfirmed_count
-            if isinstance(unconfirmed_count, int)
-            else 0,
+            "unconfirmed_transactions": unconfirmed_count if isinstance(unconfirmed_count, int) else 0,
             "mempool_size_bytes": mempool_size if isinstance(mempool_size, int) else 0,
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_difficulty(self) -> Dict[str, Any]:
+    def get_difficulty(self) -> dict[str, Any]:
         """Get current Bitcoin mining difficulty"""
         endpoint = "/q/getdifficulty"
         difficulty = self._make_request_with_retry(endpoint)
@@ -165,35 +163,29 @@ class BlockchainComService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_hashrate(self) -> Dict[str, Any]:
+    def get_hashrate(self) -> dict[str, Any]:
         """Get estimated network hash rate"""
         endpoint = "/q/hashrate"
         hashrate = self._make_request_with_retry(endpoint)
 
         return {
-            "hashrate_ghash_per_sec": hashrate
-            if isinstance(hashrate, (int, float))
-            else 0,
-            "hashrate_thash_per_sec": (hashrate / 1000)
-            if isinstance(hashrate, (int, float))
-            else 0,
+            "hashrate_ghash_per_sec": hashrate if isinstance(hashrate, (int, float)) else 0,
+            "hashrate_thash_per_sec": (hashrate / 1000) if isinstance(hashrate, (int, float)) else 0,
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_total_bitcoins(self) -> Dict[str, Any]:
+    def get_total_bitcoins(self) -> dict[str, Any]:
         """Get total bitcoins in circulation"""
         endpoint = "/q/totalbc"
         total_bc = self._make_request_with_retry(endpoint)
 
         return {
             "total_bitcoins_satoshis": total_bc if isinstance(total_bc, int) else 0,
-            "total_bitcoins": (total_bc / 100000000)
-            if isinstance(total_bc, int)
-            else 0.0,
+            "total_bitcoins": (total_bc / 100000000) if isinstance(total_bc, int) else 0.0,
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_market_price_usd(self) -> Dict[str, Any]:
+    def get_market_price_usd(self) -> dict[str, Any]:
         """Get current Bitcoin price in USD"""
         endpoint = "/q/24hrprice"
         price = self._make_request_with_retry(endpoint)
@@ -204,7 +196,7 @@ class BlockchainComService(BaseFinancialService):
             "source": "blockchain.com",
         }
 
-    def get_transaction_fee_per_kb(self) -> Dict[str, Any]:
+    def get_transaction_fee_per_kb(self) -> dict[str, Any]:
         """Get average transaction fee per KB"""
         endpoint = "/q/avgtxvalue"
         try:
@@ -220,22 +212,14 @@ class BlockchainComService(BaseFinancialService):
             avg_tx_fee = 0
 
         return {
-            "average_transaction_value_satoshis": avg_tx_value
-            if isinstance(avg_tx_value, int)
-            else 0,
-            "average_transaction_fee_satoshis": avg_tx_fee
-            if isinstance(avg_tx_fee, int)
-            else 0,
-            "average_transaction_value_btc": (avg_tx_value / 100000000)
-            if isinstance(avg_tx_value, int)
-            else 0.0,
-            "average_transaction_fee_btc": (avg_tx_fee / 100000000)
-            if isinstance(avg_tx_fee, int)
-            else 0.0,
+            "average_transaction_value_satoshis": avg_tx_value if isinstance(avg_tx_value, int) else 0,
+            "average_transaction_fee_satoshis": avg_tx_fee if isinstance(avg_tx_fee, int) else 0,
+            "average_transaction_value_btc": (avg_tx_value / 100000000) if isinstance(avg_tx_value, int) else 0.0,
+            "average_transaction_fee_btc": (avg_tx_fee / 100000000) if isinstance(avg_tx_fee, int) else 0.0,
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_blocks_mined_today(self) -> Dict[str, Any]:
+    def get_blocks_mined_today(self) -> dict[str, Any]:
         """Get number of blocks mined in the last 24 hours"""
         endpoint = "/q/24hrtransactioncount"
         try:
@@ -254,7 +238,7 @@ class BlockchainComService(BaseFinancialService):
             "period_start": yesterday.isoformat(),
         }
 
-    def get_address_transactions(self, address: str, offset: int = 0) -> Dict[str, Any]:
+    def get_address_transactions(self, address: str, offset: int = 0) -> dict[str, Any]:
         """Get transactions for a specific address with pagination"""
         if offset < 0:
             offset = 0
@@ -264,7 +248,7 @@ class BlockchainComService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"transactions for {address}")
 
-    def get_blockchain_summary(self) -> Dict[str, Any]:
+    def get_blockchain_summary(self) -> dict[str, Any]:
         """Get comprehensive blockchain summary"""
         # Combine multiple endpoints for comprehensive overview
         summary = {}
@@ -325,7 +309,7 @@ def create_blockchain_com_service(env: str = "dev") -> BlockchainComService:
 
         return BlockchainComService(service_config)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="blockchain_com",

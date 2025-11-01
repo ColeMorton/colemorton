@@ -19,9 +19,9 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import pandas as pd
+
 
 # Add scripts directory to path for importing services
 sys.path.append(str(Path(__file__).parent))
@@ -31,30 +31,18 @@ from yahoo_finance_service import YahooFinanceService
 class PositionPricingDownloader:
     """Downloads pricing data for open trading positions"""
 
-    def __init__(self, portfolio_name: str, base_data_path: Optional[str] = None):
+    def __init__(self, portfolio_name: str, base_data_path: str | None = None):
         self.portfolio_name = portfolio_name
-        self.base_data_path = (
-            Path(base_data_path)
-            if base_data_path
-            else Path(__file__).parent.parent / "data"
-        )
+        self.base_data_path = Path(base_data_path) if base_data_path else Path(__file__).parent.parent / "data"
 
         # Initialize Yahoo Finance service
         self.yahoo_service = YahooFinanceService()
 
         # Setup paths
-        self.trade_history_path = (
-            self.base_data_path / "raw" / "trade_history" / f"{portfolio_name}.csv"
-        )
-        self.pricing_output_path = (
-            self.base_data_path / "raw" / "financial_data" / "pricing" / portfolio_name
-        )
+        self.trade_history_path = self.base_data_path / "raw" / "trade_history" / f"{portfolio_name}.csv"
+        self.pricing_output_path = self.base_data_path / "raw" / "financial_data" / "pricing" / portfolio_name
         self.consolidated_output_path = (
-            self.base_data_path
-            / "raw"
-            / "financial_data"
-            / "pricing"
-            / f"{portfolio_name}_open_positions_pnl.csv"
+            self.base_data_path / "raw" / "financial_data" / "pricing" / f"{portfolio_name}_open_positions_pnl.csv"
         )
 
         # Setup logging
@@ -66,35 +54,29 @@ class PositionPricingDownloader:
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
-                logging.FileHandler(
-                    f"download_position_pricing_{self.portfolio_name}.log"
-                ),
+                logging.FileHandler(f"download_position_pricing_{self.portfolio_name}.log"),
                 logging.StreamHandler(sys.stdout),
             ],
         )
         self.logger = logging.getLogger(__name__)
 
-    def parse_open_positions(self) -> List[Dict]:
+    def parse_open_positions(self) -> list[dict]:
         """Extract open positions from trade history CSV"""
         self.logger.info(f"Parsing open positions from {self.trade_history_path}")
 
         if not self.trade_history_path.exists():
-            raise FileNotFoundError(
-                f"Trade history file not found: {self.trade_history_path}"
-            )
+            raise FileNotFoundError(f"Trade history file not found: {self.trade_history_path}")
 
         open_positions = []
 
-        with open(self.trade_history_path, "r", encoding="utf-8") as file:
+        with open(self.trade_history_path, encoding="utf-8") as file:
             reader = csv.DictReader(file)
             for row in reader:
                 if row.get("Status", "").strip() == "Open":
                     try:
                         position = {
                             "ticker": row["Ticker"].strip(),
-                            "entry_date": datetime.strptime(
-                                row["Entry_Timestamp"].strip(), "%Y-%m-%d %H:%M:%S"
-                            ).date(),
+                            "entry_date": datetime.strptime(row["Entry_Timestamp"].strip(), "%Y-%m-%d %H:%M:%S").date(),
                             "entry_price": float(row["Avg_Entry_Price"].strip()),
                             "position_size": float(row["Position_Size"].strip()),
                             "direction": row["Direction"].strip(),  # Long/Short
@@ -105,24 +87,20 @@ class PositionPricingDownloader:
                             f"Found open position: {position['ticker']} entered on {position['entry_date']}"
                         )
                     except (ValueError, KeyError) as e:
-                        self.logger.error(
-                            f"Error parsing position row: {row}. Error: {e}"
-                        )
+                        self.logger.error(f"Error parsing position row: {row}. Error: {e}")
                         continue
 
         self.logger.info(f"Found {len(open_positions)} open positions")
         return open_positions
 
     def download_ticker_prices(
-        self, ticker: str, start_date: datetime, end_date: Optional[datetime] = None
+        self, ticker: str, start_date: datetime, end_date: datetime | None = None
     ) -> pd.DataFrame:
         """Download daily price data for a specific ticker using direct yfinance"""
         if end_date is None:
             end_date = datetime.now()
 
-        self.logger.info(
-            f"Downloading price data for {ticker} from {start_date} to {end_date}"
-        )
+        self.logger.info(f"Downloading price data for {ticker} from {start_date} to {end_date}")
 
         try:
             # Import yfinance directly since the service doesn't support date ranges
@@ -132,9 +110,7 @@ class PositionPricingDownloader:
             ticker_obj = yf.Ticker(ticker)
             price_data = ticker_obj.history(
                 start=start_date.strftime("%Y-%m-%d"),
-                end=(end_date + timedelta(days=1)).strftime(
-                    "%Y-%m-%d"
-                ),  # Add 1 day to include end_date
+                end=(end_date + timedelta(days=1)).strftime("%Y-%m-%d"),  # Add 1 day to include end_date
             )
 
             if price_data is None or price_data.empty:
@@ -182,11 +158,9 @@ class PositionPricingDownloader:
             price_data_clean["Date"] = pd.to_datetime(price_data_clean["Date"]).dt.date
 
         price_data_clean.to_csv(output_file, index=False)
-        self.logger.info(
-            f"Saved {len(price_data_clean)} price records to {output_file}"
-        )
+        self.logger.info(f"Saved {len(price_data_clean)} price records to {output_file}")
 
-    def calculate_position_pnl_timeseries(self, positions: List[Dict]) -> pd.DataFrame:
+    def calculate_position_pnl_timeseries(self, positions: list[dict]) -> pd.DataFrame:
         """Generate consolidated PnL time series for all open positions"""
         self.logger.info("Calculating PnL time series for all open positions")
 
@@ -203,9 +177,7 @@ class PositionPricingDownloader:
             price_data = self.download_ticker_prices(ticker, entry_date)
 
             if price_data.empty:
-                self.logger.warning(
-                    f"Skipping PnL calculation for {ticker} due to missing price data"
-                )
+                self.logger.warning(f"Skipping PnL calculation for {ticker} due to missing price data")
                 continue
 
             # Save individual price file
@@ -218,7 +190,7 @@ class PositionPricingDownloader:
                     continue
 
                 # Convert pandas Timestamp to date object
-                if hasattr(date, "date") and callable(getattr(date, "date")):
+                if hasattr(date, "date") and callable(date.date):
                     # It's a datetime-like object (Timestamp) with a date() method
                     date = date.date()
                 elif isinstance(date, str):
@@ -253,9 +225,7 @@ class PositionPricingDownloader:
         pnl_df = pd.DataFrame(all_pnl_data)
         pnl_df = pnl_df.sort_values(["Date", "Ticker"])
 
-        self.logger.info(
-            f"Generated {len(pnl_df)} PnL records across {len(positions)} positions"
-        )
+        self.logger.info(f"Generated {len(pnl_df)} PnL records across {len(positions)} positions")
         return pnl_df
 
     def save_consolidated_pnl_file(self, pnl_data: pd.DataFrame) -> None:
@@ -268,24 +238,18 @@ class PositionPricingDownloader:
         self.consolidated_output_path.parent.mkdir(parents=True, exist_ok=True)
 
         pnl_data.to_csv(self.consolidated_output_path, index=False)
-        self.logger.info(
-            f"Saved consolidated PnL data to {self.consolidated_output_path}"
-        )
+        self.logger.info(f"Saved consolidated PnL data to {self.consolidated_output_path}")
 
         # Log summary statistics
         unique_tickers = pnl_data["Ticker"].nunique()
         date_range = f"{pnl_data['Date'].min()} to {pnl_data['Date'].max()}"
         total_records = len(pnl_data)
 
-        self.logger.info(
-            f"Summary: {unique_tickers} tickers, {total_records} records, date range: {date_range}"
-        )
+        self.logger.info(f"Summary: {unique_tickers} tickers, {total_records} records, date range: {date_range}")
 
-    def run(self, start_date: Optional[str] = None) -> None:
+    def run(self, start_date: str | None = None) -> None:
         """Execute the full pricing data download and processing pipeline"""
-        self.logger.info(
-            f"Starting position pricing download for portfolio: {self.portfolio_name}"
-        )
+        self.logger.info(f"Starting position pricing download for portfolio: {self.portfolio_name}")
 
         try:
             # Parse open positions from trade history
@@ -322,15 +286,9 @@ class PositionPricingDownloader:
 
 def main():
     """Command-line interface for the position pricing downloader"""
-    parser = argparse.ArgumentParser(
-        description="Download pricing data for open trading positions"
-    )
-    parser.add_argument(
-        "--portfolio", required=True, help="Portfolio name (e.g., live_signals)"
-    )
-    parser.add_argument(
-        "--start-date", help="Override start date for price data download (YYYY-MM-DD)"
-    )
+    parser = argparse.ArgumentParser(description="Download pricing data for open trading positions")
+    parser.add_argument("--portfolio", required=True, help="Portfolio name (e.g., live_signals)")
+    parser.add_argument("--start-date", help="Override start date for price data download (YYYY-MM-DD)")
     parser.add_argument(
         "--data-path",
         help="Base path to data directory (default: ../data relative to script)",
@@ -339,9 +297,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        downloader = PositionPricingDownloader(
-            portfolio_name=args.portfolio, base_data_path=args.data_path
-        )
+        downloader = PositionPricingDownloader(portfolio_name=args.portfolio, base_data_path=args.data_path)
         downloader.run(start_date=args.start_date)
 
     except Exception as e:

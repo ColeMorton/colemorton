@@ -14,7 +14,8 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add current directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,13 +26,9 @@ from cli_wrapper import execute_cli_command, get_service_manager
 class ServiceDiscoveryError(Exception):
     """Base exception for service discovery errors"""
 
-    pass
-
 
 class NoServiceAvailableError(ServiceDiscoveryError):
     """Raised when no service is available for the requested operation"""
-
-    pass
 
 
 class ServiceDiscoveryManager:
@@ -39,15 +36,13 @@ class ServiceDiscoveryManager:
     Manages service discovery and execution for trade history analysis
     """
 
-    def __init__(self, local_data_dir: Optional[Path] = None):
+    def __init__(self, local_data_dir: Path | None = None):
         self.local_data_dir = local_data_dir or Path(__file__).parent.parent / "data"
         self.logger = self._setup_logger()
         self.cli_manager = get_service_manager()
 
         # Local data sources
-        self.fundamental_analysis_dir = (
-            self.local_data_dir / "outputs" / "fundamental_analysis"
-        )
+        self.fundamental_analysis_dir = self.local_data_dir / "outputs" / "fundamental_analysis"
         self.sector_analysis_dir = self.local_data_dir / "outputs" / "sector_analysis"
         self.cache_dirs = [
             self.local_data_dir / "cache",
@@ -72,15 +67,13 @@ class ServiceDiscoveryManager:
         logger = logging.getLogger("service_discovery")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
 
-    def check_local_data_availability(self, ticker: str) -> Dict[str, Any]:
+    def check_local_data_availability(self, ticker: str) -> dict[str, Any]:
         """
         Check availability of local data for a given ticker
 
@@ -110,16 +103,14 @@ class ServiceDiscoveryManager:
 
             if fundamental_files:
                 availability["fundamental_analysis"]["available"] = True
-                availability["fundamental_analysis"]["file_count"] = len(
-                    fundamental_files
-                )
+                availability["fundamental_analysis"]["file_count"] = len(fundamental_files)
 
                 # Find latest file
                 latest_file = max(fundamental_files, key=lambda f: f.stat().st_mtime)
                 availability["fundamental_analysis"]["latest_file"] = str(latest_file)
-                availability["fundamental_analysis"][
-                    "latest_date"
-                ] = datetime.fromtimestamp(latest_file.stat().st_mtime).isoformat()
+                availability["fundamental_analysis"]["latest_date"] = datetime.fromtimestamp(
+                    latest_file.stat().st_mtime
+                ).isoformat()
 
         # Check sector analysis files
         if self.sector_analysis_dir.exists():
@@ -133,9 +124,7 @@ class ServiceDiscoveryManager:
                 cache_files = list(cache_dir.glob("*.json"))
                 if cache_files:
                     availability["cache_data"]["available"] = True
-                    availability["cache_data"]["cache_files"].extend(
-                        [str(f) for f in cache_files]
-                    )
+                    availability["cache_data"]["cache_files"].extend([str(f) for f in cache_files])
 
         # Calculate local coverage score
         coverage_score = 0
@@ -150,9 +139,7 @@ class ServiceDiscoveryManager:
 
         return availability
 
-    def get_market_data_with_fallback(
-        self, ticker: str, data_type: str = "quote"
-    ) -> Dict[str, Any]:
+    def get_market_data_with_fallback(self, ticker: str, data_type: str = "quote") -> dict[str, Any]:
         """
         Get market data with intelligent fallback strategy
 
@@ -192,9 +179,7 @@ class ServiceDiscoveryManager:
                 self.logger.warning(f"Failed to get local data for {ticker}: {e}")
 
         # Fall back to CLI services
-        service_priorities = self.service_priorities.get(
-            "stock_analysis", ["yahoo_finance"]
-        )
+        service_priorities = self.service_priorities.get("stock_analysis", ["yahoo_finance"])
 
         for service_name in service_priorities:
             try:
@@ -225,14 +210,10 @@ class ServiceDiscoveryManager:
                         result["local_coverage"] = local_availability["local_coverage"]
                         return result
                     except json.JSONDecodeError:
-                        self.logger.warning(
-                            f"Invalid JSON response from {service_name}"
-                        )
+                        self.logger.warning(f"Invalid JSON response from {service_name}")
                         continue
                 else:
-                    self.logger.warning(
-                        f"CLI command failed for {service_name}: {stderr}"
-                    )
+                    self.logger.warning(f"CLI command failed for {service_name}: {stderr}")
                     continue
 
             except Exception as e:
@@ -244,9 +225,7 @@ class ServiceDiscoveryManager:
         self.logger.error(result["error"])
         return result
 
-    def _get_local_data(
-        self, ticker: str, data_type: str, availability: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _get_local_data(self, ticker: str, data_type: str, availability: dict[str, Any]) -> dict[str, Any] | None:
         """
         Get data from local sources
 
@@ -258,15 +237,12 @@ class ServiceDiscoveryManager:
         Returns:
             Local data if available, None otherwise
         """
-        if (
-            data_type == "fundamental"
-            and availability["fundamental_analysis"]["available"]
-        ):
+        if data_type == "fundamental" and availability["fundamental_analysis"]["available"]:
             # Read fundamental analysis file
             file_path = Path(availability["fundamental_analysis"]["latest_file"])
             if file_path.exists():
                 try:
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         content = f.read()
 
                     return {
@@ -274,27 +250,21 @@ class ServiceDiscoveryManager:
                         "analysis_type": "fundamental",
                         "content": content,
                         "file_path": str(file_path),
-                        "timestamp": availability["fundamental_analysis"][
-                            "latest_date"
-                        ],
+                        "timestamp": availability["fundamental_analysis"]["latest_date"],
                         "source": "local_file",
                     }
                 except Exception as e:
-                    self.logger.warning(
-                        f"Failed to read fundamental analysis file: {e}"
-                    )
+                    self.logger.warning(f"Failed to read fundamental analysis file: {e}")
 
         # For other data types, check cache
         if availability["cache_data"]["available"]:
             for cache_file in availability["cache_data"]["cache_files"]:
                 try:
-                    with open(cache_file, "r") as f:
+                    with open(cache_file) as f:
                         cache_data = json.load(f)
 
                     # Check if cache data matches ticker and data type
-                    if cache_data.get("data", {}).get(
-                        "ticker"
-                    ) == ticker.upper() or ticker.upper() in str(cache_data):
+                    if cache_data.get("data", {}).get("ticker") == ticker.upper() or ticker.upper() in str(cache_data):
                         return cache_data.get("data")
 
                 except Exception as e:
@@ -303,7 +273,7 @@ class ServiceDiscoveryManager:
 
         return None
 
-    def get_service_health_summary(self) -> Dict[str, Any]:
+    def get_service_health_summary(self) -> dict[str, Any]:
         """
         Get comprehensive health summary of all services
 
@@ -315,19 +285,13 @@ class ServiceDiscoveryManager:
         # Add local data statistics
         local_stats = {
             "fundamental_analysis_files": (
-                len(list(self.fundamental_analysis_dir.glob("*.md")))
-                if self.fundamental_analysis_dir.exists()
-                else 0
+                len(list(self.fundamental_analysis_dir.glob("*.md"))) if self.fundamental_analysis_dir.exists() else 0
             ),
             "sector_analysis_files": (
-                len(list(self.sector_analysis_dir.glob("*.md")))
-                if self.sector_analysis_dir.exists()
-                else 0
+                len(list(self.sector_analysis_dir.glob("*.md"))) if self.sector_analysis_dir.exists() else 0
             ),
             "cache_files": sum(
-                len(list(cache_dir.glob("*.json")))
-                for cache_dir in self.cache_dirs
-                if cache_dir.exists()
+                len(list(cache_dir.glob("*.json"))) for cache_dir in self.cache_dirs if cache_dir.exists()
             ),
         }
 
@@ -336,7 +300,7 @@ class ServiceDiscoveryManager:
 
         return health_info
 
-    def optimize_service_usage(self, tickers: List[str]) -> Dict[str, Any]:
+    def optimize_service_usage(self, tickers: list[str]) -> dict[str, Any]:
         """
         Optimize service usage for multiple tickers
 
@@ -375,28 +339,20 @@ class ServiceDiscoveryManager:
         local_coverage_ratio = optimization_plan["local_data_available"] / len(tickers)
 
         if local_coverage_ratio > 0.8:
-            optimization_plan["recommendations"].append(
-                "Excellent local data coverage - minimal external calls needed"
-            )
+            optimization_plan["recommendations"].append("Excellent local data coverage - minimal external calls needed")
         elif local_coverage_ratio > 0.5:
-            optimization_plan["recommendations"].append(
-                "Good local data coverage - consider caching missing data"
-            )
+            optimization_plan["recommendations"].append("Good local data coverage - consider caching missing data")
         else:
-            optimization_plan["recommendations"].append(
-                "Low local data coverage - prioritize data collection"
-            )
+            optimization_plan["recommendations"].append("Low local data coverage - prioritize data collection")
 
         if optimization_plan["external_calls_needed"] > 10:
-            optimization_plan["recommendations"].append(
-                "High external call volume - implement request batching"
-            )
+            optimization_plan["recommendations"].append("High external call volume - implement request batching")
 
         return optimization_plan
 
 
 def create_service_discovery_manager(
-    local_data_dir: Optional[Path] = None,
+    local_data_dir: Path | None = None,
 ) -> ServiceDiscoveryManager:
     """Factory function to create service discovery manager"""
     return ServiceDiscoveryManager(local_data_dir)

@@ -11,7 +11,8 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -25,7 +26,6 @@ from scripts.utils.command_execution_service import (
 from scripts.utils.command_script_resolver import CommandScriptResolver
 from scripts.utils.dasv_workflow_orchestrator import (
     DASVWorkflowOrchestrator,
-    WorkflowStatus,
 )
 
 
@@ -65,15 +65,15 @@ class UnifiedCommandInterface:
             "v": "validate",
         }
 
-    def _resolve_aliases(self, command: str, phase: str) -> Tuple[str, str]:
+    def _resolve_aliases(self, command: str, phase: str) -> tuple[str, str]:
         """Resolve command and phase aliases"""
         resolved_command = self.command_aliases.get(command, command)
         resolved_phase = self.phase_aliases.get(phase, phase)
         return resolved_command, resolved_phase
 
     def _validate_command_parameters(
-        self, domain: str, phase: str, parameters: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+        self, domain: str, phase: str, parameters: dict[str, Any]
+    ) -> tuple[bool, list[str]]:
         """Validate command parameters"""
         errors = []
 
@@ -92,9 +92,7 @@ class UnifiedCommandInterface:
 
         elif domain == "comparative_analysis":
             if "ticker_1" not in parameters or "ticker_2" not in parameters:
-                errors.append(
-                    "ticker_1 and ticker_2 parameters required for comparative analysis"
-                )
+                errors.append("ticker_1 and ticker_2 parameters required for comparative analysis")
 
         elif domain == "macro_analysis":
             if "region" not in parameters:
@@ -115,9 +113,9 @@ class UnifiedCommandInterface:
         self,
         domain: str,
         phase: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.DIRECT,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute a single DASV phase
 
@@ -134,9 +132,7 @@ class UnifiedCommandInterface:
         domain, phase = self._resolve_aliases(domain, phase)
 
         # Validate parameters
-        is_valid, validation_errors = self._validate_command_parameters(
-            domain, phase, parameters
-        )
+        is_valid, validation_errors = self._validate_command_parameters(domain, phase, parameters)
         if not is_valid:
             return {
                 "status": "validation_failed",
@@ -188,10 +184,10 @@ class UnifiedCommandInterface:
     def execute_full_workflow(
         self,
         domain: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.DIRECT,
-        workflow_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        workflow_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Execute a complete DASV workflow
 
@@ -208,9 +204,7 @@ class UnifiedCommandInterface:
         domain = self.command_aliases.get(domain, domain)
 
         # Validate parameters
-        is_valid, validation_errors = self._validate_command_parameters(
-            domain, "discover", parameters
-        )
+        is_valid, validation_errors = self._validate_command_parameters(domain, "discover", parameters)
         if not is_valid:
             return {
                 "status": "validation_failed",
@@ -222,9 +216,7 @@ class UnifiedCommandInterface:
         print("   📋 Parameters: {parameters}")
 
         # Execute workflow
-        result = self.orchestrator.execute_workflow(
-            domain, parameters, mode, workflow_id
-        )
+        result = self.orchestrator.execute_workflow(domain, parameters, mode, workflow_id)
 
         # Format response
         response = {
@@ -233,9 +225,7 @@ class UnifiedCommandInterface:
             "workflow_id": result.workflow_id,
             "start_time": result.start_time.isoformat(),
             "end_time": result.end_time.isoformat() if result.end_time else None,
-            "duration": (
-                str(result.end_time - result.start_time) if result.end_time else None
-            ),
+            "duration": (str(result.end_time - result.start_time) if result.end_time else None),
             "phases_completed": len(result.phase_results),
             "final_outputs": result.final_outputs,
             "overall_confidence": result.overall_confidence,
@@ -255,9 +245,7 @@ class UnifiedCommandInterface:
 
         return response
 
-    def get_command_info(
-        self, domain: str, phase: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def get_command_info(self, domain: str, phase: str | None = None) -> dict[str, Any]:
         """Get information about available commands"""
         # Resolve aliases
         domain = self.command_aliases.get(domain, domain)
@@ -268,17 +256,14 @@ class UnifiedCommandInterface:
             command_info = self.execution_service.get_command_info(domain, phase)
             if command_info:
                 return command_info
-            else:
-                return {"error": f"Command not found: {domain}:{phase}"}
-        else:
-            # Get all phases for domain
-            available_commands = self.execution_service.get_available_commands()
-            if domain in available_commands:
-                return {"domain": domain, "phases": available_commands[domain]}
-            else:
-                return {"error": f"Domain not found: {domain}"}
+            return {"error": f"Command not found: {domain}:{phase}"}
+        # Get all phases for domain
+        available_commands = self.execution_service.get_available_commands()
+        if domain in available_commands:
+            return {"domain": domain, "phases": available_commands[domain]}
+        return {"error": f"Domain not found: {domain}"}
 
-    def list_all_commands(self) -> Dict[str, Any]:
+    def list_all_commands(self) -> dict[str, Any]:
         """List all available commands and workflows"""
         commands = self.execution_service.get_available_commands()
         workflows = self.orchestrator.list_available_workflows()
@@ -290,9 +275,7 @@ class UnifiedCommandInterface:
             "phase_aliases": self.phase_aliases,
         }
 
-    def execute_command_string(
-        self, command_string: str, mode: ExecutionMode = ExecutionMode.DIRECT
-    ) -> Dict[str, Any]:
+    def execute_command_string(self, command_string: str, mode: ExecutionMode = ExecutionMode.DIRECT) -> dict[str, Any]:
         """
         Execute a command from a string format
 
@@ -304,9 +287,7 @@ class UnifiedCommandInterface:
         try:
             parts = command_string.strip().split()
             if len(parts) < 2:
-                return {
-                    "error": "Invalid command format. Expected: domain:phase parameters"
-                }
+                return {"error": "Invalid command format. Expected: domain:phase parameters"}
 
             # Parse command and phase
             command_phase = parts[0]
@@ -338,32 +319,21 @@ class UnifiedCommandInterface:
                     else:
                         # Assume first positional parameter
                         if (
-                            domain
-                            in ["fundamental_analysis", "fa", "trade_history", "th"]
+                            domain in ["fundamental_analysis", "fa", "trade_history", "th"]
                             and "ticker" not in parameters
                         ):
                             parameters["ticker"] = param
-                        elif (
-                            domain in ["sector_analysis", "sa"]
-                            and "sector" not in parameters
-                        ):
+                        elif domain in ["sector_analysis", "sa"] and "sector" not in parameters:
                             parameters["sector"] = param
-                        elif (
-                            domain in ["industry_analysis", "ia"]
-                            and "industry" not in parameters
-                        ):
+                        elif domain in ["industry_analysis", "ia"] and "industry" not in parameters:
                             parameters["industry"] = param
-                        elif (
-                            domain in ["macro_analysis", "ma"]
-                            and "region" not in parameters
-                        ):
+                        elif domain in ["macro_analysis", "ma"] and "region" not in parameters:
                             parameters["region"] = param
 
             # Execute based on phase
             if phase == "workflow":
                 return self.execute_full_workflow(domain, parameters, mode)
-            else:
-                return self.execute_single_phase(domain, phase, parameters, mode)
+            return self.execute_single_phase(domain, phase, parameters, mode)
 
         except Exception as e:
             return {"error": f"Failed to parse command: {str(e)}"}
@@ -386,21 +356,15 @@ Examples:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument(
-        "command", nargs="?", help="Command string (domain:phase parameters)"
-    )
+    parser.add_argument("command", nargs="?", help="Command string (domain:phase parameters)")
     parser.add_argument(
         "--mode",
         choices=["direct", "sub_agent"],
         default="direct",
         help="Execution mode",
     )
-    parser.add_argument(
-        "--list", action="store_true", help="List all available commands"
-    )
-    parser.add_argument(
-        "--info", metavar="DOMAIN", help="Get information about a domain"
-    )
+    parser.add_argument("--list", action="store_true", help="List all available commands")
+    parser.add_argument("--info", metavar="DOMAIN", help="Get information about a domain")
     parser.add_argument("--workflow-id", help="Custom workflow identifier")
 
     args = parser.parse_args()

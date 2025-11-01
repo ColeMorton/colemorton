@@ -630,7 +630,7 @@ curl -w "@curl-format.txt" -o /dev/null -s https://zixly.colemorton.com
 
 ```bash
 # From your project root
-cd /Users/colemorton/Projects/sensylate
+cd /Users/colemorton/Projects/colemorton
 
 # Check what files changed
 git status

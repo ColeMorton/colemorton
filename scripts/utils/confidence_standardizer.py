@@ -11,7 +11,7 @@ Handles conversion from various formats:
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 
 class ConfidenceStandardizer:
@@ -21,7 +21,7 @@ class ConfidenceStandardizer:
         self.conversion_count = 0
         self.files_processed = 0
 
-    def normalize_confidence_value(self, value: Union[str, float, int]) -> str:
+    def normalize_confidence_value(self, value: str | float | int) -> str:
         """Convert various confidence formats to 0.0-1.0 decimal string"""
 
         if isinstance(value, str):
@@ -58,8 +58,7 @@ class ConfidenceStandardizer:
                         normalized = numeric_value / 10.0
                         self.conversion_count += 1
                         return f"{normalized:.2f}"
-                    else:
-                        return f"{numeric_value:.2f}"
+                    return f"{numeric_value:.2f}"
                 except ValueError:
                     return value
 
@@ -69,8 +68,7 @@ class ConfidenceStandardizer:
                 normalized = value / 10.0
                 self.conversion_count += 1
                 return f"{normalized:.2f}"
-            else:
-                return f"{value:.2f}"
+            return f"{value:.2f}"
 
         return str(value)
 
@@ -104,7 +102,7 @@ class ConfidenceStandardizer:
         """Standardize confidence scores in a JSON file"""
 
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 data = json.load(f)
 
             original_count = self.conversion_count
@@ -116,22 +114,17 @@ class ConfidenceStandardizer:
                 with open(file_path, "w") as f:
                     json.dump(standardized_data, f, indent=2)
 
-                print(
-                    f"Standardized {conversions_made} confidence scores in {file_path}"
-                )
+                print(f"Standardized {conversions_made} confidence scores in {file_path}")
                 self.files_processed += 1
                 return True
-            else:
-                print("No confidence scores to standardize in {file_path}")
-                return False
+            print("No confidence scores to standardize in {file_path}")
+            return False
 
-        except Exception as e:
+        except Exception:
             print("Error processing {file_path}: {e}")
             return False
 
-    def standardize_directory(
-        self, directory_path: str, file_pattern: str = "*.json"
-    ) -> Dict[str, Any]:
+    def standardize_directory(self, directory_path: str, file_pattern: str = "*.json") -> dict[str, Any]:
         """Standardize confidence scores in all matching files in a directory"""
 
         directory = Path(directory_path)
@@ -162,7 +155,7 @@ class ConfidenceStandardizer:
 
 def standardize_industry_analysis_files(
     base_directory: str = "./data/outputs/industry_analysis",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Standardize confidence scores across all industry analysis files"""
 
     standardizer = ConfidenceStandardizer()

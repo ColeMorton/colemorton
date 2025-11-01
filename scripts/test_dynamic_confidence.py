@@ -17,6 +17,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+
 # Add the scripts directory to Python path
 script_dir = Path(__file__).parent
 sys.path.insert(0, str(script_dir))
@@ -30,7 +31,7 @@ try:
     from utils.config_manager import ConfigManager
 
     IMPORTS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     print("Import error: {e}")
     IMPORTS_AVAILABLE = False
 
@@ -276,9 +277,7 @@ def run_confidence_tests():
             print("-" * 50)
 
             # Calculate confidence for this scenario
-            result = engine.calculate_confidence(
-                scenario_data["data_points"], scenario_data["context"], "market_data"
-            )
+            result = engine.calculate_confidence(scenario_data["data_points"], scenario_data["context"], "market_data")
 
             results[scenario_name] = result
 
@@ -290,9 +289,7 @@ def run_confidence_tests():
             # Display results
             print("Composite Confidence: {result['composite_confidence']:.3f}")
             print("Confidence Level: {result['confidence_level']}")
-            print(
-                f"Meets Institutional Grade: {result.get('meets_institutional_grade', 'Unknown')}"
-            )
+            print(f"Meets Institutional Grade: {result.get('meets_institutional_grade', 'Unknown')}")
 
             # Quality metrics breakdown
             if "quality_metrics" in result:
@@ -324,9 +321,7 @@ def run_confidence_tests():
         print("=" * 60)
 
         # Sort scenarios by confidence level
-        sorted_results = sorted(
-            results.items(), key=lambda x: x[1]["composite_confidence"], reverse=True
-        )
+        sorted_results = sorted(results.items(), key=lambda x: x[1]["composite_confidence"], reverse=True)
 
         print("\n🏆 Confidence Ranking:")
         for i, (scenario_name, result) in enumerate(sorted_results, 1):
@@ -358,10 +353,8 @@ def run_confidence_tests():
         age_analysis.sort(key=lambda x: x[1])
 
         for scenario_name, avg_age, confidence, freshness in age_analysis:
-            age_str = f"{avg_age:.1f}h" if avg_age < 48 else f"{avg_age/24:.1f}d"
-            print(
-                f"  {scenario_name}: {age_str} → Confidence: {confidence:.3f}, Freshness: {freshness:.3f}"
-            )
+            age_str = f"{avg_age:.1f}h" if avg_age < 48 else f"{avg_age / 24:.1f}d"
+            print(f"  {scenario_name}: {age_str} → Confidence: {confidence:.3f}, Freshness: {freshness:.3f}")
 
         # Source reliability impact
         print("\n🔍 Source Reliability Impact:")
@@ -375,14 +368,12 @@ def run_confidence_tests():
         reliability_analysis.sort(key=lambda x: x[1], reverse=True)
 
         for scenario_name, reliability, confidence in reliability_analysis:
-            print(
-                f"  {scenario_name}: Reliability {reliability:.3f} → Confidence {confidence:.3f}"
-            )
+            print(f"  {scenario_name}: Reliability {reliability:.3f} → Confidence {confidence:.3f}")
 
         print("\n✅ All Dynamic Confidence Engine tests completed successfully!")
         return True
 
-    except Exception as e:
+    except Exception:
         print("❌ Confidence engine tests failed: {e}")
         import traceback
 
@@ -456,14 +447,12 @@ def demonstrate_decay_functions():
             else:
                 status = "❌ Insufficient"
 
-            age_str = f"{age_hours}h" if age_hours < 48 else f"{age_hours//24}d"
+            age_str = f"{age_hours}h" if age_hours < 48 else f"{age_hours // 24}d"
             print("{age_str:<10} {freshness:<10.3f} {confidence:<10.3f} {status}")
 
         # Test different data types
         print("\n📊 Decay Comparison Across Data Types:")
-        print(
-            f"{'Data Type':<20} {'Half-Life':<12} {'1d Decay':<10} {'1w Decay':<10} {'1m Decay'}"
-        )
+        print(f"{'Data Type':<20} {'Half-Life':<12} {'1d Decay':<10} {'1w Decay':<10} {'1m Decay'}")
         print("-" * 65)
 
         data_types = [
@@ -483,13 +472,11 @@ def demonstrate_decay_functions():
                 decay_1w = engine._calculate_freshness_score(168, data_type)
                 decay_1m = engine._calculate_freshness_score(720, data_type)
 
-                print(
-                    f"{data_type:<20} {half_life:<12} {decay_1d:<10.3f} {decay_1w:<10.3f} {decay_1m:<10.3f}"
-                )
+                print(f"{data_type:<20} {half_life:<12} {decay_1d:<10.3f} {decay_1w:<10.3f} {decay_1m:<10.3f}")
 
         print("\n✅ Confidence decay demonstration completed!")
 
-    except Exception as e:
+    except Exception:
         print("❌ Decay demonstration failed: {e}")
 
 

@@ -1,4 +1,4 @@
-# Pre-commit configuration for Sensylate multi-component system
+# Pre-commit configuration for Colemorton multi-component system
 # Enforces code quality for Python data processing and TypeScript frontend
 
 repos:

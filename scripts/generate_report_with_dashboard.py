@@ -16,7 +16,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from scripts.dashboard_generator import main as generate_dashboard
 from scripts.report_generation import main as generate_report
@@ -27,7 +27,7 @@ from scripts.utils.logging_setup import setup_logging
 class IntegratedReportGenerator:
     """Integrated report and dashboard generation."""
 
-    def __init__(self, report_config: Dict[str, Any], dashboard_config: Dict[str, Any]):
+    def __init__(self, report_config: dict[str, Any], dashboard_config: dict[str, Any]):
         """
         Initialize integrated generator.
 
@@ -39,9 +39,7 @@ class IntegratedReportGenerator:
         self.dashboard_config = dashboard_config
         self.logger = logging.getLogger(__name__)
 
-    def generate_integrated_report(
-        self, input_file: Path, output_dir: Optional[Path] = None
-    ) -> Dict[str, List[Path]]:
+    def generate_integrated_report(self, input_file: Path, output_dir: Path | None = None) -> dict[str, list[Path]]:
         """
         Generate report with integrated dashboard.
 
@@ -68,9 +66,7 @@ class IntegratedReportGenerator:
         historical_files = self._find_historical_performance_files()
 
         if not historical_files:
-            self.logger.warning(
-                "No historical performance files found for dashboard generation"
-            )
+            self.logger.warning("No historical performance files found for dashboard generation")
             return generated_files
 
         # Step 3: Generate dashboards for available historical data
@@ -81,16 +77,14 @@ class IntegratedReportGenerator:
                     self.dashboard_config, hist_file, mode="both", output_dir=output_dir
                 )
                 generated_files["dashboards"].extend(dashboard_files)
-                self.logger.info(
-                    f"Dashboards generated from {hist_file}: {len(dashboard_files)} files"
-                )
+                self.logger.info(f"Dashboards generated from {hist_file}: {len(dashboard_files)} files")
             except Exception as e:
                 self.logger.warning(f"Dashboard generation failed for {hist_file}: {e}")
                 # Continue with other files
 
         return generated_files
 
-    def _find_historical_performance_files(self) -> List[Path]:
+    def _find_historical_performance_files(self) -> list[Path]:
         """Find available historical performance markdown files."""
         hist_dir = Path("data/outputs/trade_history")
 
@@ -111,11 +105,11 @@ class IntegratedReportGenerator:
 
 
 def main(
-    report_config: Dict[str, Any],
-    dashboard_config: Dict[str, Any],
+    report_config: dict[str, Any],
+    dashboard_config: dict[str, Any],
     input_file: Path,
-    output_dir: Optional[Path] = None,
-) -> Dict[str, List[Path]]:
+    output_dir: Path | None = None,
+) -> dict[str, list[Path]]:
     """
     Main execution function.
 
@@ -156,12 +150,8 @@ if __name__ == "__main__":
         default="config/pipelines/dashboard_generation.yaml",
         help="Path to dashboard generation YAML configuration file",
     )
-    parser.add_argument(
-        "--input", required=True, help="Input data file for report generation"
-    )
-    parser.add_argument(
-        "--output-dir", help="Output directory override (default from configs)"
-    )
+    parser.add_argument("--input", required=True, help="Input data file for report generation")
+    parser.add_argument("--output-dir", help="Output directory override (default from configs)")
     parser.add_argument(
         "--env",
         choices=["dev", "staging", "prod"],
@@ -174,21 +164,15 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument(
-        "--quiet", action="store_true", help="Suppress non-essential output"
-    )
+    parser.add_argument("--quiet", action="store_true", help="Suppress non-essential output")
 
     args = parser.parse_args()
 
     try:
         # Load configurations
         config_loader = ConfigLoader()
-        report_config = config_loader.load_with_environment(
-            args.report_config, args.env
-        )
-        dashboard_config = config_loader.load_with_environment(
-            args.dashboard_config, args.env
-        )
+        report_config = config_loader.load_with_environment(args.report_config, args.env)
+        dashboard_config = config_loader.load_with_environment(args.dashboard_config, args.env)
 
         # Setup logging
         if args.quiet:
@@ -210,9 +194,7 @@ if __name__ == "__main__":
         total_dashboards = len(generated_files["dashboards"])
 
         if not args.quiet:
-            print(
-                f"✅ Successfully generated {total_reports} report(s) and {total_dashboards} dashboard(s)"
-            )
+            print(f"✅ Successfully generated {total_reports} report(s) and {total_dashboards} dashboard(s)")
 
     except Exception as e:
         logging.error(f"Integrated report generation failed: {e}")
