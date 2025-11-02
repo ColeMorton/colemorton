@@ -80,7 +80,7 @@ scripts/                           # Python Data Processing Engine
 
 1. **Clone and Install Dependencies**
    ```bash
-   git clone https://github.com/ColeMorton/colemorton.git
+   git clone https://github.com/ColeMorton/colemorton.com.git
    cd colemorton
 
    # Frontend setup

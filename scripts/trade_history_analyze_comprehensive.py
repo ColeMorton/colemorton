@@ -639,7 +639,7 @@ class TradeHistoryAnalyzer:
 def main():
     """Main execution function"""
     # Use the most recent discovery file
-    discovery_file = "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs/trade_history/discovery/live_signals_20250804.json"
+    discovery_file = "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/discovery/live_signals_20250804.json"
 
     # Initialize analyzer
     analyzer = TradeHistoryAnalyzer(discovery_file)
@@ -649,7 +649,7 @@ def main():
 
     # Save results
     output_dir = Path(
-        "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs/trade_history/analysis"
+        "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/analysis"
     )
     output_dir.mkdir(parents=True, exist_ok=True)
 

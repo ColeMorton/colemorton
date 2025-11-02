@@ -9,8 +9,8 @@ import sys
 
 
 # Set environment variables
-os.environ["DATA_OUTPUTS_PATH"] = "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs"
-os.environ["TEMPLATES_PATH"] = "/Users/colemorton/Projects/colemorton-command-system-enhancements/templates"
+os.environ["DATA_OUTPUTS_PATH"] = "/Users/colemorton/Projects/colemorton.com/data/outputs"
+os.environ["TEMPLATES_PATH"] = "/Users/colemorton/Projects/colemorton.com/templates"
 
 # Test contract discovery
 try:

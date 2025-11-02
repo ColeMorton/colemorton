@@ -421,12 +421,8 @@ class AnalysisCrossValidator:
 
 def main():
     # Set up paths
-    analysis_dir = (
-        "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs/fundamental_analysis/analysis"
-    )
-    output_dir = (
-        "/Users/colemorton/Projects/colemorton-command-system-enhancements/data/outputs/fundamental_analysis/validation"
-    )
+    analysis_dir = "/Users/colemorton/Projects/colemorton.com/data/outputs/fundamental_analysis/analysis"
+    output_dir = "/Users/colemorton/Projects/colemorton.com/data/outputs/fundamental_analysis/validation"
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)

@@ -23,7 +23,7 @@ Before you begin, ensure you have:
 
 ```bash
 # Clone the repository
-git clone https://github.com/colemorton/platform.git
+git clone https://github.com/ColeMorton/colemorton.com.git
 cd colemorton
 
 # Install Python dependencies
