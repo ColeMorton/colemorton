@@ -75,10 +75,10 @@ class IndustrySynthesis:
             try:
                 with open(self.discovery_file) as f:
                     data = json.load(f)
-                print("✅ Loaded discovery data from: {self.discovery_file}")
+                print(f"✅ Loaded discovery data from: {self.discovery_file}")
                 return data
-            except Exception:
-                print("⚠️  Failed to load discovery data: {e}")
+            except Exception as e:
+                print(f"⚠️  Failed to load discovery data: {e}")
         return None
 
     def _load_analysis_data(self) -> dict[str, Any] | None:
@@ -87,10 +87,10 @@ class IndustrySynthesis:
             try:
                 with open(self.analysis_file) as f:
                     data = json.load(f)
-                print("✅ Loaded analysis data from: {self.analysis_file}")
+                print(f"✅ Loaded analysis data from: {self.analysis_file}")
                 return data
-            except Exception:
-                print("⚠️  Failed to load analysis data: {e}")
+            except Exception as e:
+                print(f"⚠️  Failed to load analysis data: {e}")
         return None
 
     def _synthesist_delegate_placeholder(self, requirements: dict[str, Any]) -> str:
@@ -260,8 +260,8 @@ class IndustrySynthesis:
             print("✅ Generated synthesis document using synthesist sub-agent delegation")
             return document
 
-        except Exception:
-            print("⚠️  Synthesist delegation failed: {e}")
+        except Exception as e:
+            print(f"⚠️  Synthesist delegation failed: {e}")
             print("⚠️  Falling back to enhanced document generation")
             return self._generate_enhanced_fallback_document(synthesist_requirements)
 
@@ -657,7 +657,7 @@ tags:
 ## 🎯 Executive Summary & Investment Thesis
 
 ### Core Thesis
-{investment_thesis.get("core_thesis", f"The {requirements["industry_name"]} industry presents a compelling investment opportunity driven by structural trends, competitive advantages, and favorable economic positioning.")}
+{investment_thesis.get("core_thesis", f"The {requirements['industry_name']} industry presents a compelling investment opportunity driven by structural trends, competitive advantages, and favorable economic positioning.")}
 
 ### Industry Investment Recommendation Summary
 {requirements["industry_name"]} industry offers superior risk-adjusted returns through {investment_thesis.get("key_catalysts", [{"catalyst": "technological advancement"}])[0].get("catalyst", "technological advancement")}, {(investment_thesis.get("key_catalysts", [{"catalyst": "market expansion"}, {"catalyst": "market expansion"}])[1] if len(investment_thesis.get("key_catalysts", [])) > 1 else {"catalyst": "market expansion"}).get("catalyst", "market expansion")}, and {(investment_thesis.get("key_catalysts", [{"catalyst": "competitive positioning"}, {"catalyst": "competitive positioning"}, {"catalyst": "competitive positioning"}])[2] if len(investment_thesis.get("key_catalysts", [])) > 2 else {"catalyst": "competitive positioning"}).get("catalyst", "competitive positioning")} creating multi-year growth visibility. {analysis_data.get("phase_1_industry_structure_assessment", {}).get("competitive_landscape_analysis", {}).get("market_structure", "Industry structure")} establishes {analysis_data.get("phase_1_industry_structure_assessment", {}).get("competitive_landscape_analysis", {}).get("concentration_assessment", {}).get("level", "competitive dynamics")} with pricing power and defensive network effect moats. Economic context supports {investment_thesis.get("economic_context", {}).get("economic_cycle_position", "favorable trends")} with {current_trends.get("technology_trends", {}).get("description", "innovation catalyst")} providing monetization catalyst, while international expansion creates opportunities in emerging markets. Target allocation {investment_thesis.get("recommendation", {}).get("target_allocation", {}).get("moderate", "15-20%")} for moderate positioning, focusing on industry leaders and diversified ecosystem exposure.
