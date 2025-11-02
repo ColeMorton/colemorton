@@ -6,7 +6,7 @@ pathlib2>=2.3.7,<3.0.0
 
 # Data processing
 scikit-learn>=1.3.0,<2.0.0
-pyarrow>=12.0.0,<18.0.0  # For parquet support
+pyarrow>=12.0.0,<23.0.0  # For parquet support
 
 # Database connectivity
 sqlalchemy>=2.0.0,<3.0.0
