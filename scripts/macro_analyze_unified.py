@@ -104,10 +104,10 @@ class UnifiedMacroAnalyzer:
             try:
                 self.real_time_discovery = MacroEconomicDiscovery(self.region)
                 self.real_time_available = True
-                print("✓ Real-time data validation enabled for {self.region}")
-            except Exception:
+                print(f"✓ Real-time data validation enabled for {self.region}")
+            except Exception as e:
                 self.real_time_available = False
-                print("WARNING: Real-time data initialization failed: {e}")
+                print(f"WARNING: Real-time data initialization failed: {e}")
         else:
             self.real_time_available = False
 
@@ -1719,8 +1719,8 @@ class UnifiedMacroAnalyzer:
             critical_age_threshold = quality_params.get("market_data_critical_age_hours", 72.0)
             min_freshness_score = config.get("api_performance", {}).get("min_data_freshness", 0.92)
 
-        except Exception:
-            print("⚠️  Failed to load freshness config: {e}")
+        except Exception as e:
+            print(f"⚠️  Failed to load freshness config: {e}")
             # Use hardcoded fallbacks for fail-safe operation
             real_time_threshold_hours = 24
             gdp_threshold_days = 90
@@ -1757,8 +1757,8 @@ class UnifiedMacroAnalyzer:
                     freshness_scores.append(0.5)
                     stale_indicators.append(f"Discovery execution ({discovery_age_hours:.1f}h old)")
 
-        except Exception:
-            print("⚠️  Failed to parse discovery timestamp: {e}")
+        except Exception as e:
+            print(f"⚠️  Failed to parse discovery timestamp: {e}")
             freshness_scores.append(0.7)  # Penalty for missing/invalid timestamp
             stale_indicators.append("Discovery timestamp invalid/missing")
 

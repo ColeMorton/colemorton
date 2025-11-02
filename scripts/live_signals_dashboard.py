@@ -507,11 +507,11 @@ def main():
         config_path = dashboard.generate_frontend_config(data, output_dir)
 
         print("🎉 Dashboard generation complete!")
-        print("📸 Exported images: {[f.name for f in exported_files]}")
-        print("⚙️  Frontend config: {config_path.name}")
+        print(f"📸 Exported images: {[f.name for f in exported_files]}")
+        print(f"⚙️  Frontend config: {config_path.name}")
 
-    except Exception:
-        print("❌ Dashboard generation failed: {e}")
+    except Exception as e:
+        print(f"❌ Dashboard generation failed: {e}")
         raise
 
 

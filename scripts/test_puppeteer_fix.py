@@ -136,13 +136,13 @@ def main():
                 failed += 1
             else:  # result is None (skipped)
                 skipped += 1
-        except Exception:
-            print("❌ Test {test.__name__} failed with exception: {e}")
+        except Exception as e:
+            print(f"❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
 
     print("=" * 50)
-    print("📊 Test Results: {passed} passed, {failed} failed, {skipped} skipped")
+    print(f"📊 Test Results: {passed} passed, {failed} failed, {skipped} skipped")
 
     if failed == 0:
         print("🎉 Puppeteer ES module/CommonJS fix is working correctly!")

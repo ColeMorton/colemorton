@@ -815,24 +815,24 @@ if __name__ == "__main__":
         for region in ["US", "EUROPE", "ASIA"]:
             analysis = service.analyze_volatility_regime(region)
 
-            print("\n{region} Volatility Analysis:")
-            print("  Current Level: {analysis['current_metrics']['level']:.2f}")
+            print(f"\n{region} Volatility Analysis:")
+            print(f"  Current Level: {analysis['current_metrics']['level']:.2f}")
             print(
                 f"  Regime: {analysis['current_metrics']['regime']} ({analysis['current_metrics']['regime_probability']:.1%} confidence)"
             )
             print(f"  1Y Percentile: {analysis['current_metrics']['percentile_rankings']['1y']:.0f}th")
             print(f"  Mean Reversion Target: {analysis['mean_reversion']['long_term_mean']:.2f}")
-            print("  Analysis Confidence: {analysis['confidence_score']:.1%}")
+            print(f"  Analysis Confidence: {analysis['confidence_score']:.1%}")
 
             if analysis.get("volatility_alerts"):
-                print("  Alerts: {len(analysis['volatility_alerts'])} active")
+                print(f"  Alerts: {len(analysis['volatility_alerts'])} active")
                 for alert in analysis["volatility_alerts"]:
-                    print("    - {alert.alert_type}: {alert.message}")
+                    print(f"    - {alert.alert_type}: {alert.message}")
 
         print("\n✅ Volatility analysis service test completed successfully!")
 
-    except Exception:
-        print("❌ Volatility analysis test failed: {e}")
+    except Exception as e:
+        print(f"❌ Volatility analysis test failed: {e}")
         import traceback
 
         traceback.print_exc()

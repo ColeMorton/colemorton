@@ -41,10 +41,10 @@ class ComprehensivePerformanceAnalyzer:
             self.df["PnL"] = pd.to_numeric(self.df["PnL"], errors="coerce")
             self.df["Duration_Days"] = pd.to_numeric(self.df["Duration_Days"], errors="coerce")
 
-            print("Loaded {len(self.df)} trades from {self.csv_file_path}")
+            print(f"Loaded {len(self.df)} trades from {self.csv_file_path}")
 
-        except Exception:
-            print("Error loading data: {e}")
+        except Exception as e:
+            print(f"Error loading data: {e}")
             sys.exit(1)
 
     def calculate_trade_counts(self) -> dict[str, int]:

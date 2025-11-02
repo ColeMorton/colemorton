@@ -20,9 +20,9 @@ try:
     discovery = DataContractDiscovery()
     result = discovery.discover_all_contracts()
 
-    print("✅ Contract Discovery: {len(result.contracts)} contracts found")
-    print("   Categories: {', '.join(result.categories)}")
-    print("   Success rate: {result.successful_discoveries}/{result.total_files}")
+    print(f"✅ Contract Discovery: {len(result.contracts)} contracts found")
+    print(f"   Categories: {', '.join(result.categories)}")
+    print(f"   Success rate: {result.successful_discoveries}/{result.total_files}")
 
     # Show contract details
     for contract in result.contracts:
@@ -30,8 +30,8 @@ try:
 
     print()
 
-except Exception:
-    print("❌ Contract Discovery failed: {e}")
+except Exception as e:
+    print(f"❌ Contract Discovery failed: {e}")
     sys.exit(1)
 
 # Test compliance monitoring (simplified version)
@@ -48,8 +48,8 @@ try:
 
     compliance_score = (healthy_count / total_count) * 10.0 if total_count > 0 else 0.0
 
-    print("✅ Contract Compliance: {healthy_count}/{total_count} healthy contracts")
-    print("   Overall score: {compliance_score:.1f}/10.0")
+    print(f"✅ Contract Compliance: {healthy_count}/{total_count} healthy contracts")
+    print(f"   Overall score: {compliance_score:.1f}/10.0")
 
     if compliance_score >= 8.0:
         print("🎉 System is in excellent health!")
@@ -60,8 +60,8 @@ try:
 
     print()
 
-except Exception:
-    print("❌ Compliance check failed: {e}")
+except Exception as e:
+    print(f"❌ Compliance check failed: {e}")
 
 # Test data verification
 try:
@@ -89,19 +89,19 @@ try:
             try:
                 df["X_Status"].astype("int64")
                 print("✅ No int64 overflow issues detected")
-            except Exception:
-                print("❌ Int64 overflow still present: {e}")
+            except Exception as e:
+                print(f"❌ Int64 overflow still present: {e}")
 
-        print("✅ Trade history data: {len(df)} rows, {len(df.columns)} columns")
+        print(f"✅ Trade history data: {len(df)} rows, {len(df.columns)} columns")
 
     print()
 
-except Exception:
-    print("❌ Data quality check failed: {e}")
+except Exception as e:
+    print(f"❌ Data quality check failed: {e}")
 
 print("🏆 Contract-First Data Pipeline System Status:")
-print("   📊 {len(result.contracts)} contracts discovered and validated")
-print("   🗂️  {len(result.categories)} data categories supported")
+print(f"   📊 {len(result.contracts)} contracts discovered and validated")
+print(f"   🗂️  {len(result.categories)} data categories supported")
 print("   ✅ NumPy int64 overflow issue resolved")
 print(f"   🎯 Contract fulfillment: {healthy_count}/{total_count} ({(healthy_count / total_count) * 100:.1f}%)")
 
@@ -109,5 +109,5 @@ if healthy_count == total_count:
     print("\n🎉 All systems operational! Contract-first pipeline working perfectly.")
     sys.exit(0)
 else:
-    print("\n⚠️  {total_count - healthy_count} contracts need attention.")
+    print(f"\n⚠️  {total_count - healthy_count} contracts need attention.")
     sys.exit(1)

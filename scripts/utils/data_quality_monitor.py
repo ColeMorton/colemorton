@@ -41,8 +41,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     from scripts.utils.dasv_cross_validator import DASVCrossValidator
     from scripts.utils.fed_rate_validation import FedRateValidator
-except ImportError:
-    print("Warning: Could not import validation components: {e}")
+except ImportError as e:
+    print(f"Warning: Could not import validation components: {e}")
 
 
 @dataclass
@@ -143,8 +143,8 @@ class DataQualityMonitor:
                 with open(config_file) as f:
                     user_config = json.load(f)
                 default_config.update(user_config)
-            except Exception:
-                print("Warning: Could not load config file {config_file}: {e}")
+            except Exception as e:
+                print(f"Warning: Could not load config file {config_file}: {e}")
 
         return default_config
 

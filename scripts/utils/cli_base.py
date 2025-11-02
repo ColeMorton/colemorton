@@ -95,9 +95,9 @@ class BaseFinancialCLI(ABC):
         try:
             ensure_env_loaded()
             self._validate_environment_variables()
-        except Exception:
+        except Exception as e:
             # Don't fail CLI initialization, but log the issue
-            print("Warning: Failed to load environment variables: {e}")
+            print(f"Warning: Failed to load environment variables: {e}")
 
     def _validate_environment_variables(self):
         """Validate that critical environment variables are available"""
@@ -404,8 +404,8 @@ class FinancialDataCLI:
 
                 self.console.print(table)
 
-            except Exception:
-                self.console.print("[red]Error:[/red] {str(e)}")
+            except Exception as e:
+                self.console.print(f"[red]Error:[/red] {str(e)}")
                 raise typer.Exit(1)
 
         @self.app.command("validate-config")
@@ -438,8 +438,8 @@ class FinancialDataCLI:
                         )
                     )
 
-            except Exception:
-                self.console.print("[red]Error:[/red] {str(e)}")
+            except Exception as e:
+                self.console.print(f"[red]Error:[/red] {str(e)}")
                 raise typer.Exit(1)
 
     def run(self) -> None:

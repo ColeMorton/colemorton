@@ -33,8 +33,8 @@ class AnalysisCrossValidator:
         try:
             with open(filepath) as f:
                 return json.load(f)
-        except Exception:
-            print("Error loading {filepath}: {e}")
+        except Exception as e:
+            print(f"Error loading {filepath}: {e}")
             return {}
 
     def extract_ticker_from_filename(self, filepath: Path) -> str:

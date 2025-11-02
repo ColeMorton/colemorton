@@ -95,12 +95,12 @@ class InvestmentSynthesizer:
             if os.path.exists(analysis_file_path):
                 with open(analysis_file_path) as f:
                     self.analysis_data = json.load(f)
-                print("📂 Loaded analysis data from: {analysis_file_path}")
+                print(f"📂 Loaded analysis data from: {analysis_file_path}")
                 return True
-            print("❌ Analysis file not found: {analysis_file_path}")
+            print(f"❌ Analysis file not found: {analysis_file_path}")
             return False
-        except Exception:
-            print("❌ Error loading analysis data: {str(e)}")
+        except Exception as e:
+            print(f"❌ Error loading analysis data: {str(e)}")
             return False
 
     def load_discovery_data(self) -> bool:
@@ -117,8 +117,8 @@ class InvestmentSynthesizer:
                 return True
             print("⚠️ Discovery data not found, proceeding with analysis data only")
             return False
-        except Exception:
-            print("⚠️ Could not load discovery data: {str(e)}")
+        except Exception as e:
+            print(f"⚠️ Could not load discovery data: {str(e)}")
             return False
 
     def determine_investment_category(self) -> str:

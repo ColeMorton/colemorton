@@ -708,8 +708,8 @@ class MultiFormatExporter:
 
                 exported_files[format_type] = output_path
 
-            except Exception:
-                print("Warning: Failed to export {format_type}: {e}")
+            except Exception as e:
+                print(f"Warning: Failed to export {format_type}: {e}")
 
         return exported_files
 

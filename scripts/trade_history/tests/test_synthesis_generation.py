@@ -529,15 +529,15 @@ def validate_synthesis_schema():
         else:
             print("❌ Content validation structure incomplete")
 
-        print("Total top-level properties: {len(schema_props)}")
+        print(f"Total top-level properties: {len(schema_props)}")
         print("✅ Schema validation complete")
 
     except FileNotFoundError:
         print("❌ Schema file not found")
-    except json.JSONDecodeError:
-        print("❌ Invalid JSON in schema: {e}")
-    except Exception:
-        print("❌ Schema validation error: {e}")
+    except json.JSONDecodeError as e:
+        print(f"❌ Invalid JSON in schema: {e}")
+    except Exception as e:
+        print(f"❌ Schema validation error: {e}")
 
 
 def main():

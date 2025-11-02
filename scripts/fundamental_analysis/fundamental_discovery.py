@@ -30,8 +30,8 @@ try:
     from services.yahoo_finance import create_yahoo_finance_service
 
     CLI_SERVICES_AVAILABLE = True
-except ImportError:
-    print("⚠️  CLI services not available: {e}")
+except ImportError as e:
+    print(f"⚠️  CLI services not available: {e}")
     CLI_SERVICES_AVAILABLE = False
 
 # Import sector cross-reference for sector analysis integration
@@ -87,9 +87,9 @@ class FundamentalDiscovery:
                     "sec_edgar": create_sec_edgar_service(env),
                     "imf": create_imf_service(env),
                 }
-                print("✅ Initialized {len(self.cli_services)} CLI services")
-            except Exception:
-                print("⚠️  Failed to initialize some CLI services: {e}")
+                print(f"✅ Initialized {len(self.cli_services)} CLI services")
+            except Exception as e:
+                print(f"⚠️  Failed to initialize some CLI services: {e}")
                 self.cli_services = {}
 
         # Track service health
@@ -172,8 +172,8 @@ class FundamentalDiscovery:
 
                     print(f"✅ Retrieved FMP cash flow data for {self.ticker}: FCF ${free_cash_flow:,.0f}")
 
-        except Exception:
-            print("⚠️  FMP cash flow data unavailable for {self.ticker}: {e}")
+        except Exception as e:
+            print(f"⚠️  FMP cash flow data unavailable for {self.ticker}: {e}")
             # Use Yahoo Finance as fallback
             yahoo_fcf = self.safe_get(self.fundamentals_data, "freeCashflow", 0)
             if yahoo_fcf > 0:
@@ -388,8 +388,8 @@ class FundamentalDiscovery:
                 }
             raise Exception("Financial statements not available")
 
-        except Exception:
-            print("⚠️ Limited financial statements data for {self.ticker}: {str(e)}")
+        except Exception as e:
+            print(f"⚠️ Limited financial statements data for {self.ticker}: {str(e)}")
             return {
                 "income_statement": {},
                 "balance_sheet": {},
@@ -412,8 +412,8 @@ class FundamentalDiscovery:
                 "comparative_metrics": {},
                 "confidence": 0.7,
             }
-        except Exception:
-            print("⚠️ Limited peer data available for {self.ticker}: {str(e)}")
+        except Exception as e:
+            print(f"⚠️ Limited peer data available for {self.ticker}: {str(e)}")
             return {
                 "peer_selection_rationale": "Limited peer data available",
                 "peer_companies": [],
@@ -807,8 +807,8 @@ class FundamentalDiscovery:
                             "price_change_24h": 1968,
                             "market_sentiment": "slightly_bullish",
                         }
-                except Exception:
-                    print("⚠️  CoinGecko service error: {e}")
+                except Exception as e:
+                    print(f"⚠️  CoinGecko service error: {e}")
                     coingecko_data = {
                         "bitcoin_price": 119142,
                         "price_change_24h": 1968,

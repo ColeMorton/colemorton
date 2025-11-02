@@ -67,9 +67,9 @@ class PlotlyChartGenerator(AbstractChartGenerator):
         except ImportError:
             # Kaleido not available - will fall back to browser-based rendering
             print("Warning: Kaleido not available, using browser-based rendering")
-        except Exception:
+        except Exception as e:
             # Kaleido configuration failed - continue with defaults
-            print("Warning: Kaleido configuration failed: {e}")
+            print(f"Warning: Kaleido configuration failed: {e}")
 
     def configure_export_settings(
         self,
@@ -132,8 +132,8 @@ class PlotlyChartGenerator(AbstractChartGenerator):
                 # Static image export with high-DPI
                 fig.write_image(filepath, **export_config)
 
-        except Exception:
-            print("Warning: High-quality export failed, using standard settings: {e}")
+        except Exception as e:
+            print(f"Warning: High-quality export failed, using standard settings: {e}")
             # Fallback to standard export
             fig.write_image(filepath, format=format)
 

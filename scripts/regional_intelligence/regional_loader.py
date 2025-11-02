@@ -73,9 +73,9 @@ class RegionalIntelligenceLoader:
                 with open(config_file, encoding="utf-8") as f:
                     config = yaml.safe_load(f)
                     self.loaded_configs[region] = config
-                    print("Loaded regional intelligence for {region}")
-            except Exception:
-                print("Error loading config for {region}: {e}")
+                    print(f"Loaded regional intelligence for {region}")
+            except Exception as e:
+                print(f"Error loading config for {region}: {e}")
 
     def get_region_config(self, region: str) -> dict[str, Any]:
         """Get complete configuration for a region"""

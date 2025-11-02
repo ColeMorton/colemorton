@@ -72,12 +72,12 @@ class FundamentalAnalyzer:
             if os.path.exists(discovery_file_path):
                 with open(discovery_file_path) as f:
                     self.discovery_data = json.load(f)
-                print("📂 Loaded discovery data from: {discovery_file_path}")
+                print(f"📂 Loaded discovery data from: {discovery_file_path}")
                 return True
-            print("❌ Discovery file not found: {discovery_file_path}")
+            print(f"❌ Discovery file not found: {discovery_file_path}")
             return False
-        except Exception:
-            print("❌ Error loading discovery data: {str(e)}")
+        except Exception as e:
+            print(f"❌ Error loading discovery data: {str(e)}")
             return False
 
     def get_industry_benchmarks(self) -> dict[str, float]:

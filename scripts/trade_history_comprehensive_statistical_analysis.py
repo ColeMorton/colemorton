@@ -131,8 +131,8 @@ class LiveSignalsStatisticalAnalyzer:
             print("✅ Data validation completed successfully")
             return True
 
-        except Exception:
-            print("❌ CRITICAL DATA VALIDATION FAILURE: {e}")
+        except Exception as e:
+            print(f"❌ CRITICAL DATA VALIDATION FAILURE: {e}")
             raise
 
     def analyze_strategy_performance(self) -> dict[str, Any]:
@@ -146,7 +146,7 @@ class LiveSignalsStatisticalAnalyzer:
 
         # Get unique strategies and their trade counts
         strategy_counts = self.df["Strategy_Type"].value_counts()
-        print("\n📊 Strategy Distribution: {dict(strategy_counts)}")
+        print(f"\n📊 Strategy Distribution: {dict(strategy_counts)}")
 
         for strategy in strategy_counts.index:
             strategy_data = self.df[self.df["Strategy_Type"] == strategy].copy()
@@ -840,8 +840,8 @@ def main():
 
         return output_path
 
-    except Exception:
-        print("\n❌ CRITICAL ANALYSIS FAILURE: {e}")
+    except Exception as e:
+        print(f"\n❌ CRITICAL ANALYSIS FAILURE: {e}")
         import traceback
 
         traceback.print_exc()
