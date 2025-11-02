@@ -43,7 +43,7 @@ class ComprehensivePerformanceAnalyzer:
 
             print("Loaded {len(self.df)} trades from {self.csv_file_path}")
 
-        except Exception as e:
+        except Exception:
             print("Error loading data: {e}")
             sys.exit(1)
 

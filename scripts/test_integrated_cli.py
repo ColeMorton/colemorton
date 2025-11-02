@@ -48,7 +48,7 @@ def test_cli_with_real_api():
 
                 time.sleep(0.1)
 
-            except Exception as e:
+            except Exception:
                 print("  ❌ Failed to get {symbol}: {e}")
 
         # Test FMP service
@@ -63,7 +63,7 @@ def test_cli_with_real_api():
             fmp_data = fmp_service.get_stock_quote("CRM")
             print("  ✅ FMP quote retrieved for CRM: {len(fmp_data)} records")
 
-        except Exception as e:
+        except Exception:
             print("  ❌ FMP test failed: {e}")
 
         # Count final files
@@ -86,7 +86,7 @@ def test_cli_with_real_api():
 
         return new_files > 0
 
-    except Exception as e:
+    except Exception:
         print("❌ Test failed: {e}")
         import traceback
 

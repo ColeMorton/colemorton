@@ -39,8 +39,8 @@ try:
     from sector_cross_reference import SectorCrossReference
 
     SECTOR_CROSS_REFERENCE_AVAILABLE = True
-except ImportError:
-    print("⚠️  Sector cross-reference not available: {e}")
+except ImportError as e:
+    print(f"⚠️  Sector cross-reference not available: {e}")
     SECTOR_CROSS_REFERENCE_AVAILABLE = False
 
 
@@ -109,8 +109,8 @@ class FundamentalDiscovery:
             try:
                 self.sector_cross_ref = SectorCrossReference("./data/outputs/sector_analysis")
                 print("✅ Initialized sector cross-reference system")
-            except Exception:
-                print("⚠️  Failed to initialize sector cross-reference: {e}")
+            except Exception as e:
+                print(f"⚠️  Failed to initialize sector cross-reference: {e}")
                 self.sector_cross_ref = None
         else:
             self.sector_cross_ref = None
@@ -778,8 +778,8 @@ class FundamentalDiscovery:
 
                     print(f"✅ Retrieved FRED economic data: Fed Funds {fed_funds_rate}%")
 
-                except Exception:
-                    print("⚠️  FRED service error: {e}")
+                except Exception as e:
+                    print(f"⚠️  FRED service error: {e}")
                     # Use fallback values
                     fred_data = {
                         "federal_funds_rate": 4.33,

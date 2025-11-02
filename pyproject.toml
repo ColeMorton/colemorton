@@ -26,9 +26,6 @@ exclude = [
     "frontend",
 ]
 
-# Focus on scripts directory
-include = ["scripts/**/*.py"]
-
 [tool.ruff.lint]
 # Enable core rule sets
 select = [
