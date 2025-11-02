@@ -76,18 +76,15 @@ vi.mock(".json/search.json", () => ({
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   configurable: true,
-  value: vi.fn().mockImplementation((query) => {
-    const mockMediaQueryList = {
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(), // deprecated
-      removeListener: vi.fn(), // deprecated
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    };
-    return mockMediaQueryList;
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   }),
 });
 
@@ -139,16 +136,16 @@ Object.defineProperty(document, "documentElement", {
 });
 
 // Mock MutationObserver for theme changes and testing library
-global.MutationObserver = vi.fn().mockImplementation((callback) => {
-  const instance = {
-    observe: vi.fn(),
-    disconnect: vi.fn(),
-    takeRecords: vi.fn().mockReturnValue([]),
-  };
-  // Store callback for potential manual triggering
-  instance.callback = callback;
-  return instance;
-});
+global.MutationObserver = class MutationObserver {
+  callback: MutationCallback;
+  observe = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn().mockReturnValue([]);
+
+  constructor(callback: MutationCallback) {
+    this.callback = callback;
+  }
+} as any;
 
 // Global test utilities
 global.mockSearchData = mockSearchData;

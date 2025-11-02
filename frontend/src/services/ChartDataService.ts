@@ -37,13 +37,30 @@ class ChartDataService {
   // CSV parsing utilities
   private parseCSV(csvText: string): StockDataRow[] {
     const lines = csvText.trim().split("\n");
-    const headers = lines[0].split(",");
+
+    if (lines.length === 0) {
+      throw new Error("Empty CSV data");
+    }
+
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+
+    // Fail-fast: validate required columns
+    const requiredColumns = ["date", "open", "high", "low", "close", "volume"];
+    const missingColumns = requiredColumns.filter(
+      (col) => !headers.includes(col),
+    );
+
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `Invalid CSV structure: missing required columns: ${missingColumns.join(", ")}`,
+      );
+    }
 
     return lines.slice(1).map((line) => {
       const values = line.split(",");
       const row: StockDataRow = {} as StockDataRow;
       headers.forEach((header, index) => {
-        row[header.trim()] = values[index]?.trim() || "";
+        row[header] = values[index]?.trim() || "";
       });
       return row;
     });
@@ -233,7 +250,14 @@ class ChartDataService {
       }
 
       const csvText = await response.text();
-      return this.parseCSV(csvText);
+      const data = this.parseCSV(csvText);
+
+      // Fail-fast: validate data is not empty
+      if (data.length === 0) {
+        throw new Error(`No data returned for ${symbol}`);
+      }
+
+      return data;
     } catch (error) {
       // Re-throw AbortError without wrapping to preserve abort handling
       if (error instanceof Error && error.name === "AbortError") {

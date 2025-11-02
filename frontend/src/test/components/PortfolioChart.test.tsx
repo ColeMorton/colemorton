@@ -127,23 +127,6 @@ vi.mock("@/layouts/components/charts/ChartRenderer", () => ({
   default: MockChartRenderer,
 }));
 
-// Mock window.matchMedia
-const mockMatchMedia = vi.fn().mockImplementation((query) => ({
-  matches: false,
-  media: query,
-  onchange: null,
-  addListener: vi.fn(), // deprecated
-  removeListener: vi.fn(), // deprecated
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn(),
-}));
-
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: mockMatchMedia,
-});
-
 describe("PortfolioChart Multi-Stock Component Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();

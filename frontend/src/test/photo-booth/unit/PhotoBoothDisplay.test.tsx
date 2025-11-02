@@ -40,7 +40,7 @@ vi.mock("@/config/photo-booth.json", () => ({
 }));
 
 // Mock dashboard loader BEFORE importing the component
-vi.mock("@/services/dashboardLoader", () => ({
+vi.mock("@/lib/dashboardLoader", () => ({
   DashboardLoader: {
     getAllDashboards: vi.fn(() =>
       Promise.resolve([
@@ -124,8 +124,29 @@ vi.mock("@/shortcodes/ChartDisplay", () => ({
   ),
 }));
 
+// Mock ErrorBoundary component
+vi.mock("@/layouts/components/ErrorBoundary", () => ({
+  default: ({ children, fallback }: any) => {
+    try {
+      return <>{children}</>;
+    } catch {
+      return fallback;
+    }
+  },
+}));
+
+// Mock FundamentalAnalysisDashboard component
+vi.mock(
+  "@/layouts/components/fundamentals/FundamentalAnalysisDashboard",
+  () => ({
+    default: () => (
+      <div data-testid="fundamental-dashboard">Fundamental Dashboard</div>
+    ),
+  }),
+);
+
 import PhotoBoothDisplay from "@/shortcodes/PhotoBoothDisplay";
-import { DashboardLoader } from "@/services/dashboardLoader";
+import { DashboardLoader } from "@/lib/dashboardLoader";
 import {
   setupPhotoBoothMocks,
   mockFetchError,
@@ -145,6 +166,11 @@ describe("PhotoBoothDisplay Component", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+
+    // Clear dark mode class from document
+    if (document.documentElement.classList.contains("dark")) {
+      document.documentElement.classList.remove("dark");
+    }
   });
 
   describe("Component Initialization", () => {
@@ -389,24 +415,32 @@ describe("PhotoBoothDisplay Component", () => {
         { timeout: 1000 },
       );
 
-      await waitFor(async () => {
+      // Wait for export button to be enabled
+      await waitFor(() => {
         const exportButton = screen.getByRole("button", {
           name: /export dashboard/i,
         });
-        fireEvent.click(exportButton);
+        expect(exportButton).not.toBeDisabled();
+      });
 
-        expect(global.fetch).toHaveBeenCalledWith("/api/export-dashboard", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            dashboard_id: "portfolio_history_portrait",
-            mode: "light",
-            aspect_ratio: "3:4",
-            format: "png",
-            dpi: 300,
-            scale_factor: 3,
-          }),
-        });
+      // Click export button
+      const exportButton = screen.getByRole("button", {
+        name: /export dashboard/i,
+      });
+      fireEvent.click(exportButton);
+
+      // Verify fetch was called with correct parameters
+      expect(global.fetch).toHaveBeenCalledWith("/api/export-dashboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dashboard_id: "portfolio_history_portrait",
+          mode: "light",
+          aspect_ratio: "3:4",
+          format: "png",
+          dpi: 300,
+          scale_factor: 3,
+        }),
       });
     });
 
@@ -428,17 +462,23 @@ describe("PhotoBoothDisplay Component", () => {
         { timeout: 1000 },
       );
 
-      await waitFor(async () => {
+      // Wait for export button to be enabled
+      await waitFor(() => {
         const exportButton = screen.getByRole("button", {
           name: /export dashboard/i,
         });
-        fireEvent.click(exportButton);
+        expect(exportButton).not.toBeDisabled();
+      });
 
-        await waitFor(() => {
-          expect(
-            screen.getByText(/successfully exported/i),
-          ).toBeInTheDocument();
-        });
+      // Click export button
+      const exportButton = screen.getByRole("button", {
+        name: /export dashboard/i,
+      });
+      fireEvent.click(exportButton);
+
+      // Wait for success message
+      await waitFor(() => {
+        expect(screen.getByText(/successfully exported/i)).toBeInTheDocument();
       });
     });
 
@@ -462,15 +502,23 @@ describe("PhotoBoothDisplay Component", () => {
         { timeout: 1000 },
       );
 
-      await waitFor(async () => {
+      // Wait for export button to be enabled
+      await waitFor(() => {
         const exportButton = screen.getByRole("button", {
           name: /export dashboard/i,
         });
-        fireEvent.click(exportButton);
+        expect(exportButton).not.toBeDisabled();
+      });
 
-        await waitFor(() => {
-          expect(screen.getByText(/export failed/i)).toBeInTheDocument();
-        });
+      // Click export button
+      const exportButton = screen.getByRole("button", {
+        name: /export dashboard/i,
+      });
+      fireEvent.click(exportButton);
+
+      // Wait for error message
+      await waitFor(() => {
+        expect(screen.getByText(/export failed/i)).toBeInTheDocument();
       });
     });
 
@@ -494,15 +542,23 @@ describe("PhotoBoothDisplay Component", () => {
         { timeout: 1000 },
       );
 
-      await waitFor(async () => {
+      // Wait for export button to be enabled
+      await waitFor(() => {
         const exportButton = screen.getByRole("button", {
           name: /export dashboard/i,
         });
-        fireEvent.click(exportButton);
+        expect(exportButton).not.toBeDisabled();
+      });
 
-        await waitFor(() => {
-          expect(screen.getByText(/export failed/i)).toBeInTheDocument();
-        });
+      // Click export button
+      const exportButton = screen.getByRole("button", {
+        name: /export dashboard/i,
+      });
+      fireEvent.click(exportButton);
+
+      // Wait for error message
+      await waitFor(() => {
+        expect(screen.getByText(/export failed/i)).toBeInTheDocument();
       });
     });
   });
