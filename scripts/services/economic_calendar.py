@@ -186,7 +186,7 @@ class EconomicCalendarService(BaseFinancialService):
             return sorted(events, key=lambda x: x.event_date)
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to fetch economic calendar: {e}")
+            raise DataNotFoundError(f"Failed to fetch economic calendar: {e}") from e
 
     def _generate_upcoming_events(self, start_date: datetime, end_date: datetime) -> list[EconomicEvent]:
         """Generate upcoming economic events (production would use real API data)"""
@@ -263,7 +263,7 @@ class EconomicCalendarService(BaseFinancialService):
 
         # Get impact matrix data
         impact_data = None
-        for key, data in self.impact_matrix.items():
+        for _key, data in self.impact_matrix.items():
             if event.event_type == data.event_type:
                 impact_data = data
                 break
@@ -357,7 +357,7 @@ class EconomicCalendarService(BaseFinancialService):
             )
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to calculate policy probabilities: {e}")
+            raise DataNotFoundError(f"Failed to calculate policy probabilities: {e}") from e
 
     def _get_next_fomc_meeting(self) -> datetime:
         """Get next FOMC meeting date"""
@@ -389,9 +389,6 @@ class EconomicCalendarService(BaseFinancialService):
 
         # Adjust based on current economic conditions
         # (In production, would integrate real-time economic data)
-        unemployment_adjustment = 0.0  # Would be based on current unemployment vs threshold
-        inflation_adjustment = 0.0  # Would be based on current inflation vs target
-
         # Apply adjustments (simplified)
         adjusted_probabilities = base_probabilities.copy()
 
@@ -478,7 +475,7 @@ class EconomicCalendarService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to calculate surprise index: {e}")
+            raise DataNotFoundError(f"Failed to calculate surprise index: {e}") from e
 
     def _generate_recent_surprises(self, lookback_days: int) -> list[dict[str, Any]]:
         """Generate recent economic surprises data"""
@@ -523,8 +520,7 @@ class EconomicCalendarService(BaseFinancialService):
         # Generate historical distribution (production would use real data)
         historical_indices = np.random.normal(0, 0.6, 1000)  # 1000 historical observations
 
-        percentile = (np.sum(historical_indices <= current_index) / len(historical_indices)) * 100
-        return percentile
+        return (np.sum(historical_indices <= current_index) / len(historical_indices)) * 100
 
     def _generate_sector_signals(self, surprise_index: float) -> dict[str, str]:
         """Generate sector allocation signals based on surprise index"""
@@ -694,6 +690,6 @@ def create_economic_calendar_service(env: str = "prod") -> EconomicCalendarServi
 
         return EconomicCalendarService(config)
 
-    except Exception:
-        print("❌ Failed to create economic calendar service: {e}")
+    except Exception as e:
+        print(f"❌ Failed to create economic calendar service: {e}")
         return None

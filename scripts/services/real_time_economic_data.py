@@ -100,8 +100,8 @@ class RealTimeEconomicData:
             # Final fallback to current best estimate
             return 4.33
 
-        except Exception:
-            print("Warning: Could not fetch Fed funds rate: {e}")
+        except Exception as e:
+            print(f"Warning: Could not fetch Fed funds rate: {e}")
             return 4.33
 
     def get_treasury_yields(self, force_refresh: bool = False) -> dict[str, float]:
@@ -149,8 +149,8 @@ class RealTimeEconomicData:
 
             return yields
 
-        except Exception:
-            print("Warning: Could not fetch Treasury yields: {e}")
+        except Exception as e:
+            print(f"Warning: Could not fetch Treasury yields: {e}")
             # Return fallback values based on current market data
             return {"three_month": 4.41, "ten_year": 4.39, "spread": -0.02}
 
@@ -247,8 +247,8 @@ class RealTimeEconomicData:
             fred_service = self._get_fred_service()
             fred_service.clear_cache()
             print("FRED Economic service cache cleared")
-        except Exception:
-            print("Warning: Could not clear cache: {e}")
+        except Exception as e:
+            print(f"Warning: Could not clear cache: {e}")
 
     def get_cache_status(self) -> dict[str, Any]:
         """Get cache status from underlying FREDEconomicService"""

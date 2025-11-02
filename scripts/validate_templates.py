@@ -17,8 +17,8 @@ def load_sample_data(file_path):
     try:
         with open(file_path) as f:
             return json.load(f)
-    except Exception:
-        print("Error loading {file_path}: {e}")
+    except Exception as e:
+        print(f"Error loading {file_path}: {e}")
         return {}
 
 
@@ -27,7 +27,7 @@ def test_template(template_name, data, context_vars=None):
     try:
         # Setup Jinja2 environment
         templates_dir = Path(__file__).parent / "templates"
-        env = Environment(loader=FileSystemLoader(str(templates_dir)))
+        env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
 
         # Load template
         template = env.get_template(template_name)
