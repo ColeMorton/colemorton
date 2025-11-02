@@ -68,7 +68,7 @@
     "@astrojs/sitemap": "3.6.0",
     "@digi4care/astro-google-tagmanager": "^1.4.0",
     "@justinribeiro/lite-youtube": "^1.8.0",
-    "@tabler/icons-react": "^3.27.0",
+    "@tabler/icons-react": "^3.35.0",
     "@types/three": "^0.177.0",
     "astro": "5.13.10",
     "astro-auto-import": "^0.4.4",
