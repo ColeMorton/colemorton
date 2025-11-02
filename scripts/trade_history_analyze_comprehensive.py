@@ -639,7 +639,9 @@ class TradeHistoryAnalyzer:
 def main():
     """Main execution function"""
     # Use the most recent discovery file
-    discovery_file = "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/discovery/live_signals_20250804.json"
+    discovery_file = (
+        "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/discovery/live_signals_20250804.json"
+    )
 
     # Initialize analyzer
     analyzer = TradeHistoryAnalyzer(discovery_file)
@@ -648,9 +650,7 @@ def main():
     analysis_results = analyzer.generate_comprehensive_analysis()
 
     # Save results
-    output_dir = Path(
-        "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/analysis"
-    )
+    output_dir = Path("/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/analysis")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = output_dir / f"live_signals_{datetime.now().strftime('%Y%m%d')}.json"

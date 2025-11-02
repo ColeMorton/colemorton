@@ -9,8 +9,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
-    testTimeout: 10000, // Increased timeout for async operations
-    hookTimeout: 10000, // Increased hook timeout for async operations
+    testTimeout: 5000, // Reduced timeout after fixing async patterns
+    hookTimeout: 3000, // Reduced hook timeout after fixing async patterns
     // NO globalSetup - this eliminates E2E build overhead
     include: [
       // Only include unit tests, exclude E2E tests
