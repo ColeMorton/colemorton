@@ -33,7 +33,7 @@ class AnalysisCrossValidator:
         try:
             with open(filepath) as f:
                 return json.load(f)
-        except Exception:
+        except Exception as e:
             print("Error loading {filepath}: {e}")
             return {}
 

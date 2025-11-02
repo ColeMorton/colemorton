@@ -90,7 +90,7 @@ try:
                 df["X_Status"].astype("int64")
                 print("✅ No int64 overflow issues detected")
             except Exception:
-                print("❌ Int64 overflow still present: {overflow_error}")
+                print("❌ Int64 overflow still present: {e}")
 
         print("✅ Trade history data: {len(df)} rows, {len(df.columns)} columns")
 
