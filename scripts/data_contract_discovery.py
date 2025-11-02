@@ -15,10 +15,9 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import pandas as pd
-
 from errors import ConfigurationError, ValidationError
 from result_types import ProcessingResult
 from utils.logging_setup import setup_logging
@@ -30,10 +29,10 @@ class ColumnSchema:
 
     name: str
     data_type: str
-    sample_values: List[str] = field(default_factory=list)
+    sample_values: list[str] = field(default_factory=list)
     nullable: bool = True
     unique_values: int = 0
-    format_pattern: Optional[str] = None
+    format_pattern: str | None = None
 
 
 @dataclass
@@ -47,30 +46,26 @@ class DataContract:
     relative_path: str  # Path relative to frontend/public/data/
 
     # Schema information
-    schema: List[ColumnSchema]
+    schema: list[ColumnSchema]
     row_count: int = 0
-    last_modified: Optional[datetime] = None
+    last_modified: datetime | None = None
     file_size_bytes: int = 0
 
     # Contract metadata
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     refresh_frequency: str = "daily"  # daily, hourly, on-demand
-    data_sources: List[str] = field(
-        default_factory=list
-    )  # CLI services that can provide this data
+    data_sources: list[str] = field(default_factory=list)  # CLI services that can provide this data
 
     # Quality requirements
     freshness_threshold_hours: int = 24
     minimum_rows: int = 1
-    required_columns: Set[str] = field(default_factory=set)
+    required_columns: set[str] = field(default_factory=set)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert contract to dictionary for serialization"""
         result = asdict(self)
         result["file_path"] = str(self.file_path)
-        result["last_modified"] = (
-            self.last_modified.isoformat() if self.last_modified else None
-        )
+        result["last_modified"] = self.last_modified.isoformat() if self.last_modified else None
         result["required_columns"] = list(self.required_columns)
         return result
 
@@ -79,20 +74,18 @@ class DataContract:
 class ContractDiscoveryResult:
     """Result of contract discovery operation"""
 
-    contracts: List[DataContract]
-    categories: Set[str]
+    contracts: list[DataContract]
+    categories: set[str]
     total_files: int
     successful_discoveries: int
-    failed_discoveries: List[str] = field(default_factory=list)
+    failed_discoveries: list[str] = field(default_factory=list)
     discovery_time: float = 0.0
 
-    def get_contracts_by_category(self, category: str) -> List[DataContract]:
+    def get_contracts_by_category(self, category: str) -> list[DataContract]:
         """Get all contracts for a specific category"""
-        return [
-            contract for contract in self.contracts if contract.category == category
-        ]
+        return [contract for contract in self.contracts if contract.category == category]
 
-    def get_contract_by_id(self, contract_id: str) -> Optional[DataContract]:
+    def get_contract_by_id(self, contract_id: str) -> DataContract | None:
         """Get contract by ID"""
         for contract in self.contracts:
             if contract.contract_id == contract_id:
@@ -108,7 +101,7 @@ class DataContractDiscovery:
     directory serves as the authoritative contract definition.
     """
 
-    def __init__(self, frontend_data_path: Optional[Path] = None):
+    def __init__(self, frontend_data_path: Path | None = None):
         """Initialize contract discovery with frontend data path"""
         setup_logging("INFO")
         self.logger = logging.getLogger("data_contract_discovery")
@@ -127,9 +120,7 @@ class DataContractDiscovery:
                 context={"frontend_data_path": str(self.frontend_data_path)},
             )
 
-        self.logger.info(
-            f"Initialized contract discovery for: {self.frontend_data_path}"
-        )
+        self.logger.info(f"Initialized contract discovery for: {self.frontend_data_path}")
 
         # Contract discovery configuration
         self.max_sample_values = 5
@@ -245,9 +236,7 @@ class DataContractDiscovery:
         dependencies = self._extract_dependencies(relative_path)
 
         # Set quality requirements based on contract type
-        freshness_threshold, minimum_rows = self._determine_quality_requirements(
-            category
-        )
+        freshness_threshold, minimum_rows = self._determine_quality_requirements(category)
         required_columns = self._extract_required_columns(schema)
 
         contract = DataContract(
@@ -290,7 +279,7 @@ class DataContractDiscovery:
         # Use first directory as category
         return parts[0]
 
-    def _infer_schema_from_csv(self, csv_file: Path) -> Tuple[List[ColumnSchema], int]:
+    def _infer_schema_from_csv(self, csv_file: Path) -> tuple[list[ColumnSchema], int]:
         """Infer schema from CSV file content"""
 
         try:
@@ -309,9 +298,7 @@ class DataContractDiscovery:
                 data_type = self._infer_column_data_type(col_data)
 
                 # Get sample values (first few non-null values)
-                sample_values = (
-                    col_data.head(self.max_sample_values).astype(str).tolist()
-                )
+                sample_values = col_data.head(self.max_sample_values).astype(str).tolist()
 
                 # Calculate metadata
                 nullable = df[column].isnull().any()
@@ -388,9 +375,7 @@ class DataContractDiscovery:
         # Default to string
         return "string"
 
-    def _detect_format_pattern(
-        self, series: pd.Series, data_type: str
-    ) -> Optional[str]:
+    def _detect_format_pattern(self, series: pd.Series, data_type: str) -> str | None:
         """Detect format pattern for a column"""
 
         if data_type == "datetime":
@@ -399,9 +384,9 @@ class DataContractDiscovery:
 
             if re.match(r"^\d{4}-\d{2}-\d{2}$", sample_value):
                 return "%Y-%m-%d"
-            elif re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", sample_value):
+            if re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", sample_value):
                 return "%Y-%m-%d %H:%M:%S"
-            elif re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", sample_value):
+            if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", sample_value):
                 return "%Y-%m-%dT%H:%M:%S"
 
         elif data_type == "numeric":
@@ -409,14 +394,13 @@ class DataContractDiscovery:
             try:
                 if all(float(val).is_integer() for val in series.astype(str)):
                     return "integer"
-                else:
-                    return "float"
+                return "float"
             except (ValueError, TypeError):
                 pass
 
         return None
 
-    def _determine_data_sources(self, category: str, contract_id: str) -> List[str]:
+    def _determine_data_sources(self, category: str, contract_id: str) -> list[str]:
         """Determine which CLI services can provide data for this contract"""
 
         # Map categories to CLI services
@@ -435,7 +419,7 @@ class DataContractDiscovery:
 
         return ["unknown"]
 
-    def _extract_dependencies(self, relative_path: Path) -> List[str]:
+    def _extract_dependencies(self, relative_path: Path) -> list[str]:
         """Extract dependencies from file path analysis"""
         dependencies = []
 
@@ -446,7 +430,7 @@ class DataContractDiscovery:
 
         return dependencies
 
-    def _determine_quality_requirements(self, category: str) -> Tuple[int, int]:
+    def _determine_quality_requirements(self, category: str) -> tuple[int, int]:
         """Determine quality requirements based on category"""
 
         quality_mappings = {
@@ -458,7 +442,7 @@ class DataContractDiscovery:
 
         return quality_mappings.get(category, (24, 1))  # Default: 24 hours, 1 row
 
-    def _extract_required_columns(self, schema: List[ColumnSchema]) -> Set[str]:
+    def _extract_required_columns(self, schema: list[ColumnSchema]) -> set[str]:
         """Extract required columns based on schema analysis"""
 
         required_columns = set()
@@ -476,9 +460,7 @@ class DataContractDiscovery:
 
         return required_columns
 
-    def export_contracts_to_json(
-        self, contracts: List[DataContract], output_file: Path
-    ) -> None:
+    def export_contracts_to_json(self, contracts: list[DataContract], output_file: Path) -> None:
         """Export discovered contracts to JSON file"""
 
         try:
@@ -502,9 +484,7 @@ class DataContractDiscovery:
                 },
             )
 
-    def validate_contract_completeness(
-        self, result: ContractDiscoveryResult
-    ) -> ProcessingResult:
+    def validate_contract_completeness(self, result: ContractDiscoveryResult) -> ProcessingResult:
         """Validate that all expected contracts were discovered"""
 
         # Expected contract categories based on frontend analysis
@@ -520,9 +500,7 @@ class DataContractDiscovery:
             issues.append(f"Missing expected categories: {missing_categories}")
 
         if result.failed_discoveries:
-            issues.append(
-                f"Failed to discover {len(result.failed_discoveries)} contracts"
-            )
+            issues.append(f"Failed to discover {len(result.failed_discoveries)} contracts")
 
         success = len(issues) == 0
 
@@ -533,14 +511,10 @@ class DataContractDiscovery:
         )
 
         validation_result.add_metadata("total_contracts", len(result.contracts))
-        validation_result.add_metadata(
-            "discovered_categories", list(discovered_categories)
-        )
+        validation_result.add_metadata("discovered_categories", list(discovered_categories))
         validation_result.add_metadata("expected_categories", list(expected_categories))
         validation_result.add_metadata("missing_categories", list(missing_categories))
-        validation_result.add_metadata(
-            "unexpected_categories", list(unexpected_categories)
-        )
+        validation_result.add_metadata("unexpected_categories", list(unexpected_categories))
 
         return validation_result
 
@@ -569,9 +543,7 @@ if __name__ == "__main__":
         print("   {category}: {len(contracts)} contracts")
 
         for contract in contracts:
-            print(
-                f"     - {contract.contract_id} ({len(contract.schema)} columns, {contract.row_count} rows)"
-            )
+            print(f"     - {contract.contract_id} ({len(contract.schema)} columns, {contract.row_count} rows)")
 
     # Validate contract completeness
     validation = discovery.validate_contract_completeness(result)

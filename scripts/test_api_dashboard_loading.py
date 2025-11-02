@@ -10,6 +10,7 @@ from pathlib import Path
 
 import requests
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -135,20 +136,13 @@ def test_api_endpoint_running():
                 print("❌ API returned no dashboards")
                 return False
 
-            print(
-                f"✅ API endpoint is accessible and returns {len(dashboards)} dashboards"
-            )
+            print(f"✅ API endpoint is accessible and returns {len(dashboards)} dashboards")
             return True
-        else:
-            print(
-                f"⚠️ API endpoint returned status {response.status_code} (dev server may not be running)"
-            )
-            return None  # Neutral result - server not running
+        print(f"⚠️ API endpoint returned status {response.status_code} (dev server may not be running)")
+        return None  # Neutral result - server not running
 
     except requests.exceptions.RequestException as e:
-        print(
-            f"⚠️ Could not connect to API endpoint: {e} (dev server may not be running)"
-        )
+        print(f"⚠️ Could not connect to API endpoint: {e} (dev server may not be running)")
         return None  # Neutral result - server not running
 
 
@@ -212,7 +206,7 @@ def main():
                 failed += 1
             else:  # result is None (skipped)
                 skipped += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -227,17 +221,14 @@ def main():
         print("2. Client-side fetch implementation ✅")
         print("3. Fallback configurations ✅")
         print("4. Configuration consistency ✅")
-        print(
-            f"5. API accessibility {'✅' if skipped == 0 else '⚠️ (requires dev server)'}"
-        )
+        print(f"5. API accessibility {'✅' if skipped == 0 else '⚠️ (requires dev server)'}")
 
         if skipped > 0:
             print("\n💡 To test API endpoint: yarn dev (then re-run this test)")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

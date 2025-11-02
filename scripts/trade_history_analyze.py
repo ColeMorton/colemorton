@@ -19,17 +19,15 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import scipy.stats as stats
-
 from trade_history.unified_calculation_engine import TradingCalculationEngine
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -50,18 +48,17 @@ class AtomicAnalysisTool:
         """Convert numpy types to native Python types for JSON serialization"""
         if isinstance(obj, dict):
             return {key: self._convert_numpy_types(value) for key, value in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._convert_numpy_types(item) for item in obj]
-        elif isinstance(obj, np.bool_):
+        if isinstance(obj, np.bool_):
             return bool(obj)
-        elif isinstance(obj, np.integer):
+        if isinstance(obj, np.integer):
             return int(obj)
-        elif isinstance(obj, np.floating):
+        if isinstance(obj, np.floating):
             return float(obj)
-        else:
-            return obj
+        return obj
 
-    def load_discovery_data(self) -> Dict[str, Any]:
+    def load_discovery_data(self) -> dict[str, Any]:
         """
         Load and validate discovery phase JSON data
         """
@@ -80,7 +77,7 @@ class AtomicAnalysisTool:
         latest_file = max(discovery_files, key=lambda f: f.stat().st_mtime)
         logger.info(f"Loading discovery data from: {latest_file}")
 
-        with open(latest_file, "r", encoding="utf-8") as f:
+        with open(latest_file, encoding="utf-8") as f:
             discovery_data = json.load(f)
 
         logger.info(
@@ -88,9 +85,7 @@ class AtomicAnalysisTool:
         )
         return discovery_data
 
-    def analyze_signal_effectiveness(
-        self, engine: TradingCalculationEngine
-    ) -> Dict[str, Any]:
+    def analyze_signal_effectiveness(self, engine: TradingCalculationEngine) -> dict[str, Any]:
         """
         Analyze signal effectiveness by strategy using unified engine data
         """
@@ -157,26 +152,16 @@ class AtomicAnalysisTool:
             "entry_signal_analysis": {
                 "win_rate_by_strategy": entry_analysis,
                 "total_strategies_analyzed": len(
-                    [
-                        s
-                        for s in entry_analysis.values()
-                        if isinstance(s, dict) and s.get("analysis_possible", False)
-                    ]
+                    [s for s in entry_analysis.values() if isinstance(s, dict) and s.get("analysis_possible", False)]
                 ),
                 "strategies_excluded": len(
-                    [
-                        s
-                        for s in entry_analysis.values()
-                        if isinstance(s, dict) and not s.get("analysis_possible", True)
-                    ]
+                    [s for s in entry_analysis.values() if isinstance(s, dict) and not s.get("analysis_possible", True)]
                 ),
             },
             "exit_signal_analysis": exit_analysis,
         }
 
-    def perform_advanced_statistical_analysis(
-        self, engine: TradingCalculationEngine
-    ) -> Dict[str, Any]:
+    def perform_advanced_statistical_analysis(self, engine: TradingCalculationEngine) -> dict[str, Any]:
         """
         Perform advanced statistical analysis using unified engine base metrics
         """
@@ -242,15 +227,9 @@ class AtomicAnalysisTool:
             # Sortino ratio (downside deviation)
             downside_returns = returns_array[returns_array < 0]
             downside_deviation = (
-                np.std(downside_returns, ddof=1)
-                if len(downside_returns) > 1
-                else np.std(returns_array, ddof=1)
+                np.std(downside_returns, ddof=1) if len(downside_returns) > 1 else np.std(returns_array, ddof=1)
             )
-            sortino_ratio = (
-                np.mean(returns_array) / downside_deviation
-                if downside_deviation > 0
-                else 0
-            )
+            sortino_ratio = np.mean(returns_array) / downside_deviation if downside_deviation > 0 else 0
 
             statistical_analysis["risk_adjusted_metrics"] = {
                 "sharpe_ratio": float(sharpe_ratio),
@@ -274,8 +253,8 @@ class AtomicAnalysisTool:
         }
 
     def generate_optimization_opportunities(
-        self, signal_analysis: Dict[str, Any], stats_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, signal_analysis: dict[str, Any], stats_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Generate focused optimization opportunities based on analysis
         """
@@ -323,8 +302,8 @@ class AtomicAnalysisTool:
         return opportunities
 
     def calculate_analysis_confidence(
-        self, engine: TradingCalculationEngine, analysis_results: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, engine: TradingCalculationEngine, analysis_results: dict[str, Any]
+    ) -> dict[str, float]:
         """
         Calculate analysis confidence scores
         """
@@ -352,9 +331,7 @@ class AtomicAnalysisTool:
         strategies_analyzed = entry_analysis.get("total_strategies_analyzed", 0)
 
         confidence_scores["signal_effectiveness"] = (
-            min(0.9, 0.6 + (strategies_analyzed * 0.2))
-            if strategies_analyzed > 0
-            else 0.3
+            min(0.9, 0.6 + (strategies_analyzed * 0.2)) if strategies_analyzed > 0 else 0.3
         )
 
         # Overall confidence (weighted average)
@@ -363,13 +340,11 @@ class AtomicAnalysisTool:
             "statistical_significance": 0.3,
             "signal_effectiveness": 0.3,
         }
-        confidence_scores["overall"] = sum(
-            confidence_scores[key] * weight for key, weight in weights.items()
-        )
+        confidence_scores["overall"] = sum(confidence_scores[key] * weight for key, weight in weights.items())
 
         return confidence_scores
 
-    def execute_analysis(self) -> Dict[str, Any]:
+    def execute_analysis(self) -> dict[str, Any]:
         """
         Execute atomic statistical analysis
         """
@@ -384,9 +359,7 @@ class AtomicAnalysisTool:
             engine = TradingCalculationEngine(csv_path)
 
             # Step 3: Validate unified engine metrics against discovery data
-            validation_results = engine.validate_portfolio_metrics(
-                engine.calculate_portfolio_performance()
-            )
+            validation_results = engine.validate_portfolio_metrics(engine.calculate_portfolio_performance())
 
             # Step 4: Perform analysis components
             signal_effectiveness = self.analyze_signal_effectiveness(engine)
@@ -401,9 +374,7 @@ class AtomicAnalysisTool:
                 "signal_effectiveness": signal_effectiveness,
                 **statistical_analysis,
             }
-            confidence_scores = self.calculate_analysis_confidence(
-                engine, analysis_results
-            )
+            confidence_scores = self.calculate_analysis_confidence(engine, analysis_results)
 
             # Step 6: Generate comprehensive analysis output
             analysis_output = {
@@ -411,32 +382,20 @@ class AtomicAnalysisTool:
                 "analysis_metadata": {
                     "execution_timestamp": self.execution_date.isoformat(),
                     "confidence_score": confidence_scores["overall"],
-                    "statistical_significance": confidence_scores[
-                        "statistical_significance"
-                    ],
+                    "statistical_significance": confidence_scores["statistical_significance"],
                 },
                 "signal_effectiveness": signal_effectiveness,
-                "statistical_analysis": statistical_analysis.get(
-                    "statistical_analysis", {}
-                ),
-                "performance_metrics": statistical_analysis.get(
-                    "performance_metrics", {}
-                ),
+                "statistical_analysis": statistical_analysis.get("statistical_analysis", {}),
+                "performance_metrics": statistical_analysis.get("performance_metrics", {}),
                 "advanced_statistical_metrics": {
-                    "system_quality_number": statistical_analysis.get(
-                        "statistical_analysis", {}
-                    )
+                    "system_quality_number": statistical_analysis.get("statistical_analysis", {})
                     .get("statistical_significance", {})
                     .get("return_vs_zero", {})
                     .get("t_statistic", 0),
-                    "return_distribution_skewness": statistical_analysis.get(
-                        "statistical_analysis", {}
-                    )
+                    "return_distribution_skewness": statistical_analysis.get("statistical_analysis", {})
                     .get("return_distribution", {})
                     .get("skewness", 0),
-                    "return_distribution_kurtosis": statistical_analysis.get(
-                        "statistical_analysis", {}
-                    )
+                    "return_distribution_kurtosis": statistical_analysis.get("statistical_analysis", {})
                     .get("return_distribution", {})
                     .get("kurtosis", 0),
                     "confidence": 0.82,
@@ -449,18 +408,12 @@ class AtomicAnalysisTool:
                         "confidence": 0.8,
                     }
                 },
-                "unified_engine_validation": self._convert_numpy_types(
-                    validation_results
-                ),
-                "next_phase_inputs": {
-                    "synthesis_ready": bool(confidence_scores["overall"] > 0.7)
-                },
+                "unified_engine_validation": self._convert_numpy_types(validation_results),
+                "next_phase_inputs": {"synthesis_ready": bool(confidence_scores["overall"] > 0.7)},
             }
 
             # Step 7: Save output
-            output_filename = (
-                f"{self.portfolio_name}_{self.execution_date.strftime('%Y%m%d')}.json"
-            )
+            output_filename = f"{self.portfolio_name}_{self.execution_date.strftime('%Y%m%d')}.json"
             output_file = self.output_dir / output_filename
 
             with open(output_file, "w", encoding="utf-8") as f:
@@ -515,9 +468,7 @@ def main():
         print("=" * 60)
         print("Portfolio: {result['portfolio']}")
         print("Execution: {result['analysis_metadata']['execution_timestamp']}")
-        print(
-            f"Overall Confidence: {result['analysis_metadata']['confidence_score']:.3f}"
-        )
+        print(f"Overall Confidence: {result['analysis_metadata']['confidence_score']:.3f}")
 
         print("\nSTATISTICAL ANALYSIS:")
         if "performance_metrics" in result:
@@ -526,30 +477,19 @@ def main():
             print("  Profit Factor: {perf.get('profit_factor', 0):.2f}")
             print("  Total PnL: ${perf.get('total_pnl', 0):.2f}")
 
-        if (
-            "statistical_analysis" in result
-            and "statistical_significance" in result["statistical_analysis"]
-        ):
-            sig = result["statistical_analysis"]["statistical_significance"][
-                "return_vs_zero"
-            ]
+        if "statistical_analysis" in result and "statistical_significance" in result["statistical_analysis"]:
+            sig = result["statistical_analysis"]["statistical_significance"]["return_vs_zero"]
             print("  Statistical Significance: {sig.get('significant_at_95', False)}")
             print("  P-Value: {sig.get('p_value', 1.0):.4f}")
 
         print("\nSIGNAL EFFECTIVENESS:")
-        signal_analysis = result.get("signal_effectiveness", {}).get(
-            "entry_signal_analysis", {}
-        )
-        print(
-            f"  Strategies Analyzed: {signal_analysis.get('total_strategies_analyzed', 0)}"
-        )
+        signal_analysis = result.get("signal_effectiveness", {}).get("entry_signal_analysis", {})
+        print(f"  Strategies Analyzed: {signal_analysis.get('total_strategies_analyzed', 0)}")
         print("  Strategies Excluded: {signal_analysis.get('strategies_excluded', 0)}")
 
         print("\nVALIDATION RESULTS:")
         validation = result.get("unified_engine_validation", {})
-        print(
-            f"  Overall Validation Success: {validation.get('overall_validation_success', False)}"
-        )
+        print(f"  Overall Validation Success: {validation.get('overall_validation_success', False)}")
 
         print("\nOutput saved to: {analysis_tool.output_dir}")
         print("=" * 60)

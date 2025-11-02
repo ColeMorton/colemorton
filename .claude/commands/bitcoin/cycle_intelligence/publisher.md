@@ -430,7 +430,7 @@ BITCOIN CYCLE FRONTMATTER COMPLIANCE VALIDATION:
 
 ---
 
-**Integration with Framework**: This command defines strategic Bitcoin cycle intelligence publication requirements for publisher-generated Bitcoin cycle blog content within the broader Sensylate ecosystem through standardized Bitcoin cycle template specifications, cycle intelligence quality enforcement protocols, and Bitcoin-focused cross-command coordination.
+**Integration with Framework**: This command defines strategic Bitcoin cycle intelligence publication requirements for publisher-generated Bitcoin cycle blog content within the broader Colemorton ecosystem through standardized Bitcoin cycle template specifications, cycle intelligence quality enforcement protocols, and Bitcoin-focused cross-command coordination.
 
 **Author**: Cole Morton
 **Framework**: Bitcoin Cycle Intelligence Publication Strategy Framework

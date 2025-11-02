@@ -8,12 +8,12 @@ and quality standards.
 """
 
 import json
-import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -27,14 +27,14 @@ class SchemaAnalysis:
     file_path: str
     domain: str
     phase: str
-    schema_content: Dict[str, Any]
-    required_fields: List[str] = field(default_factory=list)
-    optional_fields: List[str] = field(default_factory=list)
-    field_types: Dict[str, str] = field(default_factory=dict)
-    confidence_patterns: List[str] = field(default_factory=list)
-    validation_patterns: List[str] = field(default_factory=list)
-    quality_indicators: List[str] = field(default_factory=list)
-    inconsistencies: List[str] = field(default_factory=list)
+    schema_content: dict[str, Any]
+    required_fields: list[str] = field(default_factory=list)
+    optional_fields: list[str] = field(default_factory=list)
+    field_types: dict[str, str] = field(default_factory=dict)
+    confidence_patterns: list[str] = field(default_factory=list)
+    validation_patterns: list[str] = field(default_factory=list)
+    quality_indicators: list[str] = field(default_factory=list)
+    inconsistencies: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -42,12 +42,12 @@ class ConsistencyReport:
     """Overall consistency analysis report"""
 
     total_schemas: int
-    domains_analyzed: List[str]
-    common_patterns: Dict[str, int] = field(default_factory=dict)
-    inconsistencies: Dict[str, List[str]] = field(default_factory=dict)
-    standardization_opportunities: List[str] = field(default_factory=list)
+    domains_analyzed: list[str]
+    common_patterns: dict[str, int] = field(default_factory=dict)
+    inconsistencies: dict[str, list[str]] = field(default_factory=dict)
+    standardization_opportunities: list[str] = field(default_factory=list)
     quality_score: float = 0.0
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class SchemaConsistencyOptimizer:
@@ -176,7 +176,7 @@ class SchemaConsistencyOptimizer:
     def analyze_schema_file(self, file_path: Path) -> SchemaAnalysis:
         """Analyze a single schema file for consistency patterns"""
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 schema_content = json.load(f)
         except Exception as e:
             return SchemaAnalysis(
@@ -223,9 +223,7 @@ class SchemaConsistencyOptimizer:
 
         return analysis
 
-    def _analyze_schema_structure(
-        self, schema: Dict[str, Any], analysis: SchemaAnalysis
-    ):
+    def _analyze_schema_structure(self, schema: dict[str, Any], analysis: SchemaAnalysis):
         """Analyze the structure of a schema"""
         properties = schema.get("properties", {})
         required = schema.get("required", [])
@@ -248,14 +246,11 @@ class SchemaConsistencyOptimizer:
 
             # Look for quality indicators
             if any(
-                indicator in field_name.lower()
-                for indicator in ["quality", "accuracy", "reliability", "completeness"]
+                indicator in field_name.lower() for indicator in ["quality", "accuracy", "reliability", "completeness"]
             ):
                 analysis.quality_indicators.append(field_name)
 
-    def _check_standard_patterns(
-        self, schema: Dict[str, Any], analysis: SchemaAnalysis
-    ):
+    def _check_standard_patterns(self, schema: dict[str, Any], analysis: SchemaAnalysis):
         """Check schema against standard patterns"""
         properties = schema.get("properties", {})
 
@@ -266,9 +261,7 @@ class SchemaConsistencyOptimizer:
             metadata_props = properties["metadata"].get("properties", {})
             for required_field in self.standard_patterns["metadata"]["required_fields"]:
                 if required_field not in metadata_props:
-                    analysis.inconsistencies.append(
-                        f"Missing required metadata field: {required_field}"
-                    )
+                    analysis.inconsistencies.append(f"Missing required metadata field: {required_field}")
 
         # Check confidence scoring patterns
         confidence_fields = [f for f in properties.keys() if "confidence" in f.lower()]
@@ -277,16 +270,12 @@ class SchemaConsistencyOptimizer:
 
         # Check CLI integration patterns
         cli_fields = [
-            f
-            for f in properties.keys()
-            if any(pattern in f.lower() for pattern in ["cli", "service", "api"])
+            f for f in properties.keys() if any(pattern in f.lower() for pattern in ["cli", "service", "api"])
         ]
         if not cli_fields:
             analysis.inconsistencies.append("No CLI integration fields found")
 
-    def _validate_phase_requirements(
-        self, schema: Dict[str, Any], analysis: SchemaAnalysis
-    ):
+    def _validate_phase_requirements(self, schema: dict[str, Any], analysis: SchemaAnalysis):
         """Validate schema against phase-specific requirements"""
         if analysis.phase not in self.phase_requirements:
             return
@@ -297,24 +286,14 @@ class SchemaConsistencyOptimizer:
         # Check required sections
         for section in requirements["required_sections"]:
             if section not in properties:
-                analysis.inconsistencies.append(
-                    f"Missing required {analysis.phase} section: {section}"
-                )
+                analysis.inconsistencies.append(f"Missing required {analysis.phase} section: {section}")
 
         # Check quality indicators
         quality_indicators = requirements["quality_indicators"]
-        found_indicators = [
-            f
-            for f in properties.keys()
-            if any(indicator in f for indicator in quality_indicators)
-        ]
+        found_indicators = [f for f in properties.keys() if any(indicator in f for indicator in quality_indicators)]
 
-        if (
-            len(found_indicators) < len(quality_indicators) / 2
-        ):  # At least half should be present
-            analysis.inconsistencies.append(
-                f"Insufficient quality indicators for {analysis.phase} phase"
-            )
+        if len(found_indicators) < len(quality_indicators) / 2:  # At least half should be present
+            analysis.inconsistencies.append(f"Insufficient quality indicators for {analysis.phase} phase")
 
     def analyze_all_schemas(self) -> ConsistencyReport:
         """Analyze all schemas for consistency"""
@@ -332,9 +311,7 @@ class SchemaConsistencyOptimizer:
         for schema_file in self.schemas_dir.glob("*.json"):
             analysis = self.analyze_schema_file(schema_file)
             self.schema_analyses.append(analysis)
-            print(
-                f"  📋 Analyzed: {schema_file.name} ({analysis.domain}:{analysis.phase})"
-            )
+            print(f"  📋 Analyzed: {schema_file.name} ({analysis.domain}:{analysis.phase})")
 
         # Generate consistency report
         return self._generate_consistency_report()
@@ -343,9 +320,7 @@ class SchemaConsistencyOptimizer:
         """Generate comprehensive consistency report"""
         report = ConsistencyReport(
             total_schemas=len(self.schema_analyses),
-            domains_analyzed=list(
-                set(a.domain for a in self.schema_analyses if a.domain != "unknown")
-            ),
+            domains_analyzed=list(set(a.domain for a in self.schema_analyses if a.domain != "unknown")),
         )
 
         # Analyze common patterns
@@ -374,9 +349,7 @@ class SchemaConsistencyOptimizer:
                 report.inconsistencies[key] = analysis.inconsistencies
 
         # Generate standardization opportunities
-        report.standardization_opportunities = (
-            self._identify_standardization_opportunities()
-        )
+        report.standardization_opportunities = self._identify_standardization_opportunities()
 
         # Calculate quality score
         report.quality_score = self._calculate_quality_score()
@@ -386,20 +359,16 @@ class SchemaConsistencyOptimizer:
 
         return report
 
-    def _identify_standardization_opportunities(self) -> List[str]:
+    def _identify_standardization_opportunities(self) -> list[str]:
         """Identify opportunities for schema standardization"""
         opportunities = []
 
         # Check for missing metadata consistency
         schemas_without_metadata = [
-            a
-            for a in self.schema_analyses
-            if "metadata" not in a.schema_content.get("properties", {})
+            a for a in self.schema_analyses if "metadata" not in a.schema_content.get("properties", {})
         ]
         if schemas_without_metadata:
-            opportunities.append(
-                f"Standardize metadata section across {len(schemas_without_metadata)} schemas"
-            )
+            opportunities.append(f"Standardize metadata section across {len(schemas_without_metadata)} schemas")
 
         # Check for confidence scoring consistency
         confidence_patterns = set()
@@ -414,9 +383,7 @@ class SchemaConsistencyOptimizer:
         for analysis in self.schema_analyses:
             schema_props = analysis.schema_content.get("properties", {})
             cli_fields = [
-                f
-                for f in schema_props.keys()
-                if any(term in f.lower() for term in ["cli", "service", "api"])
+                f for f in schema_props.keys() if any(term in f.lower() for term in ["cli", "service", "api"])
             ]
             cli_patterns.extend(cli_fields)
 
@@ -431,12 +398,8 @@ class SchemaConsistencyOptimizer:
             if len(phase_schemas) > 1:
                 # Check consistency within phase
                 required_fields_sets = [set(a.required_fields) for a in phase_schemas]
-                if (
-                    len(set(tuple(s) for s in required_fields_sets)) > 1
-                ):  # Different required fields
-                    opportunities.append(
-                        f"Standardize {phase} phase required fields across domains"
-                    )
+                if len(set(tuple(s) for s in required_fields_sets)) > 1:  # Different required fields
+                    opportunities.append(f"Standardize {phase} phase required fields across domains")
 
         return opportunities
 
@@ -469,31 +432,23 @@ class SchemaConsistencyOptimizer:
 
         return total_score / len(self.schema_analyses)
 
-    def _generate_recommendations(self, report: ConsistencyReport) -> List[str]:
+    def _generate_recommendations(self, report: ConsistencyReport) -> list[str]:
         """Generate actionable recommendations"""
         recommendations = []
 
         # High-level recommendations
         if report.quality_score < 0.8:
-            recommendations.append(
-                "🔴 PRIORITY: Address major schema inconsistencies to improve quality score"
-            )
+            recommendations.append("🔴 PRIORITY: Address major schema inconsistencies to improve quality score")
 
         if len(report.inconsistencies) > len(report.domains_analyzed):
-            recommendations.append(
-                "🟡 Standardize common schema patterns across domains"
-            )
+            recommendations.append("🟡 Standardize common schema patterns across domains")
 
         # Specific recommendations based on analysis
-        confidence_schemas = sum(
-            1 for a in self.schema_analyses if a.confidence_patterns
-        )
+        confidence_schemas = sum(1 for a in self.schema_analyses if a.confidence_patterns)
         if confidence_schemas < len(self.schema_analyses) * 0.8:
             recommendations.append("🟢 Add confidence scoring fields to all schemas")
 
-        validation_schemas = sum(
-            1 for a in self.schema_analyses if a.validation_patterns
-        )
+        validation_schemas = sum(1 for a in self.schema_analyses if a.validation_patterns)
         if validation_schemas < len(self.schema_analyses) * 0.8:
             recommendations.append("🟢 Add validation tracking fields to all schemas")
 
@@ -501,18 +456,14 @@ class SchemaConsistencyOptimizer:
         domains = set(a.domain for a in self.schema_analyses if a.domain != "unknown")
         for domain in domains:
             domain_analyses = [a for a in self.schema_analyses if a.domain == domain]
-            domain_inconsistencies = sum(
-                len(a.inconsistencies) for a in domain_analyses
-            )
+            domain_inconsistencies = sum(len(a.inconsistencies) for a in domain_analyses)
 
             if domain_inconsistencies > 5:
-                recommendations.append(
-                    f"🔵 Focus on {domain} domain - high inconsistency count"
-                )
+                recommendations.append(f"🔵 Focus on {domain} domain - high inconsistency count")
 
         return recommendations
 
-    def generate_standardized_schema_template(self, phase: str) -> Dict[str, Any]:
+    def generate_standardized_schema_template(self, phase: str) -> dict[str, Any]:
         """Generate a standardized schema template for a specific phase"""
         # Base schema structure
         template = {
@@ -616,7 +567,7 @@ class SchemaConsistencyOptimizer:
 
         return template
 
-    def export_standardized_schemas(self, output_dir: str = None) -> List[str]:
+    def export_standardized_schemas(self, output_dir: str = None) -> list[str]:
         """Export standardized schema templates for all phases"""
         if output_dir is None:
             output_dir = self.schemas_dir.parent / "standardized_schemas"
@@ -652,16 +603,12 @@ class SchemaConsistencyOptimizer:
 
         if report.common_patterns:
             print("\n🔧 Most Common Field Patterns:")
-            sorted_patterns = sorted(
-                report.common_patterns.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_patterns = sorted(report.common_patterns.items(), key=lambda x: x[1], reverse=True)
             for pattern, count in sorted_patterns[:10]:
                 print("  {pattern}: {count} schemas")
 
         if report.inconsistencies:
-            print(
-                f"\n⚠️  Inconsistencies Found ({len(report.inconsistencies)} schemas):"
-            )
+            print(f"\n⚠️  Inconsistencies Found ({len(report.inconsistencies)} schemas):")
             for schema, issues in report.inconsistencies.items():
                 print("  {schema}:")
                 for issue in issues[:3]:  # Show first 3 issues
@@ -686,9 +633,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Schema Consistency Optimizer")
     parser.add_argument("--schemas-dir", help="Directory containing schemas")
-    parser.add_argument(
-        "--analyze", action="store_true", help="Analyze schema consistency"
-    )
+    parser.add_argument("--analyze", action="store_true", help="Analyze schema consistency")
     parser.add_argument(
         "--export-templates",
         action="store_true",

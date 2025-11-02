@@ -83,7 +83,7 @@ generate_output_path() {
     local date="$3"
 
     # Use the actual project data outputs directory structure
-    local project_root="/Users/colemorton/Projects/sensylate-command-system-enhancements"
+    local project_root="/Users/colemorton/Projects/colemorton.com"
     local data_outputs="${project_root}/data/outputs"
 
     case "${phase}" in

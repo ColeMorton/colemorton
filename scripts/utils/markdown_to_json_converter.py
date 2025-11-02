@@ -8,7 +8,7 @@ Converts fundamental analysis markdown files to JSON format for script processin
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MarkdownToJsonConverter:
@@ -17,10 +17,10 @@ class MarkdownToJsonConverter:
     def __init__(self):
         self.data = {}
 
-    def convert_file(self, markdown_file: Path) -> Dict[str, Any]:
+    def convert_file(self, markdown_file: Path) -> dict[str, Any]:
         """Convert markdown file to JSON structure"""
 
-        with open(markdown_file, "r", encoding="utf-8") as f:
+        with open(markdown_file, encoding="utf-8") as f:
             content = f.read()
 
         # Extract frontmatter
@@ -36,9 +36,7 @@ class MarkdownToJsonConverter:
         current_price = self._extract_current_price(content)
 
         # Calculate additional fields for templates
-        total_expected_value = self._calculate_total_expected_value(
-            catalysts, current_price
-        )
+        total_expected_value = self._calculate_total_expected_value(catalysts, current_price)
         top_risk_factor = self._get_top_risk_factor(risk_factors)
         timeline_detail = self._extract_timeline_detail(content)
 
@@ -62,36 +60,20 @@ class MarkdownToJsonConverter:
             "top_risk_factor": top_risk_factor,
             "timeline_detail": timeline_detail,
             # Individual catalyst fields (fallback)
-            "catalyst_1": (
-                catalysts[0]["name"]
-                if len(catalysts) > 0
-                else "AI memory demand growth"
-            ),
-            "catalyst_1_probability": (
-                catalysts[0]["probability"] if len(catalysts) > 0 else 85
-            ),
+            "catalyst_1": (catalysts[0]["name"] if len(catalysts) > 0 else "AI memory demand growth"),
+            "catalyst_1_probability": (catalysts[0]["probability"] if len(catalysts) > 0 else 85),
             "catalyst_1_impact": catalysts[0]["impact"] if len(catalysts) > 0 else 15,
-            "catalyst_2": (
-                catalysts[1]["name"]
-                if len(catalysts) > 1
-                else "Memory pricing recovery"
-            ),
-            "catalyst_2_probability": (
-                catalysts[1]["probability"] if len(catalysts) > 1 else 70
-            ),
+            "catalyst_2": (catalysts[1]["name"] if len(catalysts) > 1 else "Memory pricing recovery"),
+            "catalyst_2_probability": (catalysts[1]["probability"] if len(catalysts) > 1 else 70),
             "catalyst_2_impact": catalysts[1]["impact"] if len(catalysts) > 1 else 25,
-            "catalyst_3": (
-                catalysts[2]["name"] if len(catalysts) > 2 else "Data center upgrades"
-            ),
-            "catalyst_3_probability": (
-                catalysts[2]["probability"] if len(catalysts) > 2 else 75
-            ),
+            "catalyst_3": (catalysts[2]["name"] if len(catalysts) > 2 else "Data center upgrades"),
+            "catalyst_3_probability": (catalysts[2]["probability"] if len(catalysts) > 2 else 75),
             "catalyst_3_impact": catalysts[2]["impact"] if len(catalysts) > 2 else 12,
         }
 
         return json_data
 
-    def _extract_frontmatter(self, content: str) -> Dict[str, Any]:
+    def _extract_frontmatter(self, content: str) -> dict[str, Any]:
         """Extract YAML frontmatter"""
 
         match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
@@ -108,12 +90,12 @@ class MarkdownToJsonConverter:
 
         return frontmatter
 
-    def _parse_sections(self, content: str) -> Dict[str, str]:
+    def _parse_sections(self, content: str) -> dict[str, str]:
         """Parse content into sections"""
 
         sections = {}
         current_section = None
-        current_content: List[str] = []
+        current_content: list[str] = []
 
         lines = content.split("\n")
 
@@ -152,7 +134,7 @@ class MarkdownToJsonConverter:
         match = re.search(r"Current:\s*\$(\d+\.?\d*)", content)
         return float(match.group(1)) if match else 0.0
 
-    def _extract_fair_value(self, content: str) -> Dict[str, float]:
+    def _extract_fair_value(self, content: str) -> dict[str, float]:
         """Extract fair value range"""
 
         match = re.search(r"Fair Value Range.*?\$(\d+)\s*-\s*\$(\d+)", content)
@@ -164,7 +146,7 @@ class MarkdownToJsonConverter:
             }
         return {"low": 0.0, "high": 0.0, "mid": 0.0}
 
-    def _extract_recommendation(self, content: str) -> Dict[str, Any]:
+    def _extract_recommendation(self, content: str) -> dict[str, Any]:
         """Extract investment recommendation"""
 
         recommendation = {}
@@ -186,15 +168,13 @@ class MarkdownToJsonConverter:
 
         return recommendation
 
-    def _extract_catalysts(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_catalysts(self, content: str) -> list[dict[str, Any]]:
         """Extract key catalysts"""
 
         catalysts = []
 
         # Look for catalyst section
-        catalyst_section = re.search(
-            r"Key Quantified Catalysts.*?\n(.*?)(?=###|\n##|\Z)", content, re.DOTALL
-        )
+        catalyst_section = re.search(r"Key Quantified Catalysts.*?\n(.*?)(?=###|\n##|\Z)", content, re.DOTALL)
         if catalyst_section:
             catalyst_text = catalyst_section.group(1)
 
@@ -207,8 +187,7 @@ class MarkdownToJsonConverter:
                     {
                         "name": match.group(2).strip(),
                         "description": match.group(2).strip(),
-                        "probability": float(match.group(3))
-                        * 100,  # Convert to percentage
+                        "probability": float(match.group(3)) * 100,  # Convert to percentage
                         "impact": float(match.group(4)),
                         "impact_per_share": float(match.group(4)),
                     }
@@ -216,15 +195,13 @@ class MarkdownToJsonConverter:
 
         return catalysts
 
-    def _extract_risk_factors(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_risk_factors(self, content: str) -> list[dict[str, Any]]:
         """Extract risk factors"""
 
         risks = []
 
         # Look for risk matrix section
-        risk_section = re.search(
-            r"Risk Matrix.*?\n(.*?)(?=###|\n##|\Z)", content, re.DOTALL
-        )
+        risk_section = re.search(r"Risk Matrix.*?\n(.*?)(?=###|\n##|\Z)", content, re.DOTALL)
         if risk_section:
             risk_text = risk_section.group(1)
 
@@ -247,7 +224,7 @@ class MarkdownToJsonConverter:
 
         return risks
 
-    def _extract_valuation_metrics(self, content: str) -> Dict[str, Any]:
+    def _extract_valuation_metrics(self, content: str) -> dict[str, Any]:
         """Extract valuation metrics"""
 
         metrics = {}
@@ -264,7 +241,7 @@ class MarkdownToJsonConverter:
 
         return metrics
 
-    def _extract_financial_health(self, content: str) -> Dict[str, Any]:
+    def _extract_financial_health(self, content: str) -> dict[str, Any]:
         """Extract financial health metrics"""
 
         health = {}
@@ -286,7 +263,7 @@ class MarkdownToJsonConverter:
 
         return health
 
-    def _extract_economic_sensitivity(self, content: str) -> Dict[str, Any]:
+    def _extract_economic_sensitivity(self, content: str) -> dict[str, Any]:
         """Extract economic sensitivity data"""
 
         sensitivity = {}
@@ -303,7 +280,7 @@ class MarkdownToJsonConverter:
 
         return sensitivity
 
-    def _extract_moat_strength(self, content: str) -> Dict[str, Any]:
+    def _extract_moat_strength(self, content: str) -> dict[str, Any]:
         """Extract competitive moat information"""
 
         moat = {}
@@ -321,7 +298,7 @@ class MarkdownToJsonConverter:
 
         return moat
 
-    def _determine_template_context(self, content: str) -> Dict[str, Any]:
+    def _determine_template_context(self, content: str) -> dict[str, Any]:
         """Determine optimal template context"""
 
         context = {}
@@ -340,9 +317,7 @@ class MarkdownToJsonConverter:
         # Check for catalyst-driven (Template B)
         catalysts = self._extract_catalysts(content)
         if len(catalysts) >= 2:
-            high_prob_catalysts = [
-                c for c in catalysts if c.get("probability", 0) > 0.7
-            ]
+            high_prob_catalysts = [c for c in catalysts if c.get("probability", 0) > 0.7]
             if high_prob_catalysts:
                 context["template_preference"] = "B_catalyst"
                 context["catalyst_driven"] = "True"
@@ -353,9 +328,7 @@ class MarkdownToJsonConverter:
 
         return context
 
-    def _calculate_total_expected_value(
-        self, catalysts: List[Dict[str, Any]], current_price: float
-    ) -> float:
+    def _calculate_total_expected_value(self, catalysts: list[dict[str, Any]], current_price: float) -> float:
         """Calculate total expected value if all catalysts hit"""
 
         if not catalysts or current_price <= 0:
@@ -364,16 +337,14 @@ class MarkdownToJsonConverter:
         total_impact = sum(catalyst.get("impact", 0) for catalyst in catalysts)
         return current_price + total_impact
 
-    def _get_top_risk_factor(self, risk_factors: List[Dict[str, Any]]) -> str:
+    def _get_top_risk_factor(self, risk_factors: list[dict[str, Any]]) -> str:
         """Get the highest scoring risk factor"""
 
         if not risk_factors:
             return "Market volatility and execution risk"
 
         # Sort by risk score (probability * impact)
-        sorted_risks = sorted(
-            risk_factors, key=lambda x: x.get("score", 0), reverse=True
-        )
+        sorted_risks = sorted(risk_factors, key=lambda x: x.get("score", 0), reverse=True)
         return sorted_risks[0].get("factor", "Key risk factor")
 
     def _extract_timeline_detail(self, content: str) -> str:
@@ -394,7 +365,7 @@ class MarkdownToJsonConverter:
 
         return "Multiple catalysts expected within 6-18 months"
 
-    def save_json(self, json_data: Dict[str, Any], output_file: Path) -> None:
+    def save_json(self, json_data: dict[str, Any], output_file: Path) -> None:
         """Save JSON data to file"""
 
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -403,9 +374,7 @@ class MarkdownToJsonConverter:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
 
 
-def convert_markdown_to_json(
-    markdown_file: Path, output_file: Optional[Path] = None
-) -> Path:
+def convert_markdown_to_json(markdown_file: Path, output_file: Path | None = None) -> Path:
     """Convert markdown file to JSON format"""
 
     converter = MarkdownToJsonConverter()
@@ -422,9 +391,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print(
-            "Usage: python markdown_to_json_converter.py <markdown_file> [output_file]"
-        )
+        print("Usage: python markdown_to_json_converter.py <markdown_file> [output_file]")
         sys.exit(1)
 
     markdown_file = Path(sys.argv[1])

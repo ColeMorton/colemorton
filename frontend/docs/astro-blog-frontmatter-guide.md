@@ -1,6 +1,6 @@
 # Astro Blog Post Frontmatter Guide
 
-A comprehensive guide to the YAML frontmatter structure used in Sensylate's Astro blog system, located in `frontend/src/content/blog/`.
+A comprehensive guide to the YAML frontmatter structure used in Cole Morton's Astro blog system, located in `frontend/src/content/blog/`.
 
 ## What is Frontmatter?
 
@@ -191,7 +191,7 @@ draft: false
 **Issue**: SEO issues  
 **Solution**: Ensure description length and meta_title optimization
 
-This frontmatter system provides flexible content management while maintaining consistency across Sensylate's financial analysis blog platform.
+This frontmatter system provides flexible content management while maintaining consistency across Cole Morton's financial analysis blog platform.
 
 ## Integration with Content Publisher Command
 

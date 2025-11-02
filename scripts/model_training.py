@@ -11,7 +11,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from scripts.utils.config_loader import ConfigLoader
 from scripts.utils.logging_setup import setup_logging
@@ -20,7 +20,7 @@ from scripts.utils.logging_setup import setup_logging
 class ModelTrainer:
     """Main model training class."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class ModelTrainer:
         return output_path
 
 
-def main(config: Dict[str, Any], input_file: Path) -> None:
+def main(config: dict[str, Any], input_file: Path) -> None:
     """Main execution function."""
     trainer = ModelTrainer(config)
     output_file = trainer.train_model(input_file)
@@ -46,9 +46,7 @@ def main(config: Dict[str, Any], input_file: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--config", required=True, help="Path to YAML configuration file"
-    )
+    parser.add_argument("--config", required=True, help="Path to YAML configuration file")
     parser.add_argument("--input", required=True, help="Input data file path")
     parser.add_argument(
         "--env",
@@ -72,9 +70,7 @@ if __name__ == "__main__":
         config = config_loader.load_with_environment(args.config, args.env)
 
         # Setup logging
-        setup_logging(
-            level=args.log_level, log_file=config.get("logging", {}).get("file")
-        )
+        setup_logging(level=args.log_level, log_file=config.get("logging", {}).get("file"))
 
         # Override with CLI arguments
         if args.output_file:

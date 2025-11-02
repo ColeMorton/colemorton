@@ -6,7 +6,6 @@ Validates that the enhanced templates render correctly with sample data.
 """
 
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -16,10 +15,10 @@ from jinja2 import Environment, FileSystemLoader
 def load_sample_data(file_path):
     """Load sample data from JSON file"""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
     except Exception as e:
-        print("Error loading {file_path}: {e}")
+        print(f"Error loading {file_path}: {e}")
         return {}
 
 
@@ -28,7 +27,7 @@ def test_template(template_name, data, context_vars=None):
     try:
         # Setup Jinja2 environment
         templates_dir = Path(__file__).parent / "templates"
-        env = Environment(loader=FileSystemLoader(str(templates_dir)))
+        env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
 
         # Load template
         template = env.get_template(template_name)
@@ -51,12 +50,9 @@ def test_template(template_name, data, context_vars=None):
             "word_count": len(content.split()),
             "has_frontmatter": content.startswith("---"),
             "has_confidence_scoring": "/1.0" in content,
-            "has_economic_indicators": any(
-                indicator in content for indicator in ["GDP", "Fed", "FRED"]
-            ),
+            "has_economic_indicators": any(indicator in content for indicator in ["GDP", "Fed", "FRED"]),
             "has_risk_assessment": "risk" in content.lower(),
-            "has_institutional_sections": "Investment Thesis" in content
-            and "Economic Sensitivity" in content,
+            "has_institutional_sections": "Investment Thesis" in content and "Economic Sensitivity" in content,
         }
 
     except Exception as e:
@@ -107,9 +103,7 @@ def main():
             print("   📊 Has Confidence Scoring: {result['has_confidence_scoring']}")
             print("   🌍 Has Economic Indicators: {result['has_economic_indicators']}")
             print("   ⚠️ Has Risk Assessment: {result['has_risk_assessment']}")
-            print(
-                f"   🏛️ Has Institutional Sections: {result['has_institutional_sections']}"
-            )
+            print(f"   🏛️ Has Institutional Sections: {result['has_institutional_sections']}")
 
             # Quality indicators
             institutional_score = (
@@ -125,9 +119,7 @@ def main():
             )
 
             print("   🏆 Institutional Quality Score: {institutional_score*100:.0f}%")
-            print(
-                f"   ✅ Certification: {'ACHIEVED' if institutional_score >= 0.8 else 'PARTIAL'}"
-            )
+            print(f"   ✅ Certification: {'ACHIEVED' if institutional_score >= 0.8 else 'PARTIAL'}")
 
         else:
             print("   ❌ Status: {result['status']}")

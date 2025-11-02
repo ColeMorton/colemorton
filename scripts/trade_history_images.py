@@ -3,7 +3,7 @@
 Trade History Images Generator
 
 Generate visualization images for trade history reports with automated chart selection
-and Sensylate design system compliance.
+and Cole Morton design system compliance.
 
 Usage:
     python scripts/trade_history_images.py YYYYMMDD [--report-type TYPE] [--debug] [--validate-only]
@@ -11,17 +11,18 @@ Usage:
 
 import argparse
 import logging
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import matplotlib
+
 
 matplotlib.use("Agg")  # Use non-interactive backend
 
@@ -48,7 +49,7 @@ class TradeHistoryImageGenerator:
         "INTERNAL_TRADING_REPORT": "internal_dashboard",
     }
 
-    def __init__(self, config: Dict[str, Any], debug: bool = False):
+    def __init__(self, config: dict[str, Any], debug: bool = False):
         """
         Initialize the image generator.
 
@@ -63,17 +64,13 @@ class TradeHistoryImageGenerator:
         # Initialize managers
         self.theme_manager = create_theme_manager()
         self.scalability_manager = create_scalability_manager(config)
-        self.chart_generator = create_chart_generator(
-            self.theme_manager, self.scalability_manager
-        )
+        self.chart_generator = create_chart_generator(self.theme_manager, self.scalability_manager)
         self.parser = DashboardDataParser()
 
         # Base directories
         self.reports_dir = Path("data/outputs/trade_history")
 
-    def generate_images_for_date(
-        self, date_str: str, report_type: Optional[str] = None
-    ) -> List[Path]:
+    def generate_images_for_date(self, date_str: str, report_type: str | None = None) -> list[Path]:
         """
         Generate images for all reports matching the specified date.
 
@@ -108,17 +105,13 @@ class TradeHistoryImageGenerator:
                 generated_images.extend(report_images)
 
             except Exception as e:
-                self.logger.error(
-                    f"Failed to generate images for {report_path.name}: {e}"
-                )
+                self.logger.error(f"Failed to generate images for {report_path.name}: {e}")
                 if self.debug:
                     raise
 
         return generated_images
 
-    def _discover_reports(
-        self, date_str: str, report_type: Optional[str] = None
-    ) -> List[Path]:
+    def _discover_reports(self, date_str: str, report_type: str | None = None) -> list[Path]:
         """
         Discover trade history reports for the specified date.
 
@@ -164,7 +157,7 @@ class TradeHistoryImageGenerator:
         # Sort by filename for consistent processing order
         return sorted(found_reports)
 
-    def _generate_images_for_report(self, report_path: Path) -> List[Path]:
+    def _generate_images_for_report(self, report_path: Path) -> list[Path]:
         """
         Generate visualization images for a single report.
 
@@ -179,9 +172,7 @@ class TradeHistoryImageGenerator:
         # Determine report type
         report_type = self._identify_report_type(str(report_path))
         if not report_type:
-            self.logger.warning(
-                f"Could not identify report type for: {report_path.name}"
-            )
+            self.logger.warning(f"Could not identify report type for: {report_path.name}")
             return []
 
         visualization_type = self.REPORT_PATTERNS[report_type]
@@ -189,21 +180,16 @@ class TradeHistoryImageGenerator:
         # Generate visualizations based on report type
         if visualization_type == "performance_dashboard":
             return self._generate_performance_dashboard(report_path)
-        elif visualization_type == "signal_charts":
+        if visualization_type == "signal_charts":
             return self._generate_signal_charts(report_path)
-        elif visualization_type == "trade_distribution":
+        if visualization_type == "trade_distribution":
             return self._generate_trade_distribution(report_path)
-        elif visualization_type == "internal_dashboard":
-            return self._generate_performance_dashboard(
-                report_path
-            )  # Same as performance
-        else:
-            self.logger.warning(
-                f"Visualization type not implemented: {visualization_type}"
-            )
-            return []
+        if visualization_type == "internal_dashboard":
+            return self._generate_performance_dashboard(report_path)  # Same as performance
+        self.logger.warning(f"Visualization type not implemented: {visualization_type}")
+        return []
 
-    def _identify_report_type(self, filepath: str) -> Optional[str]:
+    def _identify_report_type(self, filepath: str) -> str | None:
         """
         Identify the report type from file path.
 
@@ -224,7 +210,7 @@ class TradeHistoryImageGenerator:
                 return report_type
         return None
 
-    def _generate_performance_dashboard(self, report_path: Path) -> List[Path]:
+    def _generate_performance_dashboard(self, report_path: Path) -> list[Path]:
         """
         Generate performance dashboard images using existing dashboard generator.
 
@@ -272,7 +258,7 @@ class TradeHistoryImageGenerator:
             self.logger.error(f"Failed to generate performance dashboard: {e}")
             raise
 
-    def _generate_signal_charts(self, report_path: Path) -> List[Path]:
+    def _generate_signal_charts(self, report_path: Path) -> list[Path]:
         """
         Generate signal monitoring charts (placeholder implementation).
 
@@ -283,12 +269,10 @@ class TradeHistoryImageGenerator:
             List of generated image file paths
         """
         # TODO: Implement signal-specific visualizations
-        self.logger.info(
-            f"Signal charts generation not yet implemented for {report_path.name}"
-        )
+        self.logger.info(f"Signal charts generation not yet implemented for {report_path.name}")
         return []
 
-    def _generate_trade_distribution(self, report_path: Path) -> List[Path]:
+    def _generate_trade_distribution(self, report_path: Path) -> list[Path]:
         """
         Generate trade distribution charts (placeholder implementation).
 
@@ -299,9 +283,7 @@ class TradeHistoryImageGenerator:
             List of generated image file paths
         """
         # TODO: Implement trade distribution visualizations
-        self.logger.info(
-            f"Trade distribution charts not yet implemented for {report_path.name}"
-        )
+        self.logger.info(f"Trade distribution charts not yet implemented for {report_path.name}")
         return []
 
     def _create_target_path(self, report_path: Path, mode: str) -> Path:
@@ -410,9 +392,7 @@ def main():
             sys.exit(0)
 
         # Generate images
-        generated_images = generator.generate_images_for_date(
-            args.date, args.report_type
-        )
+        generated_images = generator.generate_images_for_date(args.date, args.report_type)
 
         if generated_images:
             print("✅ Successfully generated {len(generated_images)} image(s):")

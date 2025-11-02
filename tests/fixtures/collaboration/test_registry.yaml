@@ -6,7 +6,7 @@ commands:
     classification: "collaboration_infrastructure"
     scope: "test"
     location: "/test/path/test-analyzer.md"
-    manifest: "/Users/colemorton/Projects/sensylate/tests/fixtures/collaboration/test-analyzer-manifest.yaml"
+    manifest: "/Users/colemorton/Projects/colemorton.com/tests/fixtures/collaboration/test-analyzer-manifest.yaml"
     performance_metrics:
       avg_execution_time: "45s"
       cache_hit_rate: 0.75
@@ -18,7 +18,7 @@ commands:
     classification: "collaboration_infrastructure"
     scope: "test"
     location: "/test/path/test-strategist.md"
-    manifest: "/Users/colemorton/Projects/sensylate/tests/fixtures/collaboration/test-strategist-manifest.yaml"
+    manifest: "/Users/colemorton/Projects/colemorton.com/tests/fixtures/collaboration/test-strategist-manifest.yaml"
     performance_metrics:
       avg_execution_time: "60s"
       cache_hit_rate: 0.60
@@ -30,7 +30,7 @@ commands:
     classification: "collaboration_infrastructure"
     scope: "test"
     location: "/test/path/test-implementer.md"
-    manifest: "/Users/colemorton/Projects/sensylate/tests/fixtures/collaboration/test-implementer-manifest.yaml"
+    manifest: "/Users/colemorton/Projects/colemorton.com/tests/fixtures/collaboration/test-implementer-manifest.yaml"
     performance_metrics:
       avg_execution_time: "90s"
       cache_hit_rate: 0.80
@@ -42,7 +42,7 @@ commands:
     classification: "core_product"
     scope: "test"
     location: "/test/path/test-product-command.md"
-    manifest: "/Users/colemorton/Projects/sensylate/tests/fixtures/collaboration/test-product-command-manifest.yaml"
+    manifest: "/Users/colemorton/Projects/colemorton.com/tests/fixtures/collaboration/test-product-command-manifest.yaml"
     performance_metrics:
       avg_execution_time: "30s"
       cache_hit_rate: 0.85

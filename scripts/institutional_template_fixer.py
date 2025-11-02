@@ -7,7 +7,6 @@ Automatically updates published macro analysis content to meet institutional qua
 import glob
 import os
 import re
-from typing import Dict
 
 import yaml
 
@@ -20,7 +19,7 @@ class InstitutionalTemplateFixer:
         self.blog_directory = blog_directory
         self.fixes_applied = []
 
-    def fix_all_template_violations(self) -> Dict:
+    def fix_all_template_violations(self) -> dict:
         """Fix all template compliance violations in published content"""
         print("🔧 Starting Institutional Template Compliance Fixes...")
 
@@ -51,14 +50,14 @@ class InstitutionalTemplateFixer:
                 results["errors"].append(error_msg)
 
         print(
-            f'✅ Template fixes complete! Processed {results["files_processed"]} files, applied {results["fixes_applied"]} fixes'
+            f"✅ Template fixes complete! Processed {results['files_processed']} files, applied {results['fixes_applied']} fixes"
         )
         return results
 
     def _fix_file_template_compliance(self, file_path: str) -> int:
         """Fix template compliance violations in a single file"""
         # Read file
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         if not content.startswith("---"):
@@ -91,22 +90,14 @@ class InstitutionalTemplateFixer:
         # Fix 1: Title format (remove hyphens)
         original_title = frontmatter.get("title", "")
         if "Macro-Economic" in original_title:
-            frontmatter["title"] = original_title.replace(
-                "Macro-Economic", "Macro Economic"
-            )
+            frontmatter["title"] = original_title.replace("Macro-Economic", "Macro Economic")
             fixes_applied += 1
             print("  ✓ Fixed title format")
 
         # Fix 2: Add proper meta_title with business cycle assessment
-        if not frontmatter.get(
-            "meta_title"
-        ) or "Business Cycle Assessment" not in frontmatter.get("meta_title", ""):
-            month_year = self._extract_month_year_from_title(
-                frontmatter.get("title", "")
-            )
-            frontmatter[
-                "meta_title"
-            ] = f"{region} Macro Economic Analysis - Business Cycle Assessment | {month_year}"
+        if not frontmatter.get("meta_title") or "Business Cycle Assessment" not in frontmatter.get("meta_title", ""):
+            month_year = self._extract_month_year_from_title(frontmatter.get("title", ""))
+            frontmatter["meta_title"] = f"{region} Macro Economic Analysis - Business Cycle Assessment | {month_year}"
             fixes_applied += 1
             print("  ✓ Fixed meta_title format")
 
@@ -118,21 +109,21 @@ class InstitutionalTemplateFixer:
             economic_phase = macro_data.get("outlook", "Expansion")
             confidence = macro_data.get("confidence", 0.94)
 
-            optimized_description = f"Comprehensive {region} macro economic analysis with business cycle positioning and recession probabilities. Current phase: {economic_phase} with {int(confidence*100)}% confidence."
+            optimized_description = f"Comprehensive {region} macro economic analysis with business cycle positioning and recession probabilities. Current phase: {economic_phase} with {int(confidence * 100)}% confidence."
 
             # Trim to exactly 150-200 characters
             if len(optimized_description) > 200:
                 optimized_description = optimized_description[:197] + "..."
             elif len(optimized_description) < 150:
-                optimized_description += " Professional institutional analysis with economic forecasting and policy assessment."
+                optimized_description += (
+                    " Professional institutional analysis with economic forecasting and policy assessment."
+                )
                 if len(optimized_description) > 200:
                     optimized_description = optimized_description[:200]
 
             frontmatter["description"] = optimized_description
             fixes_applied += 1
-            print(
-                f"  ✓ Optimized description length: {len(optimized_description)} chars"
-            )
+            print(f"  ✓ Optimized description length: {len(optimized_description)} chars")
 
         # Fix 4: Correct categories structure
         expected_categories = [
@@ -171,12 +162,8 @@ class InstitutionalTemplateFixer:
         required_fields = {
             "economic_phase": self._determine_economic_phase(macro_data),
             "policy_stance": self._determine_policy_stance(macro_data),
-            "business_cycle_position": self._determine_business_cycle_position(
-                macro_data
-            ),
-            "interest_rate_environment": self._determine_interest_environment(
-                macro_data
-            ),
+            "business_cycle_position": self._determine_business_cycle_position(macro_data),
+            "interest_rate_environment": self._determine_interest_environment(macro_data),
             "inflation_trajectory": self._determine_inflation_trajectory(macro_data),
             "risk_score": self._determine_risk_score(macro_data),
         }
@@ -205,9 +192,7 @@ class InstitutionalTemplateFixer:
         # Save fixed file if any fixes were applied
         if fixes_applied > 0:
             # Reconstruct file content
-            fixed_frontmatter = yaml.dump(
-                frontmatter, default_flow_style=False, sort_keys=False
-            )
+            fixed_frontmatter = yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)
             fixed_content = f"---\n{fixed_frontmatter}---\n\n{body_content}"
 
             # Write back to file
@@ -223,16 +208,15 @@ class InstitutionalTemplateFixer:
         filename_lower = filename.lower()
         if filename_lower.startswith("us-"):
             return "US"
-        elif filename_lower.startswith("americas-"):
+        if filename_lower.startswith("americas-"):
             return "Americas"
-        elif filename_lower.startswith("europe-"):
+        if filename_lower.startswith("europe-"):
             return "Europe"
-        elif filename_lower.startswith("asia-"):
+        if filename_lower.startswith("asia-"):
             return "Asia"
-        elif filename_lower.startswith("global-"):
+        if filename_lower.startswith("global-"):
             return "Global"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _extract_month_year_from_title(self, title: str) -> str:
         """Extract month and year from title"""
@@ -242,23 +226,22 @@ class InstitutionalTemplateFixer:
             return f"{match.group(1)} {match.group(2)}"
         return "September 2025"  # Default fallback
 
-    def _determine_economic_phase(self, macro_data: Dict) -> str:
+    def _determine_economic_phase(self, macro_data: dict) -> str:
         """Determine economic phase from existing data"""
         outlook = macro_data.get("outlook", "").upper()
         business_cycle = macro_data.get("business_cycle", "").lower()
 
         if "expansion" in outlook or "expansion" in business_cycle:
             return "Expansion"
-        elif "contraction" in outlook or "contraction" in business_cycle:
+        if "contraction" in outlook or "contraction" in business_cycle:
             return "Contraction"
-        elif "peak" in business_cycle:
+        if "peak" in business_cycle:
             return "Peak"
-        elif "trough" in business_cycle:
+        if "trough" in business_cycle:
             return "Trough"
-        else:
-            return "Expansion"  # Default for most current economies
+        return "Expansion"  # Default for most current economies
 
-    def _determine_policy_stance(self, macro_data: Dict) -> str:
+    def _determine_policy_stance(self, macro_data: dict) -> str:
         """Determine policy stance from existing data"""
         policy_rate = macro_data.get("policy_rate", "")
 
@@ -268,31 +251,29 @@ class InstitutionalTemplateFixer:
                 rate = float(policy_rate.replace("%", ""))
                 if rate >= 4.5:
                     return "Restrictive"
-                elif rate <= 2.0:
+                if rate <= 2.0:
                     return "Accommodative"
-                else:
-                    return "Neutral"
+                return "Neutral"
             except ValueError:
                 pass
 
         return "Restrictive"  # Default for current high-rate environment
 
-    def _determine_business_cycle_position(self, macro_data: Dict) -> str:
+    def _determine_business_cycle_position(self, macro_data: dict) -> str:
         """Determine business cycle position"""
         business_cycle = macro_data.get("business_cycle", "").lower()
 
         if "late" in business_cycle and "expansion" in business_cycle:
             return "Late-Expansion"
-        elif "early" in business_cycle and "expansion" in business_cycle:
+        if "early" in business_cycle and "expansion" in business_cycle:
             return "Early-Expansion"
-        elif "mid" in business_cycle and "expansion" in business_cycle:
+        if "mid" in business_cycle and "expansion" in business_cycle:
             return "Mid-Expansion"
-        elif "contraction" in business_cycle:
+        if "contraction" in business_cycle:
             return "Early-Contraction"
-        else:
-            return "Late-Expansion"  # Most common current position
+        return "Late-Expansion"  # Most common current position
 
-    def _determine_interest_environment(self, macro_data: Dict) -> str:
+    def _determine_interest_environment(self, macro_data: dict) -> str:
         """Determine interest rate environment"""
         policy_rate = macro_data.get("policy_rate", "")
 
@@ -302,16 +283,15 @@ class InstitutionalTemplateFixer:
                 rate = float(policy_rate.replace("%", ""))
                 if rate >= 4.5:
                     return "Stable"  # High rates tend to stabilize
-                elif rate <= 2.0:
+                if rate <= 2.0:
                     return "Rising"  # Low rates tend to rise
-                else:
-                    return "Stable"
+                return "Stable"
             except ValueError:
                 pass
 
         return "Stable"  # Default for current environment
 
-    def _determine_inflation_trajectory(self, macro_data: Dict) -> str:
+    def _determine_inflation_trajectory(self, macro_data: dict) -> str:
         """Determine inflation trajectory"""
         inflation_rate = macro_data.get("inflation_rate", "")
 
@@ -320,16 +300,15 @@ class InstitutionalTemplateFixer:
                 rate = float(inflation_rate.replace("%", ""))
                 if rate <= 2.5:
                     return "Stable"  # Near target
-                elif rate >= 4.0:
+                if rate >= 4.0:
                     return "Falling"  # High inflation falling
-                else:
-                    return "Stable"
+                return "Stable"
             except ValueError:
                 pass
 
         return "Falling"  # Default for disinflationary environment
 
-    def _determine_risk_score(self, macro_data: Dict) -> str:
+    def _determine_risk_score(self, macro_data: dict) -> str:
         """Determine risk score from existing data"""
         recession_prob = macro_data.get("recession_probability", "15%")
 
@@ -339,12 +318,11 @@ class InstitutionalTemplateFixer:
                 prob = float(recession_prob.replace("%", ""))
                 if prob <= 15:
                     return "2.5/5.0"  # Low risk
-                elif prob <= 25:
+                if prob <= 25:
                     return "3.0/5.0"  # Moderate risk
-                elif prob <= 40:
+                if prob <= 40:
                     return "3.5/5.0"  # Elevated risk
-                else:
-                    return "4.0/5.0"  # High risk
+                return "4.0/5.0"  # High risk
         except ValueError:
             pass
 
@@ -363,15 +341,15 @@ def main():
 
     # Display results
     print("\n✅ Institutional Template Fixes Complete!")
-    print(f'📊 Files Processed: {results["files_processed"]}')
-    print(f'🔧 Total Fixes Applied: {results["fixes_applied"]}')
-    print(f'📝 Files Modified: {len(results["files_fixed"])}')
+    print(f"📊 Files Processed: {results['files_processed']}")
+    print(f"🔧 Total Fixes Applied: {results['fixes_applied']}")
+    print(f"📝 Files Modified: {len(results['files_fixed'])}")
 
     if results["files_fixed"]:
-        print(f'📋 Fixed Files: {", ".join(results["files_fixed"])}')
+        print(f"📋 Fixed Files: {', '.join(results['files_fixed'])}")
 
     if results["errors"]:
-        print(f'⚠️  Errors: {len(results["errors"])}')
+        print(f"⚠️  Errors: {len(results['errors'])}")
         for error in results["errors"]:
             print(f"  - {error}")
 

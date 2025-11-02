@@ -3,7 +3,7 @@
 Dashboard generator for creating scalable performance overview visualizations.
 
 This script generates high-resolution dashboard images from historical trading
-performance data, following Sensylate design system specifications.
+performance data, following Cole Morton design system specifications.
 """
 
 import argparse
@@ -11,15 +11,17 @@ import logging
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import matplotlib
 
+
 matplotlib.use("Agg")  # Use non-interactive backend for server environments
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import matplotlib.pyplot as plt
 
@@ -42,7 +44,7 @@ from scripts.utils.theme_manager import create_theme_manager
 class DashboardGenerator:
     """Main dashboard generation class."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize dashboard generator.
 
@@ -111,14 +113,14 @@ class DashboardGenerator:
         return output_path
 
     def _setup_matplotlib(self, mode: str):
-        """Setup matplotlib with Sensylate theme."""
+        """Setup matplotlib with Cole Morton theme."""
         style_config = self.theme_manager.get_matplotlib_style(mode)
 
         # Apply style configuration
         for key, value in style_config.items():
             plt.rcParams[key] = value
 
-    def _create_dashboard_figure(self, data: Dict[str, Any], mode: str) -> plt.Figure:
+    def _create_dashboard_figure(self, data: dict[str, Any], mode: str) -> plt.Figure:
         """
         Create the enhanced dashboard figure with adaptive layout.
 
@@ -130,23 +132,16 @@ class DashboardGenerator:
             Matplotlib figure object
         """
         # Determine layout strategy based on available data
-        has_monthly_data = (
-            data.get("monthly_performance") and len(data["monthly_performance"]) > 0
-        )
-        has_quality_data = (
-            data.get("quality_distribution") and len(data["quality_distribution"]) > 0
-        )
+        has_monthly_data = data.get("monthly_performance") and len(data["monthly_performance"]) > 0
+        has_quality_data = data.get("quality_distribution") and len(data["quality_distribution"]) > 0
 
         if has_monthly_data and has_quality_data:
             # Use standard 2x2 grid layout
             return self._create_standard_layout(data, mode)
-        else:
-            # Use adaptive stacked layout
-            return self._create_adaptive_layout(
-                data, mode, has_monthly_data, has_quality_data
-            )
+        # Use adaptive stacked layout
+        return self._create_adaptive_layout(data, mode, has_monthly_data, has_quality_data)
 
-    def _create_standard_layout(self, data: Dict[str, Any], mode: str) -> plt.Figure:
+    def _create_standard_layout(self, data: dict[str, Any], mode: str) -> plt.Figure:
         """Create standard 2x2 grid layout when all data is available."""
         # Create enhanced layout
         fig, gs = self.layout_manager.create_dashboard_figure()
@@ -166,12 +161,8 @@ class DashboardGenerator:
 
         # Generate enhanced chart components
         self._create_enhanced_key_metrics(metrics_ax, data["performance_metrics"], mode)
-        self.chart_generator.create_enhanced_monthly_bars(
-            monthly_ax, data["monthly_performance"], mode
-        )
-        self.chart_generator.create_enhanced_donut_chart(
-            quality_ax, data["quality_distribution"], mode
-        )
+        self.chart_generator.create_enhanced_monthly_bars(monthly_ax, data["monthly_performance"], mode)
+        self.chart_generator.create_enhanced_donut_chart(quality_ax, data["quality_distribution"], mode)
         self.chart_generator.create_waterfall_chart(trades_ax, data["trades"], mode)
         self.chart_generator.create_enhanced_scatter(duration_ax, data["trades"], mode)
 
@@ -182,7 +173,7 @@ class DashboardGenerator:
 
     def _create_adaptive_layout(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         mode: str,
         has_monthly_data: bool,
         has_quality_data: bool,
@@ -220,9 +211,7 @@ class DashboardGenerator:
         # Right side: quality chart or trade statistics based on available data
         if has_quality_data:
             stats_ax = fig.add_subplot(gs[2, 1])
-            self.chart_generator.create_enhanced_donut_chart(
-                stats_ax, data["quality_distribution"], mode
-            )
+            self.chart_generator.create_enhanced_donut_chart(stats_ax, data["quality_distribution"], mode)
         else:
             stats_ax = fig.add_subplot(gs[2, 1])
             self._create_trade_statistics_panel(stats_ax, data["trades"], mode)
@@ -235,15 +224,11 @@ class DashboardGenerator:
         self._add_dashboard_title(fig, data, theme)
 
         # Apply enhanced spacing and typography with improved margins
-        self._apply_enhanced_styling(
-            fig, [metrics_ax, waterfall_ax, duration_ax, stats_ax], mode
-        )
+        self._apply_enhanced_styling(fig, [metrics_ax, waterfall_ax, duration_ax, stats_ax], mode)
 
         return fig
 
-    def _create_trade_statistics_panel(
-        self, ax: plt.Axes, trades: list, mode: str
-    ) -> None:
+    def _create_trade_statistics_panel(self, ax: plt.Axes, trades: list, mode: str) -> None:
         """Create a trade statistics panel when quality data is not available."""
         # Remove axis limits to allow full utilization of allocated grid space
         ax.axis("off")
@@ -269,16 +254,10 @@ class DashboardGenerator:
         losers = [t for t in trades if t.return_pct < 0]
         avg_winner = sum(t.return_pct for t in winners) / len(winners) if winners else 0
         avg_loser = sum(t.return_pct for t in losers) / len(losers) if losers else 0
-        avg_duration = (
-            sum(t.duration_days for t in trades) / total_trades if trades else 0
-        )
+        avg_duration = sum(t.duration_days for t in trades) / total_trades if trades else 0
 
         # Calculate comprehensive statistics for institutional-grade display
-        profit_factor = (
-            abs(avg_winner * len(winners) / avg_loser / len(losers))
-            if losers and avg_loser != 0
-            else 0
-        )
+        profit_factor = abs(avg_winner * len(winners) / avg_loser / len(losers)) if losers and avg_loser != 0 else 0
         largest_winner = max(t.return_pct for t in winners) if winners else 0
         largest_loser = min(t.return_pct for t in losers) if losers else 0
         win_loss_ratio = len(winners) / len(losers) if losers else float("inf")
@@ -292,8 +271,7 @@ class DashboardGenerator:
         total_gross_profit = sum(t.return_pct for t in winners) if winners else 0
         total_gross_loss = sum(t.return_pct for t in losers) if losers else 0
         expectancy = (
-            (avg_winner * len(winners) / total_trades)
-            + (avg_loser * len(losers) / total_trades)
+            (avg_winner * len(winners) / total_trades) + (avg_loser * len(losers) / total_trades)
             if total_trades > 0
             else 0
         )
@@ -304,11 +282,7 @@ class DashboardGenerator:
         recovery_factor = total_return / abs(largest_loser) if largest_loser != 0 else 0
         sharpe_approximation = (
             (total_return / len(trades))
-            / (
-                sum([(r - total_return / len(trades)) ** 2 for r in returns])
-                / len(trades)
-            )
-            ** 0.5
+            / (sum([(r - total_return / len(trades)) ** 2 for r in returns]) / len(trades)) ** 0.5
             if len(trades) > 1
             else 0
         )
@@ -320,7 +294,7 @@ class DashboardGenerator:
         # Create expanded institutional-grade two-column layout
         left_column = f"""Total Trades: {total_trades}
 Winners: {len(winners)} ({win_rate_pct:.1f}%)
-Losers: {len(losers)} ({(100-win_rate_pct):.1f}%)
+Losers: {len(losers)} ({(100 - win_rate_pct):.1f}%)
 Breakeven: {breakeven_trades}
 Win/Loss Ratio: {win_loss_ratio:.2f}
 Total Return: {total_return:+.1f}%
@@ -342,7 +316,7 @@ Median Return: {median_return:+.1f}%
 Avg Duration: {avg_duration:.1f} days
 Duration Range: {min_duration}-{max_duration} days
 Trades >5%: {total_trades_over_5pct}
-Trade Efficiency: {(len(winners)/total_trades*100):.0f}%"""
+Trade Efficiency: {(len(winners) / total_trades * 100):.0f}%"""
 
         # Create a large background rectangle to fill the entire allocated space for true symmetry
         from matplotlib.patches import Rectangle
@@ -410,9 +384,7 @@ Trade Efficiency: {(len(winners)/total_trades*100):.0f}%"""
 
         return max_consecutive
 
-    def _add_dashboard_title(
-        self, fig: plt.Figure, data: Dict[str, Any], theme
-    ) -> None:
+    def _add_dashboard_title(self, fig: plt.Figure, data: dict[str, Any], theme) -> None:
         """Add enhanced title and subtitle to dashboard."""
         metadata = data.get("metadata", {})
         title = "Historical Trading Performance Dashboard"
@@ -494,13 +466,9 @@ Trade Efficiency: {(len(winners)/total_trades*100):.0f}%"""
         # Generate filename
         timestamp = datetime.now().strftime("%Y%m%d")
         if mode == "light":
-            filename = output_config.get(
-                "light_mode_file", "dashboard-light-{timestamp}.png"
-            )
+            filename = output_config.get("light_mode_file", "dashboard-light-{timestamp}.png")
         else:
-            filename = output_config.get(
-                "dark_mode_file", "dashboard-dark-{timestamp}.png"
-            )
+            filename = output_config.get("dark_mode_file", "dashboard-dark-{timestamp}.png")
 
         filename = filename.format(timestamp=timestamp)
         output_path = base_path / filename
@@ -519,11 +487,11 @@ Trade Efficiency: {(len(winners)/total_trades*100):.0f}%"""
 
 
 def main(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     input_file: Path,
     mode: str = "both",
-    output_dir: Optional[Path] = None,
-) -> List[Path]:
+    output_dir: Path | None = None,
+) -> list[Path]:
     """
     Main execution function.
 
@@ -567,18 +535,14 @@ if __name__ == "__main__":
         default="config/pipelines/dashboard_generation.yaml",
         help="Path to YAML configuration file",
     )
-    parser.add_argument(
-        "--input", required=True, help="Input historical performance markdown file"
-    )
+    parser.add_argument("--input", required=True, help="Input historical performance markdown file")
     parser.add_argument(
         "--mode",
         choices=["light", "dark", "both"],
         default="both",
         help="Dashboard mode to generate",
     )
-    parser.add_argument(
-        "--output-dir", help="Output directory override (default from config)"
-    )
+    parser.add_argument("--output-dir", help="Output directory override (default from config)")
     parser.add_argument(
         "--env",
         choices=["dev", "staging", "prod"],
@@ -614,19 +578,15 @@ if __name__ == "__main__":
             # Suppress INFO and lower for quiet mode
             logging.getLogger().setLevel(logging.WARNING)
         else:
-            setup_logging(
-                level=args.log_level, log_file=config.get("logging", {}).get("file")
-            )
+            setup_logging(level=args.log_level, log_file=config.get("logging", {}).get("file"))
 
         # Validate configuration
         try:
             validation_summary = validate_dashboard_config(config)
             if not args.quiet:
                 if validation_summary["warning_count"] > 0:
-                    print(
-                        f"⚠️  Configuration validation passed with {validation_summary['warning_count']} warning(s)"
-                    )
-        except ConfigValidationError as e:
+                    print(f"⚠️  Configuration validation passed with {validation_summary['warning_count']} warning(s)")
+        except ConfigValidationError:
             print("❌ Configuration validation failed: {e}")
             sys.exit(1)
 
@@ -634,7 +594,7 @@ if __name__ == "__main__":
         input_path = Path(args.input)
         try:
             validate_input_file(input_path)
-        except ConfigValidationError as e:
+        except ConfigValidationError:
             print("❌ Input file validation failed: {e}")
             sys.exit(1)
 

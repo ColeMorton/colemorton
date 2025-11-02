@@ -12,10 +12,9 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
-
 from data_contract_discovery import (
     ContractDiscoveryResult,
     DataContract,
@@ -47,15 +46,15 @@ class ContractComplianceReport:
     # File metadata
     exists: bool = False
     file_size_bytes: int = 0
-    last_modified: Optional[datetime] = None
+    last_modified: datetime | None = None
     age_hours: float = 0.0
 
     # Schema compliance
     schema_valid: bool = False
     row_count: int = 0
     column_count: int = 0
-    missing_columns: List[str] = None
-    extra_columns: List[str] = None
+    missing_columns: list[str] = None
+    extra_columns: list[str] = None
 
     # Data quality metrics
     data_quality_score: float = 0.0
@@ -64,12 +63,12 @@ class ContractComplianceReport:
     data_type_violations: int = 0
 
     # Service fulfillment
-    capable_services: List[str] = None
+    capable_services: list[str] = None
     fulfillment_possible: bool = False
 
     # Issues and recommendations
-    issues: List[str] = None
-    recommendations: List[str] = None
+    issues: list[str] = None
+    recommendations: list[str] = None
 
     def __post_init__(self):
         if self.missing_columns is None:
@@ -83,13 +82,11 @@ class ContractComplianceReport:
         if self.recommendations is None:
             self.recommendations = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         result = asdict(self)
         result["status"] = self.status.value
-        result["last_modified"] = (
-            self.last_modified.isoformat() if self.last_modified else None
-        )
+        result["last_modified"] = self.last_modified.isoformat() if self.last_modified else None
         return result
 
 
@@ -107,7 +104,7 @@ class SystemComplianceReport:
     missing_contracts: int = 0
 
     # Category breakdown
-    category_summary: Dict[str, Dict[str, int]] = None
+    category_summary: dict[str, dict[str, int]] = None
 
     # Overall metrics
     overall_compliance_score: float = 0.0
@@ -116,12 +113,12 @@ class SystemComplianceReport:
     service_availability_score: float = 0.0
 
     # Contract reports
-    contract_reports: List[ContractComplianceReport] = None
+    contract_reports: list[ContractComplianceReport] = None
 
     # System health indicators
-    critical_issues: List[str] = None
-    warnings: List[str] = None
-    recommendations: List[str] = None
+    critical_issues: list[str] = None
+    warnings: list[str] = None
+    recommendations: list[str] = None
 
     def __post_init__(self):
         if self.category_summary is None:
@@ -135,13 +132,11 @@ class SystemComplianceReport:
         if self.recommendations is None:
             self.recommendations = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         result = asdict(self)
         result["report_timestamp"] = self.report_timestamp.isoformat()
-        result["contract_reports"] = [
-            report.to_dict() for report in self.contract_reports
-        ]
+        result["contract_reports"] = [report.to_dict() for report in self.contract_reports]
         return result
 
 
@@ -150,7 +145,7 @@ class ContractComplianceMonitor:
     Monitors and reports on contract compliance across the entire system
     """
 
-    def __init__(self, frontend_data_path: Optional[Path] = None):
+    def __init__(self, frontend_data_path: Path | None = None):
         """Initialize compliance monitor"""
         setup_logging("INFO")
         self.logger = logging.getLogger("contract_compliance_monitor")
@@ -183,9 +178,7 @@ class ContractComplianceMonitor:
                 contract_reports.append(report)
 
             # Calculate overall system metrics
-            system_report = self._generate_system_report(
-                contract_reports, discovery_result
-            )
+            system_report = self._generate_system_report(contract_reports, discovery_result)
 
             processing_time = (datetime.now() - start_time).total_seconds()
             self.logger.info(f"Compliance report generated in {processing_time:.2f}s")
@@ -196,9 +189,7 @@ class ContractComplianceMonitor:
             self.logger.error(f"Failed to generate compliance report: {e}")
             raise
 
-    def _analyze_contract_compliance(
-        self, contract: DataContract
-    ) -> ContractComplianceReport:
+    def _analyze_contract_compliance(self, contract: DataContract) -> ContractComplianceReport:
         """Analyze compliance for a single contract"""
 
         report = ContractComplianceReport(
@@ -230,26 +221,18 @@ class ContractComplianceMonitor:
 
         return report
 
-    def _analyze_file_metadata(
-        self, contract: DataContract, report: ContractComplianceReport
-    ):
+    def _analyze_file_metadata(self, contract: DataContract, report: ContractComplianceReport):
         """Analyze file metadata and freshness"""
 
         if contract.file_path.exists() and contract.file_path.is_file():
             report.exists = True
             report.file_size_bytes = contract.file_path.stat().st_size
-            report.last_modified = datetime.fromtimestamp(
-                contract.file_path.stat().st_mtime
-            )
-            report.age_hours = (
-                datetime.now() - report.last_modified
-            ).total_seconds() / 3600
+            report.last_modified = datetime.fromtimestamp(contract.file_path.stat().st_mtime)
+            report.age_hours = (datetime.now() - report.last_modified).total_seconds() / 3600
 
             # Check freshness
             if report.age_hours > self.freshness_critical_hours:
-                report.issues.append(
-                    f"Data is critically stale ({report.age_hours:.1f}h old)"
-                )
+                report.issues.append(f"Data is critically stale ({report.age_hours:.1f}h old)")
             elif report.age_hours > self.freshness_warning_hours:
                 report.issues.append(f"Data is stale ({report.age_hours:.1f}h old)")
 
@@ -257,13 +240,9 @@ class ContractComplianceMonitor:
             report.exists = False
             report.status = ComplianceStatus.MISSING
             report.issues.append("Contract file does not exist")
-            report.recommendations.append(
-                "Run data pipeline to generate missing contract data"
-            )
+            report.recommendations.append("Run data pipeline to generate missing contract data")
 
-    def _analyze_schema_compliance(
-        self, contract: DataContract, report: ContractComplianceReport
-    ):
+    def _analyze_schema_compliance(self, contract: DataContract, report: ContractComplianceReport):
         """Analyze schema compliance"""
 
         try:
@@ -281,22 +260,16 @@ class ContractComplianceMonitor:
             report.schema_valid = len(report.missing_columns) == 0
 
             if report.missing_columns:
-                report.issues.append(
-                    f"Missing required columns: {report.missing_columns}"
-                )
+                report.issues.append(f"Missing required columns: {report.missing_columns}")
 
             if len(df) < contract.minimum_rows:
-                report.issues.append(
-                    f"Insufficient data: {len(df)} rows < {contract.minimum_rows} required"
-                )
+                report.issues.append(f"Insufficient data: {len(df)} rows < {contract.minimum_rows} required")
 
         except Exception as e:
             report.schema_valid = False
             report.issues.append(f"Schema validation failed: {str(e)}")
 
-    def _analyze_data_quality(
-        self, contract: DataContract, report: ContractComplianceReport
-    ):
+    def _analyze_data_quality(self, contract: DataContract, report: ContractComplianceReport):
         """Analyze data quality metrics"""
 
         try:
@@ -310,15 +283,11 @@ class ContractComplianceMonitor:
             # Calculate quality metrics
             total_cells = df.size
             null_cells = df.isnull().sum().sum()
-            report.null_percentage = (
-                (null_cells / total_cells) * 100 if total_cells > 0 else 0
-            )
+            report.null_percentage = (null_cells / total_cells) * 100 if total_cells > 0 else 0
 
             # Check for duplicates
             duplicate_rows = df.duplicated().sum()
-            report.duplicate_percentage = (
-                (duplicate_rows / len(df)) * 100 if len(df) > 0 else 0
-            )
+            report.duplicate_percentage = (duplicate_rows / len(df)) * 100 if len(df) > 0 else 0
 
             # Data type validation
             report.data_type_violations = self._validate_data_types(df, contract)
@@ -347,19 +316,13 @@ class ContractComplianceMonitor:
 
             # Add quality issues
             if report.null_percentage > 20:
-                report.issues.append(
-                    f"High null percentage: {report.null_percentage:.1f}%"
-                )
+                report.issues.append(f"High null percentage: {report.null_percentage:.1f}%")
 
             if report.duplicate_percentage > 5:
-                report.issues.append(
-                    f"High duplicate percentage: {report.duplicate_percentage:.1f}%"
-                )
+                report.issues.append(f"High duplicate percentage: {report.duplicate_percentage:.1f}%")
 
             if report.data_type_violations > 0:
-                report.issues.append(
-                    f"Data type violations: {report.data_type_violations}"
-                )
+                report.issues.append(f"Data type violations: {report.data_type_violations}")
 
         except Exception as e:
             report.data_quality_score = 0.0
@@ -391,9 +354,7 @@ class ContractComplianceMonitor:
 
         return violations
 
-    def _analyze_service_fulfillment(
-        self, contract: DataContract, report: ContractComplianceReport
-    ):
+    def _analyze_service_fulfillment(self, contract: DataContract, report: ContractComplianceReport):
         """Analyze service fulfillment capabilities"""
 
         report.capable_services = self.pipeline.map_contract_to_services(contract)
@@ -401,9 +362,7 @@ class ContractComplianceMonitor:
 
         if not report.fulfillment_possible:
             report.issues.append("No CLI services available to fulfill this contract")
-            report.recommendations.append(
-                "Configure CLI services or add data source mapping"
-            )
+            report.recommendations.append("Configure CLI services or add data source mapping")
 
     def _determine_contract_status(self, report: ContractComplianceReport):
         """Determine overall contract status based on analysis"""
@@ -448,14 +407,12 @@ class ContractComplianceMonitor:
 
     def _generate_system_report(
         self,
-        contract_reports: List[ContractComplianceReport],
+        contract_reports: list[ContractComplianceReport],
         discovery_result: ContractDiscoveryResult,
     ) -> SystemComplianceReport:
         """Generate overall system compliance report"""
 
-        system_report = SystemComplianceReport(
-            report_timestamp=datetime.now(), total_contracts=len(contract_reports)
-        )
+        system_report = SystemComplianceReport(report_timestamp=datetime.now(), total_contracts=len(contract_reports))
 
         system_report.contract_reports = contract_reports
 
@@ -475,34 +432,10 @@ class ContractComplianceMonitor:
             category_reports = [r for r in contract_reports if r.category == category]
             system_report.category_summary[category] = {
                 "total": len(category_reports),
-                "healthy": len(
-                    [
-                        r
-                        for r in category_reports
-                        if r.status == ComplianceStatus.HEALTHY
-                    ]
-                ),
-                "warning": len(
-                    [
-                        r
-                        for r in category_reports
-                        if r.status == ComplianceStatus.WARNING
-                    ]
-                ),
-                "critical": len(
-                    [
-                        r
-                        for r in category_reports
-                        if r.status == ComplianceStatus.CRITICAL
-                    ]
-                ),
-                "missing": len(
-                    [
-                        r
-                        for r in category_reports
-                        if r.status == ComplianceStatus.MISSING
-                    ]
-                ),
+                "healthy": len([r for r in category_reports if r.status == ComplianceStatus.HEALTHY]),
+                "warning": len([r for r in category_reports if r.status == ComplianceStatus.WARNING]),
+                "critical": len([r for r in category_reports if r.status == ComplianceStatus.CRITICAL]),
+                "missing": len([r for r in category_reports if r.status == ComplianceStatus.MISSING]),
             }
 
         # Calculate overall scores
@@ -544,36 +477,22 @@ class ContractComplianceMonitor:
                 if report.age_hours <= self.freshness_warning_hours:
                     fresh_contracts += 1
 
-        system_report.data_freshness_score = (
-            (fresh_contracts / total_existing * 10.0) if total_existing > 0 else 0.0
-        )
+        system_report.data_freshness_score = (fresh_contracts / total_existing * 10.0) if total_existing > 0 else 0.0
 
         # Schema compliance score
-        valid_schemas = len(
-            [r for r in system_report.contract_reports if r.schema_valid]
-        )
-        system_report.schema_compliance_score = (
-            valid_schemas / system_report.total_contracts
-        ) * 10.0
+        valid_schemas = len([r for r in system_report.contract_reports if r.schema_valid])
+        system_report.schema_compliance_score = (valid_schemas / system_report.total_contracts) * 10.0
 
         # Service availability score
-        fulfillable_contracts = len(
-            [r for r in system_report.contract_reports if r.fulfillment_possible]
-        )
-        system_report.service_availability_score = (
-            fulfillable_contracts / system_report.total_contracts
-        ) * 10.0
+        fulfillable_contracts = len([r for r in system_report.contract_reports if r.fulfillment_possible])
+        system_report.service_availability_score = (fulfillable_contracts / system_report.total_contracts) * 10.0
 
-    def _generate_system_issues_and_recommendations(
-        self, system_report: SystemComplianceReport
-    ):
+    def _generate_system_issues_and_recommendations(self, system_report: SystemComplianceReport):
         """Generate system-level issues and recommendations"""
 
         # Critical issues
         if system_report.missing_contracts > 0:
-            system_report.critical_issues.append(
-                f"{system_report.missing_contracts} contracts have missing data files"
-            )
+            system_report.critical_issues.append(f"{system_report.missing_contracts} contracts have missing data files")
 
         if system_report.critical_contracts > 0:
             system_report.critical_issues.append(
@@ -587,34 +506,22 @@ class ContractComplianceMonitor:
 
         # Warnings
         if system_report.warning_contracts > 0:
-            system_report.warnings.append(
-                f"{system_report.warning_contracts} contracts have compliance warnings"
-            )
+            system_report.warnings.append(f"{system_report.warning_contracts} contracts have compliance warnings")
 
         if system_report.data_freshness_score < 7.0:
-            system_report.warnings.append(
-                f"Data freshness score is low: {system_report.data_freshness_score:.1f}/10"
-            )
+            system_report.warnings.append(f"Data freshness score is low: {system_report.data_freshness_score:.1f}/10")
 
         # Recommendations
         if system_report.missing_contracts > 0 or system_report.critical_contracts > 0:
-            system_report.recommendations.append(
-                "Run data pipeline to refresh all contract data"
-            )
+            system_report.recommendations.append("Run data pipeline to refresh all contract data")
 
         if system_report.data_freshness_score < 8.0:
-            system_report.recommendations.append(
-                "Schedule more frequent data refreshes"
-            )
+            system_report.recommendations.append("Schedule more frequent data refreshes")
 
         if system_report.schema_compliance_score < 8.0:
-            system_report.recommendations.append(
-                "Review and fix schema compliance issues"
-            )
+            system_report.recommendations.append("Review and fix schema compliance issues")
 
-    def export_report(
-        self, report: SystemComplianceReport, output_file: Path
-    ) -> ProcessingResult:
+    def export_report(self, report: SystemComplianceReport, output_file: Path) -> ProcessingResult:
         """Export compliance report to JSON file"""
 
         try:
@@ -627,9 +534,7 @@ class ContractComplianceMonitor:
 
         except Exception as e:
             self.logger.error(f"Failed to export report: {e}")
-            return ProcessingResult(
-                success=False, operation="export_compliance_report", error=str(e)
-            )
+            return ProcessingResult(success=False, operation="export_compliance_report", error=str(e))
 
     def print_summary_report(self, report: SystemComplianceReport):
         """Print a human-readable summary of the compliance report"""
@@ -643,16 +548,16 @@ class ContractComplianceMonitor:
         # Status breakdown
         print("📈 Status Breakdown:")
         print(
-            f"   ✅ Healthy: {report.healthy_contracts} ({report.healthy_contracts/report.total_contracts*100:.1f}%)"
+            f"   ✅ Healthy: {report.healthy_contracts} ({report.healthy_contracts / report.total_contracts * 100:.1f}%)"
         )
         print(
-            f"   ⚠️  Warning: {report.warning_contracts} ({report.warning_contracts/report.total_contracts*100:.1f}%)"
+            f"   ⚠️  Warning: {report.warning_contracts} ({report.warning_contracts / report.total_contracts * 100:.1f}%)"
         )
         print(
-            f"   🚨 Critical: {report.critical_contracts} ({report.critical_contracts/report.total_contracts*100:.1f}%)"
+            f"   🚨 Critical: {report.critical_contracts} ({report.critical_contracts / report.total_contracts * 100:.1f}%)"
         )
         print(
-            f"   ❌ Missing: {report.missing_contracts} ({report.missing_contracts/report.total_contracts*100:.1f}%)"
+            f"   ❌ Missing: {report.missing_contracts} ({report.missing_contracts / report.total_contracts * 100:.1f}%)"
         )
         print()
 
@@ -668,9 +573,7 @@ class ContractComplianceMonitor:
         if report.category_summary:
             print("📂 Category Breakdown:")
             for category, stats in report.category_summary.items():
-                print(
-                    f"   {category.title()}: {stats['healthy']}/{stats['total']} healthy"
-                )
+                print(f"   {category.title()}: {stats['healthy']}/{stats['total']} healthy")
         print()
 
         # Critical issues
@@ -709,9 +612,7 @@ def main():
     """Main entry point for compliance monitoring"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Contract compliance monitoring and reporting"
-    )
+    parser = argparse.ArgumentParser(description="Contract compliance monitoring and reporting")
     parser.add_argument("--output", "-o", help="Output file for JSON report")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 

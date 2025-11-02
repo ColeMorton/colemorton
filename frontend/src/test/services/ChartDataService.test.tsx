@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import {
-  mockMultiStockDataXPEVNIO,
-  mockXPEVData,
-  mockNIOData,
-  mockEmptyData,
-  mockDataWithMissingValues,
-} from "@/test/__mocks__/multi-stock-data.mock";
+import type { StockDataRow } from "@/types/chart";
 
 /**
  * Data Service Tests for Multi-Stock Chart Functionality
@@ -16,17 +10,10 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock CSV parsing
-const mockParseCsv = vi.fn();
-vi.mock("@/utils/csvParser", () => ({
-  parseCsv: mockParseCsv,
-}));
-
 describe("ChartDataService Multi-Stock Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockClear();
-    mockParseCsv.mockClear();
   });
 
   afterEach(() => {
@@ -35,21 +22,22 @@ describe("ChartDataService Multi-Stock Tests", () => {
 
   describe("Multi-Symbol Data Fetching", () => {
     it("should fetch multiple stock symbols concurrently", async () => {
-      // Mock successful responses for both symbols
+      // Mock successful responses for both symbols with proper CSV format
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
           text: () =>
-            Promise.resolve("mocked,csv,data\n2024-01-01,10.50,11.80"),
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567\n2024-01-02,11.80,13.50,11.25,12.75,18456789",
+            ),
         })
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("mocked,csv,data\n2024-01-01,6.25,6.55"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,6.25,6.80,6.10,6.55,45678912\n2024-01-02,6.55,7.10,6.40,6.90,52341678",
+            ),
         });
-
-      mockParseCsv
-        .mockReturnValueOnce(mockXPEVData)
-        .mockReturnValueOnce(mockNIOData);
 
       // Import service after mocks are set up
       const { chartDataService } = await import("@/services/ChartDataService");
@@ -80,9 +68,25 @@ describe("ChartDataService Multi-Stock Tests", () => {
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
 
-      // Verify parsed results
-      expect(xpevResult).toEqual(mockXPEVData);
-      expect(nioResult).toEqual(mockNIOData);
+      // Verify parsed results have correct structure
+      expect(xpevResult).toHaveLength(2);
+      expect(xpevResult[0]).toMatchObject({
+        date: "2024-01-01",
+        open: "10.50",
+        high: "12.25",
+        low: "9.75",
+        close: "11.80",
+        volume: "15234567",
+      });
+      expect(nioResult).toHaveLength(2);
+      expect(nioResult[0]).toMatchObject({
+        date: "2024-01-01",
+        open: "6.25",
+        high: "6.80",
+        low: "6.10",
+        close: "6.55",
+        volume: "45678912",
+      });
     });
 
     it("should handle partial failures in multi-stock requests", async () => {
@@ -90,11 +94,12 @@ describe("ChartDataService Multi-Stock Tests", () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("mocked,csv,data"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567",
+            ),
         })
         .mockRejectedValueOnce(new Error("Network timeout"));
-
-      mockParseCsv.mockReturnValueOnce(mockXPEVData);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -114,29 +119,57 @@ describe("ChartDataService Multi-Stock Tests", () => {
       ]);
 
       expect(xpevResult.status).toBe("fulfilled");
-      expect(xpevResult.value).toEqual(mockXPEVData);
+      if (xpevResult.status === "fulfilled") {
+        expect(xpevResult.value).toHaveLength(1);
+        expect(xpevResult.value[0]).toMatchObject({
+          date: "2024-01-01",
+          open: "10.50",
+          close: "11.80",
+        });
+      }
 
       expect(nioError.status).toBe("rejected");
-      expect(nioError.reason.message).toContain("Network timeout");
+      if (nioError.status === "rejected") {
+        expect(nioError.reason.message).toContain("Network timeout");
+      }
     });
 
     it("should handle AbortController for concurrent requests", async () => {
       const abortController = new AbortController();
 
-      // Mock long-running requests
-      mockFetch.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(
-              () =>
-                resolve({
-                  ok: true,
-                  text: () => Promise.resolve("data"),
-                }),
-              1000,
-            );
-          }),
-      );
+      // Mock long-running requests with proper abort handling
+      mockFetch.mockImplementation((url, options) => {
+        return new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                text: () =>
+                  Promise.resolve(
+                    "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567",
+                  ),
+              }),
+            1000,
+          );
+
+          // Check if signal is already aborted
+          if (options?.signal?.aborted) {
+            clearTimeout(timeoutId);
+            const error = new Error("The operation was aborted");
+            error.name = "AbortError";
+            reject(error);
+            return;
+          }
+
+          // Listen for abort event
+          options?.signal?.addEventListener("abort", () => {
+            clearTimeout(timeoutId);
+            const error = new Error("The operation was aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        });
+      });
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -166,11 +199,6 @@ describe("ChartDataService Multi-Stock Tests", () => {
         text: () => Promise.resolve(invalidCsvData),
       });
 
-      // Mock parser to throw validation error
-      mockParseCsv.mockImplementation(() => {
-        throw new Error("Invalid CSV structure: missing required columns");
-      });
-
       const { chartDataService } = await import("@/services/ChartDataService");
 
       await expect(
@@ -184,10 +212,11 @@ describe("ChartDataService Multi-Stock Tests", () => {
     it("should handle malformed price data gracefully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        text: () => Promise.resolve("valid,csv,response"),
+        text: () =>
+          Promise.resolve(
+            "date,open,high,low,close,volume\n2024-01-01,,,10.50,11.80,15234567",
+          ),
       });
-
-      mockParseCsv.mockReturnValue(mockDataWithMissingValues);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -196,9 +225,12 @@ describe("ChartDataService Multi-Stock Tests", () => {
         new AbortController().signal,
       );
 
-      // Should return data even with missing values
-      expect(result).toEqual(mockDataWithMissingValues);
-      expect(result.some((row) => row.open === "")).toBe(true);
+      // Should return data even with missing values (empty strings)
+      expect(result).toHaveLength(1);
+      expect(result[0].open).toBe("");
+      expect(result[0].high).toBe("");
+      expect(result[0].low).toBe("10.50");
+      expect(result[0].close).toBe("11.80");
     });
 
     it("should handle empty data responses", async () => {
@@ -207,17 +239,12 @@ describe("ChartDataService Multi-Stock Tests", () => {
         text: () => Promise.resolve("date,open,high,low,close,volume\n"), // Headers only
       });
 
-      mockParseCsv.mockReturnValue(mockEmptyData);
-
       const { chartDataService } = await import("@/services/ChartDataService");
 
-      const result = await chartDataService.fetchStockData(
-        "EMPTY",
-        new AbortController().signal,
-      );
-
-      expect(result).toEqual([]);
-      expect(Array.isArray(result)).toBe(true);
+      // Fail-fast: empty data should throw
+      await expect(
+        chartDataService.fetchStockData("EMPTY", new AbortController().signal),
+      ).rejects.toThrow("No data returned for EMPTY");
     });
   });
 
@@ -293,10 +320,11 @@ describe("ChartDataService Multi-Stock Tests", () => {
     it("should cache successful responses", async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        text: () => Promise.resolve("cached,data"),
+        text: () =>
+          Promise.resolve(
+            "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567",
+          ),
       });
-
-      mockParseCsv.mockReturnValue(mockXPEVData);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -313,7 +341,11 @@ describe("ChartDataService Multi-Stock Tests", () => {
       );
 
       expect(result1).toEqual(result2);
-      expect(result1).toEqual(mockXPEVData);
+      expect(result1).toHaveLength(1);
+      expect(result1[0]).toMatchObject({
+        date: "2024-01-01",
+        close: "11.80",
+      });
     });
 
     it("should handle large datasets efficiently", async () => {
@@ -331,18 +363,6 @@ describe("ChartDataService Multi-Stock Tests", () => {
         ok: true,
         text: () => Promise.resolve(largeCsvData),
       });
-
-      // Mock large dataset parsing
-      const largeDataset = Array.from({ length: 10000 }, (_, i) => ({
-        date: `2024-01-${String(i + 1).padStart(2, "0")}`,
-        open: `100.${i}`,
-        high: `105.${i}`,
-        low: `95.${i}`,
-        close: `102.${i}`,
-        volume: `${1000000 + i}`,
-      }));
-
-      mockParseCsv.mockReturnValue(largeDataset);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -370,17 +390,6 @@ describe("ChartDataService Multi-Stock Tests", () => {
         text: () => Promise.resolve(alternativeCsvFormat),
       });
 
-      mockParseCsv.mockReturnValue([
-        {
-          date: "2024-01-01",
-          open: "10.50",
-          high: "12.25",
-          low: "9.75",
-          close: "11.80",
-          volume: "15234567",
-        },
-      ]);
-
       const { chartDataService } = await import("@/services/ChartDataService");
 
       const result = await chartDataService.fetchStockData(
@@ -389,7 +398,9 @@ describe("ChartDataService Multi-Stock Tests", () => {
       );
 
       expect(result).toHaveLength(1);
+      // Headers are lowercased by parseCSV
       expect(result[0].close).toBe("11.80");
+      expect(result[0].date).toBe("2024-01-01");
     });
 
     it("should handle CSV with extra columns", async () => {
@@ -403,19 +414,6 @@ describe("ChartDataService Multi-Stock Tests", () => {
         text: () => Promise.resolve(csvWithExtraColumns),
       });
 
-      mockParseCsv.mockReturnValue([
-        {
-          date: "2024-01-01",
-          open: "10.50",
-          high: "12.25",
-          low: "9.75",
-          close: "11.80",
-          volume: "15234567",
-          adj_close: "11.75",
-          dividend: "0.00",
-        },
-      ]);
-
       const { chartDataService } = await import("@/services/ChartDataService");
 
       const result = await chartDataService.fetchStockData(
@@ -425,25 +423,28 @@ describe("ChartDataService Multi-Stock Tests", () => {
 
       expect(result[0]).toHaveProperty("close", "11.80");
       expect(result[0]).toHaveProperty("adj_close", "11.75");
+      expect(result[0]).toHaveProperty("dividend", "0.00");
     });
   });
 
   describe("Multi-Stock Integration", () => {
     it("should support the multi-stock workflow end-to-end", async () => {
-      // Mock responses for XPEV and NIO
+      // Mock responses for XPEV and NIO with proper CSV
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("xpev,csv,data"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567",
+            ),
         })
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("nio,csv,data"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,6.25,6.80,6.10,6.55,45678912",
+            ),
         });
-
-      mockParseCsv
-        .mockReturnValueOnce(mockMultiStockDataXPEVNIO.XPEV)
-        .mockReturnValueOnce(mockMultiStockDataXPEVNIO.NIO);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 
@@ -463,13 +464,14 @@ describe("ChartDataService Multi-Stock Tests", () => {
           acc[symbols[index]] = data;
           return acc;
         },
-        {} as { [symbol: string]: typeof mockXPEVData },
+        {} as Record<string, StockDataRow[]>,
       );
 
-      expect(multiStockData).toEqual(mockMultiStockDataXPEVNIO);
       expect(Object.keys(multiStockData)).toEqual(["XPEV", "NIO"]);
-      expect(multiStockData.XPEV).toHaveLength(mockXPEVData.length);
-      expect(multiStockData.NIO).toHaveLength(mockNIOData.length);
+      expect(multiStockData.XPEV).toHaveLength(1);
+      expect(multiStockData.NIO).toHaveLength(1);
+      expect(multiStockData.XPEV[0].close).toBe("11.80");
+      expect(multiStockData.NIO[0].close).toBe("6.55");
     });
 
     it("should handle mixed success/failure in multi-stock requests", async () => {
@@ -477,24 +479,19 @@ describe("ChartDataService Multi-Stock Tests", () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("xpev,data"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,10.50,12.25,9.75,11.80,15234567",
+            ),
         })
         .mockRejectedValueOnce(new Error("NIO API error"))
         .mockResolvedValueOnce({
           ok: true,
-          text: () => Promise.resolve("tsla,data"),
+          text: () =>
+            Promise.resolve(
+              "date,open,high,low,close,volume\n2024-01-01,200,210,195,205,30000000",
+            ),
         });
-
-      mockParseCsv.mockReturnValueOnce(mockXPEVData).mockReturnValueOnce([
-        {
-          date: "2024-01-01",
-          open: "200",
-          high: "210",
-          low: "195",
-          close: "205",
-          volume: "30000000",
-        },
-      ]);
 
       const { chartDataService } = await import("@/services/ChartDataService");
 

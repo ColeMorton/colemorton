@@ -7,7 +7,6 @@ error handling, performance optimization, and quality assurance integration.
 """
 
 import time
-from typing import Dict, List
 
 
 class MockMicroservice:
@@ -20,7 +19,7 @@ class MockMicroservice:
         self.call_count = 0
         self.outputs = {}
 
-    def execute(self, inputs: Dict) -> Dict:
+    def execute(self, inputs: dict) -> dict:
         """Simulate microservice execution."""
         self.call_count += 1
 
@@ -40,21 +39,19 @@ class MockMicroservice:
                 "market_context": {"spy_ytd_return": 0.087},
                 "confidence": 0.89,
             }
-        elif self.name == "trade_history_analyze":
+        if self.name == "trade_history_analyze":
             return {
                 "performance_measurement": {"win_rate": 0.576, "sharpe_ratio": 1.82},
-                "optimization_opportunities": [
-                    {"area": "exit_efficiency", "confidence": 0.82}
-                ],
+                "optimization_opportunities": [{"area": "exit_efficiency", "confidence": 0.82}],
                 "confidence": 0.87,
             }
-        elif self.name == "trade_history_synthesize":
+        if self.name == "trade_history_synthesize":
             return {
                 "report_generation_status": {"overall_success": True},
                 "internal_trading_report": {"completeness_score": 1.0},
                 "confidence": 0.94,
             }
-        elif self.name == "trade_history_validate":
+        if self.name == "trade_history_validate":
             return {
                 "overall_assessment": {"validation_success": True},
                 "confidence_scoring": {"overall_confidence": 0.90},
@@ -77,7 +74,7 @@ def test_workflow_orchestration():
         "validate": MockMicroservice("trade_history_validate", 1.5, 0.99),
     }
 
-    def execute_dasv_workflow(portfolio: str, phases: List[str] = None) -> Dict:
+    def execute_dasv_workflow(portfolio: str, phases: list[str] = None) -> dict:
         """Execute DASV workflow with orchestration."""
 
         if phases is None:
@@ -111,16 +108,15 @@ def test_workflow_orchestration():
                 phase_time = time.time() - phase_start
                 print("  ✅ {phase.capitalize()} phase completed in {phase_time:.2f}s")
 
-            except Exception as e:
+            except Exception:
                 print("  ❌ {phase.capitalize()} phase failed: {e}")
                 # Implement error handling strategy
                 if phase == "discover":
                     # Critical failure - terminate workflow
                     return {"success": False, "error": f"Critical failure in {phase}"}
-                else:
-                    # Non-critical failure - continue with degraded confidence
-                    confidence_scores[phase] = 0.5
-                    print("  ⚠️ Continuing with degraded confidence")
+                # Non-critical failure - continue with degraded confidence
+                confidence_scores[phase] = 0.5
+                print("  ⚠️ Continuing with degraded confidence")
 
         # Calculate overall metrics
         total_time = time.time() - workflow_start
@@ -316,9 +312,7 @@ def test_performance_optimization():
             hit_rate = scenario["hit_rate"]
             overall_hit_rate += hit_rate
             status = "✅" if hit_rate > 0.75 else "⚠️" if hit_rate > 0.60 else "❌"
-            print(
-                f"  {scenario['phase'].capitalize()}: {hit_rate:.1%} hit rate {status}"
-            )
+            print(f"  {scenario['phase'].capitalize()}: {hit_rate:.1%} hit rate {status}")
 
         overall_hit_rate /= len(cache_scenarios)
         print("  Overall Cache Hit Rate: {overall_hit_rate:.1%}")
@@ -353,9 +347,7 @@ def test_performance_optimization():
             print("  {opp['phase'].capitalize()}: {speedup:.1f}x speedup potential")
             print("    Parallel tasks: {', '.join(opp['parallelizable'])}")
 
-        print(
-            "  Overall Parallelization: ✅ Significant optimization opportunities identified"
-        )
+        print("  Overall Parallelization: ✅ Significant optimization opportunities identified")
         print()
 
     def test_resource_utilization():
@@ -406,17 +398,13 @@ def test_quality_assurance_integration():
 
         # Weighted aggregation
         weights = {"discovery": 0.25, "analysis": 0.40, "synthesis": 0.35}
-        overall_confidence = sum(
-            phase_confidences[phase] * weight for phase, weight in weights.items()
-        )
+        overall_confidence = sum(phase_confidences[phase] * weight for phase, weight in weights.items())
 
         print("Confidence Score Aggregation:")
         for phase, confidence in phase_confidences.items():
             weight = weights.get(phase, 0.0)
             contribution = confidence * weight if weight > 0 else 0
-            print(
-                f"  {phase.capitalize()}: {confidence:.3f} (weight: {weight:.2f}, contribution: {contribution:.3f})"
-            )
+            print(f"  {phase.capitalize()}: {confidence:.3f} (weight: {weight:.2f}, contribution: {contribution:.3f})")
 
         print("  Overall Confidence: {overall_confidence:.3f}")
 
@@ -581,9 +569,7 @@ def main():
         print("   Overall Confidence: {workflow_result['overall_confidence']:.3f}")
         print("   Execution Time: {workflow_result['total_execution_time']:.2f}s")
         if "performance_metrics" in workflow_result:
-            perf_improvement = workflow_result["performance_metrics"][
-                "performance_improvement"
-            ]
+            perf_improvement = workflow_result["performance_metrics"]["performance_improvement"]
             print("   Performance Improvement: {perf_improvement:.1f}%")
 
 

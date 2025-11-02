@@ -10,7 +10,8 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -20,8 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import base script and registry
 try:
     from base_script import BaseScript
-
-    from script_registry import ScriptConfig, twitter_script
+    from script_registry import twitter_script
 
     REGISTRY_AVAILABLE = True
 except ImportError:
@@ -35,8 +35,8 @@ class IndustrySynthesis:
     def __init__(
         self,
         industry: str,
-        discovery_file: Optional[str] = None,
-        analysis_file: Optional[str] = None,
+        discovery_file: str | None = None,
+        analysis_file: str | None = None,
         output_dir: str = "./data/outputs/industry_analysis",
         template_dir: str = "./scripts/templates",
     ):
@@ -64,56 +64,51 @@ class IndustrySynthesis:
         # Synthesist delegation - no direct template environment needed
 
         # Synthesis components
-        self.investment_thesis = {}
-        self.positioning_framework = {}
-        self.risk_analysis = {}
-        self.current_trends = {}
+        self.investment_thesis: dict[str, Any] = {}
+        self.positioning_framework: dict[str, Any] = {}
+        self.risk_analysis: dict[str, Any] = {}
+        self.current_trends: dict[str, Any] = {}
 
-    def _load_discovery_data(self) -> Optional[Dict[str, Any]]:
+    def _load_discovery_data(self) -> dict[str, Any] | None:
         """Load discovery phase data"""
         if self.discovery_file and os.path.exists(self.discovery_file):
             try:
-                with open(self.discovery_file, "r") as f:
+                with open(self.discovery_file) as f:
                     data = json.load(f)
-                print("✅ Loaded discovery data from: {self.discovery_file}")
+                print(f"✅ Loaded discovery data from: {self.discovery_file}")
                 return data
             except Exception as e:
-                print("⚠️  Failed to load discovery data: {e}")
+                print(f"⚠️  Failed to load discovery data: {e}")
         return None
 
-    def _load_analysis_data(self) -> Optional[Dict[str, Any]]:
+    def _load_analysis_data(self) -> dict[str, Any] | None:
         """Load analysis phase data"""
         if self.analysis_file and os.path.exists(self.analysis_file):
             try:
-                with open(self.analysis_file, "r") as f:
+                with open(self.analysis_file) as f:
                     data = json.load(f)
-                print("✅ Loaded analysis data from: {self.analysis_file}")
+                print(f"✅ Loaded analysis data from: {self.analysis_file}")
                 return data
             except Exception as e:
-                print("⚠️  Failed to load analysis data: {e}")
+                print(f"⚠️  Failed to load analysis data: {e}")
         return None
 
-    def _synthesist_delegate_placeholder(self, requirements: Dict[str, Any]) -> str:
+    def _synthesist_delegate_placeholder(self, requirements: dict[str, Any]) -> str:
         """Placeholder for synthesist sub-agent delegation implementation"""
         # This method represents where the synthesist sub-agent would be called
         # The synthesist would handle template selection, context preparation, and rendering
-
-        metadata = requirements["metadata"]
-        synthesis_components = requirements["synthesis_components"]
 
         # For now, generate a high-quality document using the synthesis components
         # This demonstrates the data structure that would be passed to the synthesist
         return self._generate_institutional_quality_document(requirements)
 
-    def synthesize_investment_thesis(self) -> Dict[str, Any]:
+    def synthesize_investment_thesis(self) -> dict[str, Any]:
         """Synthesize comprehensive investment thesis"""
         # Extract growth catalysts from analysis
         catalysts = []
         if self.analysis_data:
             # Extract growth catalysts from the phase 3 analysis
-            phase_3_data = self.analysis_data.get(
-                "phase_3_growth_catalyst_identification", {}
-            )
+            phase_3_data = self.analysis_data.get("phase_3_growth_catalyst_identification", {})
             for catalyst_type, catalyst_data in phase_3_data.items():
                 if isinstance(catalyst_data, dict):
                     catalysts.append(
@@ -139,14 +134,12 @@ class IndustrySynthesis:
         self.investment_thesis = thesis
         return thesis
 
-    def synthesize_positioning_framework(self) -> Dict[str, Any]:
+    def synthesize_positioning_framework(self) -> dict[str, Any]:
         """Synthesize industry positioning framework"""
         # Extract structure scorecard from analysis
         structure_scorecard = {}
         if self.analysis_data:
-            structure_scorecard = self.analysis_data.get(
-                "industry_structure_scorecard", {}
-            )
+            structure_scorecard = self.analysis_data.get("industry_structure_scorecard", {})
 
         # Extract moat analysis
         moats = []
@@ -165,7 +158,7 @@ class IndustrySynthesis:
         self.positioning_framework = positioning
         return positioning
 
-    def synthesize_risk_analysis(self) -> Dict[str, Any]:
+    def synthesize_risk_analysis(self) -> dict[str, Any]:
         """Synthesize comprehensive risk analysis"""
         # Extract risk matrix from analysis
         risk_matrix = {}
@@ -187,7 +180,7 @@ class IndustrySynthesis:
         self.risk_analysis = risk_analysis
         return risk_analysis
 
-    def synthesize_current_trends(self) -> Dict[str, Any]:
+    def synthesize_current_trends(self) -> dict[str, Any]:
         """Synthesize current trends and market intelligence"""
         # Extract trend data from discovery
         trend_data = {}
@@ -197,9 +190,7 @@ class IndustrySynthesis:
         # Handle trend data structure safely
         technology_trends = trend_data.get("technology_trends", [])
         if isinstance(technology_trends, list) and technology_trends:
-            tech_trend_summary = technology_trends[0].get(
-                "trend", "AI acceleration trends"
-            )
+            tech_trend_summary = technology_trends[0].get("trend", "AI acceleration trends")
         else:
             tech_trend_summary = "AI acceleration trends"
 
@@ -257,21 +248,17 @@ class IndustrySynthesis:
         try:
             # Note: This would normally use the Task tool for sub-agent delegation
             # For now, implementing simplified approach until Task tool is available
-            print(
-                "🤖 Delegating to synthesist sub-agent for institutional-quality document generation"
-            )
+            print("🤖 Delegating to synthesist sub-agent for institutional-quality document generation")
 
             # Synthesist would handle template selection, context preparation, and rendering
             # This represents the architectural pattern - synthesist determines HOW to implement
             document = self._synthesist_delegate_placeholder(synthesist_requirements)
 
-            print(
-                "✅ Generated synthesis document using synthesist sub-agent delegation"
-            )
+            print("✅ Generated synthesis document using synthesist sub-agent delegation")
             return document
 
         except Exception as e:
-            print("⚠️  Synthesist delegation failed: {e}")
+            print(f"⚠️  Synthesist delegation failed: {e}")
             print("⚠️  Falling back to enhanced document generation")
             return self._generate_enhanced_fallback_document(synthesist_requirements)
 
@@ -285,12 +272,12 @@ class IndustrySynthesis:
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(document)
 
-        print("✅ Saved synthesis document to: {filepath}")
+        print(f"✅ Saved synthesis document to: {filepath}")
         return filepath
 
-    def generate_synthesis_output(self) -> Dict[str, Any]:
+    def generate_synthesis_output(self) -> dict[str, Any]:
         """Generate comprehensive synthesis phase output"""
-        synthesis_data = {
+        return {
             "metadata": {
                 "command_name": "industry_synthesis",
                 "execution_timestamp": self.timestamp.isoformat(),
@@ -313,9 +300,8 @@ class IndustrySynthesis:
                 "professional_quality": self._assess_professional_quality(),
             },
         }
-        return synthesis_data
 
-    def save_synthesis_metadata(self, data: Dict[str, Any]) -> str:
+    def save_synthesis_metadata(self, data: dict[str, Any]) -> str:
         """Save synthesis metadata to JSON file"""
         metadata_dir = os.path.join(self.output_dir, "metadata")
         os.makedirs(metadata_dir, exist_ok=True)
@@ -326,16 +312,20 @@ class IndustrySynthesis:
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
-        print("✅ Saved synthesis metadata to: {filepath}")
+        print(f"✅ Saved synthesis metadata to: {filepath}")
         return filepath
 
     # Helper methods for thesis synthesis
     def _generate_core_thesis(self) -> str:
         """Generate core investment thesis"""
         industry_name = self._format_industry_name()
-        return f"The {industry_name} industry presents a compelling investment opportunity driven by structural trends, competitive advantages, and favorable economic positioning."
+        return (
+            f"The {industry_name} industry presents a compelling investment opportunity "
+            f"driven by structural trends, competitive advantages, and favorable "
+            f"economic positioning."
+        )
 
-    def _generate_recommendation(self) -> Dict[str, Any]:
+    def _generate_recommendation(self) -> dict[str, Any]:
         """Generate investment recommendation"""
         return {
             "rating": "BUY",
@@ -350,7 +340,7 @@ class IndustrySynthesis:
             "key_assumptions": self._identify_key_assumptions(),
         }
 
-    def _generate_growth_forecast(self) -> Dict[str, Any]:
+    def _generate_growth_forecast(self) -> dict[str, Any]:
         """Generate growth forecast"""
         # Extract growth rate from analysis
         growth_rate = 10.5  # Default
@@ -367,21 +357,15 @@ class IndustrySynthesis:
             "growth_quality": "High-quality recurring revenue growth",
         }
 
-    def _extract_economic_context(self) -> Dict[str, Any]:
+    def _extract_economic_context(self) -> dict[str, Any]:
         """Extract economic context from analysis"""
         if self.analysis_data:
             economic_data = self.analysis_data.get("economic_sensitivity", {})
             return {
-                "policy_implications": economic_data.get(
-                    "policy_implications", ["Supportive policy environment"]
-                ),
-                "interest_rate_sensitivity": economic_data.get(
-                    "interest_rate_sensitivity", "Medium"
-                ),
+                "policy_implications": economic_data.get("policy_implications", ["Supportive policy environment"]),
+                "interest_rate_sensitivity": economic_data.get("interest_rate_sensitivity", "Medium"),
                 "gdp_correlation": economic_data.get("gdp_correlation", 0.45),
-                "economic_cycle_position": economic_data.get(
-                    "economic_cycle_position", "Mid-cycle"
-                ),
+                "economic_cycle_position": economic_data.get("economic_cycle_position", "Mid-cycle"),
             }
         return {
             "policy_implications": ["Favorable regulatory environment"],
@@ -390,7 +374,7 @@ class IndustrySynthesis:
             "economic_cycle_position": "Mid-cycle",
         }
 
-    def _generate_investment_rationale(self) -> List[str]:
+    def _generate_investment_rationale(self) -> list[str]:
         """Generate investment rationale points"""
         return [
             "Strong competitive moats and market position",
@@ -400,7 +384,7 @@ class IndustrySynthesis:
             "Strong management track record and execution capability",
         ]
 
-    def _assess_market_position(self) -> Dict[str, Any]:
+    def _assess_market_position(self) -> dict[str, Any]:
         """Assess market position"""
         return {
             "market_size": self._get_market_size(),
@@ -411,7 +395,7 @@ class IndustrySynthesis:
             "competitive_position": "Industry leaders with strong market share",
         }
 
-    def _analyze_competitive_dynamics(self) -> Dict[str, Any]:
+    def _analyze_competitive_dynamics(self) -> dict[str, Any]:
         """Analyze competitive dynamics"""
         return {
             "competitive_intensity": "Medium-High",
@@ -422,7 +406,7 @@ class IndustrySynthesis:
             "overall_attractiveness": "Attractive",
         }
 
-    def _assess_innovation_landscape(self) -> Dict[str, Any]:
+    def _assess_innovation_landscape(self) -> dict[str, Any]:
         """Assess innovation landscape"""
         # Extract innovation data from analysis
         innovation_data = {}
@@ -438,7 +422,7 @@ class IndustrySynthesis:
             "competitive_differentiation": "Strong through innovation",
         }
 
-    def _develop_risk_mitigation_strategies(self) -> Dict[str, List[str]]:
+    def _develop_risk_mitigation_strategies(self) -> dict[str, list[str]]:
         """Develop risk mitigation strategies"""
         return {
             "regulatory_risks": [
@@ -463,32 +447,26 @@ class IndustrySynthesis:
             ],
         }
 
-    def _enhance_scenario_analysis(self, scenarios: List[Dict]) -> List[Dict[str, Any]]:
+    def _enhance_scenario_analysis(self, scenarios: list[dict]) -> list[dict[str, Any]]:
         """Enhance scenario analysis with additional context"""
         enhanced_scenarios = []
         for scenario in scenarios:
             enhanced = scenario.copy()
             enhanced["probability_rationale"] = self._get_scenario_rationale(scenario)
             enhanced["key_indicators"] = self._identify_scenario_indicators(scenario)
-            enhanced["investment_implications"] = self._assess_scenario_implications(
-                scenario
-            )
+            enhanced["investment_implications"] = self._assess_scenario_implications(scenario)
             enhanced_scenarios.append(enhanced)
         return enhanced_scenarios
 
-    def _identify_trend_sources(self) -> List[str]:
+    def _identify_trend_sources(self) -> list[str]:
         """Identify trend data sources"""
         sources = ["Industry reports", "Market research", "Company disclosures"]
         if self.discovery_data:
-            cli_services = self.discovery_data.get("metadata", {}).get(
-                "cli_services_utilized", []
-            )
-            sources.extend(
-                [f"{service.replace('_', ' ').title()} API" for service in cli_services]
-            )
+            cli_services = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
+            sources.extend([f"{service.replace('_', ' ').title()} API" for service in cli_services])
         return sources
 
-    def _analyze_trend_implications(self) -> Dict[str, str]:
+    def _analyze_trend_implications(self) -> dict[str, str]:
         """Analyze implications of current trends"""
         return {
             "technology_implications": "Accelerating digital transformation creating new opportunities",
@@ -501,7 +479,7 @@ class IndustrySynthesis:
         """Format industry name for display"""
         return self.industry.replace("_", " ").title()
 
-    def _extract_industry_data(self) -> Dict[str, Any]:
+    def _extract_industry_data(self) -> dict[str, Any]:
         """Extract key industry data"""
         data = {}
         if self.discovery_data:
@@ -512,9 +490,7 @@ class IndustrySynthesis:
                     "industry_growth_rate": self._get_industry_growth_rate(),
                     "market_concentration": self._get_market_concentration(),
                     "innovation_rate": scope.get("key_technologies", []),
-                    "regulatory_burden": scope.get(
-                        "regulatory_environment", "Moderate"
-                    ),
+                    "regulatory_burden": scope.get("regulatory_environment", "Moderate"),
                 }
             )
         return data
@@ -554,19 +530,19 @@ class IndustrySynthesis:
             return market_dynamics.get("growth_rate", 10.5)
         return 10.5
 
-    def _get_scenario_rationale(self, scenario: Dict) -> str:
+    def _get_scenario_rationale(self, scenario: dict) -> str:
         """Get rationale for scenario probability"""
-        return f"Based on historical patterns and current market conditions"
+        return "Based on historical patterns and current market conditions"
 
-    def _identify_scenario_indicators(self, scenario: Dict) -> List[str]:
+    def _identify_scenario_indicators(self, scenario: dict) -> list[str]:
         """Identify key indicators for scenario"""
         return ["Market volatility", "Economic indicators", "Regulatory announcements"]
 
-    def _assess_scenario_implications(self, scenario: Dict) -> str:
+    def _assess_scenario_implications(self, scenario: dict) -> str:
         """Assess investment implications of scenario"""
         return "Requires portfolio rebalancing and risk management adjustments"
 
-    def _identify_key_assumptions(self) -> List[str]:
+    def _identify_key_assumptions(self) -> list[str]:
         """Identify key investment assumptions"""
         return [
             "Continued technology adoption acceleration",
@@ -617,7 +593,7 @@ class IndustrySynthesis:
         ]
         return round(sum(confidences) / len(confidences), 2)
 
-    def _verify_template_compliance(self) -> Dict[str, bool]:
+    def _verify_template_compliance(self) -> dict[str, bool]:
         """Verify template compliance"""
         return {
             "structure_compliance": True,
@@ -647,9 +623,7 @@ class IndustrySynthesis:
         """Assess professional quality"""
         return 0.92
 
-    def _generate_institutional_quality_document(
-        self, requirements: Dict[str, Any]
-    ) -> str:
+    def _generate_institutional_quality_document(self, requirements: dict[str, Any]) -> str:
         """Generate institutional-quality document using synthesis components"""
         metadata = requirements["metadata"]
         synthesis_components = requirements["synthesis_components"]
@@ -658,41 +632,143 @@ class IndustrySynthesis:
 
         # Extract key data for document generation
         investment_thesis = synthesis_components["investment_thesis"]
-        positioning_framework = synthesis_components["positioning_framework"]
-        risk_analysis = synthesis_components["risk_analysis"]
         current_trends = synthesis_components["current_trends"]
+
+        # Extract complex values to variables for readability and line length compliance
+        data_quality = analysis_data.get("metadata", {}).get("data_quality_metrics", {}).get("overall_confidence", 0.95)
+        core_thesis_fallback = (
+            f"The {requirements['industry_name']} industry presents a "
+            f"compelling investment opportunity driven by structural trends, "
+            f"competitive advantages, and favorable economic positioning."
+        )
+        key_catalysts = investment_thesis.get("key_catalysts", [])
+        catalyst1 = (
+            key_catalysts[0].get("catalyst", "technological advancement")
+            if key_catalysts
+            else "technological advancement"
+        )
+        catalyst2 = (
+            key_catalysts[1].get("catalyst", "market expansion") if len(key_catalysts) > 1 else "market expansion"
+        )
+        catalyst3 = (
+            key_catalysts[2].get("catalyst", "competitive positioning")
+            if len(key_catalysts) > 2
+            else "competitive positioning"
+        )
+        phase1 = analysis_data.get("phase_1_industry_structure_assessment", {})
+        competitive_analysis = phase1.get("competitive_landscape_analysis", {})
+        market_structure = competitive_analysis.get("market_structure", "Industry structure")
+        concentration = competitive_analysis.get("concentration_assessment", {})
+        concentration_level = concentration.get("level", "competitive dynamics")
+        economic_context = investment_thesis.get("economic_context", {})
+        cycle_position = economic_context.get("economic_cycle_position", "favorable trends")
+        tech_description = current_trends.get("technology_trends", {}).get("description", "innovation catalyst")
+        target_allocation = (
+            investment_thesis.get("recommendation", {}).get("target_allocation", {}).get("moderate", "15-20%")
+        )
+        rec_rating = investment_thesis.get("recommendation", {}).get("rating", "BUY")
+        rec_position = investment_thesis.get("recommendation", {}).get("position_size", "15-25% of Sector Allocation")
+        forecast_2025 = investment_thesis.get("growth_forecast", {}).get("2025", "Strong growth")
+        forecast_2026 = investment_thesis.get("growth_forecast", {}).get("2026", "Continued expansion")
+        forecast_2027 = investment_thesis.get("growth_forecast", {}).get("2027", "Sustained growth")
+        long_term_cagr = investment_thesis.get("growth_forecast", {}).get("long_term_cagr", "8-12% (2025-2030)")
+        policy_impl = economic_context.get(
+            "policy_implications",
+            ["Favorable economic environment with manageable regulatory considerations"],
+        )
+        phase2 = analysis_data.get("phase_2_competitive_moat_analysis", {})
+        network_effects = phase2.get("network_effects_assessment", {})
+        overall_network = network_effects.get("overall_network_effects", {})
+        network_grade = overall_network.get("grade", "High")
+        default_catalysts = [
+            {"catalyst": "Technology Advancement", "probability": 0.85},
+            {"catalyst": "Market Expansion", "probability": 0.80},
+            {"catalyst": "Competitive Positioning", "probability": 0.75},
+        ]
+        catalyst_list = investment_thesis.get("key_catalysts", default_catalysts)[:3]
+        catalyst_strings = [
+            f"{c.get('catalyst', 'Growth catalyst')} ({c.get('probability', 0.8) * 100:.0f}% probability)"
+            for c in catalyst_list
+        ]
+        # Extract table row values
+        conc_grade = concentration.get("grade", "B+")
+        conc_confidence = concentration.get("confidence", 0.93)
+        hhi_metrics = competitive_analysis.get("hhi_ai_accelerators", "Market concentration metrics")
+        conc_rationale = concentration.get("rationale", "Platform oligopoly with network effects")
+        innovation_assessment = phase1.get("innovation_leadership_assessment", {})
+        innovation_score = innovation_assessment.get("innovation_leadership_score", {})
+        innovation_grade = innovation_score.get("grade", "A-")
+        innovation_confidence = innovation_score.get("confidence", 0.92)
+        rd_analysis = innovation_assessment.get("rd_investment_analysis", {})
+        rd_intensity = rd_analysis.get("industry_rd_intensity", {})
+        rd_percentage = rd_intensity.get("average_rd_percentage", "R&D intensity")
+        value_chain = phase1.get("value_chain_analysis", {})
+        value_chain_score = value_chain.get("value_chain_efficiency_score", {})
+        value_chain_grade = value_chain_score.get("grade", "B+")
+        value_chain_confidence = value_chain_score.get("confidence", 0.91)
+        revenue_model = value_chain.get("revenue_model_efficiency", {})
+        hardware_segments = revenue_model.get("hardware_segments", {})
+        ai_accelerators = hardware_segments.get("ai_accelerators", {})
+        gross_margins = ai_accelerators.get("gross_margins", "Strong margins")
+        market_size = discovery_data.get("industry_scope", {}).get("market_size", "$5.3T+ (2025)")
+        lifecycle_stage = phase1.get("industry_lifecycle_stage", {})
+        characteristics = lifecycle_stage.get("characteristics", ["40-55% annual growth rates"])
+        revenue_growth = characteristics[0] if characteristics else "40-55% annual growth rates"
+        developer_ecosystem = network_effects.get("developer_ecosystem_networks", {})
+        nvidia_cuda = developer_ecosystem.get("nvidia_cuda_ecosystem", {})
+        developer_count = nvidia_cuda.get("developer_count", "4.2M")
+        data_advantages = phase2.get("data_advantages_evaluation", {})
+        training_data = data_advantages.get("training_data_access", {})
+        hyperscale = training_data.get("hyperscale_advantages", {})
+        google_search = hyperscale.get("google_search_data", {})
+        data_strength = google_search.get("strength_rating", 9.3)
+        platform_ecosystem = phase2.get("platform_ecosystem_strength", {})
+        platform_score_obj = platform_ecosystem.get("platform_network_score", {})
+        platform_score = platform_score_obj.get("score", 8.7)
+        network_score_val = overall_network.get("score", 8.4)
 
         # Generate institutional-quality document following template specification
         document = f"""---
-title: {requirements['industry_name']} Industry Analysis
-description: Institutional-quality industry analysis with comprehensive investment thesis, positioning framework, and risk assessment
-author: {metadata['author']}
-date: {metadata['timestamp']}
+title: {requirements["industry_name"]} Industry Analysis
+description: Institutional-quality industry analysis with comprehensive investment
+thesis, positioning framework, and risk assessment
+author: {metadata["author"]}
+date: {metadata["timestamp"]}
 tags:
   - industry-analysis
-  - {metadata['industry'].lower().replace(' ', '-')}
+  - {metadata["industry"].lower().replace(" ", "-")}
   - investing
   - economic-analysis
   - institutional-research
 ---
 
-# {requirements['industry_name']} Industry Analysis
-*Generated: {metadata['timestamp']} | Confidence: {metadata['confidence']:.1f}/1.0 | Data Quality: {analysis_data.get('metadata', {}).get('data_quality_metrics', {}).get('overall_confidence', 0.95):.1f}/1.0 | Validation: Institutional Grade*
-<!-- Author: {metadata['author']} -->
+# {requirements["industry_name"]} Industry Analysis
+*Generated: {metadata["timestamp"]} | Confidence: {metadata["confidence"]:.1f}/1.0 | \
+Data Quality: {data_quality:.1f}/1.0 | Validation: Institutional Grade*
+<!-- Author: {metadata["author"]} -->
 
 ## 🎯 Executive Summary & Investment Thesis
 
 ### Core Thesis
-{investment_thesis.get('core_thesis', f'The {requirements["industry_name"]} industry presents a compelling investment opportunity driven by structural trends, competitive advantages, and favorable economic positioning.')}
+{investment_thesis.get("core_thesis", core_thesis_fallback)}
 
 ### Industry Investment Recommendation Summary
-{requirements['industry_name']} industry offers superior risk-adjusted returns through {investment_thesis.get('key_catalysts', [{'catalyst': 'technological advancement'}])[0].get('catalyst', 'technological advancement')}, {(investment_thesis.get('key_catalysts', [{'catalyst': 'market expansion'}, {'catalyst': 'market expansion'}])[1] if len(investment_thesis.get('key_catalysts', [])) > 1 else {'catalyst': 'market expansion'}).get('catalyst', 'market expansion')}, and {(investment_thesis.get('key_catalysts', [{'catalyst': 'competitive positioning'}, {'catalyst': 'competitive positioning'}, {'catalyst': 'competitive positioning'}])[2] if len(investment_thesis.get('key_catalysts', [])) > 2 else {'catalyst': 'competitive positioning'}).get('catalyst', 'competitive positioning')} creating multi-year growth visibility. {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('market_structure', 'Industry structure')} establishes {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('concentration_assessment', {}).get('level', 'competitive dynamics')} with pricing power and defensive network effect moats. Economic context supports {investment_thesis.get('economic_context', {}).get('economic_cycle_position', 'favorable trends')} with {current_trends.get('technology_trends', {}).get('description', 'innovation catalyst')} providing monetization catalyst, while international expansion creates opportunities in emerging markets. Target allocation {investment_thesis.get('recommendation', {}).get('target_allocation', {}).get('moderate', '15-20%')} for moderate positioning, focusing on industry leaders and diversified ecosystem exposure.
+{requirements["industry_name"]} industry offers superior risk-adjusted returns through \
+{catalyst1}, {catalyst2}, and {catalyst3} creating multi-year growth visibility. \
+{market_structure} establishes {concentration_level} with pricing power and defensive \
+network effect moats. Economic context supports {cycle_position} with {tech_description} \
+providing monetization catalyst, while international expansion creates opportunities in \
+emerging markets. Target allocation {target_allocation} for moderate positioning, focusing \
+on industry leaders and diversified ecosystem exposure.
 
-### Recommendation: {investment_thesis.get('recommendation', {}).get('rating', 'BUY')} | Position Size: {investment_thesis.get('recommendation', {}).get('position_size', '15-25% of Sector Allocation')} | Confidence: {metadata['confidence']:.1f}/1.0
-- **Growth Forecast**: {investment_thesis.get('growth_forecast', {}).get('2025', 'Strong growth')} 2025, {investment_thesis.get('growth_forecast', {}).get('2026', 'Continued expansion')} 2026, {investment_thesis.get('growth_forecast', {}).get('2027', 'Sustained growth')} 2027 | Long-term CAGR: {investment_thesis.get('growth_forecast', {}).get('long_term_cagr', '8-12% (2025-2030)')}
-- **Economic Context**: {', '.join(investment_thesis.get('economic_context', {}).get('policy_implications', ['Favorable economic environment with manageable regulatory considerations']))}
-- **Risk-Adjusted Returns**: {analysis_data.get('phase_2_competitive_moat_analysis', {}).get('network_effects_assessment', {}).get('overall_network_effects', {}).get('grade', 'High')} ROIC leaders with strong cash generation and premium valuations justified by growth prospects
-- **Key Catalysts**: {', '.join([f"{catalyst.get('catalyst', 'Growth catalyst')} ({catalyst.get('probability', 0.8)*100:.0f}% probability)" for catalyst in investment_thesis.get('key_catalysts', [{'catalyst': 'Technology Advancement', 'probability': 0.85}, {'catalyst': 'Market Expansion', 'probability': 0.80}, {'catalyst': 'Competitive Positioning', 'probability': 0.75}])[:3]])}
+### Recommendation: {rec_rating} | Position Size: {rec_position} | \
+Confidence: {metadata["confidence"]:.1f}/1.0
+- **Growth Forecast**: {forecast_2025} 2025, {forecast_2026} 2026, {forecast_2027} 2027 | \
+Long-term CAGR: {long_term_cagr}
+- **Economic Context**: {", ".join(policy_impl)}
+- **Risk-Adjusted Returns**: {network_grade} ROIC leaders with strong cash generation and \
+premium valuations justified by growth prospects
+- **Key Catalysts**: {", ".join(catalyst_strings)}
 
 ## 📊 Industry Positioning Dashboard
 
@@ -701,31 +777,43 @@ tags:
 #### Industry Structure Grades & Trends
 | Dimension | Grade | Trend | Key Metrics | Current Assessment | Confidence |
 |-----------|-------|-------|-------------|-------------------|------------|
-| Competitive Landscape | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('concentration_assessment', {}).get('grade', 'B+')} | Improving | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('hhi_ai_accelerators', 'Market concentration metrics')} | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('concentration_assessment', {}).get('rationale', 'Platform oligopoly with network effects')} | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('concentration_assessment', {}).get('confidence', 0.93):.1f}/1.0 |
-| Innovation Leadership | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('innovation_leadership_assessment', {}).get('innovation_leadership_score', {}).get('grade', 'A-')} | Improving | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('innovation_leadership_assessment', {}).get('rd_investment_analysis', {}).get('industry_rd_intensity', {}).get('average_rd_percentage', 'R&D intensity')}% of revenue | Leading AI integration and technology advancement | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('innovation_leadership_assessment', {}).get('innovation_leadership_score', {}).get('confidence', 0.92):.1f}/1.0 |
-| Value Chain Analysis | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('value_chain_analysis', {}).get('value_chain_efficiency_score', {}).get('grade', 'B+')} | Improving | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('value_chain_analysis', {}).get('revenue_model_efficiency', {}).get('hardware_segments', {}).get('ai_accelerators', {}).get('gross_margins', 'Strong margins')} | Strong digital efficiency with regulatory costs | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('value_chain_analysis', {}).get('value_chain_efficiency_score', {}).get('confidence', 0.91):.1f}/1.0 |
+| Competitive Landscape | {conc_grade} | Improving | {hhi_metrics} | \
+{conc_rationale} | {conc_confidence:.1f}/1.0 |
+| Innovation Leadership | {innovation_grade} | Improving | {rd_percentage}% of revenue | \
+Leading AI integration and technology advancement | {innovation_confidence:.1f}/1.0 |
+| Value Chain Analysis | {value_chain_grade} | Improving | {gross_margins} | \
+Strong digital efficiency with regulatory costs | {value_chain_confidence:.1f}/1.0 |
 
 ### Industry Market Position Assessment
 | Metric | Current Value | Industry Trend | Economic Context Impact | Data Source | Confidence |
 |--------|---------------|----------------|------------------------|-------------|------------|
-| Market Size | {discovery_data.get('industry_scope', {}).get('market_size', '$5.3T+ (2025)')} | Strong growth projection | Digital transformation driving secular expansion | Multi-source CLI validation | 9.2/10.0 |
-| Market Concentration | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('competitive_landscape_analysis', {}).get('market_structure', 'Stable oligopoly structure')} | Stable oligopoly structure | Network effects maintain competitive position | FMP/Yahoo Finance | 9.5/10.0 |
-| R&D Intensity | {analysis_data.get('phase_1_industry_structure_assessment', {}).get('innovation_leadership_assessment', {}).get('rd_investment_analysis', {}).get('industry_rd_intensity', {}).get('average_rd_percentage', 14)}%+ of revenue | Accelerating innovation investment | Economic environment supports technology investment | Industry analysis aggregation | 9.0/10.0 |
-| Geographic Distribution | Global with emerging market focus | International expansion trends | Industry transcends geographic boundaries for growth | FRED economic context | 9.8/10.0 |
+| Market Size | {market_size} | Strong growth projection | \
+Digital transformation driving secular expansion | Multi-source CLI validation | 9.2/10.0 |
+| Market Concentration | {market_structure} | Stable oligopoly structure | \
+Network effects maintain competitive position | FMP/Yahoo Finance | 9.5/10.0 |
+| R&D Intensity | {rd_percentage}%+ of revenue | Accelerating innovation investment | \
+Economic environment supports technology investment | Industry analysis aggregation | 9.0/10.0 |
+| Geographic Distribution | Global with emerging market focus | \
+International expansion trends | Industry transcends geographic boundaries for growth | \
+FRED economic context | 9.8/10.0 |
 
 #### Industry Moat Strength Ratings (0-10 Scale)
 | Moat Category | Strength | Durability | Evidence Backing | Economic Resilience | Assessment |
 |---------------|----------|------------|------------------|-------------------|------------|
-| Network Effects | {analysis_data.get('phase_2_competitive_moat_analysis', {}).get('network_effects_assessment', {}).get('overall_network_effects', {}).get('score', 8.4)} | High | {analysis_data.get('phase_2_competitive_moat_analysis', {}).get('network_effects_assessment', {}).get('developer_ecosystem_networks', {}).get('nvidia_cuda_ecosystem', {}).get('developer_count', '4.2M')} developers | High barriers to competitive catch-up | Strong ecosystem lock-in with switching costs |
-| Data Advantages | {analysis_data.get('phase_2_competitive_moat_analysis', {}).get('data_advantages_evaluation', {}).get('training_data_access', {}).get('hyperscale_advantages', {}).get('google_search_data', {}).get('strength_rating', 9.3)} | Very High | Web-scale behavioral data | Extremely defensible | Unique dataset scale advantages |
-| Platform Ecosystem | {analysis_data.get('phase_2_competitive_moat_analysis', {}).get('platform_ecosystem_strength', {}).get('platform_network_score', {}).get('score', 8.7)} | High | Cross-side network effects | Strong platform lock-in | Metcalfe value with N² scaling |
+| Network Effects | {network_score_val} | High | {developer_count} developers | \
+High barriers to competitive catch-up | Strong ecosystem lock-in with switching costs |
+| Data Advantages | {data_strength} | Very High | Web-scale behavioral data | \
+Extremely defensible | Unique dataset scale advantages |
+| Platform Ecosystem | {platform_score} | High | Cross-side network effects | \
+Strong platform lock-in | Metcalfe value with N² scaling |
 
 ## 📈 Industry Growth Analysis & Catalysts
 
 ### Industry Historical Performance & Future Drivers
 
 #### Growth Quality Assessment
-- **Revenue Growth**: {analysis_data.get('phase_1_industry_structure_assessment', {}).get('industry_lifecycle_stage', {}).get('characteristics', ['40-55% annual growth rates'])[0]} (2025 projected), {investment_thesis.get('growth_forecast', {}).get('2026', '32-45%')} (2026 projected), Long-term CAGR {investment_thesis.get('growth_forecast', {}).get('long_term_cagr', '8-12% (2025-2030)')}
+- **Revenue Growth**: {revenue_growth} (2025 projected), {forecast_2026} (2026 projected), \
+Long-term CAGR {long_term_cagr}
 - **Profitability Expansion**: Strong margin profile with AI automation driving efficiency gains across the industry
 - **Capital Efficiency**: High ROIC in platform leaders with improving monetization per user and asset utilization
 - **Sustainability**: Multi-year growth catalyst maturation providing demand visibility and structural growth support
@@ -736,17 +824,18 @@ tags:
 
         # Add growth catalysts from analysis data
         if analysis_data.get("phase_3_growth_catalyst_identification"):
-            for catalyst_type, catalyst_data in analysis_data[
-                "phase_3_growth_catalyst_identification"
-            ].items():
-                if (
-                    isinstance(catalyst_data, dict)
-                    and "catalyst_strength" in catalyst_data
-                ):
-                    document += f"""
-| {catalyst_type.replace('_', ' ').title()} | {catalyst_data.get('confidence', 0.85):.0%} | 2025-2027 | {catalyst_data.get('catalyst_strength', 'High')} | Low - technology-driven secular trend | 9.0/10.0 |"""
+            for catalyst_type, catalyst_data in analysis_data["phase_3_growth_catalyst_identification"].items():
+                if isinstance(catalyst_data, dict) and "catalyst_strength" in catalyst_data:
+                    catalyst_title = catalyst_type.replace("_", " ").title()
+                    catalyst_confidence = catalyst_data.get("confidence", 0.85)
+                    catalyst_strength = catalyst_data.get("catalyst_strength", "High")
+                    catalyst_row = (
+                        f"| {catalyst_title} | {catalyst_confidence:.0%} | 2025-2027 | "
+                        f"{catalyst_strength} | Low - technology-driven secular trend | 9.0/10.0 |"
+                    )
+                    document += f"\n{catalyst_row}"
 
-        document += f"""
+        document += """
 
 ## 🔒 Industry Risk Assessment & Scenario Analysis
 
@@ -758,12 +847,17 @@ tags:
 
         # Add risk assessment data
         if analysis_data.get("phase_4_risk_matrix_development"):
-            for risk_type, risk_data in analysis_data[
-                "phase_4_risk_matrix_development"
-            ].items():
+            for risk_type, risk_data in analysis_data["phase_4_risk_matrix_development"].items():
                 if isinstance(risk_data, dict) and "weighted_risk_score" in risk_data:
-                    document += f"""
-| {risk_type.replace('_', ' ').title()} | {risk_data.get('probability', 0.7):.0%} | Medium-High | {risk_data.get('weighted_risk_score', 3.1):.1f}/5.0 | Near-term | Proactive management | {risk_data.get('confidence', 0.88):.1f}/1.0 |"""
+                    risk_title = risk_type.replace("_", " ").title()
+                    risk_prob = risk_data.get("probability", 0.7)
+                    risk_score = risk_data.get("weighted_risk_score", 3.1)
+                    risk_confidence = risk_data.get("confidence", 0.88)
+                    risk_row = (
+                        f"| {risk_title} | {risk_prob:.0%} | Medium-High | {risk_score:.1f}/5.0 | "
+                        f"Near-term | Proactive management | {risk_confidence:.1f}/1.0 |"
+                    )
+                    document += f"\n{risk_row}"
 
         document += f"""
 
@@ -772,7 +866,7 @@ tags:
 #### Base Case Scenario (60% probability)
 - **Growth Environment**: Continued technology adoption with moderate economic expansion
 - **Market Dynamics**: Stable competitive landscape with innovation-driven differentiation
-- **Returns Expectation**: {investment_thesis.get('growth_forecast', {}).get('long_term_cagr', '10-15%')} annual returns with moderate volatility
+- **Returns Expectation**: {long_term_cagr} annual returns with moderate volatility
 
 #### Bull Case Scenario (25% probability)
 - **Catalyst Acceleration**: Breakthrough AI applications driving exponential demand growth
@@ -789,19 +883,24 @@ tags:
 ### Multi-Method Valuation Analysis
 
 #### Industry Valuation Metrics
-- **Forward P/E Ratio**: {analysis_data.get('valuation_metrics', {}).get('forward_pe', '25-35x')} (premium justified by growth prospects)
-- **EV/Revenue Multiple**: {analysis_data.get('valuation_metrics', {}).get('ev_revenue', '8-12x')} (reflecting platform economics and scalability)
-- **Price/Book Ratio**: {analysis_data.get('valuation_metrics', {}).get('price_book', '4-8x')} (asset-light business models with high ROIC)
+- **Forward P/E Ratio**: {analysis_data.get("valuation_metrics", {}).get("forward_pe", "25-35x")} \
+(premium justified by growth prospects)
+- **EV/Revenue Multiple**: {analysis_data.get("valuation_metrics", {}).get("ev_revenue", "8-12x")} \
+(reflecting platform economics and scalability)
+- **Price/Book Ratio**: {analysis_data.get("valuation_metrics", {}).get("price_book", "4-8x")} \
+(asset-light business models with high ROIC)
 
 ### Economic Context & Policy Implications
 
 #### Interest Rate Sensitivity Analysis
-- **Duration Impact**: {investment_thesis.get('economic_context', {}).get('interest_rate_sensitivity', 'Medium')} sensitivity to rate changes due to growth premium valuations
+- **Duration Impact**: {economic_context.get("interest_rate_sensitivity", "Medium")} \
+sensitivity to rate changes due to growth premium valuations
 - **Financing Costs**: Strong balance sheets with minimal debt burden reducing financing risk
 - **Investment Capacity**: High free cash flow generation supporting continued R&D and expansion
 
 #### Macro-Economic Correlation
-- **GDP Correlation**: {investment_thesis.get('economic_context', {}).get('gdp_correlation', 0.45)} correlation with economic cycles
+- **GDP Correlation**: {economic_context.get("gdp_correlation", 0.45)} \
+correlation with economic cycles
 - **Inflation Impact**: Technology efficiency gains providing natural inflation hedge
 - **Currency Exposure**: Global revenue diversification providing natural hedging
 
@@ -810,11 +909,24 @@ tags:
 ### Final Investment Thesis & Conviction
 
 **Industry Grade**: A- (Excellent growth prospects with manageable risks)
-**Conviction Level**: High ({metadata['confidence']:.0%} confidence)
-**Position Sizing**: {investment_thesis.get('recommendation', {}).get('position_size', '15-25% of sector allocation')}
+**Conviction Level**: High ({metadata["confidence"]:.0%} confidence)
+**Position Sizing**: {rec_position}
 
 ### Key Investment Rationale
-{chr(10).join(f"- {point}" for point in investment_thesis.get('investment_rationale', ['Strong competitive positioning', 'Attractive growth prospects', 'Reasonable valuations', 'Diversified exposure']))}
+{
+            chr(10).join(
+                f"- {point}"
+                for point in investment_thesis.get(
+                    "investment_rationale",
+                    [
+                        "Strong competitive positioning",
+                        "Attractive growth prospects",
+                        "Reasonable valuations",
+                        "Diversified exposure",
+                    ],
+                )
+            )
+        }
 
 ### Portfolio Implementation Strategy
 - **Core Holdings**: Focus on industry leaders with strongest competitive moats
@@ -824,59 +936,83 @@ tags:
 
 ---
 
-**Author**: {metadata['author']}
+**Author**: {metadata["author"]}
 **Framework**: Industry DASV Methodology (Synthesist Integration)
-**Confidence**: {metadata['confidence']:.1f}/1.0
-**Data Sources**: {len(discovery_data.get('metadata', {}).get('cli_services_utilized', []))} CLI financial services with institutional-grade validation
+**Confidence**: {metadata["confidence"]:.1f}/1.0
+**Data Sources**: {len(discovery_data.get("metadata", {}).get("cli_services_utilized", []))} \
+CLI financial services with institutional-grade validation
 
-*This document represents institutional-quality industry analysis generated through systematic DASV framework methodology with synthesist sub-agent coordination ensuring professional presentation standards and comprehensive investment intelligence.*
+*This document represents institutional-quality industry analysis generated through \
+systematic DASV framework methodology with synthesist sub-agent coordination ensuring \
+professional presentation standards and comprehensive investment intelligence.*
 """
 
         return document
 
-    def _generate_enhanced_fallback_document(self, requirements: Dict[str, Any]) -> str:
+    def _generate_enhanced_fallback_document(self, requirements: dict[str, Any]) -> str:
         """Generate enhanced fallback document with synthesist requirements structure"""
         metadata = requirements["metadata"]
         synthesis_components = requirements["synthesis_components"]
 
-        return f"""# {requirements['industry_name']} Industry Analysis
+        return f"""# {requirements["industry_name"]} Industry Analysis
 
-*Generated: {metadata['timestamp']} | Confidence: {metadata['confidence']:.1f}/1.0*
+*Generated: {metadata["timestamp"]} | Confidence: {metadata["confidence"]:.1f}/1.0*
 
 ## Executive Summary
 
-The {requirements['industry_name']} industry represents a compelling investment opportunity with strong growth prospects and competitive positioning.
+The {requirements["industry_name"]} industry represents a compelling investment
+opportunity with strong growth prospects and competitive positioning.
 
-## Investment Recommendation: {synthesis_components['investment_thesis']['recommendation']['rating'] if synthesis_components['investment_thesis'].get('recommendation') else 'BUY'}
+## Investment Recommendation: {
+            (
+                synthesis_components["investment_thesis"]["recommendation"]["rating"]
+                if synthesis_components["investment_thesis"].get("recommendation")
+                else "BUY"
+            )
+        }
 
-Target allocation: {synthesis_components['investment_thesis']['recommendation']['position_size'] if synthesis_components['investment_thesis'].get('recommendation') else '15-20% of sector exposure'}
+Target allocation: {
+            (
+                synthesis_components["investment_thesis"]["recommendation"]["position_size"]
+                if synthesis_components["investment_thesis"].get("recommendation")
+                else "15-20% of sector exposure"
+            )
+        }
 
 **Synthesist sub-agent delegation failed. Using enhanced fallback with synthesis components.**
 
 ### Investment Thesis
-{synthesis_components['investment_thesis']['core_thesis'] if synthesis_components['investment_thesis'].get('core_thesis') else 'Core investment thesis data available but requires synthesist integration.'}
+{
+            (
+                synthesis_components["investment_thesis"]["core_thesis"]
+                if synthesis_components["investment_thesis"].get("core_thesis")
+                else "Core investment thesis data available but requires synthesist integration."
+            )
+        }
 
 ### Risk Analysis
-Aggregate Risk Score: {synthesis_components['risk_analysis'].get('aggregate_risk_score', 'Available in analysis data')}
+Aggregate Risk Score: {synthesis_components["risk_analysis"].get("aggregate_risk_score", "Available in analysis data")}
 
 ---
 
-**Author**: {metadata['author']}
+**Author**: {metadata["author"]}
 **Framework**: Industry DASV Methodology (Synthesist Delegation)
-**Confidence**: {metadata['confidence']:.1f}/1.0
+**Confidence**: {metadata["confidence"]:.1f}/1.0
 
-*Note: This document was generated using fallback mode. For full institutional-quality synthesis, ensure synthesist sub-agent is properly configured.*
+*Note: This document was generated using fallback mode. For full institutional-quality \
+synthesis, ensure synthesist sub-agent is properly configured.*
 """
 
-    def _generate_fallback_document(self, context: Dict[str, Any]) -> str:
+    def _generate_fallback_document(self, context: dict[str, Any]) -> str:
         """Legacy fallback document method (deprecated in favor of enhanced version)"""
-        return f"""# {context['industry_name']} Industry Analysis
+        return f"""# {context["industry_name"]} Industry Analysis
 
-*Generated: {context['generation_timestamp']} | Confidence: {context['confidence']:.1f}/1.0*
+*Generated: {context["generation_timestamp"]} | Confidence: {context["confidence"]:.1f}/1.0*
 
 ## Executive Summary
 
-The {context['industry_name']} industry represents a compelling investment opportunity with strong growth prospects and competitive positioning.
+The {context["industry_name"]} industry represents a compelling investment \
+opportunity with strong growth prospects and competitive positioning.
 
 ## Investment Recommendation: BUY
 
@@ -886,9 +1022,9 @@ Target allocation: 15-20% of sector exposure
 
 ---
 
-**Author**: {context['author']}
+**Author**: {context["author"]}
 **Framework**: Industry DASV Methodology
-**Confidence**: {context['confidence']:.1f}/1.0
+**Confidence**: {context["confidence"]:.1f}/1.0
 """
 
 
@@ -903,7 +1039,7 @@ if REGISTRY_AVAILABLE:
     class IndustrySynthesisScript(BaseScript):
         """Registry-integrated industry synthesis script"""
 
-        def execute(self, **kwargs) -> Dict[str, Any]:
+        def execute(self, **kwargs) -> dict[str, Any]:
             """Execute industry synthesis workflow"""
             industry = kwargs.get("industry", "software_infrastructure")
             discovery_file = kwargs.get("discovery_file")
@@ -914,14 +1050,10 @@ if REGISTRY_AVAILABLE:
             date_str = datetime.now().strftime("%Y%m%d")
 
             if not discovery_file:
-                discovery_file = os.path.join(
-                    base_dir, "discovery", f"{industry}_{date_str}_discovery.json"
-                )
+                discovery_file = os.path.join(base_dir, "discovery", f"{industry}_{date_str}_discovery.json")
 
             if not analysis_file:
-                analysis_file = os.path.join(
-                    base_dir, "analysis", f"{industry}_{date_str}_analysis.json"
-                )
+                analysis_file = os.path.join(base_dir, "analysis", f"{industry}_{date_str}_analysis.json")
 
             synthesis = IndustrySynthesis(
                 industry=industry,
@@ -985,16 +1117,12 @@ def main():
     if not args.discovery_file:
         discovery_dir = "./data/outputs/industry_analysis/discovery"
         date_str = datetime.now().strftime("%Y%m%d")
-        args.discovery_file = os.path.join(
-            discovery_dir, f"{args.industry}_{date_str}_discovery.json"
-        )
+        args.discovery_file = os.path.join(discovery_dir, f"{args.industry}_{date_str}_discovery.json")
 
     if not args.analysis_file:
         analysis_dir = "./data/outputs/industry_analysis/analysis"
         date_str = datetime.now().strftime("%Y%m%d")
-        args.analysis_file = os.path.join(
-            analysis_dir, f"{args.industry}_{date_str}_analysis.json"
-        )
+        args.analysis_file = os.path.join(analysis_dir, f"{args.industry}_{date_str}_analysis.json")
 
     # Initialize and run synthesis
     synthesis = IndustrySynthesis(
@@ -1017,9 +1145,9 @@ def main():
     metadata_path = synthesis.save_synthesis_metadata(synthesis_data)
 
     print("\n✅ Industry synthesis complete!")
-    print("📊 Confidence Score: {synthesis_data['synthesis_confidence']:.1f}/1.0")
-    print("📄 Document saved to: {document_path}")
-    print("📋 Metadata saved to: {metadata_path}")
+    print(f"📊 Confidence Score: {synthesis_data['synthesis_confidence']:.1f}/1.0")
+    print(f"📄 Document saved to: {document_path}")
+    print(f"📋 Metadata saved to: {metadata_path}")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class AnalysisCrossValidator:
@@ -21,20 +21,20 @@ class AnalysisCrossValidator:
         self.ticker_specificity_issues = []
         self.cli_consistency_issues = []
 
-    def get_latest_files(self, count: int = 7) -> List[Path]:
+    def get_latest_files(self, count: int = 7) -> list[Path]:
         """Get the latest N analysis files by modification time"""
         analysis_files = list(self.analysis_dir.glob("*_analysis.json"))
         # Sort by modification time, newest first
         analysis_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
         return analysis_files[:count]
 
-    def load_json_file(self, filepath: Path) -> Dict[str, Any]:
+    def load_json_file(self, filepath: Path) -> dict[str, Any]:
         """Load and parse JSON file"""
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 return json.load(f)
         except Exception as e:
-            print("Error loading {filepath}: {e}")
+            print(f"Error loading {filepath}: {e}")
             return {}
 
     def extract_ticker_from_filename(self, filepath: Path) -> str:
@@ -43,7 +43,7 @@ class AnalysisCrossValidator:
         match = re.match(r"([A-Z]+)_\d{8}_analysis\.json", filepath.name)
         return match.group(1) if match else "UNKNOWN"
 
-    def analyze_structural_consistency(self, files_data: List[Dict[str, Any]]) -> float:
+    def analyze_structural_consistency(self, files_data: list[dict[str, Any]]) -> float:
         """Analyze structural consistency across files"""
         # Define expected structure
         expected_keys = {
@@ -84,13 +84,9 @@ class AnalysisCrossValidator:
                     }
                 )
 
-        return (
-            sum(structural_scores) / len(structural_scores)
-            if structural_scores
-            else 0.0
-        )
+        return sum(structural_scores) / len(structural_scores) if structural_scores else 0.0
 
-    def detect_hardcoded_values(self, files_data: List[Dict[str, Any]]) -> float:
+    def detect_hardcoded_values(self, files_data: list[dict[str, Any]]) -> float:
         """Detect potential hardcoded or template values"""
         # Common patterns that might indicate hardcoded values
         suspicious_patterns = [
@@ -114,19 +110,13 @@ class AnalysisCrossValidator:
             elif isinstance(obj, (str, int, float)) and obj:
                 # Skip common expected values
                 if not isinstance(obj, str) or (
-                    len(str(obj)) > 3
-                    and str(obj)
-                    not in ["true", "false", "null", "stable", "improving", "declining"]
+                    len(str(obj)) > 3 and str(obj) not in ["true", "false", "null", "stable", "improving", "declining"]
                 ):
-                    value_occurrences[str(obj)][path].append(
-                        self.files_analyzed[files_data.index(obj)]
-                    )
+                    value_occurrences[str(obj)][path].append(self.files_analyzed[files_data.index(obj)])
 
         # Analyze each file
         for idx, data in enumerate(files_data):
-            ticker = self.extract_ticker_from_filename(
-                Path(self.files_analyzed[idx]["filename"])
-            )
+            ticker = self.extract_ticker_from_filename(Path(self.files_analyzed[idx]["filename"]))
 
             # Check for suspicious patterns
             data_str = json.dumps(data, default=str).lower()
@@ -169,8 +159,7 @@ class AnalysisCrossValidator:
                         {
                             "value": value,
                             "occurrences": len(unique_files),
-                            "files_affected": list(unique_files)[:3]
-                            + (["..."] if len(unique_files) > 3 else []),
+                            "files_affected": list(unique_files)[:3] + (["..."] if len(unique_files) > 3 else []),
                         }
                     )
 
@@ -184,14 +173,12 @@ class AnalysisCrossValidator:
 
         return score
 
-    def validate_ticker_specificity(self, files_data: List[Dict[str, Any]]) -> float:
+    def validate_ticker_specificity(self, files_data: list[dict[str, Any]]) -> float:
         """Validate that data is appropriately ticker-specific"""
         specificity_scores = []
 
         for idx, data in enumerate(files_data):
-            ticker = self.extract_ticker_from_filename(
-                Path(self.files_analyzed[idx]["filename"])
-            )
+            ticker = self.extract_ticker_from_filename(Path(self.files_analyzed[idx]["filename"]))
             issues = []
 
             # Check company name matches ticker
@@ -199,9 +186,7 @@ class AnalysisCrossValidator:
             if ticker not in ["XYZ"] and company_name and ticker not in company_name:
                 # Some flexibility for company names that might not contain ticker
                 if not any(word in company_name.upper() for word in ticker.split("_")):
-                    issues.append(
-                        f"Company name '{company_name}' doesn't match ticker {ticker}"
-                    )
+                    issues.append(f"Company name '{company_name}' doesn't match ticker {ticker}")
 
             # Check market data specificity
             market_data = data.get("market_data", {})
@@ -210,15 +195,10 @@ class AnalysisCrossValidator:
                 current_price = market_data.get("current_price")
                 if current_price:
                     price_count = sum(
-                        1
-                        for d in files_data
-                        if d.get("market_data", {}).get("current_price")
-                        == current_price
+                        1 for d in files_data if d.get("market_data", {}).get("current_price") == current_price
                     )
                     if price_count > 1:
-                        issues.append(
-                            f"Current price {current_price} appears in {price_count} files"
-                        )
+                        issues.append(f"Current price {current_price} appears in {price_count} files")
 
             # Check financial metrics uniqueness
             financial_health = data.get("financial_health_analysis", {})
@@ -227,18 +207,12 @@ class AnalysisCrossValidator:
                 if isinstance(profitability, dict):
                     gross_margin = profitability.get("gross_margin_analysis", {})
                     if isinstance(gross_margin, dict):
-                        margin_value = gross_margin.get(
-                            "gross_margin"
-                        ) or gross_margin.get("gross_margin_2024")
+                        margin_value = gross_margin.get("gross_margin") or gross_margin.get("gross_margin_2024")
                         if margin_value:
                             margin_count = sum(
                                 1
                                 for d in files_data
-                                for prof in [
-                                    d.get("financial_health_analysis", {}).get(
-                                        "profitability_assessment", {}
-                                    )
-                                ]
+                                for prof in [d.get("financial_health_analysis", {}).get("profitability_assessment", {})]
                                 for gm in [prof.get("gross_margin_analysis", {})]
                                 if (
                                     gm.get("gross_margin") == margin_value
@@ -246,9 +220,7 @@ class AnalysisCrossValidator:
                                 )
                             )
                             if margin_count > 1:
-                                issues.append(
-                                    f"Gross margin {margin_value} appears in {margin_count} files"
-                                )
+                                issues.append(f"Gross margin {margin_value} appears in {margin_count} files")
 
             if issues:
                 self.ticker_specificity_issues.append(
@@ -262,15 +234,9 @@ class AnalysisCrossValidator:
             score = 1.0 - (len(issues) * 0.2)  # Deduct 20% per issue
             specificity_scores.append(max(0, score))
 
-        return (
-            sum(specificity_scores) / len(specificity_scores)
-            if specificity_scores
-            else 0.0
-        )
+        return sum(specificity_scores) / len(specificity_scores) if specificity_scores else 0.0
 
-    def assess_cli_integration_consistency(
-        self, files_data: List[Dict[str, Any]]
-    ) -> float:
+    def assess_cli_integration_consistency(self, files_data: list[dict[str, Any]]) -> float:
         """Assess consistency of CLI services integration"""
         cli_scores = []
 
@@ -321,25 +287,19 @@ class AnalysisCrossValidator:
                     "alpha_vantage_price",
                     "fmp_price",
                 ]
-                missing_sources = [
-                    s for s in expected_price_sources if s not in price_validation
-                ]
+                missing_sources = [s for s in expected_price_sources if s not in price_validation]
                 if missing_sources:
-                    issues.append(
-                        f"Missing price validation sources: {missing_sources}"
-                    )
+                    issues.append(f"Missing price validation sources: {missing_sources}")
 
             if issues:
-                self.cli_consistency_issues.append(
-                    {"file": self.files_analyzed[idx]["filename"], "issues": issues}
-                )
+                self.cli_consistency_issues.append({"file": self.files_analyzed[idx]["filename"], "issues": issues})
 
             score = 1.0 - (len(issues) * 0.15)  # Deduct 15% per issue
             cli_scores.append(max(0, score))
 
         return sum(cli_scores) / len(cli_scores) if cli_scores else 0.0
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """Generate comprehensive cross-analysis validation report"""
         # Load and analyze files
         latest_files = self.get_latest_files(7)
@@ -352,9 +312,7 @@ class AnalysisCrossValidator:
                     {
                         "filename": filepath.name,
                         "ticker": self.extract_ticker_from_filename(filepath),
-                        "modification_timestamp": datetime.fromtimestamp(
-                            filepath.stat().st_mtime
-                        ).isoformat(),
+                        "modification_timestamp": datetime.fromtimestamp(filepath.stat().st_mtime).isoformat(),
                         "file_size_bytes": filepath.stat().st_size,
                         "structural_compliance": None,  # Will be calculated
                     }
@@ -370,9 +328,7 @@ class AnalysisCrossValidator:
         # Update structural compliance scores
         for idx, issue in enumerate(self.structural_issues):
             file_idx = issue["file_index"]
-            self.files_analyzed[file_idx][
-                "structural_compliance"
-            ] = f"{issue['compliance_score']:.1f}/10.0"
+            self.files_analyzed[file_idx]["structural_compliance"] = f"{issue['compliance_score']:.1f}/10.0"
 
         # Calculate overall score
         overall_score = (
@@ -385,9 +341,7 @@ class AnalysisCrossValidator:
         # Generate recommendations
         immediate_fixes = []
         if structural_score < 0.9:
-            immediate_fixes.append(
-                "Standardize JSON structure across all analysis files"
-            )
+            immediate_fixes.append("Standardize JSON structure across all analysis files")
         if hardcoded_score < 0.9:
             immediate_fixes.append("Replace hardcoded values with ticker-specific data")
         if ticker_specificity_score < 0.9:
@@ -448,28 +402,27 @@ class AnalysisCrossValidator:
         """Calculate letter grade from score"""
         if score >= 0.97:
             return "A+"
-        elif score >= 0.93:
+        if score >= 0.93:
             return "A"
-        elif score >= 0.90:
+        if score >= 0.90:
             return "A-"
-        elif score >= 0.87:
+        if score >= 0.87:
             return "B+"
-        elif score >= 0.83:
+        if score >= 0.83:
             return "B"
-        elif score >= 0.80:
+        if score >= 0.80:
             return "B-"
-        elif score >= 0.77:
+        if score >= 0.77:
             return "C+"
-        elif score >= 0.73:
+        if score >= 0.73:
             return "C"
-        else:
-            return "F"
+        return "F"
 
 
 def main():
     # Set up paths
-    analysis_dir = "/Users/colemorton/Projects/sensylate-command-system-enhancements/data/outputs/fundamental_analysis/analysis"
-    output_dir = "/Users/colemorton/Projects/sensylate-command-system-enhancements/data/outputs/fundamental_analysis/validation"
+    analysis_dir = "/Users/colemorton/Projects/colemorton.com/data/outputs/fundamental_analysis/analysis"
+    output_dir = "/Users/colemorton/Projects/colemorton.com/data/outputs/fundamental_analysis/validation"
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -480,17 +433,13 @@ def main():
 
     # Save report
     timestamp = datetime.now().strftime("%Y%m%d")
-    output_file = os.path.join(
-        output_dir, f"analysis_cross_analysis_{timestamp}_validation.json"
-    )
+    output_file = os.path.join(output_dir, f"analysis_cross_analysis_{timestamp}_validation.json")
 
     with open(output_file, "w") as f:
         json.dump(report, f, indent=2)
 
     print("Cross-analysis validation complete. Report saved to: {output_file}")
-    print(
-        f"Overall Score: {report['cross_analysis_results']['overall_cross_analysis_score']}"
-    )
+    print(f"Overall Score: {report['cross_analysis_results']['overall_cross_analysis_score']}")
     print("Files Analyzed: {report['metadata']['files_analyzed_count']}")
 
 

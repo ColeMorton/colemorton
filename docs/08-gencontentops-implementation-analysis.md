@@ -1,5 +1,8 @@
 # GenContentOps Implementation Analysis: Project Current State Review
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Reference
+**Authority**: Content Operations | **Audience**: System Architects
+
 **Analysis Date**: 2025-08-12
 **Framework**: Generative Content Operations (GenContentOps) Assessment
 **Scope**: System Architecture, Content Processing, Quality Assurance, Integration Patterns
@@ -367,10 +370,10 @@ class ChartGeneratorFactory:
 # Target architecture: Container-based services
 services:
   discovery_service:
-    image: sensylate/discovery:latest
+    image: colemorton/discovery:latest
     environment: [API_KEYS, VALIDATION_THRESHOLDS]
   analysis_service:
-    image: sensylate/analysis:latest
+    image: colemorton/analysis:latest
     depends_on: [discovery_service]
 ```
 

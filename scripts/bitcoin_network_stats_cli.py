@@ -12,9 +12,10 @@ Command-line interface for comprehensive Bitcoin network statistics with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,7 +41,7 @@ class BitcoinNetworkStatsCLI(BaseFinancialCLI):
             self.service = create_bitcoin_network_stats_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Bitcoin Network Stats service health check"""
         try:
             service = self._get_service(env)
@@ -59,7 +60,7 @@ class BitcoinNetworkStatsCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -126,9 +127,7 @@ class BitcoinNetworkStatsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_network_health_metrics()
-                self._output_result(
-                    result, output_format, "Bitcoin Network Health Metrics"
-                )
+                self._output_result(result, output_format, "Bitcoin Network Health Metrics")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get network health metrics")
@@ -143,9 +142,7 @@ class BitcoinNetworkStatsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_price_and_market_data()
-                self._output_result(
-                    result, output_format, "Bitcoin Price and Market Data"
-                )
+                self._output_result(result, output_format, "Bitcoin Price and Market Data")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get price and market data")
@@ -160,9 +157,7 @@ class BitcoinNetworkStatsCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_comprehensive_report()
-                self._output_result(
-                    result, output_format, "Comprehensive Bitcoin Network Report"
-                )
+                self._output_result(result, output_format, "Comprehensive Bitcoin Network Report")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get comprehensive report")

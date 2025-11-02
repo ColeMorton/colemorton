@@ -4,10 +4,9 @@ Regional Intelligence Loader
 Loads and manages sophisticated regional economic intelligence configurations
 """
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -21,7 +20,7 @@ class CentralBankInfo:
     policy_rate_name: str
     policy_framework: str
     meeting_frequency: int
-    policy_tools: List[str]
+    policy_tools: list[str]
 
 
 @dataclass
@@ -44,43 +43,41 @@ class EconomicIndicator:
     code: str
     frequency: str
     importance: str
-    typical_range: List[float]
-    target_level: Optional[float] = None
-    fred_code: Optional[str] = None
-    expansion_threshold: Optional[float] = None
+    typical_range: list[float]
+    target_level: float | None = None
+    fred_code: str | None = None
+    expansion_threshold: float | None = None
 
 
 class RegionalIntelligenceLoader:
     """Loads and manages regional intelligence configurations"""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         if config_dir is None:
             # Default to configs directory relative to this file
             current_dir = Path(__file__).parent
             config_dir = current_dir / "configs"
 
         self.config_dir = Path(config_dir)
-        self.loaded_configs: Dict[str, Dict[str, Any]] = {}
+        self.loaded_configs: dict[str, dict[str, Any]] = {}
         self._load_all_configs()
 
     def _load_all_configs(self) -> None:
         """Load all available regional configurations"""
         if not self.config_dir.exists():
-            raise FileNotFoundError(
-                f"Regional intelligence config directory not found: {self.config_dir}"
-            )
+            raise FileNotFoundError(f"Regional intelligence config directory not found: {self.config_dir}")
 
         for config_file in self.config_dir.glob("*.yaml"):
             region = config_file.stem.upper()
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     config = yaml.safe_load(f)
                     self.loaded_configs[region] = config
-                    print("Loaded regional intelligence for {region}")
+                    print(f"Loaded regional intelligence for {region}")
             except Exception as e:
-                print("Error loading config for {region}: {e}")
+                print(f"Error loading config for {region}: {e}")
 
-    def get_region_config(self, region: str) -> Dict[str, Any]:
+    def get_region_config(self, region: str) -> dict[str, Any]:
         """Get complete configuration for a region"""
         region = region.upper()
         if region not in self.loaded_configs:
@@ -123,12 +120,10 @@ class RegionalIntelligenceLoader:
             regime=currency_config.get("regime", "floating"),
             is_reserve_currency=currency_config.get("is_reserve_currency", False),
             safe_haven_status=currency_config.get("safe_haven_status", False),
-            correlation_with_risk_sentiment=currency_config.get(
-                "correlation_with_risk_sentiment", 0.0
-            ),
+            correlation_with_risk_sentiment=currency_config.get("correlation_with_risk_sentiment", 0.0),
         )
 
-    def get_key_economic_indicators(self, region: str) -> List[EconomicIndicator]:
+    def get_key_economic_indicators(self, region: str) -> list[EconomicIndicator]:
         """Get key economic indicators for region"""
         config = self.get_region_config(region)
         indicators_config = config.get("key_economic_indicators", {})
@@ -151,7 +146,7 @@ class RegionalIntelligenceLoader:
 
         return indicators
 
-    def _parse_indicator(self, indicator_data: Dict[str, Any]) -> EconomicIndicator:
+    def _parse_indicator(self, indicator_data: dict[str, Any]) -> EconomicIndicator:
         """Parse individual indicator data"""
         return EconomicIndicator(
             name=indicator_data.get("name", "Unknown Indicator"),
@@ -164,42 +159,42 @@ class RegionalIntelligenceLoader:
             expansion_threshold=indicator_data.get("expansion_threshold"),
         )
 
-    def get_benchmark_securities(self, region: str) -> Dict[str, Any]:
+    def get_benchmark_securities(self, region: str) -> dict[str, Any]:
         """Get benchmark securities for region"""
         config = self.get_region_config(region)
         return config.get("benchmark_securities", {})
 
-    def get_risk_factors(self, region: str) -> Dict[str, List[Dict[str, Any]]]:
+    def get_risk_factors(self, region: str) -> dict[str, list[dict[str, Any]]]:
         """Get risk factors for region"""
         config = self.get_region_config(region)
         return config.get("risk_factors", {})
 
-    def get_correlation_patterns(self, region: str) -> Dict[str, float]:
+    def get_correlation_patterns(self, region: str) -> dict[str, float]:
         """Get typical correlation patterns for region"""
         config = self.get_region_config(region)
         return config.get("correlation_patterns", {})
 
-    def get_market_structure(self, region: str) -> Dict[str, Any]:
+    def get_market_structure(self, region: str) -> dict[str, Any]:
         """Get market structure information for region"""
         config = self.get_region_config(region)
         return config.get("market_structure", {})
 
-    def get_transmission_channels(self, region: str) -> Dict[str, Any]:
+    def get_transmission_channels(self, region: str) -> dict[str, Any]:
         """Get economic transmission channels for region"""
         config = self.get_region_config(region)
         return config.get("economic_transmission_channels", {})
 
-    def get_regional_specifics(self, region: str) -> Dict[str, Any]:
+    def get_regional_specifics(self, region: str) -> dict[str, Any]:
         """Get regional specific characteristics"""
         config = self.get_region_config(region)
         return config.get("regional_specifics", {})
 
-    def get_data_sources(self, region: str) -> Dict[str, List[str]]:
+    def get_data_sources(self, region: str) -> dict[str, list[str]]:
         """Get data sources for region"""
         config = self.get_region_config(region)
         return config.get("data_sources", {})
 
-    def get_quality_standards(self, region: str) -> Dict[str, Any]:
+    def get_quality_standards(self, region: str) -> dict[str, Any]:
         """Get quality standards for region"""
         config = self.get_region_config(region)
         return config.get(
@@ -212,16 +207,16 @@ class RegionalIntelligenceLoader:
             },
         )
 
-    def get_special_features(self, region: str) -> Dict[str, Any]:
+    def get_special_features(self, region: str) -> dict[str, Any]:
         """Get special features for region (like green transition for Europe)"""
         config = self.get_region_config(region)
         return config.get("special_features", {})
 
-    def list_available_regions(self) -> List[str]:
+    def list_available_regions(self) -> list[str]:
         """List all available regions"""
         return list(self.loaded_configs.keys())
 
-    def validate_region_config(self, region: str) -> Dict[str, Any]:
+    def validate_region_config(self, region: str) -> dict[str, Any]:
         """Validate region configuration completeness"""
         config = self.get_region_config(region)
         validation_results = {
@@ -247,13 +242,11 @@ class RegionalIntelligenceLoader:
             if is_present:
                 present_sections += 1
 
-        validation_results["completeness_score"] = present_sections / len(
-            required_sections
-        )
+        validation_results["completeness_score"] = present_sections / len(required_sections)
 
         return validation_results
 
-    def get_regional_policy_rate_mapping(self, region: str) -> Dict[str, str]:
+    def get_regional_policy_rate_mapping(self, region: str) -> dict[str, str]:
         """Get mapping of policy rate names and typical ranges"""
         config = self.get_region_config(region)
         cb_info = config.get("central_bank", {})
@@ -261,17 +254,10 @@ class RegionalIntelligenceLoader:
         # Handle multi-bank regions
         if "primary_banks" in cb_info:
             banks = cb_info["primary_banks"]
-            return {
-                bank["short"]: bank.get("policy_rate", "policy_rate") for bank in banks
-            }
-        else:
-            return {
-                cb_info.get("short_name", "CB"): cb_info.get(
-                    "policy_rate_name", "policy_rate"
-                )
-            }
+            return {bank["short"]: bank.get("policy_rate", "policy_rate") for bank in banks}
+        return {cb_info.get("short_name", "CB"): cb_info.get("policy_rate_name", "policy_rate")}
 
-    def get_regional_analysis_priorities(self, region: str) -> Dict[str, float]:
+    def get_regional_analysis_priorities(self, region: str) -> dict[str, float]:
         """Get analysis priorities and weights for different economic factors"""
         config = self.get_region_config(region)
 

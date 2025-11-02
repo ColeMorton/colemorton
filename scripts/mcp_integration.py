@@ -14,7 +14,8 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,19 +25,13 @@ logger = logging.getLogger(__name__)
 class MCPIntegrationError(Exception):
     """Base exception for MCP integration errors"""
 
-    pass
-
 
 class ServerNotFoundError(MCPIntegrationError):
     """Raised when MCP server is not available"""
 
-    pass
-
 
 class DataAccessError(MCPIntegrationError):
     """Raised when data access fails"""
-
-    pass
 
 
 class CacheManager:
@@ -77,21 +72,16 @@ class CacheManager:
         """Get file cache path for the given key"""
         return self.file_cache_dir / f"{cache_key}.pkl"
 
-    def _is_cache_valid(
-        self, cache_time: datetime, is_market_data: bool = False
-    ) -> bool:
+    def _is_cache_valid(self, cache_time: datetime, is_market_data: bool = False) -> bool:
         """Check if cache entry is still valid based on TTL"""
         now = datetime.now()
         age = (now - cache_time).total_seconds()
 
         if is_market_data and self._is_market_hours():
             return age < self.market_hours_ttl
-        else:
-            return age < self.file_ttl
+        return age < self.file_ttl
 
-    def get(
-        self, server_name: str, tool_name: str, **kwargs
-    ) -> Optional[Dict[str, Any]]:
+    def get(self, server_name: str, tool_name: str, **kwargs) -> dict[str, Any] | None:
         """Get data from cache with intelligent fallback"""
         self.cache_stats["total_requests"] += 1
         cache_key = self._get_cache_key(server_name, tool_name, **kwargs)
@@ -104,9 +94,8 @@ class CacheManager:
                 self.cache_stats["session_hits"] += 1
                 logger.debug(f"Session cache hit for {server_name}.{tool_name}")
                 return cached_result
-            else:
-                # Expired session cache entry
-                del self.session_cache[cache_key]
+            # Expired session cache entry
+            del self.session_cache[cache_key]
 
         # Level 2: Check file cache
         file_cache_path = self._get_file_cache_path(cache_key)
@@ -125,9 +114,8 @@ class CacheManager:
                     self.cache_stats["file_hits"] += 1
                     logger.debug(f"File cache hit for {server_name}.{tool_name}")
                     return cached_result
-                else:
-                    # Expired file cache entry
-                    file_cache_path.unlink()
+                # Expired file cache entry
+                file_cache_path.unlink()
 
             except Exception as e:
                 logger.warning(f"Failed to load file cache: {e}")
@@ -138,7 +126,7 @@ class CacheManager:
         self.cache_stats["cache_misses"] += 1
         return None
 
-    def set(self, server_name: str, tool_name: str, result: Dict[str, Any], **kwargs):
+    def set(self, server_name: str, tool_name: str, result: dict[str, Any], **kwargs):
         """Store data in all cache levels"""
         cache_key = self._get_cache_key(server_name, tool_name, **kwargs)
         timestamp = datetime.now()
@@ -207,16 +195,14 @@ class CacheManager:
 
         logger.info("Cache cleanup completed")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get comprehensive cache statistics"""
         total_requests = self.cache_stats["total_requests"]
         total_hits = self.cache_stats["session_hits"] + self.cache_stats["file_hits"]
 
         return {
             "cache_stats": self.cache_stats,
-            "hit_ratio": (
-                (total_hits / total_requests * 100) if total_requests > 0 else 0
-            ),
+            "hit_ratio": ((total_hits / total_requests * 100) if total_requests > 0 else 0),
             "session_cache_size": len(self.session_cache),
             "file_cache_size": len(list(self.file_cache_dir.glob("*.pkl"))),
             "cache_directory": str(self.cache_dir),
@@ -226,9 +212,7 @@ class CacheManager:
 class MCPDataAccess:
     """Unified data access layer for MCP servers with advanced caching"""
 
-    def __init__(
-        self, config_path: str = "mcp-servers.json", enable_caching: bool = True
-    ):
+    def __init__(self, config_path: str = "mcp-servers.json", enable_caching: bool = True):
         self.config_path = Path(config_path)
         self.servers = self._load_server_config()
         self.enable_caching = enable_caching
@@ -251,7 +235,7 @@ class MCPDataAccess:
     def _load_server_config(self) -> dict:
         """Load MCP server configuration"""
         try:
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 config = json.load(f)
             return config.get("mcpServers", {})
         except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -313,10 +297,7 @@ class MCPDataAccess:
                 tool_result = response.get("result", {})
 
                 # Parse the tool result if it's a JSON string
-                if (
-                    isinstance(tool_result.get("content"), list)
-                    and tool_result["content"]
-                ):
+                if isinstance(tool_result.get("content"), list) and tool_result["content"]:
                     content = tool_result["content"][0].get("text", "{}")
                     try:
                         parsed_result = json.loads(content)
@@ -327,9 +308,7 @@ class MCPDataAccess:
 
                 # Store in advanced cache
                 if self.enable_caching and self.cache_manager:
-                    self.cache_manager.set(
-                        server_name, tool_name, parsed_result, **kwargs
-                    )
+                    self.cache_manager.set(server_name, tool_name, parsed_result, **kwargs)
 
                 # Record successful request performance
                 response_time = time.time() - start_time
@@ -337,9 +316,7 @@ class MCPDataAccess:
                 self.performance_metrics["response_times"].append(response_time)
                 self._update_average_response_time()
 
-                logger.info(
-                    f"MCP tool call successful: {server_name}.{tool_name} ({response_time:.3f}s)"
-                )
+                logger.info(f"MCP tool call successful: {server_name}.{tool_name} ({response_time:.3f}s)")
                 return parsed_result
 
             except json.JSONDecodeError as e:
@@ -365,47 +342,33 @@ class MCPDataAccess:
         if self.performance_metrics["response_times"]:
             # Keep only the last 100 response times for rolling average
             if len(self.performance_metrics["response_times"]) > 100:
-                self.performance_metrics["response_times"] = self.performance_metrics[
-                    "response_times"
-                ][-100:]
+                self.performance_metrics["response_times"] = self.performance_metrics["response_times"][-100:]
 
-            self.performance_metrics["average_response_time"] = sum(
+            self.performance_metrics["average_response_time"] = sum(self.performance_metrics["response_times"]) / len(
                 self.performance_metrics["response_times"]
-            ) / len(self.performance_metrics["response_times"])
+            )
 
     # Yahoo Finance Integration
     def get_stock_fundamentals(self, ticker: str) -> dict:
         """Get stock fundamentals via Yahoo Finance MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_company_fundamentals", ticker=ticker
-        )
+        return self._call_mcp_tool("external-api", "get_company_fundamentals", ticker=ticker)
 
     def get_market_data(self, ticker: str, period: str = "1y") -> dict:
         """Get historical market data via Yahoo Finance MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_historical_data", ticker=ticker, period=period
-        )
+        return self._call_mcp_tool("external-api", "get_historical_data", ticker=ticker, period=period)
 
     def get_financial_statements(self, ticker: str) -> dict:
         """Get financial statements via Yahoo Finance MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_company_fundamentals", ticker=ticker
-        )
+        return self._call_mcp_tool("external-api", "get_company_fundamentals", ticker=ticker)
 
     # SEC EDGAR Integration
     def get_company_filings(self, ticker: str, filing_type: str = "10-K") -> dict:
         """Get SEC filings via EDGAR MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_sec_filings", ticker=ticker, filing_type=filing_type
-        )
+        return self._call_mcp_tool("external-api", "get_sec_filings", ticker=ticker, filing_type=filing_type)
 
-    def get_edgar_financial_statements(
-        self, ticker: str, period: str = "annual"
-    ) -> dict:
+    def get_edgar_financial_statements(self, ticker: str, period: str = "annual") -> dict:
         """Get SEC financial statements via EDGAR MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_sec_filings", ticker=ticker, filing_type="10-K"
-        )
+        return self._call_mcp_tool("external-api", "get_sec_filings", ticker=ticker, filing_type="10-K")
 
     def get_sec_metrics(self, ticker: str, fiscal_year: str = None) -> dict:
         """Get SEC metrics via EDGAR MCP server"""
@@ -430,39 +393,29 @@ class MCPDataAccess:
 
     def get_inflation_data(self, period: str = "1y") -> dict:
         """Get inflation data via FRED MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_economic_data", indicator="CPIAUCSL"
-        )
+        return self._call_mcp_tool("external-api", "get_economic_data", indicator="CPIAUCSL")
 
     def get_interest_rates(self, rate_type: str = "all", period: str = "1y") -> dict:
         """Get interest rate data via FRED MCP server"""
-        return self._call_mcp_tool(
-            "external-api", "get_economic_data", indicator="FEDFUNDS"
-        )
+        return self._call_mcp_tool("external-api", "get_economic_data", indicator="FEDFUNDS")
 
-    # Sensylate Trading Integration (deprecated - using external-api)
+    # Cole Morton Trading Integration (deprecated - using external-api)
     def get_fundamental_analysis(self, ticker: str) -> dict:
         """Get comprehensive fundamental analysis via External API server"""
-        return self._call_mcp_tool(
-            "external-api", "get_comprehensive_stock_analysis", ticker=ticker
-        )
+        return self._call_mcp_tool("external-api", "get_comprehensive_stock_analysis", ticker=ticker)
 
-    def list_available_analyses(
-        self, analysis_type: str = "fundamental_analysis"
-    ) -> dict:
-        """List available analyses via Sensylate Trading MCP server"""
+    def list_available_analyses(self, analysis_type: str = "fundamental_analysis") -> dict:
+        """List available analyses via Cole Morton Trading MCP server"""
         raise NotImplementedError(
-            "sensylate-trading server has been deprecated. Use external-api for fundamental analysis."
+            "colemorton-trading server has been deprecated. Use external-api for fundamental analysis."
         )
 
     def get_trading_performance(self) -> dict:
-        """Get trading performance data via Sensylate Trading MCP server"""
-        raise NotImplementedError("sensylate-trading server has been deprecated.")
+        """Get trading performance data via Cole Morton Trading MCP server"""
+        raise NotImplementedError("colemorton-trading server has been deprecated.")
 
-    def generate_blog_content_from_analysis(
-        self, ticker: str, content_type: str = "fundamental_analysis"
-    ) -> dict:
-        """Generate blog content from analysis via Sensylate Trading MCP server"""
+    def generate_blog_content_from_analysis(self, ticker: str, content_type: str = "fundamental_analysis") -> dict:
+        """Generate blog content from analysis via Cole Morton Trading MCP server"""
         return self._call_mcp_tool(
             "content-publishing",
             "generate_fundamental_analysis_blog",
@@ -479,9 +432,7 @@ class MCPDataAccess:
             data=json.dumps(data),
         )
 
-    def create_social_content(
-        self, ticker: str, analysis_type: str, key_points: str
-    ) -> dict:
+    def create_social_content(self, ticker: str, analysis_type: str, key_points: str) -> dict:
         """Create social media content via Content Automation MCP server"""
         return self._call_mcp_tool(
             "content-automation",
@@ -518,15 +469,9 @@ class MCPDataAccess:
 
         # Yahoo Finance Data
         try:
-            analysis["yahoo_finance"]["fundamentals"] = self.get_stock_fundamentals(
-                ticker
-            )
-            analysis["yahoo_finance"]["market_data"] = self.get_market_data(
-                ticker, "1y"
-            )
-            analysis["yahoo_finance"][
-                "financial_statements"
-            ] = self.get_financial_statements(ticker)
+            analysis["yahoo_finance"]["fundamentals"] = self.get_stock_fundamentals(ticker)
+            analysis["yahoo_finance"]["market_data"] = self.get_market_data(ticker, "1y")
+            analysis["yahoo_finance"]["financial_statements"] = self.get_financial_statements(ticker)
             analysis["data_sources"].append("yahoo_finance")
             logger.info(f"Yahoo Finance data retrieved for {ticker}")
         except Exception as e:
@@ -536,9 +481,7 @@ class MCPDataAccess:
         # SEC EDGAR Data
         try:
             analysis["sec_edgar"]["filings"] = self.get_company_filings(ticker, "10-K")
-            analysis["sec_edgar"][
-                "financial_statements"
-            ] = self.get_edgar_financial_statements(ticker)
+            analysis["sec_edgar"]["financial_statements"] = self.get_edgar_financial_statements(ticker)
             analysis["sec_edgar"]["metrics"] = self.get_sec_metrics(ticker)
             analysis["data_sources"].append("sec_edgar")
             logger.info(f"SEC EDGAR data retrieved for {ticker}")
@@ -549,9 +492,7 @@ class MCPDataAccess:
         # Economic Context
         try:
             analysis["economic_context"]["inflation"] = self.get_inflation_data("1y")
-            analysis["economic_context"]["interest_rates"] = self.get_interest_rates(
-                "all", "1y"
-            )
+            analysis["economic_context"]["interest_rates"] = self.get_interest_rates("all", "1y")
             analysis["data_sources"].append("economic_context")
             logger.info("Economic context data retrieved")
         except Exception as e:
@@ -560,9 +501,7 @@ class MCPDataAccess:
 
         # Existing Analysis
         try:
-            analysis["existing_analysis"][
-                "fundamental"
-            ] = self.get_fundamental_analysis(ticker)
+            analysis["existing_analysis"]["fundamental"] = self.get_fundamental_analysis(ticker)
             analysis["data_sources"].append("existing_analysis")
             logger.info(f"Existing analysis retrieved for {ticker}")
         except Exception as e:
@@ -572,14 +511,10 @@ class MCPDataAccess:
         analysis["data_sources_count"] = len(analysis["data_sources"])
         analysis["analysis_complete"] = len(analysis["data_sources"]) > 0
 
-        logger.info(
-            f"Comprehensive analysis complete for {ticker}: {len(analysis['data_sources'])} sources"
-        )
+        logger.info(f"Comprehensive analysis complete for {ticker}: {len(analysis['data_sources'])} sources")
         return analysis
 
-    def save_analysis_to_file(
-        self, analysis: dict, output_dir: str = "data/outputs/mcp_integration"
-    ) -> str:
+    def save_analysis_to_file(self, analysis: dict, output_dir: str = "data/outputs/mcp_integration") -> str:
         """Save analysis results to file"""
 
         output_path = Path(output_dir)
@@ -612,8 +547,7 @@ class MCPDataAccess:
         """Get comprehensive cache statistics"""
         if self.cache_manager:
             return self.cache_manager.get_stats()
-        else:
-            return {"caching_disabled": True}
+        return {"caching_disabled": True}
 
     def get_performance_metrics(self) -> dict:
         """Get comprehensive performance metrics"""
@@ -662,14 +596,10 @@ class MCPDataAccess:
         # Analyze performance metrics
         if metrics["total_requests"] > 10:
             if metrics["failure_rate"] > 10:
-                recommendations.append(
-                    "High failure rate detected - check MCP server stability"
-                )
+                recommendations.append("High failure rate detected - check MCP server stability")
 
             if metrics["average_response_time"] > 5.0:
-                recommendations.append(
-                    "Slow response times - consider server optimization"
-                )
+                recommendations.append("Slow response times - consider server optimization")
 
             # Cache performance analysis
             if self.cache_manager:
@@ -677,9 +607,7 @@ class MCPDataAccess:
                 hit_ratio = cache_stats.get("hit_ratio", 0)
 
                 if hit_ratio < 30:
-                    recommendations.append(
-                        "Low cache hit ratio - consider increasing cache TTL"
-                    )
+                    recommendations.append("Low cache hit ratio - consider increasing cache TTL")
                 elif hit_ratio > 80:
                     recommendations.append("Excellent cache performance")
 

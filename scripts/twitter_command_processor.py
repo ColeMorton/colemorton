@@ -13,7 +13,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from twitter_template_renderer import TwitterTemplateRenderer
 
@@ -21,7 +21,7 @@ from twitter_template_renderer import TwitterTemplateRenderer
 class TwitterCommandProcessor:
     """Unified processor for all Twitter commands"""
 
-    def __init__(self, base_path: Optional[Path] = None):
+    def __init__(self, base_path: Path | None = None):
         """Initialize the command processor"""
         self.base_path = base_path or Path(__file__).parent.parent
         self.data_outputs_path = self.base_path / "data" / "outputs"
@@ -40,7 +40,7 @@ class TwitterCommandProcessor:
         ]:
             (self.twitter_outputs_path / content_type).mkdir(exist_ok=True)
 
-    def process_fundamental_analysis(self, ticker_date: str) -> Dict[str, Any]:
+    def process_fundamental_analysis(self, ticker_date: str) -> dict[str, Any]:
         """Process fundamental analysis Twitter content"""
         try:
             # Parse ticker and date
@@ -53,14 +53,10 @@ class TwitterCommandProcessor:
             validation_result = self._validate_source_data(source_data, "fundamental")
 
             # Render content
-            rendered_result = self.template_renderer.render_fundamental_analysis(
-                ticker, source_data
-            )
+            rendered_result = self.template_renderer.render_fundamental_analysis(ticker, source_data)
 
             # Export content
-            output_path = self._export_content(
-                rendered_result, "fundamental_analysis", f"{ticker}_{date}"
-            )
+            output_path = self._export_content(rendered_result, "fundamental_analysis", f"{ticker}_{date}")
 
             return {
                 "success": True,
@@ -73,7 +69,7 @@ class TwitterCommandProcessor:
         except Exception as e:
             return {"success": False, "error": str(e), "ticker_date": ticker_date}
 
-    def process_strategy_post(self, ticker_date: str) -> Dict[str, Any]:
+    def process_strategy_post(self, ticker_date: str) -> dict[str, Any]:
         """Process strategy post Twitter content"""
         try:
             # Parse ticker and date
@@ -86,14 +82,10 @@ class TwitterCommandProcessor:
             validation_result = self._validate_source_data(source_data, "strategy")
 
             # Render content
-            rendered_result = self.template_renderer.render_strategy_post(
-                ticker, source_data
-            )
+            rendered_result = self.template_renderer.render_strategy_post(ticker, source_data)
 
             # Export content
-            output_path = self._export_content(
-                rendered_result, "post_strategy", f"{ticker}_{date}"
-            )
+            output_path = self._export_content(rendered_result, "post_strategy", f"{ticker}_{date}")
 
             return {
                 "success": True,
@@ -106,7 +98,7 @@ class TwitterCommandProcessor:
         except Exception as e:
             return {"success": False, "error": str(e), "ticker_date": ticker_date}
 
-    def process_sector_analysis(self, sector_date: str) -> Dict[str, Any]:
+    def process_sector_analysis(self, sector_date: str) -> dict[str, Any]:
         """Process sector analysis Twitter content"""
         try:
             # Parse sector and date
@@ -119,14 +111,10 @@ class TwitterCommandProcessor:
             validation_result = self._validate_source_data(source_data, "sector")
 
             # Render content
-            rendered_result = self.template_renderer.render_sector_analysis(
-                sector, source_data
-            )
+            rendered_result = self.template_renderer.render_sector_analysis(sector, source_data)
 
             # Export content
-            output_path = self._export_content(
-                rendered_result, "sector_analysis", f"{sector}_{date}"
-            )
+            output_path = self._export_content(rendered_result, "sector_analysis", f"{sector}_{date}")
 
             return {
                 "success": True,
@@ -139,7 +127,7 @@ class TwitterCommandProcessor:
         except Exception as e:
             return {"success": False, "error": str(e), "sector_date": sector_date}
 
-    def process_trade_history(self, analysis_name_date: str) -> Dict[str, Any]:
+    def process_trade_history(self, analysis_name_date: str) -> dict[str, Any]:
         """Process trade history Twitter content"""
         try:
             # Parse analysis name and date
@@ -152,14 +140,10 @@ class TwitterCommandProcessor:
             validation_result = self._validate_source_data(source_data, "trade_history")
 
             # Render content
-            rendered_result = self.template_renderer.render_trade_history(
-                analysis_name, source_data
-            )
+            rendered_result = self.template_renderer.render_trade_history(analysis_name, source_data)
 
             # Export content
-            output_path = self._export_content(
-                rendered_result, "trade_history", f"{analysis_name}_{date}"
-            )
+            output_path = self._export_content(rendered_result, "trade_history", f"{analysis_name}_{date}")
 
             return {
                 "success": True,
@@ -176,23 +160,17 @@ class TwitterCommandProcessor:
                 "analysis_name_date": analysis_name_date,
             }
 
-    def process_validation_enhancement(
-        self, validation_file_path: str
-    ) -> Dict[str, Any]:
+    def process_validation_enhancement(self, validation_file_path: str) -> dict[str, Any]:
         """Process validation-driven content enhancement"""
         try:
             # Parse validation file path
-            content_type, identifier, date = self._parse_validation_path(
-                validation_file_path
-            )
+            content_type, identifier, date = self._parse_validation_path(validation_file_path)
 
             # Load validation data
             validation_data = self._load_validation_data(validation_file_path)
 
             # Load original content
-            original_content = self._load_original_content(
-                content_type, identifier, date
-            )
+            original_content = self._load_original_content(content_type, identifier, date)
 
             # Apply enhancements based on validation feedback
             enhanced_result = self._apply_validation_enhancements(
@@ -200,9 +178,7 @@ class TwitterCommandProcessor:
             )
 
             # Export enhanced content
-            output_path = self._export_content(
-                enhanced_result, content_type, f"{identifier}_{date}"
-            )
+            output_path = self._export_content(enhanced_result, content_type, f"{identifier}_{date}")
 
             return {
                 "success": True,
@@ -219,18 +195,14 @@ class TwitterCommandProcessor:
                 "validation_file_path": validation_file_path,
             }
 
-    def _parse_ticker_date(self, ticker_date: str) -> Tuple[str, str]:
+    def _parse_ticker_date(self, ticker_date: str) -> tuple[str, str]:
         """Parse ticker_date format (e.g., 'AAPL_20250618')"""
         if "_" not in ticker_date:
-            raise ValueError(
-                f"Invalid ticker_date format: {ticker_date}. Expected format: TICKER_YYYYMMDD"
-            )
+            raise ValueError(f"Invalid ticker_date format: {ticker_date}. Expected format: TICKER_YYYYMMDD")
 
         parts = ticker_date.split("_")
         if len(parts) != 2:
-            raise ValueError(
-                f"Invalid ticker_date format: {ticker_date}. Expected format: TICKER_YYYYMMDD"
-            )
+            raise ValueError(f"Invalid ticker_date format: {ticker_date}. Expected format: TICKER_YYYYMMDD")
 
         ticker, date = parts
 
@@ -240,18 +212,14 @@ class TwitterCommandProcessor:
 
         return ticker.upper(), date
 
-    def _parse_sector_date(self, sector_date: str) -> Tuple[str, str]:
+    def _parse_sector_date(self, sector_date: str) -> tuple[str, str]:
         """Parse sector_date format (e.g., 'technology_20250618')"""
         if "_" not in sector_date:
-            raise ValueError(
-                f"Invalid sector_date format: {sector_date}. Expected format: SECTOR_YYYYMMDD"
-            )
+            raise ValueError(f"Invalid sector_date format: {sector_date}. Expected format: SECTOR_YYYYMMDD")
 
         parts = sector_date.split("_")
         if len(parts) != 2:
-            raise ValueError(
-                f"Invalid sector_date format: {sector_date}. Expected format: SECTOR_YYYYMMDD"
-            )
+            raise ValueError(f"Invalid sector_date format: {sector_date}. Expected format: SECTOR_YYYYMMDD")
 
         sector, date = parts
 
@@ -261,7 +229,7 @@ class TwitterCommandProcessor:
 
         return sector.lower(), date
 
-    def _parse_analysis_name_date(self, analysis_name_date: str) -> Tuple[str, str]:
+    def _parse_analysis_name_date(self, analysis_name_date: str) -> tuple[str, str]:
         """Parse analysis_name_date format (e.g., 'HISTORICAL_PERFORMANCE_REPORT_20250618')"""
         if "_" not in analysis_name_date:
             raise ValueError(f"Invalid analysis_name_date format: {analysis_name_date}")
@@ -280,7 +248,7 @@ class TwitterCommandProcessor:
 
         return analysis_name, date
 
-    def _parse_validation_path(self, validation_file_path: str) -> Tuple[str, str, str]:
+    def _parse_validation_path(self, validation_file_path: str) -> tuple[str, str, str]:
         """Parse validation file path to extract content type, identifier, and date"""
         path = Path(validation_file_path)
 
@@ -296,9 +264,7 @@ class TwitterCommandProcessor:
             content_type = "trade_history"
 
         if not content_type:
-            raise ValueError(
-                f"Cannot determine content type from validation path: {validation_file_path}"
-            )
+            raise ValueError(f"Cannot determine content type from validation path: {validation_file_path}")
 
         # Extract identifier and date from filename
         filename = path.stem
@@ -315,12 +281,10 @@ class TwitterCommandProcessor:
 
         return content_type, identifier, date
 
-    def _load_fundamental_analysis_data(self, ticker: str, date: str) -> Dict[str, Any]:
+    def _load_fundamental_analysis_data(self, ticker: str, date: str) -> dict[str, Any]:
         """Load fundamental analysis source data"""
         # Try to load from analysis outputs
-        analysis_path = (
-            self.data_outputs_path / "fundamental_analysis" / f"{ticker}_{date}.md"
-        )
+        analysis_path = self.data_outputs_path / "fundamental_analysis" / f"{ticker}_{date}.md"
 
         if not analysis_path.exists():
             raise FileNotFoundError(f"Fundamental analysis not found: {analysis_path}")
@@ -335,29 +299,17 @@ class TwitterCommandProcessor:
 
         return data
 
-    def _load_strategy_data(self, ticker: str, date: str) -> Dict[str, Any]:
+    def _load_strategy_data(self, ticker: str, date: str) -> dict[str, Any]:
         """Load strategy data from multiple sources"""
         data = {"ticker": ticker, "date": date}
 
         # Try to load TrendSpider data
-        trendspider_path = (
-            self.base_path
-            / "data"
-            / "images"
-            / "trendspider_tabular"
-            / f"{ticker}_{date}.png"
-        )
+        trendspider_path = self.base_path / "data" / "images" / "trendspider_tabular" / f"{ticker}_{date}.png"
         if trendspider_path.exists():
             data["trendspider_available"] = True
 
         # Try to load strategy CSV data
-        strategy_path = (
-            self.base_path
-            / "data"
-            / "raw"
-            / "analysis_strategy"
-            / f"{ticker}_{date}.csv"
-        )
+        strategy_path = self.base_path / "data" / "raw" / "analysis_strategy" / f"{ticker}_{date}.csv"
         if strategy_path.exists():
             data["strategy_csv_available"] = True
 
@@ -384,12 +336,10 @@ class TwitterCommandProcessor:
 
         return data
 
-    def _load_sector_analysis_data(self, sector: str, date: str) -> Dict[str, Any]:
+    def _load_sector_analysis_data(self, sector: str, date: str) -> dict[str, Any]:
         """Load sector analysis source data"""
         # Try to load from sector analysis outputs
-        analysis_path = (
-            self.data_outputs_path / "sector_analysis" / f"{sector}_{date}.md"
-        )
+        analysis_path = self.data_outputs_path / "sector_analysis" / f"{sector}_{date}.md"
 
         if not analysis_path.exists():
             raise FileNotFoundError(f"Sector analysis not found: {analysis_path}")
@@ -404,17 +354,13 @@ class TwitterCommandProcessor:
 
         return data
 
-    def _load_trade_history_data(self, analysis_name: str, date: str) -> Dict[str, Any]:
+    def _load_trade_history_data(self, analysis_name: str, date: str) -> dict[str, Any]:
         """Load trade history source data"""
         # Try to load from trade history outputs
-        analysis_path = (
-            self.data_outputs_path / "trade_history" / f"{analysis_name}_{date}.md"
-        )
+        analysis_path = self.data_outputs_path / "trade_history" / f"{analysis_name}_{date}.md"
 
         if not analysis_path.exists():
-            raise FileNotFoundError(
-                f"Trade history analysis not found: {analysis_path}"
-            )
+            raise FileNotFoundError(f"Trade history analysis not found: {analysis_path}")
 
         # Parse markdown file with frontmatter
         content = analysis_path.read_text()
@@ -426,7 +372,7 @@ class TwitterCommandProcessor:
 
         return data
 
-    def _parse_markdown_with_frontmatter(self, content: str) -> Dict[str, Any]:
+    def _parse_markdown_with_frontmatter(self, content: str) -> dict[str, Any]:
         """Parse markdown content with YAML frontmatter"""
         data = {}
 
@@ -450,9 +396,7 @@ class TwitterCommandProcessor:
 
         return data
 
-    def _validate_source_data(
-        self, data: Dict[str, Any], content_type: str
-    ) -> Dict[str, Any]:
+    def _validate_source_data(self, data: dict[str, Any], content_type: str) -> dict[str, Any]:
         """Validate source data completeness and quality"""
 
         required_fields = {
@@ -475,9 +419,7 @@ class TwitterCommandProcessor:
             "data_quality": "good" if len(missing_fields) == 0 else "poor",
         }
 
-    def _export_content(
-        self, rendered_result: Dict[str, Any], content_type: str, filename: str
-    ) -> Path:
+    def _export_content(self, rendered_result: dict[str, Any], content_type: str, filename: str) -> Path:
         """Export rendered content to appropriate directory"""
 
         # Create output directory
@@ -498,27 +440,21 @@ class TwitterCommandProcessor:
 
         return output_path
 
-    def _load_validation_data(self, validation_file_path: str) -> Dict[str, Any]:
+    def _load_validation_data(self, validation_file_path: str) -> dict[str, Any]:
         """Load validation data from JSON file"""
         path = Path(validation_file_path)
 
         if not path.exists():
-            raise FileNotFoundError(
-                f"Validation file not found: {validation_file_path}"
-            )
+            raise FileNotFoundError(f"Validation file not found: {validation_file_path}")
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    def _load_original_content(
-        self, content_type: str, identifier: str, date: str
-    ) -> Dict[str, Any]:
+    def _load_original_content(self, content_type: str, identifier: str, date: str) -> dict[str, Any]:
         """Load original content for enhancement"""
 
         # Construct path to original content
-        content_path = (
-            self.twitter_outputs_path / content_type / f"{identifier}_{date}.md"
-        )
+        content_path = self.twitter_outputs_path / content_type / f"{identifier}_{date}.md"
 
         if not content_path.exists():
             raise FileNotFoundError(f"Original content not found: {content_path}")
@@ -526,25 +462,21 @@ class TwitterCommandProcessor:
         content = content_path.read_text()
 
         # Also load metadata if available
-        metadata_path = (
-            self.twitter_outputs_path
-            / content_type
-            / f"{identifier}_{date}_metadata.json"
-        )
+        metadata_path = self.twitter_outputs_path / content_type / f"{identifier}_{date}_metadata.json"
         metadata = {}
         if metadata_path.exists():
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
         return {"content": content, "metadata": metadata}
 
     def _apply_validation_enhancements(
         self,
-        original_content: Dict[str, Any],
-        validation_data: Dict[str, Any],
+        original_content: dict[str, Any],
+        validation_data: dict[str, Any],
         content_type: str,
         identifier: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply validation-driven enhancements to content"""
 
         # Extract enhancement recommendations from validation data
@@ -570,7 +502,7 @@ class TwitterCommandProcessor:
             },
         }
 
-    def get_processing_status(self) -> Dict[str, Any]:
+    def get_processing_status(self) -> dict[str, Any]:
         """Get status of processing system"""
         return {
             "template_renderer_available": True,

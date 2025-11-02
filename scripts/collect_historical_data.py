@@ -13,7 +13,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -34,7 +34,7 @@ def print_banner():
     print()
 
 
-def parse_symbol_list(symbols_arg: str) -> List[str]:
+def parse_symbol_list(symbols_arg: str) -> list[str]:
     """Parse comma-separated symbol list"""
     return [s.strip().upper() for s in symbols_arg.split(",") if s.strip()]
 
@@ -106,9 +106,7 @@ Examples:
     )
 
     # Status and information
-    parser.add_argument(
-        "--status", action="store_true", help="Show current collection status and exit"
-    )
+    parser.add_argument("--status", action="store_true", help="Show current collection status and exit")
 
     parser.add_argument(
         "--list-available",
@@ -136,9 +134,7 @@ Examples:
     )
 
     # Output options
-    parser.add_argument(
-        "--quiet", "-q", action="store_true", help="Reduce output verbosity"
-    )
+    parser.add_argument("--quiet", "-q", action="store_true", help="Reduce output verbosity")
 
     parser.add_argument("--output-json", type=str, help="Save results to JSON file")
 
@@ -150,7 +146,7 @@ Examples:
     # Create collector
     try:
         collector = create_historical_data_collector(rate_limit_delay=args.rate_limit)
-    except Exception as e:
+    except Exception:
         print("❌ Failed to initialize collector: {e}")
         return 1
 
@@ -178,7 +174,7 @@ Examples:
 
             return 0
 
-        except Exception as e:
+        except Exception:
             print("❌ Failed to get status: {e}")
             return 1
 
@@ -198,7 +194,7 @@ Examples:
 
             return 0
 
-        except Exception as e:
+        except Exception:
             print("❌ Failed to list available data: {e}")
             return 1
 
@@ -289,9 +285,7 @@ Examples:
             else:
                 print("⚠️  Collection completed with issues")
 
-            print(
-                f"📁 Total files created: {collection_results.get('total_files_created', 0)}"
-            )
+            print(f"📁 Total files created: {collection_results.get('total_files_created', 0)}")
 
             # Daily results
             if "daily_collection" in collection_results:
@@ -323,7 +317,7 @@ Examples:
                     json.dump(collection_results, f, indent=2, default=str)
                 if not args.quiet:
                     print("\n💾 Results saved to: {args.output_json}")
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to save JSON output: {e}")
 
         # Return appropriate exit code
@@ -332,7 +326,7 @@ Examples:
     except KeyboardInterrupt:
         print("\n🛑 Collection interrupted by user")
         return 1
-    except Exception as e:
+    except Exception:
         print("❌ Collection failed: {e}")
         return 1
 

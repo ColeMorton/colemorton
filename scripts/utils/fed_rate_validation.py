@@ -18,8 +18,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class FedRateValidator:
@@ -75,7 +74,7 @@ class FedRateValidator:
                 return True
         return False
 
-    def check_file(self, file_path: str) -> List[Dict[str, Any]]:
+    def check_file(self, file_path: str) -> list[dict[str, Any]]:
         """
         Check a single file for hardcoded Fed rates
 
@@ -85,7 +84,7 @@ class FedRateValidator:
         file_issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             # Check each pattern
@@ -119,7 +118,7 @@ class FedRateValidator:
 
                     file_issues.append(issue)
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not read file {file_path}: {e}")
 
         return file_issues
@@ -128,16 +127,13 @@ class FedRateValidator:
         """Assess severity of the hardcoded rate issue"""
         if "synthesis" in file_path.lower() or file_path.endswith(".md"):
             return "HIGH"  # Customer-facing documents
-        elif "analysis" in file_path.lower() or file_path.endswith(".json"):
+        if "analysis" in file_path.lower() or file_path.endswith(".json"):
             return "MEDIUM"  # Analysis pipeline
-        elif "template" in file_path.lower():
+        if "template" in file_path.lower():
             return "LOW"  # Templates (might be intentional examples)
-        else:
-            return "MEDIUM"
+        return "MEDIUM"
 
-    def check_directory(
-        self, directory: str, recursive: bool = True
-    ) -> List[Dict[str, Any]]:
+    def check_directory(self, directory: str, recursive: bool = True) -> list[dict[str, Any]]:
         """
         Check all files in a directory for hardcoded Fed rates
 
@@ -170,7 +166,7 @@ class FedRateValidator:
 
         return all_issues
 
-    def format_report(self, issues: List[Dict[str, Any]]) -> str:
+    def format_report(self, issues: list[dict[str, Any]]) -> str:
         """Format validation report"""
         if not issues:
             return "✅ No hardcoded Fed funds rates detected!"
@@ -201,7 +197,7 @@ class FedRateValidator:
                             f"File: {issue['file']}",
                             f"Line: {issue['line']}",
                             f"Found: {issue['matched_text']}",
-                            f"Context:",
+                            "Context:",
                             f"  {issue['context'].replace(chr(10), chr(10) + '  ')}",
                             "",
                         ]
@@ -220,7 +216,7 @@ class FedRateValidator:
 
         return "\n".join(report)
 
-    def get_suggested_fixes(self, issues: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+    def get_suggested_fixes(self, issues: list[dict[str, Any]]) -> dict[str, list[str]]:
         """Generate suggested fixes for detected issues"""
         fixes = {}
 
@@ -233,9 +229,7 @@ class FedRateValidator:
 
             # Generate fix suggestions based on file type
             if file_path.endswith(".py"):
-                fix = (
-                    f"Replace '{matched_text}' with self.econ_data.get_fed_funds_rate()"
-                )
+                fix = f"Replace '{matched_text}' with self.econ_data.get_fed_funds_rate()"
             elif file_path.endswith(".json"):
                 fix = f"Replace '{matched_text}' with dynamic rate from RealTimeEconomicData"
             elif file_path.endswith(".md"):
@@ -249,12 +243,8 @@ class FedRateValidator:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Validate files for hardcoded Fed funds rates"
-    )
-    parser.add_argument(
-        "--check-all", action="store_true", help="Check all analysis and template files"
-    )
+    parser = argparse.ArgumentParser(description="Validate files for hardcoded Fed funds rates")
+    parser.add_argument("--check-all", action="store_true", help="Check all analysis and template files")
     parser.add_argument("--file", type=str, help="Check specific file")
     parser.add_argument("--directory", type=str, help="Check specific directory")
     parser.add_argument(

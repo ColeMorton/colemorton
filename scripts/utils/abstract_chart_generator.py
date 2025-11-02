@@ -7,7 +7,7 @@ seamless switching between different chart rendering engines (matplotlib, plotly
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from scripts.utils.dashboard_parser import (
     MonthlyPerformance,
@@ -49,11 +49,10 @@ class AbstractChartGenerator(ABC):
             max_value: Maximum value for gauge
             mode: 'light' or 'dark' mode
         """
-        pass
 
     @abstractmethod
     def create_enhanced_monthly_bars(
-        self, ax: Any, monthly_data: List[MonthlyPerformance], mode: str = "light"
+        self, ax: Any, monthly_data: list[MonthlyPerformance], mode: str = "light"
     ) -> None:
         """
         Create enhanced monthly performance bar chart.
@@ -63,11 +62,10 @@ class AbstractChartGenerator(ABC):
             monthly_data: Monthly performance data
             mode: 'light' or 'dark' mode
         """
-        pass
 
     @abstractmethod
     def create_enhanced_donut_chart(
-        self, ax: Any, quality_data: List[QualityDistribution], mode: str = "light"
+        self, ax: Any, quality_data: list[QualityDistribution], mode: str = "light"
     ) -> None:
         """
         Create sophisticated donut chart for quality distribution.
@@ -77,12 +75,9 @@ class AbstractChartGenerator(ABC):
             quality_data: Quality distribution data
             mode: 'light' or 'dark' mode
         """
-        pass
 
     @abstractmethod
-    def create_waterfall_chart(
-        self, ax: Any, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_waterfall_chart(self, ax: Any, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create sophisticated waterfall chart.
 
@@ -91,12 +86,9 @@ class AbstractChartGenerator(ABC):
             trades: Trade data
             mode: 'light' or 'dark' mode
         """
-        pass
 
     @abstractmethod
-    def create_enhanced_scatter(
-        self, ax: Any, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_enhanced_scatter(self, ax: Any, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create enhanced scatter plot.
 
@@ -105,14 +97,13 @@ class AbstractChartGenerator(ABC):
             trades: Trade data
             mode: 'light' or 'dark' mode
         """
-        pass
 
     @abstractmethod
     def create_performance_summary_panel(
         self,
         ax: Any,
-        trades: List[TradeData],
-        monthly_data: List[MonthlyPerformance],
+        trades: list[TradeData],
+        monthly_data: list[MonthlyPerformance],
         mode: str = "light",
     ) -> None:
         """
@@ -124,9 +115,8 @@ class AbstractChartGenerator(ABC):
             monthly_data: Monthly performance data
             mode: 'light' or 'dark' mode
         """
-        pass
 
-    def get_chart_config(self, chart_type: str, mode: str = "light") -> Dict[str, Any]:
+    def get_chart_config(self, chart_type: str, mode: str = "light") -> dict[str, Any]:
         """
         Get configuration for a specific chart type.
 

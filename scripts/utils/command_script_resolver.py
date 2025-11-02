@@ -7,11 +7,11 @@ for consistent sub-agent execution across the DASV framework.
 """
 
 import json
-import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -26,15 +26,15 @@ class CommandScriptMapping:
     phase: str
     sub_agent: str
     primary_script: str
-    cli_services: List[str]
+    cli_services: list[str]
     schema: str
     template: str
     output_dir: str
     file_pattern: str
-    supporting_scripts: Optional[List[str]] = None
-    script_class: Optional[str] = None
-    registry_name: Optional[str] = None
-    content_types: Optional[List[str]] = None
+    supporting_scripts: list[str] | None = None
+    script_class: str | None = None
+    registry_name: str | None = None
+    content_types: list[str] | None = None
 
 
 @dataclass
@@ -46,9 +46,9 @@ class TwitterCommandMapping:
     primary_script: str
     script_class: str
     registry_name: str
-    content_types: List[str]
-    supporting_components: Dict[str, str]
-    templates: Dict[str, Any]
+    content_types: list[str]
+    supporting_components: dict[str, str]
+    templates: dict[str, Any]
     output_dir: str
     file_pattern: str
 
@@ -60,14 +60,14 @@ class CLIServiceMapping:
     service_name: str
     script_path: str
     service_class: str
-    capabilities: List[str]
-    common_commands: Dict[str, str]
+    capabilities: list[str]
+    common_commands: dict[str, str]
 
 
 class CommandScriptResolver:
     """Resolves command references to actual script paths for sub-agent execution"""
 
-    def __init__(self, registry_path: Optional[str] = None):
+    def __init__(self, registry_path: str | None = None):
         """
         Initialize resolver with command registry
 
@@ -75,23 +75,19 @@ class CommandScriptResolver:
             registry_path: Path to command_script_registry.json
         """
         if registry_path is None:
-            registry_path = (
-                Path(__file__).parent.parent / "command_script_registry.json"
-            )
+            registry_path = Path(__file__).parent.parent / "command_script_registry.json"
 
         self.registry_path = Path(registry_path)
         self.registry = self._load_registry()
         self.path_variables = self.registry.get("path_variables", {})
 
-    def _load_registry(self) -> Dict[str, Any]:
+    def _load_registry(self) -> dict[str, Any]:
         """Load the command script registry"""
         try:
-            with open(self.registry_path, "r") as f:
+            with open(self.registry_path) as f:
                 return json.load(f)
         except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Command registry not found at {self.registry_path}"
-            )
+            raise FileNotFoundError(f"Command registry not found at {self.registry_path}")
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in command registry: {e}")
 
@@ -102,9 +98,7 @@ class CommandScriptResolver:
             resolved_path = resolved_path.replace(f"{{{variable}}}", value)
         return resolved_path
 
-    def get_scripts_for_command(
-        self, domain: str, phase: str
-    ) -> Optional[CommandScriptMapping]:
+    def get_scripts_for_command(self, domain: str, phase: str) -> CommandScriptMapping | None:
         """
         Get all scripts, schemas, templates for a DASV command
 
@@ -128,19 +122,13 @@ class CommandScriptResolver:
 
         # Resolve all path variables
         primary_script = self._resolve_path_variables(phase_config["primary_script"])
-        cli_services = [
-            self._resolve_path_variables(service)
-            for service in phase_config.get("cli_services", [])
-        ]
+        cli_services = [self._resolve_path_variables(service) for service in phase_config.get("cli_services", [])]
         schema = self._resolve_path_variables(phase_config["schema"])
         template = phase_config.get("template", "")
         output_dir = self._resolve_path_variables(phase_config["output_dir"])
         supporting_scripts = None
         if "supporting_scripts" in phase_config:
-            supporting_scripts = [
-                self._resolve_path_variables(script)
-                for script in phase_config["supporting_scripts"]
-            ]
+            supporting_scripts = [self._resolve_path_variables(script) for script in phase_config["supporting_scripts"]]
 
         return CommandScriptMapping(
             domain=domain,
@@ -155,9 +143,7 @@ class CommandScriptResolver:
             supporting_scripts=supporting_scripts,
         )
 
-    def resolve_sub_agent_scripts(
-        self, domain: str, phase: str, sub_agent: str
-    ) -> List[str]:
+    def resolve_sub_agent_scripts(self, domain: str, phase: str, sub_agent: str) -> list[str]:
         """
         Get script paths a specific sub-agent should execute for a command
 
@@ -181,7 +167,7 @@ class CommandScriptResolver:
 
         return scripts
 
-    def get_twitter_command(self, command_name: str) -> Optional[TwitterCommandMapping]:
+    def get_twitter_command(self, command_name: str) -> TwitterCommandMapping | None:
         """
         Get Twitter command configuration
 
@@ -201,8 +187,7 @@ class CommandScriptResolver:
         # Resolve path variables
         primary_script = self._resolve_path_variables(config["primary_script"])
         supporting_components = {
-            key: self._resolve_path_variables(path)
-            for key, path in config["supporting_components"].items()
+            key: self._resolve_path_variables(path) for key, path in config["supporting_components"].items()
         }
 
         templates = config["templates"].copy()
@@ -224,7 +209,7 @@ class CommandScriptResolver:
             file_pattern=config["file_pattern"],
         )
 
-    def get_cli_service(self, service_name: str) -> Optional[CLIServiceMapping]:
+    def get_cli_service(self, service_name: str) -> CLIServiceMapping | None:
         """
         Get CLI service configuration
 
@@ -243,10 +228,7 @@ class CommandScriptResolver:
 
         # Resolve path variables
         script_path = self._resolve_path_variables(config["script_path"])
-        common_commands = {
-            key: self._resolve_path_variables(cmd)
-            for key, cmd in config["common_commands"].items()
-        }
+        common_commands = {key: self._resolve_path_variables(cmd) for key, cmd in config["common_commands"].items()}
 
         return CLIServiceMapping(
             service_name=service_name,
@@ -256,26 +238,26 @@ class CommandScriptResolver:
             common_commands=common_commands,
         )
 
-    def list_available_domains(self) -> List[str]:
+    def list_available_domains(self) -> list[str]:
         """Get list of available analysis domains"""
         return list(self.registry.get("command_mappings", {}).keys())
 
-    def list_available_phases(self, domain: str) -> List[str]:
+    def list_available_phases(self, domain: str) -> list[str]:
         """Get list of available phases for a domain"""
         command_mappings = self.registry.get("command_mappings", {})
         if domain not in command_mappings:
             return []
         return list(command_mappings[domain].keys())
 
-    def list_twitter_commands(self) -> List[str]:
+    def list_twitter_commands(self) -> list[str]:
         """Get list of available Twitter commands"""
         return list(self.registry.get("twitter_commands", {}).keys())
 
-    def list_cli_services(self) -> List[str]:
+    def list_cli_services(self) -> list[str]:
         """Get list of available CLI services"""
         return list(self.registry.get("cli_services", {}).keys())
 
-    def validate_script_paths_exist(self) -> Dict[str, List[str]]:
+    def validate_script_paths_exist(self) -> dict[str, list[str]]:
         """
         Validate that all script paths in registry exist
 
@@ -320,7 +302,7 @@ class CommandScriptResolver:
 
         return {"missing": list(set(missing)), "found": list(set(found))}
 
-    def validate_schema_paths_exist(self) -> Dict[str, List[str]]:
+    def validate_schema_paths_exist(self) -> dict[str, list[str]]:
         """
         Validate that all schema paths in registry exist
 
@@ -340,17 +322,13 @@ class CommandScriptResolver:
 
         return {"missing": list(set(missing)), "found": list(set(found))}
 
-    def get_registry_info(self) -> Dict[str, Any]:
+    def get_registry_info(self) -> dict[str, Any]:
         """Get registry metadata and statistics"""
         return {
             "version": self.registry.get("version", "unknown"),
             "last_updated": self.registry.get("last_updated", "unknown"),
             "total_dasv_commands": len(
-                [
-                    phase
-                    for domain in self.registry.get("command_mappings", {}).values()
-                    for phase in domain.keys()
-                ]
+                [phase for domain in self.registry.get("command_mappings", {}).values() for phase in domain.keys()]
             ),
             "total_domains": len(self.registry.get("command_mappings", {})),
             "total_twitter_commands": len(self.registry.get("twitter_commands", {})),
@@ -370,9 +348,7 @@ def main():
     parser.add_argument("--cli-service", help="CLI service name")
     parser.add_argument("--validate", action="store_true", help="Validate all paths")
     parser.add_argument("--info", action="store_true", help="Show registry info")
-    parser.add_argument(
-        "--list-domains", action="store_true", help="List available domains"
-    )
+    parser.add_argument("--list-domains", action="store_true", help="List available domains")
 
     args = parser.parse_args()
 

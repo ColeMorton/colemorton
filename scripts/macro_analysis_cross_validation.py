@@ -10,9 +10,10 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -49,12 +50,10 @@ class MacroAnalysisCrossValidation:
         self.cross_analysis_score = 0.0
         self.detected_issues = []
 
-    def _discover_analysis_files(self) -> List[str]:
+    def _discover_analysis_files(self) -> list[str]:
         """Discover analysis files in the target directory"""
         if not os.path.exists(self.analysis_dir):
-            raise FileNotFoundError(
-                f"Analysis directory not found: {self.analysis_dir}"
-            )
+            raise FileNotFoundError(f"Analysis directory not found: {self.analysis_dir}")
 
         analysis_files = []
         for file in os.listdir(self.analysis_dir):
@@ -71,23 +70,23 @@ class MacroAnalysisCrossValidation:
 
         return selected_files
 
-    def _load_analysis_data(self) -> Dict[str, Dict[str, Any]]:
+    def _load_analysis_data(self) -> dict[str, dict[str, Any]]:
         """Load analysis data from discovered files"""
         analysis_data = {}
 
         for file_path in self.analysis_files:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     data = json.load(f)
                     filename = os.path.basename(file_path)
                     analysis_data[filename] = data
                     print("✅ Loaded: {filename}")
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load {file_path}: {e}")
 
         return analysis_data
 
-    def validate_structural_consistency(self) -> Dict[str, Any]:
+    def validate_structural_consistency(self) -> dict[str, Any]:
         """Analyze structural consistency across files"""
         consistency_results = {
             "schema_consistency": self._check_schema_consistency(),
@@ -101,17 +100,13 @@ class MacroAnalysisCrossValidation:
 
         # Calculate overall structural score
         scores = [
-            v
-            for k, v in consistency_results.items()
-            if isinstance(v, (int, float)) and k != "overall_structural_score"
+            v for k, v in consistency_results.items() if isinstance(v, (int, float)) and k != "overall_structural_score"
         ]
-        consistency_results["overall_structural_score"] = (
-            np.mean(scores) if scores else 0.0
-        )
+        consistency_results["overall_structural_score"] = np.mean(scores) if scores else 0.0
 
         return consistency_results
 
-    def detect_hardcoded_magic_values(self) -> Dict[str, Any]:
+    def detect_hardcoded_magic_values(self) -> dict[str, Any]:
         """Detect hardcoded/magic values across analysis files"""
         magic_value_issues = {
             "hardcoded_rates": self._detect_hardcoded_rates(),
@@ -129,13 +124,11 @@ class MacroAnalysisCrossValidation:
             if k != "overall_magic_value_score"
         ]
         total_issues = sum(issue_counts)
-        magic_value_issues["overall_magic_value_score"] = max(
-            1.0 - (total_issues / 50), 0.0
-        )
+        magic_value_issues["overall_magic_value_score"] = max(1.0 - (total_issues / 50), 0.0)
 
         return magic_value_issues
 
-    def validate_region_specificity(self) -> Dict[str, Any]:
+    def validate_region_specificity(self) -> dict[str, Any]:
         """Validate region-specific content and avoid generic templates"""
         region_validation = {
             "region_specific_indicators": self._validate_regional_indicators(),
@@ -153,13 +146,11 @@ class MacroAnalysisCrossValidation:
             for k, v in region_validation.items()
             if isinstance(v, (int, float)) and k != "overall_region_specificity_score"
         ]
-        region_validation["overall_region_specificity_score"] = (
-            np.mean(scores) if scores else 0.0
-        )
+        region_validation["overall_region_specificity_score"] = np.mean(scores) if scores else 0.0
 
         return region_validation
 
-    def validate_cli_services_integration(self) -> Dict[str, Any]:
+    def validate_cli_services_integration(self) -> dict[str, Any]:
         """Validate CLI services integration consistency"""
         cli_validation = {
             "service_utilization_consistency": self._validate_service_consistency(),
@@ -172,13 +163,9 @@ class MacroAnalysisCrossValidation:
 
         # Calculate overall CLI integration score
         scores = [
-            v
-            for k, v in cli_validation.items()
-            if isinstance(v, (int, float)) and k != "overall_cli_integration_score"
+            v for k, v in cli_validation.items() if isinstance(v, (int, float)) and k != "overall_cli_integration_score"
         ]
-        cli_validation["overall_cli_integration_score"] = (
-            np.mean(scores) if scores else 0.0
-        )
+        cli_validation["overall_cli_integration_score"] = np.mean(scores) if scores else 0.0
 
         return cli_validation
 
@@ -197,12 +184,10 @@ class MacroAnalysisCrossValidation:
                 if "overall" in key and isinstance(value, (int, float)):
                     component_scores.append(value)
 
-        self.cross_analysis_score = (
-            np.mean(component_scores) if component_scores else 0.0
-        )
+        self.cross_analysis_score = np.mean(component_scores) if component_scores else 0.0
         return self.cross_analysis_score
 
-    def identify_critical_issues(self) -> List[Dict[str, Any]]:
+    def identify_critical_issues(self) -> list[dict[str, Any]]:
         """Identify critical issues requiring attention"""
         issues = []
 
@@ -225,7 +210,7 @@ class MacroAnalysisCrossValidation:
                 {
                     "severity": "medium",
                     "category": "hardcoded_values",
-                    "finding": f"High number of hardcoded/magic values detected",
+                    "finding": "High number of hardcoded/magic values detected",
                     "recommendation": "Replace hardcoded values with dynamic data-driven calculations",
                 }
             )
@@ -249,7 +234,7 @@ class MacroAnalysisCrossValidation:
                 {
                     "severity": "medium",
                     "category": "cli_services_integration",
-                    "finding": f"CLI services integration inconsistent across files",
+                    "finding": "CLI services integration inconsistent across files",
                     "recommendation": "Standardize CLI service usage patterns and data integration",
                 }
             )
@@ -257,7 +242,7 @@ class MacroAnalysisCrossValidation:
         self.detected_issues = issues
         return issues
 
-    def generate_validation_report(self) -> Dict[str, Any]:
+    def generate_validation_report(self) -> dict[str, Any]:
         """Generate comprehensive cross-analysis validation report"""
         cross_analysis_score = self.calculate_cross_analysis_score()
         critical_issues = self.identify_critical_issues()
@@ -276,20 +261,12 @@ class MacroAnalysisCrossValidation:
             },
             "cross_analysis_summary": {
                 "overall_cross_analysis_score": cross_analysis_score,
-                "validation_status": (
-                    "PASS" if cross_analysis_score >= 9.0 else "REVIEW_REQUIRED"
-                ),
+                "validation_status": ("PASS" if cross_analysis_score >= 9.0 else "REVIEW_REQUIRED"),
                 "target_score": 9.0,
                 "score_achievement": cross_analysis_score >= 9.0,
-                "critical_issues_count": len(
-                    [i for i in critical_issues if i["severity"] == "high"]
-                ),
-                "medium_issues_count": len(
-                    [i for i in critical_issues if i["severity"] == "medium"]
-                ),
-                "low_issues_count": len(
-                    [i for i in critical_issues if i["severity"] == "low"]
-                ),
+                "critical_issues_count": len([i for i in critical_issues if i["severity"] == "high"]),
+                "medium_issues_count": len([i for i in critical_issues if i["severity"] == "medium"]),
+                "low_issues_count": len([i for i in critical_issues if i["severity"] == "low"]),
                 "files_processed": len(self.analysis_data),
                 "validation_date": self.timestamp.strftime("%Y%m%d"),
             },
@@ -308,7 +285,7 @@ class MacroAnalysisCrossValidation:
         self.validation_results = report_data
         return report_data
 
-    def save_validation_output(self, data: Dict[str, Any]) -> str:
+    def save_validation_output(self, data: dict[str, Any]) -> str:
         """Save validation output to file"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -319,18 +296,17 @@ class MacroAnalysisCrossValidation:
         def convert_numpy_types(obj):
             if isinstance(obj, np.bool_):
                 return bool(obj)
-            elif isinstance(obj, np.integer):
+            if isinstance(obj, np.integer):
                 return int(obj)
-            elif isinstance(obj, np.floating):
+            if isinstance(obj, np.floating):
                 return float(obj)
-            elif isinstance(obj, np.ndarray):
+            if isinstance(obj, np.ndarray):
                 return obj.tolist()
-            elif isinstance(obj, dict):
+            if isinstance(obj, dict):
                 return {k: convert_numpy_types(v) for k, v in obj.items()}
-            elif isinstance(obj, list):
+            if isinstance(obj, list):
                 return [convert_numpy_types(item) for item in obj]
-            else:
-                return obj
+            return obj
 
         serializable_data = convert_numpy_types(data)
 
@@ -366,9 +342,7 @@ class MacroAnalysisCrossValidation:
         for schema in all_schemas:
             total_unique_keys.update(schema)
 
-        consistency_ratio = (
-            len(consistent_keys) / len(total_unique_keys) if total_unique_keys else 0
-        )
+        consistency_ratio = len(consistent_keys) / len(total_unique_keys) if total_unique_keys else 0
         return round(consistency_ratio, 3)
 
     def _check_metadata_consistency(self) -> float:
@@ -402,9 +376,7 @@ class MacroAnalysisCrossValidation:
 
         completeness_scores = []
         for filename, data in self.analysis_data.items():
-            present_sections = sum(
-                1 for section in required_sections if section in data
-            )
+            present_sections = sum(1 for section in required_sections if section in data)
             completeness_score = present_sections / len(required_sections)
             completeness_scores.append(completeness_score)
 
@@ -416,9 +388,7 @@ class MacroAnalysisCrossValidation:
 
         for filename, data in self.analysis_data.items():
             # Check metadata confidence
-            metadata_confidence = data.get("metadata", {}).get(
-                "confidence_threshold", 0
-            )
+            metadata_confidence = data.get("metadata", {}).get("confidence_threshold", 0)
             if metadata_confidence:
                 confidence_scores.append(metadata_confidence)
 
@@ -450,10 +420,9 @@ class MacroAnalysisCrossValidation:
 
         if reasonable_range and variance <= 0.05:
             return 0.95
-        elif reasonable_range:
+        if reasonable_range:
             return 0.8
-        else:
-            return 0.5
+        return 0.5
 
     def _check_methodology_consistency(self) -> float:
         """Check analysis methodology consistency"""
@@ -468,9 +437,7 @@ class MacroAnalysisCrossValidation:
             return 0.0
 
         # Check for consistent methodology patterns
-        consistent_methodology = (
-            len(set(methodologies)) <= 2
-        )  # Allow for minor variations
+        consistent_methodology = len(set(methodologies)) <= 2  # Allow for minor variations
         return 0.9 if consistent_methodology else 0.6
 
     def _check_regional_specificity(self) -> float:
@@ -502,7 +469,7 @@ class MacroAnalysisCrossValidation:
         return np.mean(specificity_scores) if specificity_scores else 0.0
 
     # Helper methods for magic value detection
-    def _detect_hardcoded_rates(self) -> List[Dict[str, Any]]:
+    def _detect_hardcoded_rates(self) -> list[dict[str, Any]]:
         """Detect hardcoded interest rates and economic values"""
         hardcoded_issues = []
 
@@ -538,7 +505,7 @@ class MacroAnalysisCrossValidation:
 
         return hardcoded_issues
 
-    def _detect_magic_thresholds(self) -> List[Dict[str, Any]]:
+    def _detect_magic_thresholds(self) -> list[dict[str, Any]]:
         """Detect magic number thresholds"""
         magic_issues = []
 
@@ -568,7 +535,7 @@ class MacroAnalysisCrossValidation:
 
         return magic_issues
 
-    def _detect_template_artifacts(self) -> List[Dict[str, Any]]:
+    def _detect_template_artifacts(self) -> list[dict[str, Any]]:
         """Detect template artifacts and placeholder text"""
         template_issues = []
 
@@ -598,7 +565,7 @@ class MacroAnalysisCrossValidation:
 
         return template_issues
 
-    def _detect_inconsistent_values(self) -> List[Dict[str, Any]]:
+    def _detect_inconsistent_values(self) -> list[dict[str, Any]]:
         """Detect inconsistent numeric values across files"""
         inconsistent_issues = []
 
@@ -608,15 +575,11 @@ class MacroAnalysisCrossValidation:
         for filename, data in self.analysis_data.items():
             # Extract numeric values from key sections
             if "business_cycle_modeling" in data:
-                recession_prob = data["business_cycle_modeling"].get(
-                    "recession_probability"
-                )
+                recession_prob = data["business_cycle_modeling"].get("recession_probability")
                 if recession_prob:
                     if "recession_probability" not in value_collections:
                         value_collections["recession_probability"] = []
-                    value_collections["recession_probability"].append(
-                        {"file": filename, "value": recession_prob}
-                    )
+                    value_collections["recession_probability"].append({"file": filename, "value": recession_prob})
 
         # Check for inconsistencies
         for metric, values in value_collections.items():
@@ -651,7 +614,7 @@ class MacroAnalysisCrossValidation:
 
         return inconsistent_issues
 
-    def _detect_placeholder_values(self) -> List[Dict[str, Any]]:
+    def _detect_placeholder_values(self) -> list[dict[str, Any]]:
         """Detect placeholder values"""
         placeholder_issues = []
 
@@ -669,9 +632,7 @@ class MacroAnalysisCrossValidation:
             data_str = json.dumps(data).lower()
 
             # Count placeholder occurrences
-            placeholder_count = sum(
-                data_str.count(pattern) for pattern in placeholder_patterns
-            )
+            placeholder_count = sum(data_str.count(pattern) for pattern in placeholder_patterns)
 
             if placeholder_count > 10:  # Threshold for excessive placeholders
                 placeholder_issues.append(
@@ -703,9 +664,7 @@ class MacroAnalysisCrossValidation:
 
             if region in regional_indicators:
                 expected_indicators = regional_indicators[region]
-                found_indicators = sum(
-                    1 for indicator in expected_indicators if indicator in data_str
-                )
+                found_indicators = sum(1 for indicator in expected_indicators if indicator in data_str)
                 region_score = found_indicators / len(expected_indicators)
                 region_scores.append(region_score)
             else:
@@ -731,12 +690,8 @@ class MacroAnalysisCrossValidation:
 
             if region in currency_mapping:
                 expected_currencies = currency_mapping[region]
-                found_currencies = sum(
-                    1 for currency in expected_currencies if currency in data_str
-                )
-                currency_score = min(
-                    found_currencies / 2, 1.0
-                )  # Need at least 2 currency refs
+                found_currencies = sum(1 for currency in expected_currencies if currency in data_str)
+                currency_score = min(found_currencies / 2, 1.0)  # Need at least 2 currency refs
                 currency_scores.append(currency_score)
             else:
                 currency_scores.append(0.5)
@@ -764,9 +719,7 @@ class MacroAnalysisCrossValidation:
 
             if region in policy_contexts:
                 expected_policies = policy_contexts[region]
-                found_policies = sum(
-                    1 for policy in expected_policies if policy in policy_str
-                )
+                found_policies = sum(1 for policy in expected_policies if policy in policy_str)
                 policy_score = min(found_policies / 2, 1.0)
                 policy_scores.append(policy_score)
             else:
@@ -788,9 +741,7 @@ class MacroAnalysisCrossValidation:
             business_cycle = data.get("business_cycle_modeling", {})
             if isinstance(business_cycle, dict):
                 bc_str = json.dumps(business_cycle).lower()
-                if any(
-                    term in bc_str for term in [region.lower(), "regional", "domestic"]
-                ):
+                if any(term in bc_str for term in [region.lower(), "regional", "domestic"]):
                     region_specific_count += 1
 
             # Check economic sensitivity
@@ -822,7 +773,7 @@ class MacroAnalysisCrossValidation:
 
         return consistency_score
 
-    def _detect_template_generalization(self) -> List[Dict[str, Any]]:
+    def _detect_template_generalization(self) -> list[dict[str, Any]]:
         """Detect overly generic template usage"""
         generic_issues = []
 
@@ -873,11 +824,7 @@ class MacroAnalysisCrossValidation:
         for services in service_usage:
             total_unique_services.update(services)
 
-        consistency_ratio = (
-            len(common_services) / len(total_unique_services)
-            if total_unique_services
-            else 0
-        )
+        consistency_ratio = len(common_services) / len(total_unique_services) if total_unique_services else 0
         return consistency_ratio
 
     def _validate_data_source_alignment(self) -> float:
@@ -920,14 +867,10 @@ class MacroAnalysisCrossValidation:
                 if service_name in expected_indicators:
                     service_count += 1
                     indicators = expected_indicators[service_name]
-                    found_indicators = sum(
-                        1 for indicator in indicators if indicator in data_str
-                    )
+                    found_indicators = sum(1 for indicator in indicators if indicator in data_str)
                     service_score += found_indicators / len(indicators)
 
-            avg_service_score = (
-                service_score / service_count if service_count > 0 else 0
-            )
+            avg_service_score = service_score / service_count if service_count > 0 else 0
             service_indicator_scores.append(avg_service_score)
 
         return np.mean(service_indicator_scores) if service_indicator_scores else 0.0
@@ -946,12 +889,11 @@ class MacroAnalysisCrossValidation:
         service_diversity = len(total_services)
         if service_diversity >= 5:
             return 0.9
-        elif service_diversity >= 3:
+        if service_diversity >= 3:
             return 0.8
-        elif service_diversity >= 2:
+        if service_diversity >= 2:
             return 0.7
-        else:
-            return 0.5
+        return 0.5
 
     def _validate_cli_methodology(self) -> float:
         """Validate CLI methodology consistency"""
@@ -972,7 +914,7 @@ class MacroAnalysisCrossValidation:
         return consistency_score
 
     # Helper methods for quality assessment and recommendations
-    def _generate_quality_assessment(self) -> Dict[str, Any]:
+    def _generate_quality_assessment(self) -> dict[str, Any]:
         """Generate overall quality assessment"""
         cross_analysis_score = self.cross_analysis_score
 
@@ -982,9 +924,7 @@ class MacroAnalysisCrossValidation:
             else (
                 "GOOD"
                 if cross_analysis_score >= 0.9
-                else (
-                    "ACCEPTABLE" if cross_analysis_score >= 0.8 else "NEEDS_IMPROVEMENT"
-                )
+                else ("ACCEPTABLE" if cross_analysis_score >= 0.8 else "NEEDS_IMPROVEMENT")
             )
         )
 
@@ -993,14 +933,12 @@ class MacroAnalysisCrossValidation:
             "cross_analysis_score": cross_analysis_score,
             "target_achievement": cross_analysis_score >= 0.9,
             "institutional_ready": cross_analysis_score >= 0.9,
-            "critical_issues": len(
-                [i for i in self.detected_issues if i["severity"] == "high"]
-            ),
+            "critical_issues": len([i for i in self.detected_issues if i["severity"] == "high"]),
             "areas_of_strength": self._identify_strengths(),
             "areas_for_improvement": self._identify_improvement_areas(),
         }
 
-    def _generate_recommendations(self) -> List[Dict[str, Any]]:
+    def _generate_recommendations(self) -> list[dict[str, Any]]:
         """Generate actionable recommendations"""
         recommendations = []
 
@@ -1020,18 +958,14 @@ class MacroAnalysisCrossValidation:
             )
 
         # Based on detected issues
-        high_priority_issues = [
-            i for i in self.detected_issues if i["severity"] == "high"
-        ]
+        high_priority_issues = [i for i in self.detected_issues if i["severity"] == "high"]
         if high_priority_issues:
             recommendations.append(
                 {
                     "priority": "high",
                     "category": "critical_issues",
                     "recommendation": "Address critical issues identified in cross-analysis validation",
-                    "actions": [
-                        issue["recommendation"] for issue in high_priority_issues
-                    ],
+                    "actions": [issue["recommendation"] for issue in high_priority_issues],
                 }
             )
 
@@ -1053,7 +987,7 @@ class MacroAnalysisCrossValidation:
 
         return recommendations
 
-    def _identify_strengths(self) -> List[str]:
+    def _identify_strengths(self) -> list[str]:
         """Identify strengths in the cross-analysis"""
         strengths = []
 
@@ -1070,21 +1004,17 @@ class MacroAnalysisCrossValidation:
             strengths.append("Comprehensive CLI services integration")
 
         if len(self.analysis_files) >= 5:
-            strengths.append(
-                "Comprehensive cross-analysis coverage with multiple files"
-            )
+            strengths.append("Comprehensive cross-analysis coverage with multiple files")
 
         return strengths
 
-    def _identify_improvement_areas(self) -> List[str]:
+    def _identify_improvement_areas(self) -> list[str]:
         """Identify areas for improvement"""
         improvements = []
 
         magic_values = self.detect_hardcoded_magic_values()
         if magic_values.get("overall_magic_value_score", 0) < 0.8:
-            improvements.append(
-                "Reduce hardcoded values and implement dynamic calculations"
-            )
+            improvements.append("Reduce hardcoded values and implement dynamic calculations")
 
         structural = self.validate_structural_consistency()
         if structural.get("schema_consistency", 0) < 0.8:
@@ -1092,13 +1022,11 @@ class MacroAnalysisCrossValidation:
 
         region_spec = self.validate_region_specificity()
         if region_spec.get("template_generalization_detection"):
-            improvements.append(
-                "Reduce generic template usage and enhance region specificity"
-            )
+            improvements.append("Reduce generic template usage and enhance region specificity")
 
         return improvements
 
-    def _generate_file_specific_analysis(self) -> Dict[str, Any]:
+    def _generate_file_specific_analysis(self) -> dict[str, Any]:
         """Generate file-specific analysis details"""
         file_analysis = {}
 
@@ -1108,14 +1036,12 @@ class MacroAnalysisCrossValidation:
                 "section_completeness": self._assess_file_completeness(data),
                 "region_specificity": self._assess_file_region_specificity(data),
                 "confidence_scores": self._extract_file_confidence_scores(data),
-                "issues_identified": self._identify_file_specific_issues(
-                    filename, data
-                ),
+                "issues_identified": self._identify_file_specific_issues(filename, data),
             }
 
         return file_analysis
 
-    def _generate_cross_file_comparison(self) -> Dict[str, Any]:
+    def _generate_cross_file_comparison(self) -> dict[str, Any]:
         """Generate cross-file comparison analysis"""
         if len(self.analysis_data) < 2:
             return {"comparison": "insufficient_files_for_comparison"}
@@ -1142,7 +1068,7 @@ class MacroAnalysisCrossValidation:
         return max(np.mean(factors), 0.0)
 
     # Additional helper methods
-    def _assess_file_metadata_quality(self, data: Dict[str, Any]) -> float:
+    def _assess_file_metadata_quality(self, data: dict[str, Any]) -> float:
         """Assess metadata quality for a specific file"""
         metadata = data.get("metadata", {})
         required_fields = [
@@ -1157,7 +1083,7 @@ class MacroAnalysisCrossValidation:
         present_fields = sum(1 for field in required_fields if field in metadata)
         return present_fields / len(required_fields)
 
-    def _assess_file_completeness(self, data: Dict[str, Any]) -> float:
+    def _assess_file_completeness(self, data: dict[str, Any]) -> float:
         """Assess completeness for a specific file"""
         required_sections = [
             "business_cycle_modeling",
@@ -1170,7 +1096,7 @@ class MacroAnalysisCrossValidation:
         present_sections = sum(1 for section in required_sections if section in data)
         return present_sections / len(required_sections)
 
-    def _assess_file_region_specificity(self, data: Dict[str, Any]) -> float:
+    def _assess_file_region_specificity(self, data: dict[str, Any]) -> float:
         """Assess region specificity for a specific file"""
         region = data.get("metadata", {}).get("region", "").lower()
         data_str = json.dumps(data).lower()
@@ -1178,7 +1104,7 @@ class MacroAnalysisCrossValidation:
         region_mentions = data_str.count(region)
         return min(region_mentions / 5, 1.0)  # Normalize to 0-1 scale
 
-    def _extract_file_confidence_scores(self, data: Dict[str, Any]) -> List[float]:
+    def _extract_file_confidence_scores(self, data: dict[str, Any]) -> list[float]:
         """Extract confidence scores from a specific file"""
         confidence_scores = []
 
@@ -1186,9 +1112,7 @@ class MacroAnalysisCrossValidation:
         metadata_confidence = data.get("metadata", {}).get("confidence_threshold")
         if metadata_confidence is not None:
             try:
-                if isinstance(metadata_confidence, (int, float)):
-                    confidence_scores.append(float(metadata_confidence))
-                elif isinstance(metadata_confidence, str):
+                if isinstance(metadata_confidence, (int, float)) or isinstance(metadata_confidence, str):
                     confidence_scores.append(float(metadata_confidence))
             except (ValueError, TypeError):
                 pass
@@ -1198,26 +1122,20 @@ class MacroAnalysisCrossValidation:
             if isinstance(section_data, dict) and "confidence" in section_data:
                 try:
                     confidence_value = section_data["confidence"]
-                    if isinstance(confidence_value, (int, float)):
-                        confidence_scores.append(float(confidence_value))
-                    elif isinstance(confidence_value, str):
+                    if isinstance(confidence_value, (int, float)) or isinstance(confidence_value, str):
                         confidence_scores.append(float(confidence_value))
                 except (ValueError, TypeError):
                     pass
 
         return confidence_scores
 
-    def _identify_file_specific_issues(
-        self, filename: str, data: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_file_specific_issues(self, filename: str, data: dict[str, Any]) -> list[str]:
         """Identify issues specific to a file"""
         issues = []
 
         # Check for missing required sections
         required_sections = ["business_cycle_modeling", "liquidity_cycle_positioning"]
-        missing_sections = [
-            section for section in required_sections if section not in data
-        ]
+        missing_sections = [section for section in required_sections if section not in data]
         if missing_sections:
             issues.append(f"Missing sections: {', '.join(missing_sections)}")
 
@@ -1228,7 +1146,7 @@ class MacroAnalysisCrossValidation:
 
         return issues
 
-    def _find_common_sections(self) -> List[str]:
+    def _find_common_sections(self) -> list[str]:
         """Find sections common across all files"""
         if not self.analysis_data:
             return []
@@ -1239,7 +1157,7 @@ class MacroAnalysisCrossValidation:
 
         return list(common_sections)
 
-    def _find_unique_sections(self) -> Dict[str, List[str]]:
+    def _find_unique_sections(self) -> dict[str, list[str]]:
         """Find unique sections per file"""
         unique_sections = {}
         all_sections = set()
@@ -1254,11 +1172,7 @@ class MacroAnalysisCrossValidation:
             unique_to_file = []
 
             for section in file_sections:
-                appears_in_count = sum(
-                    1
-                    for other_data in self.analysis_data.values()
-                    if section in other_data
-                )
+                appears_in_count = sum(1 for other_data in self.analysis_data.values() if section in other_data)
                 if appears_in_count == 1:
                     unique_to_file.append(section)
 
@@ -1287,7 +1201,7 @@ class MacroAnalysisCrossValidation:
         unique_methodologies = set(methodologies)
         return 0.9 if len(unique_methodologies) <= 2 else 0.6
 
-    def _extract_cross_regional_insights(self) -> Dict[str, Any]:
+    def _extract_cross_regional_insights(self) -> dict[str, Any]:
         """Extract insights from cross-regional analysis"""
         regions = []
         recession_probs = []
@@ -1314,9 +1228,7 @@ class MacroAnalysisCrossValidation:
             "recession_probability_range": {
                 "min": min(recession_probs) if recession_probs else None,
                 "max": max(recession_probs) if recession_probs else None,
-                "variance": (
-                    np.var(recession_probs) if len(recession_probs) > 1 else None
-                ),
+                "variance": (np.var(recession_probs) if len(recession_probs) > 1 else None),
             },
             "cross_regional_consistency": len(set(regions)) > 1,
         }
@@ -1369,21 +1281,13 @@ def main():
         output_path = validator.save_validation_output(validation_report)
 
         # Display results
-        cross_analysis_score = validation_report["cross_analysis_summary"][
-            "overall_cross_analysis_score"
-        ]
-        validation_status = validation_report["cross_analysis_summary"][
-            "validation_status"
-        ]
-        critical_issues = validation_report["cross_analysis_summary"][
-            "critical_issues_count"
-        ]
+        cross_analysis_score = validation_report["cross_analysis_summary"]["overall_cross_analysis_score"]
+        validation_status = validation_report["cross_analysis_summary"]["validation_status"]
+        critical_issues = validation_report["cross_analysis_summary"]["critical_issues_count"]
 
         print("\n✅ Cross-analysis validation complete!")
         print("📊 Cross-Analysis Score: {cross_analysis_score:.3f}/1.0")
-        print(
-            f"🎯 Target Achievement: {'✅ PASS' if cross_analysis_score >= 0.9 else '❌ REVIEW REQUIRED'}"
-        )
+        print(f"🎯 Target Achievement: {'✅ PASS' if cross_analysis_score >= 0.9 else '❌ REVIEW REQUIRED'}")
         print("🏆 Validation Status: {validation_status}")
         print("⚠️  Critical Issues: {critical_issues}")
         print("📁 Validation report saved to: {output_path}")
@@ -1392,29 +1296,17 @@ def main():
         if validation_report["detected_issues"]:
             print("\n🚨 Issues Detected:")
             for issue in validation_report["detected_issues"]:
-                severity_icon = (
-                    "🔴"
-                    if issue["severity"] == "high"
-                    else "🟡"
-                    if issue["severity"] == "medium"
-                    else "🟢"
-                )
+                severity_icon = "🔴" if issue["severity"] == "high" else "🟡" if issue["severity"] == "medium" else "🟢"
                 print("  {severity_icon} {issue['category']}: {issue['finding']}")
 
         # Display recommendations
         if validation_report["recommendations"]:
             print("\n💡 Key Recommendations:")
             for rec in validation_report["recommendations"]:
-                priority_icon = (
-                    "🔴"
-                    if rec["priority"] == "high"
-                    else "🟡"
-                    if rec["priority"] == "medium"
-                    else "🟢"
-                )
+                priority_icon = "🔴" if rec["priority"] == "high" else "🟡" if rec["priority"] == "medium" else "🟢"
                 print("  {priority_icon} {rec['recommendation']}")
 
-    except Exception as e:
+    except Exception:
         print("❌ Cross-validation failed: {e}")
         sys.exit(1)
 

@@ -12,7 +12,7 @@ Generalized, parameter-driven script for strategy analysis content generation:
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from errors import DataError, ValidationError
 from result_types import ProcessingResult
@@ -23,9 +23,7 @@ from twitter_template_selector_refactored import TwitterTemplateSelector
 from unified_validation_framework import UnifiedValidationFramework
 
 
-@twitter_script(
-    name="strategy_analysis", content_types=["strategy"], requires_validation=True
-)
+@twitter_script(name="strategy_analysis", content_types=["strategy"], requires_validation=True)
 class StrategyAnalysisScript(BaseScript):
     """
     Generalized strategy analysis script
@@ -61,9 +59,9 @@ class StrategyAnalysisScript(BaseScript):
         ticker: str,
         strategy_name: str,
         date: str,
-        data_path: Optional[str] = None,
-        template_variant: Optional[str] = None,
-        output_path: Optional[str] = None,
+        data_path: str | None = None,
+        template_variant: str | None = None,
+        output_path: str | None = None,
         validate_content: bool = True,
         performance_threshold: float = 0.0,
         **kwargs,
@@ -86,15 +84,11 @@ class StrategyAnalysisScript(BaseScript):
             )
 
             # Load strategy data
-            strategy_data = self._load_strategy_data(
-                ticker, strategy_name, date, data_path
-            )
+            strategy_data = self._load_strategy_data(ticker, strategy_name, date, data_path)
 
             # Apply performance filtering if threshold is set
             if performance_threshold > 0:
-                self._validate_performance_threshold(
-                    strategy_data, performance_threshold
-                )
+                self._validate_performance_threshold(strategy_data, performance_threshold)
 
             # Select template
             if template_variant:
@@ -104,9 +98,7 @@ class StrategyAnalysisScript(BaseScript):
                 (
                     selected_template,
                     template_metadata,
-                ) = self.template_selector.select_optimal_template(
-                    "strategy", strategy_data
-                )
+                ) = self.template_selector.select_optimal_template("strategy", strategy_data)
 
             # Generate content
             content = self._generate_content(strategy_data, selected_template)
@@ -114,15 +106,11 @@ class StrategyAnalysisScript(BaseScript):
             # Validate content if requested
             validation_result = None
             if validate_content:
-                validation_result = self.validation_framework.validate_content(
-                    content, "strategy", strategy_data
-                )
+                validation_result = self.validation_framework.validate_content(content, "strategy", strategy_data)
 
                 # Fail-fast if validation score is too low
                 overall_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 if overall_score < 8.5:
                     raise ValidationError(
@@ -131,9 +119,7 @@ class StrategyAnalysisScript(BaseScript):
                     )
 
             # Save content
-            output_file = self._save_content(
-                content, ticker, strategy_name, date, output_path
-            )
+            output_file = self._save_content(content, ticker, strategy_name, date, output_path)
 
             # Create processing result
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -155,9 +141,7 @@ class StrategyAnalysisScript(BaseScript):
 
             if validation_result:
                 result.validation_score = float(
-                    validation_result["overall_assessment"][
-                        "overall_reliability_score"
-                    ].split("/")[0]
+                    validation_result["overall_assessment"]["overall_reliability_score"].split("/")[0]
                 )
                 result.add_metadata("validation_result", validation_result)
 
@@ -231,15 +215,10 @@ class StrategyAnalysisScript(BaseScript):
         try:
             datetime.strptime(date, "%Y%m%d")
         except ValueError:
-            raise ValidationError(
-                f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"}
-            )
+            raise ValidationError(f"Invalid date format: {date}", context={"valid_format": "YYYYMMDD"})
 
         # Validate performance threshold
-        if (
-            not isinstance(performance_threshold, (int, float))
-            or performance_threshold < 0
-        ):
+        if not isinstance(performance_threshold, (int, float)) or performance_threshold < 0:
             raise ValidationError(
                 f"Invalid performance threshold: {performance_threshold}",
                 context={"valid_range": "Non-negative number"},
@@ -259,8 +238,8 @@ class StrategyAnalysisScript(BaseScript):
         ticker: str,
         strategy_name: str,
         date: str,
-        data_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data_path: str | None = None,
+    ) -> dict[str, Any]:
         """Load strategy analysis data"""
 
         if data_path:
@@ -278,7 +257,7 @@ class StrategyAnalysisScript(BaseScript):
             )
 
         try:
-            with open(data_file, "r", encoding="utf-8") as f:
+            with open(data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Ensure required fields
@@ -297,9 +276,7 @@ class StrategyAnalysisScript(BaseScript):
                 context={"json_error": str(e)},
             )
 
-    def _validate_performance_threshold(
-        self, strategy_data: Dict[str, Any], threshold: float
-    ) -> None:
+    def _validate_performance_threshold(self, strategy_data: dict[str, Any], threshold: float) -> None:
         """Validate strategy performance against threshold"""
 
         # Check various performance metrics
@@ -325,7 +302,7 @@ class StrategyAnalysisScript(BaseScript):
                                 "threshold": threshold,
                             },
                         )
-                    elif metric != "win_rate" and value < threshold:
+                    if metric != "win_rate" and value < threshold:
                         raise ValidationError(
                             f"Strategy {metric} {value:.2f} below threshold {threshold:.2f}",
                             context={
@@ -346,9 +323,7 @@ class StrategyAnalysisScript(BaseScript):
                 },
             )
 
-    def _generate_content(
-        self, strategy_data: Dict[str, Any], template_variant: str
-    ) -> str:
+    def _generate_content(self, strategy_data: dict[str, Any], template_variant: str) -> str:
         """Generate Twitter content using template"""
 
         try:
@@ -382,7 +357,7 @@ class StrategyAnalysisScript(BaseScript):
         ticker: str,
         strategy_name: str,
         date: str,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
     ) -> Path:
         """Save generated content to file"""
 
@@ -391,9 +366,7 @@ class StrategyAnalysisScript(BaseScript):
         else:
             # Create output directory if it doesn't exist
             self.template_outputs_path.mkdir(parents=True, exist_ok=True)
-            output_file = (
-                self.template_outputs_path / f"{ticker}_{strategy_name}_{date}.md"
-            )
+            output_file = self.template_outputs_path / f"{ticker}_{strategy_name}_{date}.md"
 
         try:
             with open(output_file, "w", encoding="utf-8") as f:
@@ -408,7 +381,7 @@ class StrategyAnalysisScript(BaseScript):
                 operation="content_saving",
             )
 
-    def get_usage_examples(self) -> List[Dict[str, Any]]:
+    def get_usage_examples(self) -> list[dict[str, Any]]:
         """Get usage examples for the script"""
 
         return [
@@ -454,14 +427,12 @@ class StrategyAnalysisScript(BaseScript):
         ticker: str,
         strategy_name: str,
         date: str,
-        data_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data_path: str | None = None,
+    ) -> dict[str, Any]:
         """Get strategy performance summary"""
 
         try:
-            strategy_data = self._load_strategy_data(
-                ticker, strategy_name, date, data_path
-            )
+            strategy_data = self._load_strategy_data(ticker, strategy_name, date, data_path)
 
             # Extract performance metrics
             performance_metrics = {}
@@ -502,20 +473,16 @@ class StrategyAnalysisScript(BaseScript):
         ticker: str,
         strategy_name: str,
         date: str,
-        data_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data_path: str | None = None,
+    ) -> dict[str, Any]:
         """Validate strategy data quality"""
 
         try:
-            strategy_data = self._load_strategy_data(
-                ticker, strategy_name, date, data_path
-            )
+            strategy_data = self._load_strategy_data(ticker, strategy_name, date, data_path)
 
             # Check required fields
             required_fields = ["ticker", "strategy_type", "date"]
-            missing_fields = [
-                field for field in required_fields if field not in strategy_data
-            ]
+            missing_fields = [field for field in required_fields if field not in strategy_data]
 
             # Check performance fields
             performance_fields = [
@@ -524,9 +491,7 @@ class StrategyAnalysisScript(BaseScript):
                 "total_trades",
                 "reward_risk",
             ]
-            available_performance = [
-                field for field in performance_fields if field in strategy_data
-            ]
+            available_performance = [field for field in performance_fields if field in strategy_data]
 
             # Check data types
             type_issues = []
@@ -537,13 +502,9 @@ class StrategyAnalysisScript(BaseScript):
                     "reward_risk",
                     "sharpe_ratio",
                 ] and not isinstance(value, (int, float)):
-                    type_issues.append(
-                        f"{field}: expected number, got {type(value).__name__}"
-                    )
+                    type_issues.append(f"{field}: expected number, got {type(value).__name__}")
                 elif field == "total_trades" and not isinstance(value, int):
-                    type_issues.append(
-                        f"{field}: expected integer, got {type(value).__name__}"
-                    )
+                    type_issues.append(f"{field}: expected integer, got {type(value).__name__}")
 
             quality_score = 1.0
             if missing_fields:
@@ -579,18 +540,16 @@ class StrategyAnalysisScript(BaseScript):
 
     def _generate_data_quality_recommendations(
         self,
-        missing_fields: List[str],
-        available_performance: List[str],
-        type_issues: List[str],
-    ) -> List[str]:
+        missing_fields: list[str],
+        available_performance: list[str],
+        type_issues: list[str],
+    ) -> list[str]:
         """Generate data quality improvement recommendations"""
 
         recommendations = []
 
         if missing_fields:
-            recommendations.append(
-                f"Add missing required fields: {', '.join(missing_fields)}"
-            )
+            recommendations.append(f"Add missing required fields: {', '.join(missing_fields)}")
 
         if len(available_performance) < 2:
             recommendations.append(

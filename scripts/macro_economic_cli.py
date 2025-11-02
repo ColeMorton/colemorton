@@ -15,9 +15,10 @@ Provides institutional-grade economic intelligence for trading and investment de
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -84,9 +85,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
 
         @self.app.command("market-regime")
         def analyze_market_regime(
-            lookback_days: int = typer.Option(
-                252, help="Days of historical data for analysis"
-            ),
+            lookback_days: int = typer.Option(252, help="Days of historical data for analysis"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -102,7 +101,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 )
 
             except Exception as e:
-                self._handle_error(e, f"Failed to analyze market regime")
+                self._handle_error(e, "Failed to analyze market regime")
 
         @self.app.command("business-cycle")
         def analyze_business_cycle(
@@ -130,12 +129,10 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_macro_service(env)
 
                 result = service.get_global_liquidity_analysis(period)
-                self._output_result(
-                    result, output_format, f"Global Liquidity Analysis ({period})"
-                )
+                self._output_result(result, output_format, f"Global Liquidity Analysis ({period})")
 
             except Exception as e:
-                self._handle_error(e, f"Failed to analyze global liquidity")
+                self._handle_error(e, "Failed to analyze global liquidity")
 
         @self.app.command("economic-calendar")
         def analyze_economic_calendar(
@@ -167,9 +164,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_calendar_service(env)
 
                 result = service.get_fomc_decision_probabilities()
-                self._output_result(
-                    result, output_format, "FOMC Decision Probabilities"
-                )
+                self._output_result(result, output_format, "FOMC Decision Probabilities")
 
             except Exception as e:
                 self._handle_error(e, "Failed to analyze FOMC probabilities")
@@ -196,9 +191,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
 
         @self.app.command("global-m2-analysis")
         def analyze_global_m2(
-            lookback_months: int = typer.Option(
-                24, help="Months of M2 data for analysis"
-            ),
+            lookback_months: int = typer.Option(24, help="Months of M2 data for analysis"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -226,9 +219,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_liquidity_service(env)
 
                 result = service.get_central_bank_analysis()
-                self._output_result(
-                    result, output_format, "Central Bank Balance Sheet Analysis"
-                )
+                self._output_result(result, output_format, "Central Bank Balance Sheet Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to analyze central bank balance sheets")
@@ -247,9 +238,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 cb_analysis = service.get_central_bank_analysis()
 
                 # Assess liquidity conditions
-                result = service.assess_global_liquidity_conditions(
-                    m2_analysis, cb_analysis
-                )
+                result = service.assess_global_liquidity_conditions(m2_analysis, cb_analysis)
 
                 # Format result for output
                 output_data = {
@@ -261,18 +250,14 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     "risk_asset_implications": result.risk_asset_implications,
                 }
 
-                self._output_result(
-                    output_data, output_format, "Global Liquidity Conditions Assessment"
-                )
+                self._output_result(output_data, output_format, "Global Liquidity Conditions Assessment")
 
             except Exception as e:
                 self._handle_error(e, "Failed to assess liquidity conditions")
 
         @self.app.command("capital-flows")
         def analyze_capital_flows(
-            lookback_quarters: int = typer.Option(
-                8, help="Quarters of capital flow data"
-            ),
+            lookback_quarters: int = typer.Option(8, help="Quarters of capital flow data"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -314,20 +299,14 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_liquidity_service(env)
 
                 result = service.get_comprehensive_liquidity_analysis()
-                self._output_result(
-                    result, output_format, "Comprehensive Global Liquidity Analysis"
-                )
+                self._output_result(result, output_format, "Comprehensive Global Liquidity Analysis")
 
             except Exception as e:
-                self._handle_error(
-                    e, "Failed to perform comprehensive liquidity analysis"
-                )
+                self._handle_error(e, "Failed to perform comprehensive liquidity analysis")
 
         @self.app.command("sector-sensitivities")
         def analyze_sector_sensitivities(
-            lookback_months: int = typer.Option(
-                36, help="Months of data for sensitivity analysis"
-            ),
+            lookback_months: int = typer.Option(36, help="Months of data for sensitivity analysis"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -431,9 +410,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     for signal in result
                 ]
 
-                self._output_result(
-                    output_data, output_format, "Sector Rotation Signals"
-                )
+                self._output_result(output_data, output_format, "Sector Rotation Signals")
 
             except Exception as e:
                 self._handle_error(e, "Failed to generate sector rotation signals")
@@ -476,9 +453,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     "vix": -0.18,
                 }
 
-                result = service.perform_factor_attribution(
-                    mock_sector_returns, mock_factor_returns
-                )
+                result = service.perform_factor_attribution(mock_sector_returns, mock_factor_returns)
 
                 # Format result for output
                 output_data = {
@@ -492,9 +467,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     for sector, attr in result.items()
                 }
 
-                self._output_result(
-                    output_data, output_format, "Sector Factor Attribution Analysis"
-                )
+                self._output_result(output_data, output_format, "Sector Factor Attribution Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to perform factor attribution")
@@ -509,9 +482,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_sector_service(env)
 
                 result = service.get_comprehensive_sector_analysis()
-                self._output_result(
-                    result, output_format, "Comprehensive Sector-Economic Analysis"
-                )
+                self._output_result(result, output_format, "Comprehensive Sector-Economic Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to perform comprehensive sector analysis")
@@ -526,18 +497,14 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_macro_service(env)
 
                 result = service.get_comprehensive_macro_analysis()
-                self._output_result(
-                    result, output_format, "Comprehensive Macro-Economic Analysis"
-                )
+                self._output_result(result, output_format, "Comprehensive Macro-Economic Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to perform comprehensive macro analysis")
 
         @self.app.command("vix-analysis")
         def analyze_vix_volatility(
-            lookback_days: int = typer.Option(
-                252, help="Days of VIX data for analysis"
-            ),
+            lookback_days: int = typer.Option(252, help="Days of VIX data for analysis"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -566,12 +533,8 @@ class MacroEconomicCLI(BaseFinancialCLI):
 
         @self.app.command("oil-prices")
         def analyze_oil_prices(
-            period: str = typer.Option(
-                "1y", help="Time period (1m, 3m, 6m, 1y, 2y, 5y)"
-            ),
-            price_type: str = typer.Option(
-                "all", help="Price type (all, wti_crude, brent_crude, etc.)"
-            ),
+            period: str = typer.Option("1y", help="Time period (1m, 3m, 6m, 1y, 2y, 5y)"),
+            price_type: str = typer.Option("all", help="Price type (all, wti_crude, brent_crude, etc.)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -587,7 +550,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 )
 
             except Exception as e:
-                self._handle_error(e, f"Failed to analyze oil prices")
+                self._handle_error(e, "Failed to analyze oil prices")
 
         @self.app.command("natural-gas")
         def analyze_natural_gas(
@@ -600,12 +563,10 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_energy_service(env)
 
                 result = service.get_natural_gas_data(period)
-                self._output_result(
-                    result, output_format, f"Natural Gas Analysis ({period})"
-                )
+                self._output_result(result, output_format, f"Natural Gas Analysis ({period})")
 
             except Exception as e:
-                self._handle_error(e, f"Failed to analyze natural gas market")
+                self._handle_error(e, "Failed to analyze natural gas market")
 
         @self.app.command("energy-comprehensive")
         def comprehensive_energy_analysis(
@@ -617,9 +578,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 service = self._get_energy_service(env)
 
                 result = service.get_comprehensive_energy_analysis()
-                self._output_result(
-                    result, output_format, "Comprehensive Energy Market Analysis"
-                )
+                self._output_result(result, output_format, "Comprehensive Energy Market Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to perform comprehensive energy analysis")
@@ -633,44 +592,26 @@ class MacroEconomicCLI(BaseFinancialCLI):
             try:
                 # Mock indicator data for testing
                 mock_leading = {
-                    "yield_curve_spread": {
-                        "observations": [{"value": "1.2"}, {"value": "1.1"}]
-                    },
-                    "consumer_confidence": {
-                        "observations": [{"value": "95.5"}, {"value": "96.2"}]
-                    },
-                    "stock_market": {
-                        "observations": [{"value": "4200"}, {"value": "4250"}]
-                    },
+                    "yield_curve_spread": {"observations": [{"value": "1.2"}, {"value": "1.1"}]},
+                    "consumer_confidence": {"observations": [{"value": "95.5"}, {"value": "96.2"}]},
+                    "stock_market": {"observations": [{"value": "4200"}, {"value": "4250"}]},
                 }
 
                 mock_coincident = {
                     "gdp": {"observations": [{"value": "2.1"}, {"value": "2.3"}]},
-                    "employment": {
-                        "observations": [{"value": "150000"}, {"value": "155000"}]
-                    },
-                    "industrial_production": {
-                        "observations": [{"value": "105.2"}, {"value": "105.8"}]
-                    },
+                    "employment": {"observations": [{"value": "150000"}, {"value": "155000"}]},
+                    "industrial_production": {"observations": [{"value": "105.2"}, {"value": "105.8"}]},
                 }
 
                 mock_lagging = {
-                    "unemployment_rate": {
-                        "observations": [{"value": "3.8"}, {"value": "3.7"}]
-                    },
+                    "unemployment_rate": {"observations": [{"value": "3.8"}, {"value": "3.7"}]},
                     "cpi": {"observations": [{"value": "2.4"}, {"value": "2.3"}]},
-                    "prime_rate": {
-                        "observations": [{"value": "5.5"}, {"value": "5.5"}]
-                    },
+                    "prime_rate": {"observations": [{"value": "5.5"}, {"value": "5.5"}]},
                 }
 
-                result = self.business_cycle_engine.analyze_business_cycle(
-                    mock_leading, mock_coincident, mock_lagging
-                )
+                result = self.business_cycle_engine.analyze_business_cycle(mock_leading, mock_coincident, mock_lagging)
 
-                self._output_result(
-                    result, output_format, "Business Cycle Engine Analysis"
-                )
+                self._output_result(result, output_format, "Business Cycle Engine Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to test business cycle engine")
@@ -687,9 +628,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 import numpy as np
 
                 np.random.seed(42)
-                mock_vix_series = np.random.normal(
-                    current_vix, 3, 60
-                )  # 60 days of data
+                mock_vix_series = np.random.normal(current_vix, 3, 60)  # 60 days of data
 
                 # Create mock volatility regime
                 from utils.vix_volatility_analyzer import VolatilityRegime
@@ -779,10 +718,8 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     )
                 }
 
-                recession_signal = (
-                    self.business_cycle_engine._calculate_recession_probability(
-                        mock_leading_scores, mock_coincident_scores
-                    )
+                recession_signal = self.business_cycle_engine._calculate_recession_probability(
+                    mock_leading_scores, mock_coincident_scores
                 )
 
                 result = {
@@ -791,14 +728,10 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     "time_horizon": recession_signal.time_horizon,
                     "confidence_interval": f"{recession_signal.confidence_interval[0]:.1%} - {recession_signal.confidence_interval[1]:.1%}",
                     "key_drivers": recession_signal.key_drivers,
-                    "interpretation": self._interpret_recession_probability(
-                        recession_signal.recession_probability
-                    ),
+                    "interpretation": self._interpret_recession_probability(recession_signal.recession_probability),
                 }
 
-                self._output_result(
-                    result, output_format, "Recession Probability Analysis"
-                )
+                self._output_result(result, output_format, "Recession Probability Analysis")
 
             except Exception as e:
                 self._handle_error(e, "Failed to calculate recession probability")
@@ -841,9 +774,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                         "Confidence": f"{confidence:.0%}",
                         "Duration": f"{duration} days",
                         "Implication": (
-                            "Supportive for risk assets"
-                            if regime_type == "consolidation"
-                            else "Monitor volatility"
+                            "Supportive for risk assets" if regime_type == "consolidation" else "Monitor volatility"
                         ),
                     }
                 )
@@ -851,9 +782,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 # Liquidity summary (handle both dict and mock responses)
                 if hasattr(liquidity, "get"):
                     liquidity_info = liquidity.get("global_liquidity_assessment", {})
-                    liquidity_env = liquidity_info.get(
-                        "liquidity_environment", "Unknown"
-                    )
+                    liquidity_env = liquidity_info.get("liquidity_environment", "Unknown")
                     composite_score = liquidity_info.get("composite_score", 0.5)
                     trend = liquidity_info.get("trend", "neutral")
                 else:
@@ -868,11 +797,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                         "Current Status": liquidity_env.title(),
                         "Confidence": f"{composite_score:.0%}",
                         "Duration": "N/A",
-                        "Implication": (
-                            "Supports risk assets"
-                            if trend == "expanding"
-                            else "Monitor tightening"
-                        ),
+                        "Implication": ("Supports risk assets" if trend == "expanding" else "Monitor tightening"),
                     }
                 )
 
@@ -892,33 +817,23 @@ class MacroEconomicCLI(BaseFinancialCLI):
                         "Current Status": market_condition.title(),
                         "Confidence": "N/A",
                         "Duration": "N/A",
-                        "Implication": (
-                            "Inflationary pressure"
-                            if supply_demand == "tight"
-                            else "Stable input costs"
-                        ),
+                        "Implication": ("Inflationary pressure" if supply_demand == "tight" else "Stable input costs"),
                     }
                 )
 
                 # VIX/Volatility summary
                 mock_vix_data = {"observations": [{"value": "18.5"}]}
-                vix_analysis = self.vix_analyzer.analyze_volatility_environment(
-                    mock_vix_data
-                )
+                vix_analysis = self.vix_analyzer.analyze_volatility_environment(mock_vix_data)
 
                 vix_regime = vix_analysis.get("volatility_regime", {})
                 summary.append(
                     {
                         "Category": "Volatility (VIX)",
-                        "Current Status": vix_regime.get(
-                            "regime_type", "Unknown"
-                        ).title(),
+                        "Current Status": vix_regime.get("regime_type", "Unknown").title(),
                         "Confidence": f"{vix_regime.get('regime_probability', 0.5):.0%}",
                         "Duration": f"{vix_regime.get('regime_duration_days', 0)} days",
                         "Implication": (
-                            "Low hedging costs"
-                            if vix_regime.get("regime_type") == "low"
-                            else "Monitor risk management"
+                            "Low hedging costs" if vix_regime.get("regime_type") == "low" else "Monitor risk management"
                         ),
                     }
                 )
@@ -928,10 +843,8 @@ class MacroEconomicCLI(BaseFinancialCLI):
                     liquidity_service = self._get_liquidity_service(env)
                     m2_analysis = liquidity_service.get_global_m2_analysis(12)
                     cb_analysis = liquidity_service.get_central_bank_analysis()
-                    liquidity_conditions = (
-                        liquidity_service.assess_global_liquidity_conditions(
-                            m2_analysis, cb_analysis
-                        )
+                    liquidity_conditions = liquidity_service.assess_global_liquidity_conditions(
+                        m2_analysis, cb_analysis
                     )
 
                     summary.append(
@@ -959,9 +872,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                         }
                     )
 
-                self._output_result(
-                    summary, output_format, "Macro-Economic Executive Summary"
-                )
+                self._output_result(summary, output_format, "Macro-Economic Executive Summary")
 
             except Exception as e:
                 self._handle_error(e, "Failed to generate macro-economic summary")
@@ -970,14 +881,13 @@ class MacroEconomicCLI(BaseFinancialCLI):
         """Interpret recession probability for user"""
         if probability < 0.15:
             return "Low recession risk - economic expansion likely continuing"
-        elif probability < 0.30:
+        if probability < 0.30:
             return "Moderate recession risk - monitor leading indicators closely"
-        elif probability < 0.50:
+        if probability < 0.50:
             return "Elevated recession risk - defensive positioning recommended"
-        else:
-            return "High recession risk - recession may be imminent or underway"
+        return "High recession risk - recession may be imminent or underway"
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform macro-economic services health check"""
         try:
             macro_service = self._get_macro_service(env)
@@ -1021,7 +931,7 @@ class MacroEconomicCLI(BaseFinancialCLI):
                 "error_type": type(e).__name__,
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action across services"""
         try:
             macro_service = self._get_macro_service(env)

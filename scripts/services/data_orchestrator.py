@@ -11,9 +11,7 @@ Coordinates multiple financial data services to provide:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-from .base_financial_service import FinancialServiceError
+from typing import Any
 
 
 class DataOrchestrator:
@@ -28,7 +26,7 @@ class DataOrchestrator:
     """
 
     def __init__(self):
-        self.services: Dict[str, Any] = {}
+        self.services: dict[str, Any] = {}
         self.logger = logging.getLogger("data_orchestrator")
 
     def register_service(self, name: str, service: Any) -> None:
@@ -42,13 +40,11 @@ class DataOrchestrator:
             del self.services[name]
             self.logger.info(f"Unregistered service: {name}")
 
-    def list_services(self) -> List[str]:
+    def list_services(self) -> list[str]:
         """List all registered services"""
         return list(self.services.keys())
 
-    def validate_cross_source_prices(
-        self, ticker: str, source_methods: Dict[str, str]
-    ) -> Dict[str, Any]:
+    def validate_cross_source_prices(self, ticker: str, source_methods: dict[str, str]) -> dict[str, Any]:
         """
         Validate prices across multiple sources
 
@@ -88,9 +84,7 @@ class DataOrchestrator:
 
         return self._calculate_price_validation(price_sources, errors)
 
-    def _extract_price_from_response(
-        self, response: Dict[str, Any], service_name: str
-    ) -> Optional[float]:
+    def _extract_price_from_response(self, response: dict[str, Any], service_name: str) -> float | None:
         """Extract price from service response"""
 
         # Common price field names across services
@@ -129,10 +123,7 @@ class DataOrchestrator:
                                     continue
                     elif isinstance(nested_data, list) and len(nested_data) > 0:
                         for field in price_fields:
-                            if (
-                                field in nested_data[0]
-                                and nested_data[0][field] is not None
-                            ):
+                            if field in nested_data[0] and nested_data[0][field] is not None:
                                 try:
                                     return float(nested_data[0][field])
                                 except (ValueError, TypeError):
@@ -140,9 +131,7 @@ class DataOrchestrator:
 
         return None
 
-    def _calculate_price_validation(
-        self, price_sources: Dict[str, float], errors: Dict[str, str]
-    ) -> Dict[str, Any]:
+    def _calculate_price_validation(self, price_sources: dict[str, float], errors: dict[str, str]) -> dict[str, Any]:
         """Calculate price validation metrics"""
 
         if not price_sources:
@@ -180,9 +169,7 @@ class DataOrchestrator:
         is_consistent = deviation_percentage < 1.0  # Less than 1% deviation
 
         if is_consistent:
-            confidence_score = min(
-                0.95, 0.85 + (0.1 * len(prices) / 5)
-            )  # Higher confidence with more sources
+            confidence_score = min(0.95, 0.85 + (0.1 * len(prices) / 5))  # Higher confidence with more sources
             validation_status = "consistent"
         elif deviation_percentage < 5.0:
             confidence_score = 0.7
@@ -208,9 +195,7 @@ class DataOrchestrator:
             },
         }
 
-    def get_comprehensive_analysis(
-        self, ticker: str, services_config: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def get_comprehensive_analysis(self, ticker: str, services_config: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """
         Get comprehensive analysis from multiple services
 
@@ -294,7 +279,7 @@ class DataOrchestrator:
             },
         }
 
-    def health_check_all_services(self) -> Dict[str, Any]:
+    def health_check_all_services(self) -> dict[str, Any]:
         """Perform health check on all registered services"""
         health_results = {}
 
@@ -318,9 +303,7 @@ class DataOrchestrator:
                 }
 
         # Calculate overall health
-        healthy_count = sum(
-            1 for result in health_results.values() if result["status"] == "healthy"
-        )
+        healthy_count = sum(1 for result in health_results.values() if result["status"] == "healthy")
         total_count = len(health_results)
         overall_health = "healthy" if healthy_count == total_count else "degraded"
 
@@ -332,7 +315,7 @@ class DataOrchestrator:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def cleanup_all_caches(self) -> Dict[str, Any]:
+    def cleanup_all_caches(self) -> dict[str, Any]:
         """Clean up caches for all registered services"""
         cleanup_results = {}
 

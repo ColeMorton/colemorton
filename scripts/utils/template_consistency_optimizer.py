@@ -7,13 +7,12 @@ to ensure maximum consistency in output formatting, content structure,
 and presentation quality.
 """
 
-import json
 import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -28,14 +27,14 @@ class TemplateAnalysis:
     domain: str
     template_type: str
     template_content: str
-    variables_used: Set[str] = field(default_factory=set)
-    macro_imports: Set[str] = field(default_factory=set)
-    conditional_blocks: List[str] = field(default_factory=list)
-    loop_blocks: List[str] = field(default_factory=list)
-    includes_extends: List[str] = field(default_factory=list)
-    content_sections: List[str] = field(default_factory=list)
-    quality_indicators: List[str] = field(default_factory=list)
-    inconsistencies: List[str] = field(default_factory=list)
+    variables_used: set[str] = field(default_factory=set)
+    macro_imports: set[str] = field(default_factory=set)
+    conditional_blocks: list[str] = field(default_factory=list)
+    loop_blocks: list[str] = field(default_factory=list)
+    includes_extends: list[str] = field(default_factory=list)
+    content_sections: list[str] = field(default_factory=list)
+    quality_indicators: list[str] = field(default_factory=list)
+    inconsistencies: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -43,14 +42,14 @@ class TemplateConsistencyReport:
     """Overall template consistency analysis report"""
 
     total_templates: int
-    domains_analyzed: List[str]
-    template_types: List[str]
-    common_variables: Dict[str, int] = field(default_factory=dict)
-    common_macros: Dict[str, int] = field(default_factory=dict)
-    inconsistencies: Dict[str, List[str]] = field(default_factory=dict)
-    standardization_opportunities: List[str] = field(default_factory=list)
+    domains_analyzed: list[str]
+    template_types: list[str]
+    common_variables: dict[str, int] = field(default_factory=dict)
+    common_macros: dict[str, int] = field(default_factory=dict)
+    inconsistencies: dict[str, list[str]] = field(default_factory=dict)
+    standardization_opportunities: list[str] = field(default_factory=list)
     quality_score: float = 0.0
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class TemplateConsistencyOptimizer:
@@ -142,7 +141,7 @@ class TemplateConsistencyOptimizer:
     def analyze_template_file(self, file_path: Path) -> TemplateAnalysis:
         """Analyze a single template file for consistency patterns"""
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 template_content = f.read()
         except Exception as e:
             return TemplateAnalysis(
@@ -199,33 +198,33 @@ class TemplateConsistencyOptimizer:
             ):
                 if "fundamental" in part:
                     return "fundamental_analysis"
-                elif "sector" in part:
+                if "sector" in part:
                     return "sector_analysis"
-                elif "industry" in part:
+                if "industry" in part:
                     return "industry_analysis"
-                elif "comparative" in part:
+                if "comparative" in part:
                     return "comparative_analysis"
-                elif "macro" in part:
+                if "macro" in part:
                     return "macro_analysis"
-                elif "trade" in part:
+                if "trade" in part:
                     return "trade_history"
 
         # Check filename
         if "fundamental" in filename:
             return "fundamental_analysis"
-        elif "sector" in filename:
+        if "sector" in filename:
             return "sector_analysis"
-        elif "industry" in filename:
+        if "industry" in filename:
             return "industry_analysis"
-        elif "comparative" in filename:
+        if "comparative" in filename:
             return "comparative_analysis"
-        elif "macro" in filename:
+        if "macro" in filename:
             return "macro_analysis"
-        elif "trade" in filename:
+        if "trade" in filename:
             return "trade_history"
-        elif "twitter" in filename or "twitter" in str(relative_path):
+        if "twitter" in filename or "twitter" in str(relative_path):
             return "twitter_content"
-        elif "shared" in str(relative_path) or "base_" in filename:
+        if "shared" in str(relative_path) or "base_" in filename:
             return "shared"
 
         return "unknown"
@@ -244,13 +243,13 @@ class TemplateConsistencyOptimizer:
         # Check by directory structure
         if "twitter" in full_path:
             return "twitter"
-        elif "shared" in full_path or "macros" in full_path:
+        if "shared" in full_path or "macros" in full_path:
             return "shared"
-        elif "validation" in full_path:
+        if "validation" in full_path:
             return "validation"
-        elif "blog" in filename_lower:
+        if "blog" in filename_lower:
             return "synthesis"
-        elif "enhanced" in filename_lower:
+        if "enhanced" in filename_lower:
             return "analysis"
 
         return "unknown"
@@ -260,9 +259,7 @@ class TemplateConsistencyOptimizer:
         # Extract variables used
         variable_pattern = r"{{\s*([^}]+)\s*}}"
         variables = re.findall(variable_pattern, content)
-        analysis.variables_used = set(
-            var.split("|")[0].split(".")[0].strip() for var in variables
-        )
+        analysis.variables_used = set(var.split("|")[0].split(".")[0].strip() for var in variables)
 
         # Extract macro imports
         import_pattern = r'{%\s*import\s+["\']([^"\']+)["\']'
@@ -318,9 +315,7 @@ class TemplateConsistencyOptimizer:
                 missing_metadata.append(var)
 
         if missing_metadata:
-            analysis.inconsistencies.append(
-                f"Missing required metadata variables: {', '.join(missing_metadata)}"
-            )
+            analysis.inconsistencies.append(f"Missing required metadata variables: {', '.join(missing_metadata)}")
 
         # Check macro imports for domain-specific templates
         if analysis.template_type in ["analysis", "synthesis", "validation"]:
@@ -331,9 +326,7 @@ class TemplateConsistencyOptimizer:
                     missing_macros.append(macro)
 
             if missing_macros:
-                analysis.inconsistencies.append(
-                    f"Missing recommended macro imports: {', '.join(missing_macros)}"
-                )
+                analysis.inconsistencies.append(f"Missing recommended macro imports: {', '.join(missing_macros)}")
 
         # Check formatting standards
         format_patterns = self.standard_patterns["formatting_standards"]
@@ -347,16 +340,12 @@ class TemplateConsistencyOptimizer:
         template_type = analysis.template_type
 
         if template_type in self.standard_patterns["content_structure"]:
-            required_sections = self.standard_patterns["content_structure"][
-                f"{template_type}_templates"
-            ]
+            required_sections = self.standard_patterns["content_structure"][f"{template_type}_templates"]
             missing_sections = []
 
             for section in required_sections:
                 # Check if section is present (case-insensitive)
-                if not re.search(
-                    section.replace("_", "[-_\\s]*"), content, re.IGNORECASE
-                ):
+                if not re.search(section.replace("_", "[-_\\s]*"), content, re.IGNORECASE):
                     missing_sections.append(section)
 
             if missing_sections:
@@ -381,9 +370,7 @@ class TemplateConsistencyOptimizer:
         for template_file in self.templates_dir.rglob("*.j2"):
             analysis = self.analyze_template_file(template_file)
             self.template_analyses.append(analysis)
-            print(
-                f"  📋 Analyzed: {template_file.name} ({analysis.domain}:{analysis.template_type})"
-            )
+            print(f"  📋 Analyzed: {template_file.name} ({analysis.domain}:{analysis.template_type})")
 
         # Generate consistency report
         return self._generate_consistency_report()
@@ -392,16 +379,8 @@ class TemplateConsistencyOptimizer:
         """Generate comprehensive consistency report"""
         report = TemplateConsistencyReport(
             total_templates=len(self.template_analyses),
-            domains_analyzed=list(
-                set(a.domain for a in self.template_analyses if a.domain != "unknown")
-            ),
-            template_types=list(
-                set(
-                    a.template_type
-                    for a in self.template_analyses
-                    if a.template_type != "unknown"
-                )
-            ),
+            domains_analyzed=list(set(a.domain for a in self.template_analyses if a.domain != "unknown")),
+            template_types=list(set(a.template_type for a in self.template_analyses if a.template_type != "unknown")),
         )
 
         # Analyze common patterns
@@ -427,9 +406,7 @@ class TemplateConsistencyOptimizer:
                 report.inconsistencies[key] = analysis.inconsistencies
 
         # Generate standardization opportunities
-        report.standardization_opportunities = (
-            self._identify_standardization_opportunities()
-        )
+        report.standardization_opportunities = self._identify_standardization_opportunities()
 
         # Calculate quality score
         report.quality_score = self._calculate_quality_score()
@@ -439,20 +416,16 @@ class TemplateConsistencyOptimizer:
 
         return report
 
-    def _identify_standardization_opportunities(self) -> List[str]:
+    def _identify_standardization_opportunities(self) -> list[str]:
         """Identify opportunities for template standardization"""
         opportunities = []
 
         # Check for missing base template usage
         templates_without_base = [
-            a
-            for a in self.template_analyses
-            if not any("base_" in inc for inc in a.includes_extends)
+            a for a in self.template_analyses if not any("base_" in inc for inc in a.includes_extends)
         ]
         if len(templates_without_base) > 5:
-            opportunities.append(
-                f"Standardize base template usage across {len(templates_without_base)} templates"
-            )
+            opportunities.append(f"Standardize base template usage across {len(templates_without_base)} templates")
 
         # Check for macro consistency
         all_macros = set()
@@ -476,29 +449,17 @@ class TemplateConsistencyOptimizer:
 
         for pattern_type, vars_set in variable_patterns.items():
             if len(vars_set) > 3:  # Too many variations
-                opportunities.append(
-                    f"Standardize {pattern_type} variable naming patterns"
-                )
+                opportunities.append(f"Standardize {pattern_type} variable naming patterns")
 
         # Check for template type standardization
-        template_types = set(
-            a.template_type
-            for a in self.template_analyses
-            if a.template_type != "unknown"
-        )
+        template_types = set(a.template_type for a in self.template_analyses if a.template_type != "unknown")
         for template_type in template_types:
-            type_templates = [
-                a for a in self.template_analyses if a.template_type == template_type
-            ]
+            type_templates = [a for a in self.template_analyses if a.template_type == template_type]
             if len(type_templates) > 1:
                 # Check consistency within type
                 variable_sets = [a.variables_used for a in type_templates]
-                if (
-                    len(set(tuple(sorted(s)) for s in variable_sets)) > 1
-                ):  # Different variable sets
-                    opportunities.append(
-                        f"Standardize {template_type} template variable usage across domains"
-                    )
+                if len(set(tuple(sorted(s)) for s in variable_sets)) > 1:  # Different variable sets
+                    opportunities.append(f"Standardize {template_type} template variable usage across domains")
 
         return opportunities
 
@@ -534,26 +495,20 @@ class TemplateConsistencyOptimizer:
 
         return total_score / len(self.template_analyses)
 
-    def _generate_recommendations(self, report: TemplateConsistencyReport) -> List[str]:
+    def _generate_recommendations(self, report: TemplateConsistencyReport) -> list[str]:
         """Generate actionable recommendations"""
         recommendations = []
 
         # High-level recommendations
         if report.quality_score < 0.7:
-            recommendations.append(
-                "🔴 PRIORITY: Address major template inconsistencies to improve quality score"
-            )
+            recommendations.append("🔴 PRIORITY: Address major template inconsistencies to improve quality score")
 
         if len(report.inconsistencies) > len(report.domains_analyzed):
-            recommendations.append(
-                "🟡 Standardize common template patterns across domains"
-            )
+            recommendations.append("🟡 Standardize common template patterns across domains")
 
         # Specific recommendations based on analysis
         base_template_usage = sum(
-            1
-            for a in self.template_analyses
-            if any("base_" in inc for inc in a.includes_extends)
+            1 for a in self.template_analyses if any("base_" in inc for inc in a.includes_extends)
         )
         if base_template_usage < len(self.template_analyses) * 0.6:
             recommendations.append("🟢 Increase base template usage for consistency")
@@ -566,20 +521,14 @@ class TemplateConsistencyOptimizer:
         domains = set(a.domain for a in self.template_analyses if a.domain != "unknown")
         for domain in domains:
             domain_analyses = [a for a in self.template_analyses if a.domain == domain]
-            domain_inconsistencies = sum(
-                len(a.inconsistencies) for a in domain_analyses
-            )
+            domain_inconsistencies = sum(len(a.inconsistencies) for a in domain_analyses)
 
             if domain_inconsistencies > 3:
-                recommendations.append(
-                    f"🔵 Focus on {domain} domain - high inconsistency count"
-                )
+                recommendations.append(f"🔵 Focus on {domain} domain - high inconsistency count")
 
         return recommendations
 
-    def generate_standardized_template(
-        self, template_type: str, domain: str = None
-    ) -> str:
+    def generate_standardized_template(self, template_type: str, domain: str = None) -> str:
         """Generate a standardized template for a specific type and domain"""
         # Base template structure
         template_parts = [
@@ -708,7 +657,7 @@ class TemplateConsistencyOptimizer:
 
         return "\n".join(template_parts)
 
-    def export_standardized_templates(self, output_dir: str = None) -> List[str]:
+    def export_standardized_templates(self, output_dir: str = None) -> list[str]:
         """Export standardized template files for all types"""
         if output_dir is None:
             output_dir = self.templates_dir.parent / "standardized_templates"
@@ -730,9 +679,7 @@ class TemplateConsistencyOptimizer:
 
         for template_type in template_types:
             for domain in domains:
-                template_content = self.generate_standardized_template(
-                    template_type, domain
-                )
+                template_content = self.generate_standardized_template(template_type, domain)
 
                 output_file = output_path / f"{domain}_{template_type}_standard.j2"
                 with open(output_file, "w") as f:
@@ -757,24 +704,18 @@ class TemplateConsistencyOptimizer:
 
         if report.common_variables:
             print("\n🔧 Most Common Variables:")
-            sorted_variables = sorted(
-                report.common_variables.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_variables = sorted(report.common_variables.items(), key=lambda x: x[1], reverse=True)
             for variable, count in sorted_variables[:10]:
                 print("  {variable}: {count} templates")
 
         if report.common_macros:
             print("\n🧩 Most Common Macros:")
-            sorted_macros = sorted(
-                report.common_macros.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_macros = sorted(report.common_macros.items(), key=lambda x: x[1], reverse=True)
             for macro, count in sorted_macros:
                 print("  {macro}: {count} templates")
 
         if report.inconsistencies:
-            print(
-                f"\n⚠️  Inconsistencies Found ({len(report.inconsistencies)} templates):"
-            )
+            print(f"\n⚠️  Inconsistencies Found ({len(report.inconsistencies)} templates):")
             for template, issues in report.inconsistencies.items():
                 print("  {template}:")
                 for issue in issues[:3]:  # Show first 3 issues
@@ -799,9 +740,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Template Consistency Optimizer")
     parser.add_argument("--templates-dir", help="Directory containing templates")
-    parser.add_argument(
-        "--analyze", action="store_true", help="Analyze template consistency"
-    )
+    parser.add_argument("--analyze", action="store_true", help="Analyze template consistency")
     parser.add_argument(
         "--export-templates",
         action="store_true",

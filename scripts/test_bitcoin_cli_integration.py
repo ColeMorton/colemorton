@@ -18,8 +18,8 @@ import time
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from unittest.mock import Mock, patch
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -53,9 +53,7 @@ class BitcoinCLIIntegrationTestBase(unittest.TestCase):
             "bitcoin_network_stats": create_bitcoin_network_stats_service("test"),
         }
 
-    def run_cli_command(
-        self, cli_script: str, args: List[str], env: str = "test"
-    ) -> Dict[str, Any]:
+    def run_cli_command(self, cli_script: str, args: list[str], env: str = "test") -> dict[str, Any]:
         """Run CLI command and return parsed result"""
         cmd = ["python", str(self.scripts_dir / cli_script)] + args
 
@@ -85,22 +83,20 @@ class BitcoinCLIIntegrationTestBase(unittest.TestCase):
             "timeout": False,
         }
 
-    def validate_json_output(self, output: str) -> Dict[str, Any]:
+    def validate_json_output(self, output: str) -> dict[str, Any]:
         """Validate and parse JSON output"""
         try:
             return json.loads(output.strip())
         except json.JSONDecodeError as e:
             self.fail(f"Invalid JSON output: {e}. Output was: {output}")
 
-    def get_bitcoin_price_from_multiple_sources(self) -> Dict[str, Optional[float]]:
+    def get_bitcoin_price_from_multiple_sources(self) -> dict[str, float | None]:
         """Get Bitcoin prices from multiple sources for comparison"""
         prices = {}
 
         # Binance price
         try:
-            binance_data = self.services["binance_api"].get_symbol_price_ticker(
-                "BTCUSDT"
-            )
+            binance_data = self.services["binance_api"].get_symbol_price_ticker("BTCUSDT")
             prices["binance"] = float(binance_data.get("price", 0))
         except:
             prices["binance"] = None
@@ -122,7 +118,7 @@ class BitcoinCLIIntegrationTestBase(unittest.TestCase):
 
         return prices
 
-    def validate_price_consistency(self, prices: Dict[str, Optional[float]]) -> bool:
+    def validate_price_consistency(self, prices: dict[str, float | None]) -> bool:
         """Validate that prices from different sources are reasonably consistent"""
         valid_prices = [p for p in prices.values() if p is not None and p > 0]
 
@@ -153,18 +149,14 @@ class TestBitcoinPriceConsistency(BitcoinCLIIntegrationTestBase):
         # Filter out None values
         valid_prices = {k: v for k, v in prices.items() if v is not None and v > 0}
 
-        self.assertGreater(
-            len(valid_prices), 0, "No valid prices retrieved from any source"
-        )
+        self.assertGreater(len(valid_prices), 0, "No valid prices retrieved from any source")
 
         if len(valid_prices) > 1:
             is_consistent = self.validate_price_consistency(prices)
 
             if not is_consistent:
                 # Log the prices for debugging
-                price_details = ", ".join(
-                    [f"{k}: ${v:,.2f}" for k, v in valid_prices.items()]
-                )
+                price_details = ", ".join([f"{k}: ${v:,.2f}" for k, v in valid_prices.items()])
                 self.fail(f"Bitcoin prices show significant deviation: {price_details}")
 
     def test_price_cli_integration(self):
@@ -190,18 +182,14 @@ class TestBitcoinPriceConsistency(BitcoinCLIIntegrationTestBase):
                     elif "blockchain" in cli_script:
                         price = float(data.get("price_usd", 0))
                     elif "mempool" in cli_script:
-                        price = (
-                            float(data.get("USD", 0))
-                            if isinstance(data, dict) and "USD" in data
-                            else 0
-                        )
+                        price = float(data.get("USD", 0)) if isinstance(data, dict) and "USD" in data else 0
                     else:
                         price = 0
 
                     if price > 0:
                         prices[cli_script] = price
 
-                except Exception as e:
+                except Exception:
                     # Individual service failures are acceptable
                     continue
 
@@ -233,9 +221,7 @@ class TestBitcoinNetworkMetricsIntegration(BitcoinCLIIntegrationTestBase):
         except:
             pass
 
-        self.assertGreater(
-            len(mempool_data), 0, "No mempool data retrieved from any source"
-        )
+        self.assertGreater(len(mempool_data), 0, "No mempool data retrieved from any source")
 
         # Validate that both sources report reasonable mempool sizes
         for source, data in mempool_data.items():
@@ -365,9 +351,7 @@ class TestBitcoinCycleIntelligenceWorkflow(BitcoinCLIIntegrationTestBase):
 
         # Collect network metrics
         try:
-            network_overview = self.services[
-                "bitcoin_network_stats"
-            ].get_network_overview()
+            network_overview = self.services["bitcoin_network_stats"].get_network_overview()
             if network_overview:
                 analysis_data["network_metrics"] = network_overview
         except Exception as e:
@@ -382,9 +366,7 @@ class TestBitcoinCycleIntelligenceWorkflow(BitcoinCLIIntegrationTestBase):
             analysis_data["errors"].append(f"Sentiment error: {str(e)}")
 
         # Validate that we have comprehensive data
-        self.assertGreater(
-            len(analysis_data["price_sources"]), 0, "No price sources available"
-        )
+        self.assertGreater(len(analysis_data["price_sources"]), 0, "No price sources available")
 
         # Allow for some errors in integration scenarios
         total_sources = (
@@ -408,9 +390,7 @@ class TestBitcoinCycleIntelligenceWorkflow(BitcoinCLIIntegrationTestBase):
 
         # Try to get historical sentiment data
         try:
-            historical_fng = self.services["alternative_me"].get_historical_fear_greed(
-                30
-            )
+            historical_fng = self.services["alternative_me"].get_historical_fear_greed(30)
             if historical_fng and len(historical_fng) > 0:
                 historical_data["sentiment"] = len(historical_fng)
         except:
@@ -438,9 +418,7 @@ class TestBitcoinCycleIntelligenceWorkflow(BitcoinCLIIntegrationTestBase):
         except:
             pass
 
-        self.assertGreater(
-            len(historical_data), 0, "No historical data available from any source"
-        )
+        self.assertGreater(len(historical_data), 0, "No historical data available from any source")
 
 
 class TestBitcoinCLIErrorResilience(BitcoinCLIIntegrationTestBase):
@@ -450,9 +428,7 @@ class TestBitcoinCLIErrorResilience(BitcoinCLIIntegrationTestBase):
         """Test that aggregation services handle individual service failures gracefully"""
         # Test the network stats service which aggregates multiple APIs
         try:
-            comprehensive_report = self.services[
-                "bitcoin_network_stats"
-            ].get_comprehensive_report()
+            comprehensive_report = self.services["bitcoin_network_stats"].get_comprehensive_report()
 
             self.assertIsInstance(comprehensive_report, dict)
             self.assertIn("errors", comprehensive_report)
@@ -465,9 +441,7 @@ class TestBitcoinCLIErrorResilience(BitcoinCLIIntegrationTestBase):
                 "network_health",
                 "market_data",
             ]
-            successful_sections = sum(
-                1 for section in sections if comprehensive_report.get(section)
-            )
+            successful_sections = sum(1 for section in sections if comprehensive_report.get(section))
 
             self.assertGreater(
                 successful_sections,
@@ -499,10 +473,7 @@ class TestBitcoinCLIErrorResilience(BitcoinCLIIntegrationTestBase):
                     # (e.g., corrected the limit, returned an error message)
                     output = result["stdout"].lower() + result["stderr"].lower()
                     self.assertTrue(
-                        any(
-                            word in output
-                            for word in ["error", "invalid", "limit", "corrected"]
-                        ),
+                        any(word in output for word in ["error", "invalid", "limit", "corrected"]),
                         f"Service should acknowledge invalid input: {output}",
                     )
 
@@ -597,14 +568,8 @@ class TestBitcoinCLIPerformance(BitcoinCLIIntegrationTestBase):
         ]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(call_service, service_info)
-                for service_info in service_calls
-            ]
-            results = [
-                future.result(timeout=15)
-                for future in concurrent.futures.as_completed(futures, timeout=20)
-            ]
+            futures = [executor.submit(call_service, service_info) for service_info in service_calls]
+            results = [future.result(timeout=15) for future in concurrent.futures.as_completed(futures, timeout=20)]
 
         successful_calls = [r for r in results if r[1]]
         self.assertGreater(

@@ -54,7 +54,7 @@ describe("Contact Form - Staging Email Delivery", () => {
         // Fill form with technical collaboration data
         await page.type("#name", "Cole Morton (E2E Test)");
         await page.type("#email", "cole.morton@hotmail.com");
-        await page.type("#organization", "Sensylate Platform Testing");
+        await page.type("#organization", "Cole Morton Platform Testing");
         await page.select("#inquiry-type", "technical-collaboration");
         await page.type(
           "#message",
@@ -165,7 +165,7 @@ describe("Contact Form - Staging Email Delivery", () => {
         // Fill form with platform inquiry data
         await page.type("#name", "Cole Morton (E2E Platform Test)");
         await page.type("#email", "cole.morton@hotmail.com");
-        await page.type("#organization", "Sensylate Research & Development");
+        await page.type("#organization", "Cole Morton Research & Development");
         await page.select("#inquiry-type", "platform-inquiry");
         await page.type(
           "#message",
@@ -289,7 +289,7 @@ Check cole.morton@hotmail.com inbox for the following test emails:
 
 1. Technical Collaboration Inquiry
    ✓ Professional sender: Cole Morton (E2E Test)
-   ✓ Organization: Sensylate Platform Testing
+   ✓ Organization: Cole Morton Platform Testing
    ✓ Subject should include: Technical Collaboration
    ✓ Message includes test timestamp and details
 
@@ -301,7 +301,7 @@ Check cole.morton@hotmail.com inbox for the following test emails:
 
 3. Platform Inquiry
    ✓ Professional sender: Cole Morton (E2E Platform Test)
-   ✓ Organization: Sensylate Research & Development
+   ✓ Organization: Cole Morton Research & Development
    ✓ Subject should include: Platform Inquiry
    ✓ Message includes comprehensive platform details
 

@@ -10,12 +10,13 @@ styling, animations, and interactive features for trading performance dashboards
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle
+
 
 # Configure path before imports
 project_root = Path(__file__).parent.parent.parent
@@ -36,7 +37,7 @@ class ChartConfig:
 
     title: str
     chart_type: str
-    colors: List[str]
+    colors: list[str]
     background_color: str = "white"
     grid_alpha: float = 0.3
     title_fontsize: int = 12
@@ -133,12 +134,10 @@ class AdvancedChartGenerator:
         )
 
         # Title
-        ax.text(
-            0, -0.5, title, ha="center", va="center", fontsize=10, color=theme.body_text
-        )
+        ax.text(0, -0.5, title, ha="center", va="center", fontsize=10, color=theme.body_text)
 
     def create_enhanced_monthly_bars(
-        self, ax: plt.Axes, monthly_data: List[MonthlyPerformance], mode: str = "light"
+        self, ax: plt.Axes, monthly_data: list[MonthlyPerformance], mode: str = "light"
     ) -> None:
         """
         Create enhanced monthly performance bar chart with scalability optimization.
@@ -155,12 +154,8 @@ class AdvancedChartGenerator:
 
         # Apply scalability optimizations if available
         if self.scalability_manager:
-            timeline_category = (
-                self.scalability_manager.detect_monthly_timeline_category(monthly_data)
-            )
-            months = self.scalability_manager.optimize_monthly_labels(
-                monthly_data, timeline_category
-            )
+            timeline_category = self.scalability_manager.detect_monthly_timeline_category(monthly_data)
+            months = self.scalability_manager.optimize_monthly_labels(monthly_data, timeline_category)
         else:
             months = [f"{data.month[:3]} {str(data.year)[2:]}" for data in monthly_data]
         win_rates = [data.win_rate for data in monthly_data]
@@ -181,7 +176,7 @@ class AdvancedChartGenerator:
         )
 
         # Add value labels on bars
-        for i, (bar, rate, ret) in enumerate(zip(bars, win_rates, returns)):
+        for i, (bar, rate, ret) in enumerate(zip(bars, win_rates, returns, strict=False)):
             height = bar.get_height()
 
             # Win rate label
@@ -228,7 +223,7 @@ class AdvancedChartGenerator:
         ax.tick_params(colors=theme.body_text)
 
     def create_enhanced_donut_chart(
-        self, ax: plt.Axes, quality_data: List[QualityDistribution], mode: str = "light"
+        self, ax: plt.Axes, quality_data: list[QualityDistribution], mode: str = "light"
     ) -> None:
         """
         Create sophisticated donut chart for quality distribution.
@@ -271,7 +266,7 @@ class AdvancedChartGenerator:
 
         # Add custom labels outside the donut
         for i, (wedge, category, percentage, win_rate) in enumerate(
-            zip(wedges, categories, percentages, win_rates)
+            zip(wedges, categories, percentages, win_rates, strict=False)
         ):
             angle = (wedge.theta2 + wedge.theta1) / 2
             x = 1.2 * np.cos(np.radians(angle))
@@ -318,9 +313,7 @@ class AdvancedChartGenerator:
         # Apply standardized title styling
         self.theme_manager.apply_title_style(ax, "Trade Quality Analysis", mode)
 
-    def create_waterfall_chart(
-        self, ax: plt.Axes, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_waterfall_chart(self, ax: plt.Axes, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create sophisticated waterfall chart with scalability optimization.
 
@@ -336,15 +329,13 @@ class AdvancedChartGenerator:
 
         # Check for scalability optimization
         if self.scalability_manager:
-            trade_category = self.scalability_manager.detect_trade_volume_category(
-                trades
-            )
+            trade_category = self.scalability_manager.detect_trade_volume_category(trades)
 
             # For large datasets, use performance bands instead of waterfall
             if trade_category == "large":
                 self._create_performance_bands_chart(ax, trades, mode)
                 return
-            elif trade_category == "medium":
+            if trade_category == "medium":
                 # Use performance bands for medium datasets too
                 self._create_performance_bands_chart(ax, trades, mode)
                 return
@@ -361,12 +352,8 @@ class AdvancedChartGenerator:
         cumulative: np.ndarray = np.cumsum(np.array([0] + returns[:-1]))
 
         # Create waterfall bars
-        for i, (ret, cum, ticker) in enumerate(zip(returns, cumulative, tickers)):
-            color = (
-                performance_colors["positive"]
-                if ret >= 0
-                else performance_colors["negative"]
-            )
+        for i, (ret, cum, ticker) in enumerate(zip(returns, cumulative, tickers, strict=False)):
+            color = performance_colors["positive"] if ret >= 0 else performance_colors["negative"]
 
             # Bar from cumulative to cumulative + return
             ax.bar(
@@ -423,9 +410,7 @@ class AdvancedChartGenerator:
 
         # Limit x-axis labels for readability
         if self.scalability_manager:
-            label_freq = self.scalability_manager.calculate_adaptive_label_frequency(
-                len(trades)
-            )
+            label_freq = self.scalability_manager.calculate_adaptive_label_frequency(len(trades))
             ax.set_xticks(range(0, len(trades), label_freq))
             ax.set_xticklabels(
                 [tickers[i] for i in range(0, len(trades), label_freq)],
@@ -446,9 +431,7 @@ class AdvancedChartGenerator:
         ax.grid(True, alpha=0.3, axis="y")
         ax.tick_params(colors=theme.body_text)
 
-    def _create_performance_bands_chart(
-        self, ax: plt.Axes, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def _create_performance_bands_chart(self, ax: plt.Axes, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create performance bands chart for medium/large datasets.
 
@@ -505,7 +488,7 @@ class AdvancedChartGenerator:
         )
 
         # Add count labels
-        for i, (bar, count) in enumerate(zip(bars, band_counts)):
+        for i, (bar, count) in enumerate(zip(bars, band_counts, strict=False)):
             ax.text(
                 bar.get_width() + 0.1,
                 bar.get_y() + bar.get_height() / 2,
@@ -522,9 +505,7 @@ class AdvancedChartGenerator:
         ax.set_yticklabels(band_names, fontsize=9)
         ax.set_xlabel("Number of Trades", fontsize=10, color=theme.body_text)
         # Apply standardized title styling
-        self.theme_manager.apply_title_style(
-            ax, "Performance Distribution by Bands", mode
-        )
+        self.theme_manager.apply_title_style(ax, "Performance Distribution by Bands", mode)
 
         ax.grid(True, alpha=0.3, axis="x")
         ax.tick_params(colors=theme.body_text)
@@ -532,9 +513,7 @@ class AdvancedChartGenerator:
         # Invert y-axis to show best performers at top
         ax.invert_yaxis()
 
-    def create_enhanced_scatter(
-        self, ax: plt.Axes, trades: List[TradeData], mode: str = "light"
-    ) -> None:
+    def create_enhanced_scatter(self, ax: plt.Axes, trades: list[TradeData], mode: str = "light") -> None:
         """
         Create enhanced scatter plot with clustering for high-density management.
 
@@ -553,16 +532,14 @@ class AdvancedChartGenerator:
 
         # Check for clustering optimization
         if self.scalability_manager:
-            density_category = self.scalability_manager.detect_scatter_density_category(
-                trades
-            )
+            density_category = self.scalability_manager.detect_scatter_density_category(trades)
 
             if density_category == "high":
                 # Use clustering for high-density plots
                 cluster_info = self.scalability_manager.cluster_scatter_points(trades)
                 self._create_clustered_scatter(ax, cluster_info, mode)
                 return
-            elif density_category == "medium":
+            if density_category == "medium":
                 # Reduce opacity for medium density
                 base_alpha = 0.6
             else:
@@ -585,14 +562,10 @@ class AdvancedChartGenerator:
             colors.append(quality_colors.get(trade.quality, theme.borders))
 
             # Enhanced sizing: base size + magnitude scaling + outlier boost
-            magnitude_factor = (
-                abs(trade.return_pct) / max(max_return, 1) if max_return > 0 else 0
-            )
+            magnitude_factor = abs(trade.return_pct) / max(max_return, 1) if max_return > 0 else 0
             base_size = 60  # Larger base size for better visibility
             magnitude_size = magnitude_factor * 80  # More pronounced size scaling
-            outlier_boost = (
-                20 if abs(trade.return_pct) > 5 else 0
-            )  # Boost for significant trades
+            outlier_boost = 20 if abs(trade.return_pct) > 5 else 0  # Boost for significant trades
 
             sizes.append(base_size + magnitude_size + outlier_boost)
 
@@ -609,7 +582,7 @@ class AdvancedChartGenerator:
         # Create scatter plot with enhanced styling
         scatter_points = []
         for i, (trade, dur, ret, color, size, alpha) in enumerate(
-            zip(trades, durations, returns, colors, sizes, alphas)
+            zip(trades, durations, returns, colors, sizes, alphas, strict=False)
         ):
             ax.scatter(
                 dur,
@@ -673,14 +646,12 @@ class AdvancedChartGenerator:
                 significant_trades.append((trade, dur, ret))
 
         # Add labels with intelligent positioning to avoid overlap
-        labeled_positions: List[Tuple[float, float]] = []
+        labeled_positions: list[tuple[float, float]] = []
 
         for trade, dur, ret in significant_trades:
             # Calculate label position with offset to avoid overlapping bubble
             label_offset_x = 2.0  # Horizontal offset
-            label_offset_y = (
-                0.5 if ret >= 0 else -0.5
-            )  # Vertical offset based on return sign
+            label_offset_y = 0.5 if ret >= 0 else -0.5  # Vertical offset based on return sign
 
             label_x = dur + label_offset_x
             label_y = ret + label_offset_y
@@ -719,9 +690,7 @@ class AdvancedChartGenerator:
 
             labeled_positions.append((label_x, label_y))
 
-    def _add_performance_zones(
-        self, ax: plt.Axes, cumulative_returns: list, theme
-    ) -> None:
+    def _add_performance_zones(self, ax: plt.Axes, cumulative_returns: list, theme) -> None:
         """Add minimal reference lines to waterfall chart."""
         if not cumulative_returns or len(cumulative_returns) == 0:
             return
@@ -734,9 +703,7 @@ class AdvancedChartGenerator:
         # Only add breakeven line if we have both positive and negative returns
         if max_cum > 0 and min_cum < 0:
             # Breakeven line - keep this as it's a critical reference
-            ax.axhline(
-                y=0, color=theme.borders, linestyle="-", alpha=0.6, linewidth=1.5
-            )
+            ax.axhline(y=0, color=theme.borders, linestyle="-", alpha=0.6, linewidth=1.5)
             ax.text(
                 len(cumulative_returns) * 0.02,
                 0.5,
@@ -744,14 +711,10 @@ class AdvancedChartGenerator:
                 fontsize=8,
                 color=theme.body_text,
                 alpha=0.7,
-                bbox=dict(
-                    boxstyle="round,pad=0.2", facecolor=theme.background, alpha=0.8
-                ),
+                bbox=dict(boxstyle="round,pad=0.2", facecolor=theme.background, alpha=0.8),
             )
 
-    def _create_clustered_scatter(
-        self, ax: plt.Axes, cluster_info: Dict[str, Any], mode: str = "light"
-    ) -> None:
+    def _create_clustered_scatter(self, ax: plt.Axes, cluster_info: dict[str, Any], mode: str = "light") -> None:
         """
         Create clustered scatter plot for high-density datasets.
 
@@ -806,12 +769,9 @@ class AdvancedChartGenerator:
         if cluster_info["noise"]:
             noise_durations = [t.duration_days for t in cluster_info["noise"]]
             noise_returns = [t.return_pct for t in cluster_info["noise"]]
-            noise_colors = [
-                quality_colors.get(t.quality, theme.borders)
-                for t in cluster_info["noise"]
-            ]
+            noise_colors = [quality_colors.get(t.quality, theme.borders) for t in cluster_info["noise"]]
 
-            for dur, ret, color in zip(noise_durations, noise_returns, noise_colors):
+            for dur, ret, color in zip(noise_durations, noise_returns, noise_colors, strict=False):
                 ax.scatter(
                     dur,
                     ret,
@@ -847,9 +807,7 @@ class AdvancedChartGenerator:
         ax.set_xlabel("Duration (days)", fontsize=10, color=theme.body_text)
         ax.set_ylabel("Return (%)", fontsize=10, color=theme.body_text)
         # Apply standardized title styling
-        self.theme_manager.apply_title_style(
-            ax, "Duration vs Return Analysis (Clustered)", mode
-        )
+        self.theme_manager.apply_title_style(ax, "Duration vs Return Analysis (Clustered)", mode)
 
         ax.grid(True, alpha=0.3)
         ax.tick_params(colors=theme.body_text)
@@ -857,8 +815,8 @@ class AdvancedChartGenerator:
     def create_performance_summary_panel(
         self,
         ax: plt.Axes,
-        trades: List[TradeData],
-        monthly_data: List[MonthlyPerformance],
+        trades: list[TradeData],
+        monthly_data: list[MonthlyPerformance],
         mode: str = "light",
     ) -> None:
         """
@@ -896,8 +854,8 @@ Win Rate: {win_rate:.1f}%
 Avg Winner: {avg_winner:.1f}%
 Avg Loser: {avg_loser:.1f}%
 
-Best Month: {best_month.month if monthly_data else 'N/A'}
-Worst Month: {worst_month.month if monthly_data else 'N/A'}"""
+Best Month: {best_month.month if monthly_data else "N/A"}
+Worst Month: {worst_month.month if monthly_data else "N/A"}"""
 
             ax.text(
                 0.05,
@@ -917,9 +875,7 @@ Worst Month: {worst_month.month if monthly_data else 'N/A'}"""
             )
 
 
-def create_chart_generator(
-    theme_manager, scalability_manager=None
-) -> AdvancedChartGenerator:
+def create_chart_generator(theme_manager, scalability_manager=None) -> AdvancedChartGenerator:
     """
     Factory function to create chart generator.
 

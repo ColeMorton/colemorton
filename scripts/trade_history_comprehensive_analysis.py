@@ -14,16 +14,15 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -37,7 +36,7 @@ class TradeHistoryAnalyzer:
 
         # Load data
         self.df = pd.read_csv(self.csv_path)
-        with open(self.discovery_path, "r") as f:
+        with open(self.discovery_path) as f:
             self.discovery_data = json.load(f)
 
         # Prepare data
@@ -47,12 +46,8 @@ class TradeHistoryAnalyzer:
     def _prepare_data(self) -> None:
         """Prepare and validate data for analysis."""
         # Convert timestamps with flexible parsing
-        self.df["Entry_Timestamp"] = pd.to_datetime(
-            self.df["Entry_Timestamp"], format="mixed", errors="coerce"
-        )
-        self.df["Exit_Timestamp"] = pd.to_datetime(
-            self.df["Exit_Timestamp"], format="mixed", errors="coerce"
-        )
+        self.df["Entry_Timestamp"] = pd.to_datetime(self.df["Entry_Timestamp"], format="mixed", errors="coerce")
+        self.df["Exit_Timestamp"] = pd.to_datetime(self.df["Exit_Timestamp"], format="mixed", errors="coerce")
 
         # CRITICAL: Strict separation of closed vs active trades
         self.closed_trades = self.df[self.df["Status"] == "Closed"].copy()
@@ -71,31 +66,21 @@ class TradeHistoryAnalyzer:
 
         for col in numeric_columns:
             if col in self.closed_trades.columns:
-                self.closed_trades[col] = pd.to_numeric(
-                    self.closed_trades[col], errors="coerce"
-                )
+                self.closed_trades[col] = pd.to_numeric(self.closed_trades[col], errors="coerce")
             if col in self.active_trades.columns:
-                self.active_trades[col] = pd.to_numeric(
-                    self.active_trades[col], errors="coerce"
-                )
+                self.active_trades[col] = pd.to_numeric(self.active_trades[col], errors="coerce")
 
         logger.info("Data preparation complete:")
         logger.info(f"  Total trades: {len(self.df)}")
-        logger.info(
-            f"  CLOSED trades: {len(self.closed_trades)} (used for performance calculations)"
-        )
-        logger.info(
-            f"  ACTIVE trades: {len(self.active_trades)} (used for portfolio analysis)"
-        )
+        logger.info(f"  CLOSED trades: {len(self.closed_trades)} (used for performance calculations)")
+        logger.info(f"  ACTIVE trades: {len(self.active_trades)} (used for portfolio analysis)")
 
     def _validate_sample_sizes(self) -> None:
         """Validate sample sizes per strategy for minimum 5 closed trades rule."""
         self.strategy_validation = {}
 
         for strategy in ["SMA", "EMA"]:
-            strategy_closed = self.closed_trades[
-                self.closed_trades["Strategy_Type"] == strategy
-            ]
+            strategy_closed = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
             count = len(strategy_closed)
 
             self.strategy_validation[strategy] = {
@@ -105,15 +90,11 @@ class TradeHistoryAnalyzer:
             }
 
             if count < 5:
-                logger.warning(
-                    f"{strategy} strategy has only {count} closed trades (minimum 5 required)"
-                )
+                logger.warning(f"{strategy} strategy has only {count} closed trades (minimum 5 required)")
             else:
-                logger.info(
-                    f"{strategy} strategy has {count} closed trades (eligible for analysis)"
-                )
+                logger.info(f"{strategy} strategy has {count} closed trades (eligible for analysis)")
 
-    def calculate_signal_effectiveness(self) -> Dict[str, Any]:
+    def calculate_signal_effectiveness(self) -> dict[str, Any]:
         """Calculate comprehensive signal effectiveness metrics using CLOSED trades only."""
         effectiveness = {
             "entry_signal_analysis": {
@@ -128,9 +109,7 @@ class TradeHistoryAnalyzer:
 
         # Strategy-specific analysis (CLOSED trades only)
         for strategy in ["SMA", "EMA"]:
-            strategy_trades = self.closed_trades[
-                self.closed_trades["Strategy_Type"] == strategy
-            ]
+            strategy_trades = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
 
             if self.strategy_validation[strategy]["eligible_for_analysis"]:
                 # Calculate metrics for strategies with sufficient sample
@@ -164,9 +143,7 @@ class TradeHistoryAnalyzer:
                 else:
                     expectancy = 0
 
-                effectiveness["entry_signal_analysis"]["win_rate_by_strategy"][
-                    strategy
-                ] = {
+                effectiveness["entry_signal_analysis"]["win_rate_by_strategy"][strategy] = {
                     "win_rate": win_rate,
                     "total_closed_trades": len(strategy_trades),
                     "winners": len(wins),
@@ -180,9 +157,7 @@ class TradeHistoryAnalyzer:
                 }
             else:
                 # Insufficient sample size
-                effectiveness["entry_signal_analysis"]["win_rate_by_strategy"][
-                    strategy
-                ] = {
+                effectiveness["entry_signal_analysis"]["win_rate_by_strategy"][strategy] = {
                     "status": "INSUFFICIENT_SAMPLE",
                     "closed_trades": len(strategy_trades),
                     "minimum_required": 5,
@@ -194,9 +169,7 @@ class TradeHistoryAnalyzer:
         # Exit efficiency analysis (CLOSED trades only)
         if len(self.closed_trades) > 0:
             # Overall exit efficiency
-            valid_exits = self.closed_trades[
-                self.closed_trades["Exit_Efficiency_Fixed"].notna()
-            ]
+            valid_exits = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()]
             if len(valid_exits) > 0:
                 exit_efficiency = valid_exits["Exit_Efficiency_Fixed"].values
 
@@ -205,46 +178,26 @@ class TradeHistoryAnalyzer:
 
                 effectiveness["exit_signal_analysis"]["exit_efficiency_metrics"] = {
                     "overall_exit_efficiency": (
-                        float(np.mean(finite_efficiency))
-                        if len(finite_efficiency) > 0
-                        else 0.0
+                        float(np.mean(finite_efficiency)) if len(finite_efficiency) > 0 else 0.0
                     ),
                     "median_exit_efficiency": float(np.median(exit_efficiency)),
-                    "mfe_capture_rate": (
-                        float(np.mean(finite_efficiency))
-                        if len(finite_efficiency) > 0
-                        else 0.0
-                    ),
+                    "mfe_capture_rate": (float(np.mean(finite_efficiency)) if len(finite_efficiency) > 0 else 0.0),
                     "avg_hold_period": float(np.mean(valid_exits["Duration_Days"])),
-                    "median_hold_period": float(
-                        np.median(valid_exits["Duration_Days"])
-                    ),
+                    "median_hold_period": float(np.median(valid_exits["Duration_Days"])),
                     "std_hold_period": float(np.std(valid_exits["Duration_Days"])),
-                    "excellent_exits_pct": float(
-                        len(exit_efficiency[exit_efficiency > 0.5])
-                        / len(exit_efficiency)
-                    ),
-                    "poor_exits_pct": float(
-                        len(exit_efficiency[exit_efficiency < 0]) / len(exit_efficiency)
-                    ),
-                    "infinite_efficiency_count": int(
-                        len(exit_efficiency[np.isinf(exit_efficiency)])
-                    ),
+                    "excellent_exits_pct": float(len(exit_efficiency[exit_efficiency > 0.5]) / len(exit_efficiency)),
+                    "poor_exits_pct": float(len(exit_efficiency[exit_efficiency < 0]) / len(exit_efficiency)),
+                    "infinite_efficiency_count": int(len(exit_efficiency[np.isinf(exit_efficiency)])),
                     "confidence": 0.9 if len(valid_exits) >= 10 else 0.7,
                 }
 
             # Exit timing quality by duration buckets
             duration_buckets = {
-                "short_term_le_7d": self.closed_trades[
-                    self.closed_trades["Duration_Days"] <= 7
-                ],
+                "short_term_le_7d": self.closed_trades[self.closed_trades["Duration_Days"] <= 7],
                 "medium_term_8_30d": self.closed_trades[
-                    (self.closed_trades["Duration_Days"] > 7)
-                    & (self.closed_trades["Duration_Days"] <= 30)
+                    (self.closed_trades["Duration_Days"] > 7) & (self.closed_trades["Duration_Days"] <= 30)
                 ],
-                "long_term_gt_30d": self.closed_trades[
-                    self.closed_trades["Duration_Days"] > 30
-                ],
+                "long_term_gt_30d": self.closed_trades[self.closed_trades["Duration_Days"] > 30],
             }
 
             hold_period_analysis = {}
@@ -256,17 +209,11 @@ class TradeHistoryAnalyzer:
 
                     hold_period_analysis[bucket_name] = {
                         "count": len(bucket_trades),
-                        "percentage": float(
-                            len(bucket_trades) / len(self.closed_trades)
-                        ),
+                        "percentage": float(len(bucket_trades) / len(self.closed_trades)),
                         "avg_return": float(np.mean(returns)),
                         "median_return": float(np.median(returns)),
                         "win_rate": float(len(returns[returns > 0]) / len(returns)),
-                        "avg_efficiency": (
-                            float(np.mean(finite_efficiency))
-                            if len(finite_efficiency) > 0
-                            else 0.0
-                        ),
+                        "avg_efficiency": (float(np.mean(finite_efficiency)) if len(finite_efficiency) > 0 else 0.0),
                         "avg_duration": float(np.mean(bucket_trades["Duration_Days"])),
                     }
 
@@ -276,7 +223,7 @@ class TradeHistoryAnalyzer:
 
         return effectiveness
 
-    def calculate_statistical_analysis(self) -> Dict[str, Any]:
+    def calculate_statistical_analysis(self) -> dict[str, Any]:
         """Perform statistical analysis and significance testing using CLOSED trades only."""
         if len(self.closed_trades) == 0:
             return {"error": "No closed trades available for statistical analysis"}
@@ -303,22 +250,12 @@ class TradeHistoryAnalyzer:
 
         # Risk-adjusted metrics
         if np.std(returns) > 0:
-            sharpe_ratio = (
-                np.mean(returns) / np.std(returns) * np.sqrt(252)
-            )  # Annualized
+            sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(252)  # Annualized
 
             # Sortino ratio (downside deviation)
             downside_returns = returns[returns < 0]
-            downside_std = (
-                np.std(downside_returns)
-                if len(downside_returns) > 0
-                else np.std(returns)
-            )
-            sortino_ratio = (
-                np.mean(returns) / downside_std * np.sqrt(252)
-                if downside_std > 0
-                else 0
-            )
+            downside_std = np.std(downside_returns) if len(downside_returns) > 0 else np.std(returns)
+            sortino_ratio = np.mean(returns) / downside_std * np.sqrt(252) if downside_std > 0 else 0
 
             # Maximum drawdown
             cumulative_returns = np.cumprod(1 + returns)
@@ -395,7 +332,7 @@ class TradeHistoryAnalyzer:
             },
         }
 
-    def analyze_trade_quality_classification(self) -> Dict[str, Any]:
+    def analyze_trade_quality_classification(self) -> dict[str, Any]:
         """Analyze trade quality distribution using CLOSED trades only."""
         if len(self.closed_trades) == 0:
             return {"error": "No closed trades for quality analysis"}
@@ -411,9 +348,7 @@ class TradeHistoryAnalyzer:
         }
 
         for category, qualities in quality_categories.items():
-            matching_trades = self.closed_trades[
-                self.closed_trades["Trade_Quality"].isin(qualities)
-            ]
+            matching_trades = self.closed_trades[self.closed_trades["Trade_Quality"].isin(qualities)]
 
             if len(matching_trades) > 0:
                 returns = matching_trades["Return"].values
@@ -435,7 +370,7 @@ class TradeHistoryAnalyzer:
 
         return quality_dist
 
-    def analyze_temporal_patterns(self) -> Dict[str, Any]:
+    def analyze_temporal_patterns(self) -> dict[str, Any]:
         """Analyze temporal patterns using CLOSED trades only."""
         if len(self.closed_trades) == 0:
             return {"error": "No closed trades for temporal analysis"}
@@ -443,15 +378,11 @@ class TradeHistoryAnalyzer:
         temporal_analysis = {}
 
         # Monthly effectiveness
-        self.closed_trades["entry_month"] = self.closed_trades[
-            "Entry_Timestamp"
-        ].dt.month
+        self.closed_trades["entry_month"] = self.closed_trades["Entry_Timestamp"].dt.month
         monthly_stats = {}
 
         for month in self.closed_trades["entry_month"].unique():
-            month_trades = self.closed_trades[
-                self.closed_trades["entry_month"] == month
-            ]
+            month_trades = self.closed_trades[self.closed_trades["entry_month"] == month]
             if len(month_trades) > 0:
                 returns = month_trades["Return"].values
                 monthly_stats[f"month_{month:02d}"] = {
@@ -466,16 +397,11 @@ class TradeHistoryAnalyzer:
 
         # Hold period analysis (same as exit timing quality)
         duration_buckets = {
-            "short_term_le_7d": self.closed_trades[
-                self.closed_trades["Duration_Days"] <= 7
-            ],
+            "short_term_le_7d": self.closed_trades[self.closed_trades["Duration_Days"] <= 7],
             "medium_term_8_30d": self.closed_trades[
-                (self.closed_trades["Duration_Days"] > 7)
-                & (self.closed_trades["Duration_Days"] <= 30)
+                (self.closed_trades["Duration_Days"] > 7) & (self.closed_trades["Duration_Days"] <= 30)
             ],
-            "long_term_gt_30d": self.closed_trades[
-                self.closed_trades["Duration_Days"] > 30
-            ],
+            "long_term_gt_30d": self.closed_trades[self.closed_trades["Duration_Days"] > 30],
         }
 
         hold_period_analysis = {}
@@ -491,11 +417,7 @@ class TradeHistoryAnalyzer:
                     "avg_return": float(np.mean(returns)),
                     "median_return": float(np.median(returns)),
                     "win_rate": float(len(returns[returns > 0]) / len(returns)),
-                    "avg_efficiency": (
-                        float(np.mean(finite_efficiency))
-                        if len(finite_efficiency) > 0
-                        else 0.0
-                    ),
+                    "avg_efficiency": (float(np.mean(finite_efficiency)) if len(finite_efficiency) > 0 else 0.0),
                     "avg_duration": float(np.mean(bucket_trades["Duration_Days"])),
                 }
 
@@ -503,7 +425,7 @@ class TradeHistoryAnalyzer:
 
         return temporal_analysis
 
-    def generate_optimization_opportunities(self) -> Dict[str, Any]:
+    def generate_optimization_opportunities(self) -> dict[str, Any]:
         """Generate optimization opportunities based on analysis."""
         opportunities = {
             "entry_signal_enhancements": [],
@@ -516,12 +438,8 @@ class TradeHistoryAnalyzer:
         if len(self.closed_trades) > 0:
             for strategy in ["SMA", "EMA"]:
                 if self.strategy_validation[strategy]["eligible_for_analysis"]:
-                    strategy_trades = self.closed_trades[
-                        self.closed_trades["Strategy_Type"] == strategy
-                    ]
-                    win_rate = len(
-                        strategy_trades[strategy_trades["Return"] > 0]
-                    ) / len(strategy_trades)
+                    strategy_trades = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
+                    win_rate = len(strategy_trades[strategy_trades["Return"] > 0]) / len(strategy_trades)
 
                     if win_rate < 0.55:  # Below 55% win rate
                         opportunities["entry_signal_enhancements"].append(
@@ -537,18 +455,12 @@ class TradeHistoryAnalyzer:
 
         # Exit signal refinements
         if len(self.closed_trades) > 0:
-            valid_exits = self.closed_trades[
-                self.closed_trades["Exit_Efficiency_Fixed"].notna()
-            ]
+            valid_exits = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()]
             if len(valid_exits) > 0:
                 exit_efficiency = valid_exits["Exit_Efficiency_Fixed"].values
                 finite_efficiency = exit_efficiency[np.isfinite(exit_efficiency)]
-                avg_efficiency = (
-                    np.mean(finite_efficiency) if len(finite_efficiency) > 0 else 0
-                )
-                poor_exits_pct = len(
-                    valid_exits[valid_exits["Exit_Efficiency_Fixed"] < 0]
-                ) / len(valid_exits)
+                avg_efficiency = np.mean(finite_efficiency) if len(finite_efficiency) > 0 else 0
+                poor_exits_pct = len(valid_exits[valid_exits["Exit_Efficiency_Fixed"] < 0]) / len(valid_exits)
 
                 if avg_efficiency < 0.3:  # Poor exit efficiency
                     opportunities["exit_signal_refinements"].append(
@@ -633,7 +545,7 @@ class TradeHistoryAnalyzer:
 
         return opportunities
 
-    def analyze_active_portfolio(self) -> Dict[str, Any]:
+    def analyze_active_portfolio(self) -> dict[str, Any]:
         """Analyze active portfolio composition (using ACTIVE trades only)."""
         if len(self.active_trades) == 0:
             return {"error": "No active trades for portfolio analysis"}
@@ -648,17 +560,11 @@ class TradeHistoryAnalyzer:
         portfolio_analysis["portfolio_composition"] = {
             "total_active_positions": len(self.active_trades),
             "strategy_distribution": {
-                "SMA": len(
-                    self.active_trades[self.active_trades["Strategy_Type"] == "SMA"]
-                ),
-                "EMA": len(
-                    self.active_trades[self.active_trades["Strategy_Type"] == "EMA"]
-                ),
+                "SMA": len(self.active_trades[self.active_trades["Strategy_Type"] == "SMA"]),
+                "EMA": len(self.active_trades[self.active_trades["Strategy_Type"] == "EMA"]),
             },
             "avg_days_held": float(np.mean(self.active_trades["Days_Since_Entry"])),
-            "median_days_held": float(
-                np.median(self.active_trades["Days_Since_Entry"])
-            ),
+            "median_days_held": float(np.median(self.active_trades["Days_Since_Entry"])),
         }
 
         # Unrealized performance
@@ -684,17 +590,13 @@ class TradeHistoryAnalyzer:
                 "avg_mae": float(np.mean(mae_values)),
                 "max_mfe": float(np.max(mfe_values)),
                 "max_mae": float(np.max(mae_values)),
-                "positions_in_profit": int(
-                    len(mfe_values[mfe_values > mae_values[: len(mfe_values)]])
-                ),
-                "positions_at_risk": int(
-                    len(mae_values[mae_values > 0.05])
-                ),  # >5% adverse
+                "positions_in_profit": int(len(mfe_values[mfe_values > mae_values[: len(mfe_values)]])),
+                "positions_at_risk": int(len(mae_values[mae_values > 0.05])),  # >5% adverse
             }
 
         return portfolio_analysis
 
-    def calculate_confidence_scoring(self) -> Dict[str, Any]:
+    def calculate_confidence_scoring(self) -> dict[str, Any]:
         """Calculate conservative confidence scoring based on sample sizes."""
         confidence_metrics = {}
 
@@ -727,16 +629,14 @@ class TradeHistoryAnalyzer:
         confidence_metrics["strategy_confidence"] = strategy_confidence
 
         # Analysis completeness
-        confidence_metrics["analysis_completeness"] = min(
-            0.95, total_closed / 20 * 0.95
-        )
+        confidence_metrics["analysis_completeness"] = min(0.95, total_closed / 20 * 0.95)
 
         # Statistical robustness
         confidence_metrics["statistical_robustness"] = min(0.9, total_closed / 30 * 0.9)
 
         return confidence_metrics
 
-    def generate_comprehensive_analysis(self) -> Dict[str, Any]:
+    def generate_comprehensive_analysis(self) -> dict[str, Any]:
         """Generate comprehensive analysis following the expected JSON schema."""
         logger.info("Generating comprehensive trade history analysis...")
 
@@ -757,9 +657,7 @@ class TradeHistoryAnalyzer:
                 "confidence_score": confidence_metrics["overall_confidence"],
                 "analysis_completeness": confidence_metrics["analysis_completeness"],
                 "calculation_duration": "45.2s",  # Placeholder
-                "statistical_significance": confidence_metrics[
-                    "statistical_robustness"
-                ],
+                "statistical_significance": confidence_metrics["statistical_robustness"],
                 "sample_size_adequacy": min(1.0, len(self.closed_trades) / 10),
                 "data_source": str(self.csv_path),
                 "discovery_data_source": str(self.discovery_path),
@@ -774,15 +672,9 @@ class TradeHistoryAnalyzer:
                 "signal_temporal_patterns": temporal_patterns,
                 "strategy_effectiveness": {
                     strategy: {
-                        "sample_adequate": self.strategy_validation[strategy][
-                            "eligible_for_analysis"
-                        ],
-                        "closed_trades": self.strategy_validation[strategy][
-                            "closed_count"
-                        ],
-                        "confidence": confidence_metrics["strategy_confidence"][
-                            strategy
-                        ],
+                        "sample_adequate": self.strategy_validation[strategy]["eligible_for_analysis"],
+                        "closed_trades": self.strategy_validation[strategy]["closed_count"],
+                        "confidence": confidence_metrics["strategy_confidence"][strategy],
                     }
                     for strategy in ["SMA", "EMA"]
                 },
@@ -812,9 +704,8 @@ class TradeHistoryAnalyzer:
             },
             "next_phase_inputs": {
                 "synthesis_ready": True,
-                "confidence_threshold_met": confidence_metrics["overall_confidence"]
-                > 0.5,
-                "analysis_package_path": "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analysis/live_signals_20250716.json",
+                "confidence_threshold_met": confidence_metrics["overall_confidence"] > 0.5,
+                "analysis_package_path": "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analysis/live_signals_20250716.json",
                 "report_focus_areas": self._identify_focus_areas(),
                 "critical_findings": self._identify_critical_findings(),
             },
@@ -822,63 +713,49 @@ class TradeHistoryAnalyzer:
 
         return analysis_report
 
-    def _identify_quality_issues(self) -> List[str]:
+    def _identify_quality_issues(self) -> list[str]:
         """Identify quality issues in the analysis."""
         issues = []
 
         for strategy in ["SMA", "EMA"]:
             if not self.strategy_validation[strategy]["eligible_for_analysis"]:
-                issues.append(
-                    f"{strategy} strategy has insufficient closed trades for analysis"
-                )
+                issues.append(f"{strategy} strategy has insufficient closed trades for analysis")
 
         if len(self.closed_trades) < 20:
             issues.append("Limited sample size reduces statistical power")
 
         if len(self.closed_trades) > 0:
-            valid_exits = self.closed_trades[
-                self.closed_trades["Exit_Efficiency_Fixed"].notna()
-            ]
+            valid_exits = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()]
             if len(valid_exits) > 0:
                 avg_efficiency = np.mean(valid_exits["Exit_Efficiency_Fixed"])
                 if avg_efficiency < 0:
-                    issues.append(
-                        "Negative exit efficiency indicates optimization needed"
-                    )
+                    issues.append("Negative exit efficiency indicates optimization needed")
 
         return issues
 
-    def _generate_improvement_recommendations(self) -> List[str]:
+    def _generate_improvement_recommendations(self) -> list[str]:
         """Generate improvement recommendations."""
         recommendations = []
 
         if len(self.closed_trades) < 30:
-            recommendations.append(
-                "Continue trading to build sample size for more robust statistical analysis"
-            )
+            recommendations.append("Continue trading to build sample size for more robust statistical analysis")
 
         # Check exit efficiency
         if len(self.closed_trades) > 0:
-            valid_exits = self.closed_trades[
-                self.closed_trades["Exit_Efficiency_Fixed"].notna()
-            ]
+            valid_exits = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()]
             if len(valid_exits) > 0:
                 avg_efficiency = np.mean(valid_exits["Exit_Efficiency_Fixed"])
                 if avg_efficiency < 0.3:
-                    recommendations.append(
-                        "Focus on exit timing optimization to improve efficiency"
-                    )
+                    recommendations.append("Focus on exit timing optimization to improve efficiency")
 
         # Strategy-specific recommendations
         for strategy in ["SMA", "EMA"]:
             if not self.strategy_validation[strategy]["eligible_for_analysis"]:
-                recommendations.append(
-                    f"Build {strategy} strategy sample size for performance validation"
-                )
+                recommendations.append(f"Build {strategy} strategy sample size for performance validation")
 
         return recommendations
 
-    def _identify_focus_areas(self) -> List[str]:
+    def _identify_focus_areas(self) -> list[str]:
         """Identify key focus areas for reports."""
         focus_areas = []
 
@@ -901,7 +778,7 @@ class TradeHistoryAnalyzer:
 
         return focus_areas
 
-    def _identify_critical_findings(self) -> List[str]:
+    def _identify_critical_findings(self) -> list[str]:
         """Identify critical findings."""
         findings = []
 
@@ -912,21 +789,15 @@ class TradeHistoryAnalyzer:
 
         # Exit efficiency critical finding
         if len(self.closed_trades) > 0:
-            valid_exits = self.closed_trades[
-                self.closed_trades["Exit_Efficiency_Fixed"].notna()
-            ]
+            valid_exits = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"].notna()]
             if len(valid_exits) > 0:
                 avg_efficiency = np.mean(valid_exits["Exit_Efficiency_Fixed"])
-                findings.append(
-                    f"Exit efficiency at {avg_efficiency:.1%} presents optimization opportunity"
-                )
+                findings.append(f"Exit efficiency at {avg_efficiency:.1%} presents optimization opportunity")
 
         # Strategy-specific findings
         for strategy in ["SMA", "EMA"]:
             if not self.strategy_validation[strategy]["eligible_for_analysis"]:
-                findings.append(
-                    f"{strategy} strategy has zero/insufficient closed trades - cannot assess performance"
-                )
+                findings.append(f"{strategy} strategy has zero/insufficient closed trades - cannot assess performance")
 
         return findings
 
@@ -934,11 +805,11 @@ class TradeHistoryAnalyzer:
 def main():
     """Main execution function."""
     # File paths
-    csv_path = (
-        "/Users/colemorton/Projects/sensylate/data/raw/trade_history/live_signals.csv"
+    csv_path = "/Users/colemorton/Projects/colemorton/data/raw/trade_history/live_signals.csv"
+    discovery_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/discovery/live_signals_20250703.json"
     )
-    discovery_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/discovery/live_signals_20250703.json"
-    output_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analysis/live_signals_20250716.json"
+    output_path = "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analysis/live_signals_20250716.json"
 
     try:
         # Validate input files exist

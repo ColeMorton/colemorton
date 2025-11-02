@@ -6,6 +6,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
+
 # Paths
 scripts_dir = Path(__file__).parent
 templates_dir = scripts_dir / "templates"
@@ -15,10 +16,10 @@ test_data_dir = scripts_dir / "test_data"
 jinja_env = Environment(loader=FileSystemLoader(str(templates_dir)))
 
 # Load sample data
-with open(test_data_dir / "sample_fundamental_data.json", "r") as f:
+with open(test_data_dir / "sample_fundamental_data.json") as f:
     fundamental_data = json.load(f)
 
-with open(test_data_dir / "sample_sector_data.json", "r") as f:
+with open(test_data_dir / "sample_sector_data.json") as f:
     sector_data = json.load(f)
 
 print("Testing template loading and basic rendering...")
@@ -80,7 +81,7 @@ try:
     print("\n🎉 SUCCESS: All templates loaded and rendered successfully!")
     print("✨ Template inheritance and macros are working correctly!")
 
-except Exception as e:
+except Exception:
     print("\n❌ ERROR: {e}")
     import traceback
 

@@ -18,6 +18,7 @@ from .imf import IMFService, create_imf_service
 from .sec_edgar import SECEDGARService, create_sec_edgar_service
 from .yahoo_finance import YahooFinanceAPIService, create_yahoo_finance_service
 
+
 __all__ = [
     "BaseFinancialService",
     "DataOrchestrator",

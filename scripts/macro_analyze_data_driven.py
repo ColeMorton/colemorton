@@ -8,9 +8,10 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
+
 
 # Import existing utilities
 sys.path.insert(0, str(Path(__file__).parent))
@@ -35,9 +36,7 @@ class DataDrivenMacroAnalyzer:
 
         # Get regional configuration using available config methods
         try:
-            self.regional_volatility_config = (
-                self.config_manager.get_regional_volatility_parameters(self.region)
-            )
+            self.regional_volatility_config = self.config_manager.get_regional_volatility_parameters(self.region)
         except Exception:
             self.regional_volatility_config = {
                 "long_term_mean": 19.5,
@@ -47,12 +46,12 @@ class DataDrivenMacroAnalyzer:
         # Initialize discovery data mapping after all other attributes are set
         self.data_mapper = self._initialize_discovery_mapping()
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load discovery JSON data"""
-        with open(self.discovery_file, "r") as f:
+        with open(self.discovery_file) as f:
             return json.load(f)
 
-    def _initialize_discovery_mapping(self) -> Dict[str, Any]:
+    def _initialize_discovery_mapping(self) -> dict[str, Any]:
         """Initialize comprehensive discovery data mapping for better utilization"""
         # Simple fallback mapping for now
         return {
@@ -98,9 +97,7 @@ class DataDrivenMacroAnalyzer:
             "business_cycle": self.discovery_data.get("business_cycle_data", {}),
             "regional_context": {
                 "region": self.region,
-                "policy_context": self.discovery_data.get(
-                    "monetary_policy_context", {}
-                ),
+                "policy_context": self.discovery_data.get("monetary_policy_context", {}),
             },
             "data_quality": {
                 "overall_confidence": 0.92,
@@ -109,37 +106,27 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def _calculate_from_observations(
-        self, observations: list, calculation_type: str = "latest"
-    ) -> float:
+    def _calculate_from_observations(self, observations: list, calculation_type: str = "latest") -> float:
         """Calculate values from discovery data observations"""
         if not observations:
             return 0.0
 
-        values = [
-            obs.get("value", 0.0)
-            for obs in observations
-            if obs.get("value") is not None
-        ]
+        values = [obs.get("value", 0.0) for obs in observations if obs.get("value") is not None]
 
         if calculation_type == "latest":
             return values[0] if values else 0.0
-        elif calculation_type == "average":
+        if calculation_type == "average":
             return np.mean(values) if values else 0.0
-        elif calculation_type == "trend":
+        if calculation_type == "trend":
             if len(values) >= 2:
                 return values[0] - values[1]  # Change from previous period
             return 0.0
 
         return 0.0
 
-    def _calculate_confidence_from_data_quality(
-        self, base_confidence: float, data_quality_factors: list
-    ) -> float:
+    def _calculate_confidence_from_data_quality(self, base_confidence: float, data_quality_factors: list) -> float:
         """Calculate confidence based on data quality and completeness with threshold enforcement"""
-        valid_factors = [
-            factor for factor in data_quality_factors if factor is not None
-        ]
+        valid_factors = [factor for factor in data_quality_factors if factor is not None]
         if not valid_factors:
             return max(self.confidence_threshold, base_confidence * 0.8)
 
@@ -153,37 +140,27 @@ class DataDrivenMacroAnalyzer:
 
         return calculated_confidence
 
-    def analyze_business_cycle_modeling(self) -> Dict[str, Any]:
+    def analyze_business_cycle_modeling(self) -> dict[str, Any]:
         """Phase 1: Data-driven Business Cycle Analysis"""
         # Extract real data from discovery
         business_cycle_data = self.discovery_data.get("business_cycle_data", {})
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
 
         current_phase = business_cycle_data.get("current_phase", "expansion")
 
         # Calculate recession probability from discovery data with phase consistency
         transition_probs = business_cycle_data.get("transition_probabilities", {})
-        base_recession_prob = 1.0 - transition_probs.get(
-            "next_12m", 0.7
-        )  # Invert continuation probability
+        base_recession_prob = 1.0 - transition_probs.get("next_12m", 0.7)  # Invert continuation probability
 
         # Adjust recession probability based on current phase for consistency
         if current_phase == "expansion":
-            recession_prob = max(
-                0.1, min(0.35, base_recession_prob)
-            )  # Lower during expansion
+            recession_prob = max(0.1, min(0.35, base_recession_prob))  # Lower during expansion
         elif current_phase == "peak":
             recession_prob = max(0.3, min(0.6, base_recession_prob))  # Higher at peak
         elif current_phase == "contraction":
-            recession_prob = max(
-                0.6, min(0.9, base_recession_prob)
-            )  # Higher during contraction
+            recession_prob = max(0.6, min(0.9, base_recession_prob))  # Higher during contraction
         else:  # trough
-            recession_prob = max(
-                0.05, min(0.25, base_recession_prob)
-            )  # Lower at trough
+            recession_prob = max(0.05, min(0.25, base_recession_prob))  # Lower at trough
 
         # Advanced recession probability with real data (synthesis compatible)
         recession_probability = recession_prob  # Synthesis expects simple float
@@ -210,24 +187,16 @@ class DataDrivenMacroAnalyzer:
         momentum_factor = 1.0 if gdp_trend > 0 and employment_momentum > 0 else 0.5
         phase_transitions = {
             "expansion_to_peak": (
-                max(0.05, min(0.4, 0.15 + (gdp_current - 2.0) * 0.1))
-                if current_phase == "expansion"
-                else 0.05
+                max(0.05, min(0.4, 0.15 + (gdp_current - 2.0) * 0.1)) if current_phase == "expansion" else 0.05
             ),
             "peak_to_contraction": (
-                max(0.1, min(0.8, 0.25 + (1.0 - momentum_factor) * 0.15))
-                if current_phase == "peak"
-                else 0.05
+                max(0.1, min(0.8, 0.25 + (1.0 - momentum_factor) * 0.15)) if current_phase == "peak" else 0.05
             ),
             "contraction_to_trough": (
-                max(0.1, min(0.6, 0.4 if gdp_current < 0 else 0.2))
-                if current_phase == "contraction"
-                else 0.1
+                max(0.1, min(0.6, 0.4 if gdp_current < 0 else 0.2)) if current_phase == "contraction" else 0.1
             ),
             "trough_to_expansion": (
-                max(0.3, min(0.7, 0.5 + momentum_factor * 0.2))
-                if current_phase == "trough"
-                else 0.1
+                max(0.3, min(0.7, 0.5 + momentum_factor * 0.2)) if current_phase == "trough" else 0.1
             ),
         }
 
@@ -251,15 +220,10 @@ class DataDrivenMacroAnalyzer:
         current_core_cpi = self._calculate_from_observations(core_cpi_obs, "latest")
 
         inflation_analysis = {
-            "core_vs_headline_spread": abs(
-                current_core_cpi - current_cpi
-            ),  # Calculated spread
-            "inflation_expectations_anchored": current_cpi < 3.0
-            and current_core_cpi < 3.0,
+            "core_vs_headline_spread": abs(current_core_cpi - current_cpi),  # Calculated spread
+            "inflation_expectations_anchored": current_cpi < 3.0 and current_core_cpi < 3.0,
             "supply_vs_demand_drivers": self._assess_inflation_drivers(inflation_data),
-            "central_bank_credibility": min(
-                0.95, 0.8 + (3.0 - abs(current_cpi - 2.0)) * 0.05
-            ),
+            "central_bank_credibility": min(0.95, 0.8 + (3.0 - abs(current_cpi - 2.0)) * 0.05),
         }
 
         # Data-driven economic growth decomposition
@@ -269,26 +233,16 @@ class DataDrivenMacroAnalyzer:
         discovery_base_confidence = business_cycle_data.get("confidence", 0.92)
         data_quality_factors = [
             discovery_base_confidence,
-            economic_data.get("gdp_data", {}).get(
-                "confidence", discovery_base_confidence
-            ),
-            economic_data.get("employment_data", {}).get(
-                "confidence", discovery_base_confidence
-            ),
-            economic_data.get("inflation_data", {}).get(
-                "confidence", discovery_base_confidence
-            ),
+            economic_data.get("gdp_data", {}).get("confidence", discovery_base_confidence),
+            economic_data.get("employment_data", {}).get("confidence", discovery_base_confidence),
+            economic_data.get("inflation_data", {}).get("confidence", discovery_base_confidence),
         ]
 
         # Adjust base confidence using data availability and quality mapping
-        discovery_base_confidence = self.data_mapper["data_quality"][
-            "overall_confidence"
-        ]
+        discovery_base_confidence = self.data_mapper["data_quality"]["overall_confidence"]
         data_availability_score = self.data_mapper["data_quality"]["completeness_score"]
         adjusted_base = max(0.92, discovery_base_confidence * data_availability_score)
-        confidence = self._calculate_confidence_from_data_quality(
-            adjusted_base, data_quality_factors
-        )
+        confidence = self._calculate_confidence_from_data_quality(adjusted_base, data_quality_factors)
 
         return {
             "current_phase": current_phase,
@@ -298,15 +252,11 @@ class DataDrivenMacroAnalyzer:
             "monetary_policy_transmission": transmission_assessment,
             "inflation_dynamics": inflation_analysis,
             "economic_growth_decomposition": gdp_components,
-            "expansion_longevity_assessment": self._assess_expansion_longevity(
-                business_cycle_data
-            ),
+            "expansion_longevity_assessment": self._assess_expansion_longevity(business_cycle_data),
             "confidence": confidence,
         }
 
-    def _assess_inflation_drivers(
-        self, inflation_data: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def _assess_inflation_drivers(self, inflation_data: dict[str, Any]) -> dict[str, float]:
         """Assess supply vs demand inflation drivers from data"""
         cpi_trend = inflation_data.get("cpi_data", {}).get("trend", "")
         inflation_data.get("core_cpi_data", {}).get("trend", "")
@@ -320,9 +270,7 @@ class DataDrivenMacroAnalyzer:
             "demand_contribution": demand_weight,
         }
 
-    def _calculate_gdp_components(
-        self, economic_data: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def _calculate_gdp_components(self, economic_data: dict[str, Any]) -> dict[str, float]:
         """Calculate GDP components from discovery data analysis field"""
         gdp_analysis = economic_data.get("gdp_data", {}).get("analysis", "")
         gdp_observations = economic_data.get("gdp_data", {}).get("observations", [])
@@ -344,9 +292,7 @@ class DataDrivenMacroAnalyzer:
             investment_contrib = total_gdp * 0.20  # Typical 20% of GDP growth
 
         gov_contrib = total_gdp * 0.18  # Typical 18% of GDP growth
-        net_exports_contrib = (
-            total_gdp - consumption_contrib - investment_contrib - gov_contrib
-        )
+        net_exports_contrib = total_gdp - consumption_contrib - investment_contrib - gov_contrib
 
         return {
             "consumption_contribution": round(consumption_contrib, 1),
@@ -354,43 +300,29 @@ class DataDrivenMacroAnalyzer:
             "government_contribution": round(gov_contrib, 1),
             "net_exports_contribution": round(net_exports_contrib, 1),
             "total_gdp_growth": round(total_gdp, 1),
-            "potential_output_gap": max(
-                -2.0, min(2.0, total_gdp - 2.1)
-            ),  # Gap from trend
-            "productivity_growth": max(
-                0.3, min(2.5, total_gdp * 0.4)
-            ),  # Productivity as fraction of growth
+            "potential_output_gap": max(-2.0, min(2.0, total_gdp - 2.1)),  # Gap from trend
+            "productivity_growth": max(0.3, min(2.5, total_gdp * 0.4)),  # Productivity as fraction of growth
         }
 
-    def _assess_expansion_longevity(
-        self, business_cycle_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_expansion_longevity(self, business_cycle_data: dict[str, Any]) -> dict[str, Any]:
         """Assess expansion longevity from business cycle data"""
         historical_context = business_cycle_data.get("historical_context", {})
 
         return {
             "months_in_expansion": historical_context.get("phase_duration", 20),
             "historical_average": 18,  # From config or historical data
-            "late_cycle_indicators": (
-                0.6
-                if historical_context.get("cycle_maturity") == "mid_to_late"
-                else 0.3
-            ),
+            "late_cycle_indicators": (0.6 if historical_context.get("cycle_maturity") == "mid_to_late" else 0.3),
         }
 
-    def analyze_global_liquidity(self) -> Dict[str, Any]:
+    def analyze_global_liquidity(self) -> dict[str, Any]:
         """Phase 2: Data-driven Global Liquidity Analysis"""
         monetary_policy_context = self.discovery_data.get("monetary_policy_context", {})
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
 
         # Regional central bank coordination using region-specific logic
         "Federal Reserve" if self.region == "US" else "Regional Central Bank"
 
-        policy_coordination = self._calculate_policy_coordination(
-            monetary_policy_context
-        )
+        policy_coordination = self._calculate_policy_coordination(monetary_policy_context)
         credit_dynamics = self._calculate_credit_dynamics(economic_data)
         money_supply = self._calculate_money_supply_metrics(economic_data)
         labor_analysis = self._calculate_labor_market_analysis(economic_data)
@@ -402,9 +334,7 @@ class DataDrivenMacroAnalyzer:
             base_confidence,
             [
                 discovery_confidence,
-                economic_data.get("monetary_policy_data", {}).get(
-                    "confidence", discovery_confidence
-                ),
+                economic_data.get("monetary_policy_data", {}).get("confidence", discovery_confidence),
             ],
         )
 
@@ -415,16 +345,12 @@ class DataDrivenMacroAnalyzer:
             "labor_market_assessment": labor_analysis,
             "global_liquidity_score": 0.75,  # Calculated from components
             "liquidity_trend": (
-                "tightening"
-                if policy_coordination.get("policy_stance") == "restrictive"
-                else "neutral"
+                "tightening" if policy_coordination.get("policy_stance") == "restrictive" else "neutral"
             ),
             "confidence": confidence,
         }
 
-    def _calculate_policy_coordination(
-        self, monetary_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_policy_coordination(self, monetary_context: dict[str, Any]) -> dict[str, Any]:
         """Calculate policy coordination from monetary policy data"""
         policy_stance = monetary_context.get("policy_stance", {})
         current_rate = policy_stance.get("policy_rate", 5.0)
@@ -438,22 +364,19 @@ class DataDrivenMacroAnalyzer:
                 "synchronization_score": 0.3,
                 "spillover_magnitude": "high" if current_rate > 5.0 else "moderate",
             }
-        elif self.region == "EUROPE":
+        if self.region == "EUROPE":
             return {
                 "ecb_fed_divergence": -1.5,
                 "ecb_boj_divergence": 3.7,
                 "synchronization_score": 0.4,
                 "spillover_magnitude": "moderate",
             }
-        else:
-            return {
-                "synchronization_score": 0.35,
-                "spillover_magnitude": "moderate",
-            }
+        return {
+            "synchronization_score": 0.35,
+            "spillover_magnitude": "moderate",
+        }
 
-    def _calculate_credit_dynamics(
-        self, economic_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_credit_dynamics(self, economic_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate credit market dynamics from economic data"""
         return {
             "global_credit_growth": 3.8,  # Would be calculated from credit data if available
@@ -463,9 +386,7 @@ class DataDrivenMacroAnalyzer:
             "systemic_risk_indicators": 0.25,
         }
 
-    def _calculate_money_supply_metrics(
-        self, economic_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_money_supply_metrics(self, economic_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate money supply metrics"""
         return {
             "m2_growth_rate": 3.5,
@@ -475,28 +396,22 @@ class DataDrivenMacroAnalyzer:
             "liquidity_trap_risk": 0.15,
         }
 
-    def _calculate_labor_market_analysis(
-        self, economic_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_labor_market_analysis(self, economic_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate labor market analysis from employment data"""
         employment_data = economic_data.get("employment_data", {})
         payroll_trend = employment_data.get("payroll_data", {}).get("trend", "")
-        unemployment_trend = employment_data.get("unemployment_data", {}).get(
-            "trend", ""
-        )
+        unemployment_trend = employment_data.get("unemployment_data", {}).get("trend", "")
 
         return {
             "employment_trend": payroll_trend if payroll_trend else "moderating",
-            "participation_rate_change": (
-                -0.1 if "stable" in unemployment_trend else -0.2
-            ),
+            "participation_rate_change": (-0.1 if "stable" in unemployment_trend else -0.2),
             "wage_growth_rate": 4.2,  # Would extract from wage data if available
             "labor_market_tightness": 0.75,
             "phillips_curve_slope": 0.15,
             "structural_unemployment": 3.5,
         }
 
-    def classify_market_regime(self) -> Dict[str, Any]:
+    def classify_market_regime(self) -> dict[str, Any]:
         """Phase 3: Data-driven Market Regime Classification"""
         market_intelligence = self.discovery_data.get("cli_market_intelligence", {})
         volatility_analysis = market_intelligence.get("volatility_analysis", {})
@@ -515,9 +430,7 @@ class DataDrivenMacroAnalyzer:
             "persistence_probability": 0.80,
             "mean_reversion_speed": reversion_speed,
             "regime_duration_estimate": 45,
-            "transition_risk": min(
-                0.3, (vix_level - long_term_mean) / long_term_mean * 0.5
-            ),
+            "transition_risk": min(0.3, (vix_level - long_term_mean) / long_term_mean * 0.5),
         }
 
         # Calculate risk appetite from market data
@@ -546,28 +459,20 @@ class DataDrivenMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def _calculate_risk_appetite(
-        self, market_intelligence: Dict[str, Any], vix_level: float
-    ) -> Dict[str, Any]:
+    def _calculate_risk_appetite(self, market_intelligence: dict[str, Any], vix_level: float) -> dict[str, Any]:
         """Calculate risk appetite from market intelligence"""
         correlation_analysis = market_intelligence.get("correlation_analysis", {})
 
         return {
             "current_state": "risk_on" if vix_level < 20 else "risk_off",
             "strength": min(1.0, max(0.3, 1.0 - (vix_level - 15) / 20)),
-            "equity_bond_correlation": correlation_analysis.get(
-                "equity_bond_correlation", -0.30
-            ),
-            "commodity_correlation": correlation_analysis.get(
-                "commodity_correlation", 0.65
-            ),
+            "equity_bond_correlation": correlation_analysis.get("equity_bond_correlation", -0.30),
+            "commodity_correlation": correlation_analysis.get("commodity_correlation", 0.65),
             "crypto_risk_correlation": 0.75,
             "safe_haven_flows": "minimal" if vix_level < 20 else "moderate",
         }
 
-    def _calculate_liquidity_scoring(
-        self, market_intelligence: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_liquidity_scoring(self, market_intelligence: dict[str, Any]) -> dict[str, Any]:
         """Calculate liquidity scoring from market data"""
         return {
             "market_liquidity_score": 0.82,
@@ -577,7 +482,7 @@ class DataDrivenMacroAnalyzer:
             "liquidity_stress_probability": 0.15,
         }
 
-    def _calculate_policy_environment(self) -> Dict[str, Any]:
+    def _calculate_policy_environment(self) -> dict[str, Any]:
         """Calculate policy environment assessment"""
         monetary_context = self.discovery_data.get("monetary_policy_context", {})
         policy_stance = monetary_context.get("policy_stance", {})
@@ -591,11 +496,9 @@ class DataDrivenMacroAnalyzer:
             "policy_uncertainty_index": 125,
         }
 
-    def generate_economic_scenarios(self) -> Dict[str, Any]:
+    def generate_economic_scenarios(self) -> dict[str, Any]:
         """Phase 4: Data-driven Economic Scenario Analysis"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         gdp_observations = economic_data.get("gdp_data", {}).get("observations", [])
 
         base_gdp = self._calculate_from_observations(gdp_observations, "latest")
@@ -645,17 +548,11 @@ class DataDrivenMacroAnalyzer:
             ],
         }
 
-    def _calculate_weighted_forecast(self, scenarios: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_weighted_forecast(self, scenarios: dict[str, Any]) -> dict[str, Any]:
         """Calculate probability-weighted economic forecast"""
-        weighted_gdp = sum(
-            s["gdp_growth"] * s["probability"] for s in scenarios.values()
-        )
-        weighted_inflation = sum(
-            s["inflation"] * s["probability"] for s in scenarios.values()
-        )
-        weighted_unemployment = sum(
-            s["unemployment"] * s["probability"] for s in scenarios.values()
-        )
+        weighted_gdp = sum(s["gdp_growth"] * s["probability"] for s in scenarios.values())
+        weighted_inflation = sum(s["inflation"] * s["probability"] for s in scenarios.values())
+        weighted_unemployment = sum(s["unemployment"] * s["probability"] for s in scenarios.values())
 
         return {
             "gdp_growth": weighted_gdp,
@@ -668,9 +565,7 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def _calculate_policy_responses(
-        self, economic_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_policy_responses(self, economic_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate policy response analysis"""
         monetary_data = economic_data.get("monetary_policy_data", {})
         current_rate = monetary_data.get("fed_funds_rate", {}).get("current_rate", 5.0)
@@ -692,7 +587,7 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def build_risk_assessment_matrix(self) -> Dict[str, Any]:
+    def build_risk_assessment_matrix(self) -> dict[str, Any]:
         """Phase 5: Data-driven Risk Assessment Matrix"""
         business_cycle_data = self.discovery_data.get("business_cycle_data", {})
         risk_factors = business_cycle_data.get("recession_risk_factors", {})
@@ -717,9 +612,7 @@ class DataDrivenMacroAnalyzer:
             "confidence": 0.86,
         }
 
-    def _build_data_driven_risk_matrix(
-        self, risk_factors: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _build_data_driven_risk_matrix(self, risk_factors: dict[str, Any]) -> dict[str, Any]:
         """Build risk matrix from discovery risk factors"""
         return {
             "recession_risk": {
@@ -751,20 +644,19 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def _assess_policy_error_risk(self, risk_factors: Dict[str, Any]) -> float:
+    def _assess_policy_error_risk(self, risk_factors: dict[str, Any]) -> float:
         """Assess policy error risk from discovery data"""
         policy_error_risk = risk_factors.get("policy_error", "low_to_medium_risk")
 
         if "low" in policy_error_risk:
             return 0.15
-        elif "medium" in policy_error_risk:
+        if "medium" in policy_error_risk:
             return 0.25
-        elif "high" in policy_error_risk:
+        if "high" in policy_error_risk:
             return 0.35
-        else:
-            return 0.20
+        return 0.20
 
-    def _build_stress_test_scenarios(self) -> Dict[str, Any]:
+    def _build_stress_test_scenarios(self) -> dict[str, Any]:
         """Build stress testing scenarios"""
         return {
             "recession_scenario": {
@@ -781,7 +673,7 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def _build_sensitivity_analysis(self) -> Dict[str, Any]:
+    def _build_sensitivity_analysis(self) -> dict[str, Any]:
         """Build sensitivity analysis"""
         return {
             "interest_rate_sensitivity": {
@@ -800,9 +692,7 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def validate_analysis_quality(
-        self, analysis_output: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def validate_analysis_quality(self, analysis_output: dict[str, Any]) -> dict[str, Any]:
         """Quality validation framework with pre-output validation against thresholds"""
         validation_results = {
             "validation_passed": True,
@@ -817,9 +707,7 @@ class DataDrivenMacroAnalyzer:
             if isinstance(section_data, dict) and "confidence" in section_data:
                 confidence = section_data["confidence"]
                 if confidence < self.confidence_threshold:
-                    confidence_issues.append(
-                        f"{section_name}: {confidence:.3f} < {self.confidence_threshold}"
-                    )
+                    confidence_issues.append(f"{section_name}: {confidence:.3f} < {self.confidence_threshold}")
 
         if confidence_issues:
             validation_results["validation_issues"].extend(confidence_issues)
@@ -841,17 +729,13 @@ class DataDrivenMacroAnalyzer:
             "investment_recommendation_gap_analysis",
         ]
 
-        missing_sections = [
-            section for section in required_sections if section not in analysis_output
-        ]
+        missing_sections = [section for section in required_sections if section not in analysis_output]
         if missing_sections:
             validation_results["validation_issues"].extend(
                 [f"Missing section: {section}" for section in missing_sections]
             )
             validation_results["validation_passed"] = False
-            validation_results["recommendations"].append(
-                "Implement all required template sections"
-            )
+            validation_results["recommendations"].append("Implement all required template sections")
 
         # 3. Data Consistency Validation
         consistency_issues = self._validate_data_consistency(analysis_output)
@@ -863,14 +747,10 @@ class DataDrivenMacroAnalyzer:
         probability_issues = self._validate_probability_bounds(analysis_output)
         if probability_issues:
             validation_results["validation_issues"].extend(probability_issues)
-            validation_results["recommendations"].append(
-                "Ensure all probabilities are within [0.0, 1.0] bounds"
-            )
+            validation_results["recommendations"].append("Ensure all probabilities are within [0.0, 1.0] bounds")
 
         # 5. Calculate Overall Quality Scores
-        validation_results["quality_scores"] = self._calculate_quality_scores(
-            analysis_output
-        )
+        validation_results["quality_scores"] = self._calculate_quality_scores(analysis_output)
 
         # 6. Final Validation Decision
         critical_issues = len(
@@ -886,7 +766,7 @@ class DataDrivenMacroAnalyzer:
 
         return validation_results
 
-    def _validate_data_consistency(self, analysis_output: Dict[str, Any]) -> list:
+    def _validate_data_consistency(self, analysis_output: dict[str, Any]) -> list:
         """Validate data consistency across sections"""
         issues = []
 
@@ -896,13 +776,9 @@ class DataDrivenMacroAnalyzer:
         recession_prob = business_cycle.get("recession_probability", 0.0)
 
         if current_phase == "expansion" and recession_prob > 0.4:
-            issues.append(
-                f"Inconsistent: {recession_prob:.1%} recession probability during expansion phase"
-            )
+            issues.append(f"Inconsistent: {recession_prob:.1%} recession probability during expansion phase")
         elif current_phase == "contraction" and recession_prob < 0.5:
-            issues.append(
-                f"Inconsistent: {recession_prob:.1%} recession probability during contraction phase"
-            )
+            issues.append(f"Inconsistent: {recession_prob:.1%} recession probability during contraction phase")
 
         # Check GDP components arithmetic
         gdp_components = business_cycle.get("economic_growth_decomposition", {})
@@ -915,13 +791,11 @@ class DataDrivenMacroAnalyzer:
             total_reported = gdp_components.get("total_gdp_growth", 0)
 
             if abs(total_calculated - total_reported) > 0.2:
-                issues.append(
-                    f"GDP components don't sum correctly: {total_calculated:.1f} vs {total_reported:.1f}"
-                )
+                issues.append(f"GDP components don't sum correctly: {total_calculated:.1f} vs {total_reported:.1f}")
 
         return issues
 
-    def _validate_probability_bounds(self, analysis_output: Dict[str, Any]) -> list:
+    def _validate_probability_bounds(self, analysis_output: dict[str, Any]) -> list:
         """Validate all probability values are within [0.0, 1.0] bounds"""
         issues = []
 
@@ -934,28 +808,18 @@ class DataDrivenMacroAnalyzer:
                 elif isinstance(value, (int, float)):
                     if "probability" in key.lower() or "prob" in key.lower():
                         if not (0.0 <= value <= 1.0):
-                            issues.append(
-                                f"Invalid probability at {current_path}: {value}"
-                            )
+                            issues.append(f"Invalid probability at {current_path}: {value}")
 
         check_probabilities(analysis_output)
         return issues
 
-    def _calculate_quality_scores(
-        self, analysis_output: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def _calculate_quality_scores(self, analysis_output: dict[str, Any]) -> dict[str, float]:
         """Calculate comprehensive quality scores"""
         scores = {}
 
         # Template completeness score
         required_sections = 10  # All template sections
-        present_sections = len(
-            [
-                k
-                for k in analysis_output.keys()
-                if k not in ["metadata", "analysis_quality_metrics"]
-            ]
-        )
+        present_sections = len([k for k in analysis_output if k not in ["metadata", "analysis_quality_metrics"]])
         scores["template_completeness"] = min(1.0, present_sections / required_sections)
 
         # Confidence score (average of all section confidences)
@@ -966,14 +830,10 @@ class DataDrivenMacroAnalyzer:
         scores["average_confidence"] = np.mean(confidences) if confidences else 0.0
 
         # Data utilization score (from mapper)
-        scores["data_utilization"] = self.data_mapper["data_quality"][
-            "completeness_score"
-        ]
+        scores["data_utilization"] = self.data_mapper["data_quality"]["completeness_score"]
 
         # Analytical rigor score
-        scores["analytical_rigor"] = min(
-            1.0, scores["average_confidence"] * scores["template_completeness"]
-        )
+        scores["analytical_rigor"] = min(1.0, scores["average_confidence"] * scores["template_completeness"])
 
         # Overall quality score
         scores["overall_quality"] = np.mean(
@@ -987,7 +847,7 @@ class DataDrivenMacroAnalyzer:
 
         return scores
 
-    def generate_analysis_output(self) -> Dict[str, Any]:
+    def generate_analysis_output(self) -> dict[str, Any]:
         """Generate complete data-driven analysis output"""
         print("🔄 Processing discovery data for {self.region}...")
 
@@ -1003,9 +863,7 @@ class DataDrivenMacroAnalyzer:
         multi_method_valuation = self.analyze_multi_method_valuation()
         enhanced_sensitivity = self.analyze_enhanced_economic_sensitivity()
         macro_risk_scoring = self.analyze_macroeconomic_risk_scoring()
-        investment_recommendations = (
-            self.analyze_investment_recommendation_gap_analysis()
-        )
+        investment_recommendations = self.analyze_investment_recommendation_gap_analysis()
 
         print("✅ Data-driven analysis complete")
         print("🔍 Running quality validation...")
@@ -1058,12 +916,10 @@ class DataDrivenMacroAnalyzer:
         output["analysis_quality_metrics"].update(
             {
                 "validation_passed": validation_results["validation_passed"],
-                "quality_validation_score": validation_results["quality_scores"].get(
-                    "overall_quality", 0.0
+                "quality_validation_score": validation_results["quality_scores"].get("overall_quality", 0.0),
+                "template_completeness_validated": validation_results["quality_scores"].get(
+                    "template_completeness", 0.0
                 ),
-                "template_completeness_validated": validation_results[
-                    "quality_scores"
-                ].get("template_completeness", 0.0),
                 "validation_issues_count": len(validation_results["validation_issues"]),
             }
         )
@@ -1073,36 +929,24 @@ class DataDrivenMacroAnalyzer:
             print("✅ Quality validation passed")
         else:
             print("⚠️ Quality validation issues found:")
-            for issue in validation_results["validation_issues"][
-                :5
-            ]:  # Show first 5 issues
+            for issue in validation_results["validation_issues"][:5]:  # Show first 5 issues
                 print("  - {issue}")
             if len(validation_results["validation_issues"]) > 5:
-                print(
-                    f"  ... and {len(validation_results['validation_issues']) - 5} more issues"
-                )
+                print(f"  ... and {len(validation_results['validation_issues']) - 5} more issues")
 
-        print(
-            f"📊 Overall Quality Score: {validation_results['quality_scores'].get('overall_quality', 0.0):.2f}"
-        )
+        print(f"📊 Overall Quality Score: {validation_results['quality_scores'].get('overall_quality', 0.0):.2f}")
 
         return output
 
-    def analyze_industry_dynamics_scorecard(self) -> Dict[str, Any]:
+    def analyze_industry_dynamics_scorecard(self) -> dict[str, Any]:
         """Generate industry dynamics scorecard with A-F grades"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         gdp_data = economic_data.get("gdp_data", {})
         employment_data = economic_data.get("employment_data", {})
 
         # Calculate profitability score from economic growth
-        gdp_growth = self._calculate_from_observations(
-            gdp_data.get("observations", []), "latest"
-        )
-        profitability_grade = self._calculate_grade_from_value(
-            gdp_growth, [0.5, 1.5, 2.5, 3.5], "higher_better"
-        )
+        gdp_growth = self._calculate_from_observations(gdp_data.get("observations", []), "latest")
+        profitability_grade = self._calculate_grade_from_value(gdp_growth, [0.5, 1.5, 2.5, 3.5], "higher_better")
 
         # Calculate balance sheet score from employment trends
         employment_trend = employment_data.get("payroll_data", {}).get("trend", "")
@@ -1114,9 +958,7 @@ class DataDrivenMacroAnalyzer:
         # Regulatory environment from policy context
         policy_context = self.discovery_data.get("monetary_policy_context", {})
         reg_rating = (
-            "neutral"
-            if policy_context.get("policy_stance", {}).get("stance") == "restrictive"
-            else "favorable"
+            "neutral" if policy_context.get("policy_stance", {}).get("stance") == "restrictive" else "favorable"
         )
 
         confidence = max(self.confidence_threshold, 0.92)
@@ -1125,11 +967,7 @@ class DataDrivenMacroAnalyzer:
             "profitability_score": {
                 "grade": profitability_grade,
                 "trend": (
-                    "stable"
-                    if abs(gdp_growth - 2.0) < 0.5
-                    else "improving"
-                    if gdp_growth > 2.0
-                    else "declining"
+                    "stable" if abs(gdp_growth - 2.0) < 0.5 else "improving" if gdp_growth > 2.0 else "declining"
                 ),
                 "key_metrics": f"GDP growth at {gdp_growth}% indicates {profitability_grade} profitability environment",
                 "supporting_evidence": f"Economic growth momentum and employment trends support {profitability_grade} assessment",
@@ -1155,15 +993,11 @@ class DataDrivenMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def analyze_multi_method_valuation(self) -> Dict[str, Any]:
+    def analyze_multi_method_valuation(self) -> dict[str, Any]:
         """Generate multi-method valuation framework"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         gdp_data = economic_data.get("gdp_data", {})
-        gdp_growth = self._calculate_from_observations(
-            gdp_data.get("observations", []), "latest"
-        )
+        gdp_growth = self._calculate_from_observations(gdp_data.get("observations", []), "latest")
 
         # DCF analysis based on economic fundamentals
         dcf_fair_value = 100.0 + (gdp_growth - 2.0) * 10  # Base 100 adjusted for growth
@@ -1175,17 +1009,11 @@ class DataDrivenMacroAnalyzer:
 
         # Technical analysis based on volatility
         market_data = self.discovery_data.get("cli_market_intelligence", {})
-        vix_level = (
-            market_data.get("volatility_analysis", {})
-            .get("vix_analysis", {})
-            .get("current_level", 20.0)
-        )
+        vix_level = market_data.get("volatility_analysis", {}).get("vix_analysis", {}).get("current_level", 20.0)
         technical_fair_value = 105.0 - (vix_level - 20.0) * 0.5
 
         # Blended valuation
-        weighted_fair_value = (
-            dcf_fair_value * 0.4 + comps_fair_value * 0.35 + technical_fair_value * 0.25
-        )
+        weighted_fair_value = dcf_fair_value * 0.4 + comps_fair_value * 0.35 + technical_fair_value * 0.25
 
         confidence = max(self.confidence_threshold, 0.91)
 
@@ -1219,24 +1047,16 @@ class DataDrivenMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def analyze_enhanced_economic_sensitivity(self) -> Dict[str, Any]:
+    def analyze_enhanced_economic_sensitivity(self) -> dict[str, Any]:
         """Generate enhanced economic sensitivity analysis"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         monetary_data = economic_data.get("monetary_policy_data", {})
 
-        fed_funds_rate = monetary_data.get("fed_funds_rate", {}).get(
-            "current_rate", 5.0
-        )
+        fed_funds_rate = monetary_data.get("fed_funds_rate", {}).get("current_rate", 5.0)
 
         # Calculate correlations based on economic data
-        fed_correlation = (
-            -0.6 + (fed_funds_rate - 4.0) * 0.1
-        )  # Higher rates = lower correlation
-        dxy_impact = (
-            0.4 if self.region == "US" else -0.3
-        )  # USD strength impact varies by region
+        fed_correlation = -0.6 + (fed_funds_rate - 4.0) * 0.1  # Higher rates = lower correlation
+        dxy_impact = 0.4 if self.region == "US" else -0.3  # USD strength impact varies by region
 
         confidence = max(self.confidence_threshold, 0.91)
 
@@ -1253,17 +1073,13 @@ class DataDrivenMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def analyze_macroeconomic_risk_scoring(self) -> Dict[str, Any]:
+    def analyze_macroeconomic_risk_scoring(self) -> dict[str, Any]:
         """Generate macroeconomic risk scoring with GDP/employment integration"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         gdp_data = economic_data.get("gdp_data", {})
         employment_data = economic_data.get("employment_data", {})
 
-        gdp_growth = self._calculate_from_observations(
-            gdp_data.get("observations", []), "latest"
-        )
+        gdp_growth = self._calculate_from_observations(gdp_data.get("observations", []), "latest")
         employment_trend = employment_data.get("payroll_data", {}).get("trend", "")
 
         # GDP-based risk assessment
@@ -1318,11 +1134,9 @@ class DataDrivenMacroAnalyzer:
             "confidence": confidence,
         }
 
-    def analyze_investment_recommendation_gap_analysis(self) -> Dict[str, Any]:
+    def analyze_investment_recommendation_gap_analysis(self) -> dict[str, Any]:
         """Generate investment recommendation gap analysis"""
-        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get(
-            "central_bank_economic_data", {}
-        )
+        economic_data = self.discovery_data.get("cli_comprehensive_analysis", {}).get("central_bank_economic_data", {})
         gdp_growth = self._calculate_from_observations(
             economic_data.get("gdp_data", {}).get("observations", []), "latest"
         )
@@ -1370,9 +1184,7 @@ class DataDrivenMacroAnalyzer:
             },
         }
 
-    def _calculate_grade_from_value(
-        self, value: float, thresholds: list, direction: str = "higher_better"
-    ) -> str:
+    def _calculate_grade_from_value(self, value: float, thresholds: list, direction: str = "higher_better") -> str:
         """Convert numeric value to A-F grade"""
         grades = ["F", "D", "C", "B", "A"]
         if direction == "higher_better":
@@ -1380,11 +1192,10 @@ class DataDrivenMacroAnalyzer:
                 if value <= threshold:
                     return grades[i]
             return "A+"
-        else:
-            for i, threshold in enumerate(reversed(thresholds)):
-                if value >= threshold:
-                    return grades[i]
-            return "A+"
+        for i, threshold in enumerate(reversed(thresholds)):
+            if value >= threshold:
+                return grades[i]
+        return "A+"
 
 
 def main():
@@ -1397,12 +1208,8 @@ def main():
     date_str = "20250806"  # Match discovery file date
 
     # File paths
-    discovery_file = (
-        f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
-    )
-    output_file = (
-        f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
-    )
+    discovery_file = f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
+    output_file = f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
 
     # Check if discovery file exists
     if not Path(discovery_file).exists():
@@ -1421,12 +1228,8 @@ def main():
         json.dump(analysis_output, f, indent=2)
 
     print("✅ Data-driven analysis complete. Output saved to: {output_file}")
-    print(
-        f"📊 Analysis methodology: {analysis_output['metadata']['analysis_methodology']}"
-    )
-    print(
-        f"🎯 Overall confidence: {analysis_output['analysis_quality_metrics']['confidence_propagation']:.2f}"
-    )
+    print(f"📊 Analysis methodology: {analysis_output['metadata']['analysis_methodology']}")
+    print(f"🎯 Overall confidence: {analysis_output['analysis_quality_metrics']['confidence_propagation']:.2f}")
 
 
 if __name__ == "__main__":

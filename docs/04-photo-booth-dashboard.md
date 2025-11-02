@@ -1,5 +1,8 @@
 # Photo Booth & Dashboard System
 
+**Version**: 2.1 | **Last Updated**: 2024-08-27 | **Status**: Production Ready
+**Authority**: Product Team | **Audience**: Developers & System Architects
+
 Technical reference for photo booth, dashboard, chart and export systems.
 
 ---

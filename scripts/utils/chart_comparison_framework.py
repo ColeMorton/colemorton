@@ -7,20 +7,17 @@ quality metrics for chart migration validation.
 """
 
 import json
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-import plotly.io as pio
 from PIL import Image
 
 from scripts.utils.dashboard_parser import (
     MonthlyPerformance,
     QualityDistribution,
-    TradeData,
 )
 
 
@@ -44,7 +41,7 @@ class ChartComparisonFramework:
         chart_type: str,
         test_data: Any,
         mode: str = "light",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare matplotlib and Plotly implementations of a chart.
 
@@ -76,9 +73,7 @@ class ChartComparisonFramework:
 
         # Save matplotlib output
         mpl_path = self.output_dir / f"{chart_type}_matplotlib_{mode}.png"
-        fig_mpl.savefig(
-            mpl_path, dpi=150, bbox_inches="tight", facecolor=theme.background
-        )
+        fig_mpl.savefig(mpl_path, dpi=150, bbox_inches="tight", facecolor=theme.background)
         plt.close(fig_mpl)
 
         # Generate Plotly chart
@@ -86,27 +81,19 @@ class ChartComparisonFramework:
 
         # Call the appropriate Plotly method
         if chart_type == "monthly_bars":
-            result = plotly_generator.create_enhanced_monthly_bars(
-                fig_plotly, test_data, mode
-            )
+            result = plotly_generator.create_enhanced_monthly_bars(fig_plotly, test_data, mode)
             if result is not None and isinstance(result, go.Figure):
                 fig_plotly = result
         elif chart_type == "donut_chart":
-            result = plotly_generator.create_enhanced_donut_chart(
-                fig_plotly, test_data, mode
-            )
+            result = plotly_generator.create_enhanced_donut_chart(fig_plotly, test_data, mode)
             if result is not None and isinstance(result, go.Figure):
                 fig_plotly = result
         elif chart_type == "waterfall":
-            result = plotly_generator.create_waterfall_chart(
-                fig_plotly, test_data, mode
-            )
+            result = plotly_generator.create_waterfall_chart(fig_plotly, test_data, mode)
             if result is not None and isinstance(result, go.Figure):
                 fig_plotly = result
         elif chart_type == "scatter":
-            result = plotly_generator.create_enhanced_scatter(
-                fig_plotly, test_data, mode
-            )
+            result = plotly_generator.create_enhanced_scatter(fig_plotly, test_data, mode)
             if result is not None and isinstance(result, go.Figure):
                 fig_plotly = result
 
@@ -115,17 +102,13 @@ class ChartComparisonFramework:
         fig_plotly.write_image(plotly_path, width=800, height=600, scale=2)
 
         # Create side-by-side comparison
-        comparison_path = self._create_side_by_side_comparison(
-            mpl_path, plotly_path, chart_type, mode
-        )
+        comparison_path = self._create_side_by_side_comparison(mpl_path, plotly_path, chart_type, mode)
 
         # Calculate visual similarity metrics
         similarity_metrics = self._calculate_similarity_metrics(mpl_path, plotly_path)
 
         # Export JSON schema
-        json_schema = plotly_generator.export_chart_config(
-            f"enhanced_{chart_type}", {"mode": mode}
-        )
+        json_schema = plotly_generator.export_chart_config(f"enhanced_{chart_type}", {"mode": mode})
         schema_path = self.output_dir / f"{chart_type}_schema_{mode}.json"
         with open(schema_path, "w") as f:
             json.dump(json_schema, f, indent=2)
@@ -140,9 +123,7 @@ class ChartComparisonFramework:
             "mode": mode,
         }
 
-    def _create_side_by_side_comparison(
-        self, mpl_path: Path, plotly_path: Path, chart_type: str, mode: str
-    ) -> Path:
+    def _create_side_by_side_comparison(self, mpl_path: Path, plotly_path: Path, chart_type: str, mode: str) -> Path:
         """Create side-by-side comparison image."""
         # Load images
         img_mpl = Image.open(mpl_path)
@@ -181,17 +162,11 @@ class ChartComparisonFramework:
             title_font = font
 
         # Add title
-        title = (
-            f"{chart_type.replace('_', ' ').title()} Comparison ({mode.title()} Mode)"
-        )
-        draw.text(
-            (total_width // 2, 20), title, fill="black", font=title_font, anchor="mt"
-        )
+        title = f"{chart_type.replace('_', ' ').title()} Comparison ({mode.title()} Mode)"
+        draw.text((total_width // 2, 20), title, fill="black", font=title_font, anchor="mt")
 
         # Add labels
-        draw.text(
-            (img_mpl.width // 2, 60), "Matplotlib", fill="black", font=font, anchor="mb"
-        )
+        draw.text((img_mpl.width // 2, 60), "Matplotlib", fill="black", font=font, anchor="mb")
         draw.text(
             (img_mpl.width + 20 + img_plotly.width // 2, 60),
             "Plotly",
@@ -206,9 +181,7 @@ class ChartComparisonFramework:
 
         return comparison_path
 
-    def _calculate_similarity_metrics(
-        self, img1_path: Path, img2_path: Path
-    ) -> Dict[str, float]:
+    def _calculate_similarity_metrics(self, img1_path: Path, img2_path: Path) -> dict[str, float]:
         """Calculate visual similarity metrics between two images."""
         # Load images as numpy arrays
         img1 = np.array(Image.open(img1_path).convert("RGB"))
@@ -230,7 +203,7 @@ class ChartComparisonFramework:
             "size_match": img1.shape == img2.shape,
         }
 
-    def generate_test_report(self, comparison_results: List[Dict[str, Any]]) -> str:
+    def generate_test_report(self, comparison_results: list[dict[str, Any]]) -> str:
         """
         Generate a test report from comparison results.
 
@@ -247,32 +220,21 @@ class ChartComparisonFramework:
             f.write("## Summary\n\n")
 
             # Calculate overall metrics
-            avg_similarity = np.mean(
-                [
-                    r["similarity_metrics"]["similarity_percent"]
-                    for r in comparison_results
-                ]
-            )
+            avg_similarity = np.mean([r["similarity_metrics"]["similarity_percent"] for r in comparison_results])
             f.write(f"- **Average Visual Similarity**: {avg_similarity:.1f}%\n")
             f.write(f"- **Charts Compared**: {len(comparison_results)}\n")
             from datetime import datetime
 
-            f.write(
-                f"- **Test Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-            )
+            f.write(f"- **Test Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             f.write("## Detailed Comparisons\n\n")
 
             for result in comparison_results:
-                f.write(
-                    f"### {result['chart_type'].replace('_', ' ').title()} ({result['mode'].title()} Mode)\n\n"
-                )
+                f.write(f"### {result['chart_type'].replace('_', ' ').title()} ({result['mode'].title()} Mode)\n\n")
                 f.write(f"![Comparison]({Path(result['comparison_path']).name})\n\n")
 
                 metrics = result["similarity_metrics"]
-                f.write(
-                    f"- **Visual Similarity**: {metrics['similarity_percent']:.1f}%\n"
-                )
+                f.write(f"- **Visual Similarity**: {metrics['similarity_percent']:.1f}%\n")
                 f.write(f"- **MSE**: {metrics['mse']:.2f}\n")
                 f.write(f"- **Size Match**: {'✓' if metrics['size_match'] else '✗'}\n")
                 f.write(
@@ -284,7 +246,7 @@ class ChartComparisonFramework:
         return str(report_path)
 
 
-def create_test_data() -> Dict[str, Any]:
+def create_test_data() -> dict[str, Any]:
     """Create sample test data for chart comparison."""
     # Monthly performance data
     monthly_data = [

@@ -14,15 +14,16 @@ This demonstrates how to integrate network resilience into Bitcoin CLI services.
 
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
     ServiceConfig,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -74,7 +75,7 @@ class ResilientMempoolSpaceService(BaseFinancialService):
         self.service_name = "mempool_space"
         self.logger = logging.getLogger(f"resilient_service.{self.service_name}")
 
-    def _resilient_request(self, endpoint: str, params: Dict[str, Any] = None) -> Any:
+    def _resilient_request(self, endpoint: str, params: dict[str, Any] = None) -> Any:
         """Make resilient request with circuit breaker and retry protection"""
 
         def make_request():
@@ -91,12 +92,10 @@ class ResilientMempoolSpaceService(BaseFinancialService):
             self.logger.warning(f"Circuit breaker open for {self.service_name}: {e}")
             return self._get_fallback_response(endpoint)
         except RetryExhaustedException as e:
-            self.logger.error(
-                f"All retries exhausted for {self.service_name}/{endpoint}: {e}"
-            )
+            self.logger.error(f"All retries exhausted for {self.service_name}/{endpoint}: {e}")
             return self._get_fallback_response(endpoint)
 
-    def _get_fallback_response(self, endpoint: str) -> Dict[str, Any]:
+    def _get_fallback_response(self, endpoint: str) -> dict[str, Any]:
         """
         Provide fallback response when service is unavailable
 
@@ -123,9 +122,7 @@ class ResilientMempoolSpaceService(BaseFinancialService):
                 }
             )
         elif endpoint == "/mempool":
-            fallback_data.update(
-                {"count": 0, "vsize": 0, "total_fee": 0, "fallback": True}
-            )
+            fallback_data.update({"count": 0, "vsize": 0, "total_fee": 0, "fallback": True})
         elif endpoint.startswith("/v1/blocks"):
             fallback_data.update({"blocks": [], "fallback": True})
         else:
@@ -135,8 +132,8 @@ class ResilientMempoolSpaceService(BaseFinancialService):
         return fallback_data
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate response data with enhanced error handling"""
 
         # Handle fallback responses
@@ -151,37 +148,37 @@ class ResilientMempoolSpaceService(BaseFinancialService):
 
     # Enhanced API methods with resilience patterns
 
-    def get_fee_estimates(self) -> Dict[str, Any]:
+    def get_fee_estimates(self) -> dict[str, Any]:
         """Get recommended Bitcoin transaction fees with resilience"""
         endpoint = "/v1/fees/recommended"
         data = self._resilient_request(endpoint)
         return self._validate_response(data, "fee estimates")
 
-    def get_mempool_info(self) -> Dict[str, Any]:
+    def get_mempool_info(self) -> dict[str, Any]:
         """Get current mempool statistics with resilience"""
         endpoint = "/mempool"
         data = self._resilient_request(endpoint)
         return self._validate_response(data, "mempool info")
 
-    def get_recent_blocks(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_recent_blocks(self, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent Bitcoin blocks with resilience"""
         if limit > 25:
             limit = 25
 
-        endpoint = f"/v1/blocks"
+        endpoint = "/v1/blocks"
         data = self._resilient_request(endpoint)
 
         if isinstance(data, list):
             return data[:limit]
         return self._validate_response(data, "recent blocks")
 
-    def get_bitcoin_price(self) -> Dict[str, Any]:
+    def get_bitcoin_price(self) -> dict[str, Any]:
         """Get current Bitcoin price with resilience"""
         endpoint = "/v1/prices"
         data = self._resilient_request(endpoint)
         return self._validate_response(data, "Bitcoin price")
 
-    def get_network_stats(self) -> Dict[str, Any]:
+    def get_network_stats(self) -> dict[str, Any]:
         """Get comprehensive Bitcoin network statistics with resilience"""
         # Combine multiple endpoints for comprehensive network health
         stats = {
@@ -220,7 +217,7 @@ class ResilientMempoolSpaceService(BaseFinancialService):
 
         return stats
 
-    def get_service_health(self) -> Dict[str, Any]:
+    def get_service_health(self) -> dict[str, Any]:
         """Get detailed service health metrics"""
         circuit_breaker = self.resilience_manager.get_circuit_breaker(self.service_name)
         status = circuit_breaker.get_status()
@@ -241,28 +238,27 @@ class ResilientMempoolSpaceService(BaseFinancialService):
 
         return health_info
 
-    def _determine_health_status(self, circuit_status: Dict[str, Any]) -> str:
+    def _determine_health_status(self, circuit_status: dict[str, Any]) -> str:
         """Determine overall health status"""
         state = circuit_status["state"]
         metrics = circuit_status["metrics"]
 
         if state == "open":
             return "unhealthy"
-        elif state == "half_open":
+        if state == "half_open":
             return "recovering"
-        elif metrics["success_rate"] >= 95.0:
+        if metrics["success_rate"] >= 95.0:
             return "healthy"
-        elif metrics["success_rate"] >= 80.0:
+        if metrics["success_rate"] >= 80.0:
             return "degraded"
-        else:
-            return "poor"
+        return "poor"
 
     def reset_circuit_breaker(self):
         """Manually reset the circuit breaker"""
         self.resilience_manager.reset_circuit_breaker(self.service_name)
         self.logger.info(f"Circuit breaker reset for {self.service_name}")
 
-    def get_resilience_metrics(self) -> Dict[str, Any]:
+    def get_resilience_metrics(self) -> dict[str, Any]:
         """Get comprehensive resilience metrics"""
         all_status = self.resilience_manager.get_all_status()
 
@@ -272,19 +268,13 @@ class ResilientMempoolSpaceService(BaseFinancialService):
             "summary": {
                 "total_services": len(all_status),
                 "healthy_services": len(
-                    [
-                        s
-                        for s in all_status.values()
-                        if s["state"] == "closed"
-                        and s["metrics"]["success_rate"] >= 95.0
-                    ]
+                    [s for s in all_status.values() if s["state"] == "closed" and s["metrics"]["success_rate"] >= 95.0]
                 ),
                 "degraded_services": len(
                     [
                         s
                         for s in all_status.values()
-                        if s["state"] in ["half_open", "open"]
-                        or s["metrics"]["success_rate"] < 95.0
+                        if s["state"] in ["half_open", "open"] or s["metrics"]["success_rate"] < 95.0
                     ]
                 ),
             },
@@ -320,7 +310,7 @@ def create_resilient_mempool_space_service(
 
         return ResilientMempoolSpaceService(service_config)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="mempool_space_resilient",
@@ -342,13 +332,11 @@ class DecoratorExampleService:
         circuit_config=CircuitBreakerConfig(failure_threshold=2, recovery_timeout=20),
         retry_config=RetryConfig(max_retries=1, initial_delay=0.5),
     )
-    def get_fees_with_decorator(self) -> Dict[str, Any]:
+    def get_fees_with_decorator(self) -> dict[str, Any]:
         """Example of decorator-based resilience"""
         # Simulate API call
         import requests
 
-        response = requests.get(
-            "https://mempool.space/api/v1/fees/recommended", timeout=10
-        )
+        response = requests.get("https://mempool.space/api/v1/fees/recommended", timeout=10)
         response.raise_for_status()
         return response.json()

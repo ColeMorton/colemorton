@@ -2,7 +2,7 @@
 
 **Version**: 1.0
 **DASV Framework**: Phase 1 - Discovery
-**Author**: Sensylate Framework Architecture
+**Author**: Colemorton Framework Architecture
 **Date**: 2025-07-26
 
 ## Executive Summary
@@ -444,7 +444,7 @@ The Discovery Phase Framework provides the institutional foundation for systemat
 - 100% framework schema compliance
 - Institutional-grade reliability and performance
 
-This specification serves as the definitive guide for implementing discovery phases that meet institutional standards while maintaining the flexibility required for diverse analysis domains within the Sensylate platform.
+This specification serves as the definitive guide for implementing discovery phases that meet institutional standards while maintaining the flexibility required for diverse analysis domains within the Colemorton platform.
 
 ---
 

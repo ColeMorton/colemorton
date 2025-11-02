@@ -1,6 +1,9 @@
 # API Key Management System
 
-This document describes the secure API key management system implemented for the Sensylate Command System.
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: Developers
+
+This document describes the secure API key management system implemented for the Colemorton Command System.
 
 ## Overview
 

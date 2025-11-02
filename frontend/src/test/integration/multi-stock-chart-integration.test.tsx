@@ -37,6 +37,40 @@ const mockChartConfig = {
         symbols: "dynamic",
       },
     },
+    "xpev-nio-stock-price": {
+      chartType: "xpev-nio-stock-price",
+      chartStatus: "active",
+      primarySource: {
+        type: "cli-api",
+        location: "dynamic",
+        refreshMethod: "api-poll",
+        frequency: "daily",
+        cliService: "yahoo-finance",
+        symbols: "dynamic",
+      },
+    },
+    "tech-giants-comparison": {
+      chartType: "tech-giants-comparison",
+      chartStatus: "active",
+      primarySource: {
+        type: "cli-api",
+        location: "dynamic",
+        refreshMethod: "api-poll",
+        frequency: "daily",
+        cliService: "yahoo-finance",
+        symbols: "dynamic",
+      },
+    },
+    "portfolio-history": {
+      chartType: "portfolio-history",
+      chartStatus: "active",
+      primarySource: {
+        type: "csv",
+        location: "/data/portfolio_history.csv",
+        refreshMethod: "manual",
+        frequency: "on-demand",
+      },
+    },
   },
 };
 
@@ -120,11 +154,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
         />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Verify chart was rendered with correct data
       expect(screen.getByTestId("integration-data")).toHaveTextContent(
@@ -133,7 +173,7 @@ describe("Multi-Stock Chart Integration Tests", () => {
 
       // Verify layout configuration
       const layoutElement = screen.getByTestId("integration-layout");
-      expect(layoutElement).toHaveTextContent("XPEV vs NIO Comparison");
+      expect(layoutElement).toHaveTextContent("XPEV vs NIO Stock Comparison");
 
       // Verify API calls were made correctly
       expect(mockChartDataService.fetchStockData).toHaveBeenCalledTimes(2);
@@ -166,11 +206,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
         />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Verify three data series
       expect(screen.getByTestId("integration-data")).toHaveTextContent(
@@ -234,11 +280,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
         />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Should use metadata display name
       expect(screen.getByTestId("integration-layout")).toHaveTextContent(
@@ -338,11 +390,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
       );
 
       // Should render without crashing
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Should show no data
       expect(screen.getByTestId("integration-data")).toHaveTextContent(
@@ -379,11 +437,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
         />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -440,11 +504,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
 
       render(<ChartDisplay chartType="apple-price" title="Apple Stock" />);
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Should work as before
       expect(screen.getByTestId("integration-data")).toHaveTextContent(
@@ -468,11 +538,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
         />,
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Should not attempt stock data fetching for non-stock charts
       expect(mockChartDataService.fetchStockData).not.toHaveBeenCalled();
@@ -521,11 +597,17 @@ describe("Multi-Stock Chart Integration Tests", () => {
 
       render(<ChartDisplay {...testProps} />);
 
-      await waitFor(() => {
-        expect(screen.getByTestId("integration-status")).toHaveTextContent(
-          "ready",
-        );
-      });
+      const statusElement = await screen.findByTestId(
+        "integration-status",
+        {},
+        { timeout: 5000 },
+      );
+      await waitFor(
+        () => {
+          expect(statusElement.textContent).toBe("ready");
+        },
+        { timeout: 5000 },
+      );
 
       // Verify integration completed successfully
       expect(screen.getByTestId("integration-data")).toHaveTextContent(

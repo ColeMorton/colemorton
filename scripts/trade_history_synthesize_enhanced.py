@@ -17,9 +17,10 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
+
 
 # Add project paths
 sys.path.insert(0, str(Path(__file__).parent))
@@ -56,9 +57,7 @@ class EnhancedTradeHistorySynthesizer:
         self.data_root = Path(__file__).parent.parent / "data"
         self.outputs_root = self.data_root / "outputs" / "trade_history"
 
-    def synthesize_with_macro_context(
-        self, portfolio_name: str, report_date: str = None
-    ) -> Dict[str, Any]:
+    def synthesize_with_macro_context(self, portfolio_name: str, report_date: str = None) -> dict[str, Any]:
         """
         Enhanced synthesis with comprehensive macro-economic integration
 
@@ -82,19 +81,13 @@ class EnhancedTradeHistorySynthesizer:
             macro_analysis = self._generate_macro_economic_context()
 
             # Correlate trade performance with macro conditions
-            performance_correlation = self._correlate_performance_macro(
-                trade_data, macro_analysis, analysis_data
-            )
+            performance_correlation = self._correlate_performance_macro(trade_data, macro_analysis, analysis_data)
 
             # Generate enhanced market context
-            enhanced_market_context = self._generate_enhanced_market_context(
-                macro_analysis, discovery_data
-            )
+            enhanced_market_context = self._generate_enhanced_market_context(macro_analysis, discovery_data)
 
             # Create forward-looking analysis
-            forward_analysis = self._generate_forward_looking_analysis(
-                macro_analysis, performance_correlation
-            )
+            forward_analysis = self._generate_forward_looking_analysis(macro_analysis, performance_correlation)
 
             # Generate enhanced reports
             enhanced_reports = self._generate_enhanced_reports(
@@ -129,30 +122,22 @@ class EnhancedTradeHistorySynthesizer:
                 "synthesis_timestamp": datetime.now().isoformat(),
             }
 
-    def _load_discovery_data(
-        self, portfolio_name: str, report_date: str
-    ) -> Dict[str, Any]:
+    def _load_discovery_data(self, portfolio_name: str, report_date: str) -> dict[str, Any]:
         """Load discovery phase data"""
-        discovery_file = (
-            self.outputs_root / "discovery" / f"{portfolio_name}_{report_date}.json"
-        )
+        discovery_file = self.outputs_root / "discovery" / f"{portfolio_name}_{report_date}.json"
 
         if discovery_file.exists():
-            with open(discovery_file, "r") as f:
+            with open(discovery_file) as f:
                 return json.load(f)
         else:
             return {"error": "Discovery data not found"}
 
-    def _load_analysis_data(
-        self, portfolio_name: str, report_date: str
-    ) -> Dict[str, Any]:
+    def _load_analysis_data(self, portfolio_name: str, report_date: str) -> dict[str, Any]:
         """Load analysis phase data"""
-        analysis_file = (
-            self.outputs_root / "analysis" / f"{portfolio_name}_{report_date}.json"
-        )
+        analysis_file = self.outputs_root / "analysis" / f"{portfolio_name}_{report_date}.json"
 
         if analysis_file.exists():
-            with open(analysis_file, "r") as f:
+            with open(analysis_file) as f:
                 return json.load(f)
         else:
             return {"error": "Analysis data not found"}
@@ -163,13 +148,10 @@ class EnhancedTradeHistorySynthesizer:
 
         if trade_file.exists():
             return pd.read_csv(trade_file)
-        else:
-            # Return empty DataFrame with expected columns
-            return pd.DataFrame(
-                columns=["Ticker", "Entry_Timestamp", "Exit_Timestamp", "PnL", "Return"]
-            )
+        # Return empty DataFrame with expected columns
+        return pd.DataFrame(columns=["Ticker", "Entry_Timestamp", "Exit_Timestamp", "PnL", "Return"])
 
-    def _generate_macro_economic_context(self) -> Dict[str, Any]:
+    def _generate_macro_economic_context(self) -> dict[str, Any]:
         """Generate comprehensive macro-economic context"""
 
         try:
@@ -178,9 +160,7 @@ class EnhancedTradeHistorySynthesizer:
 
             # Get VIX volatility analysis
             mock_vix_data = {"observations": [{"value": "18.5"}, {"value": "19.2"}]}
-            vix_analysis = self.vix_analyzer.analyze_volatility_environment(
-                mock_vix_data
-            )
+            vix_analysis = self.vix_analyzer.analyze_volatility_environment(mock_vix_data)
 
             # Get energy market analysis
             energy_analysis = self.energy_service.get_comprehensive_energy_analysis()
@@ -195,9 +175,7 @@ class EnhancedTradeHistorySynthesizer:
                 "volatility_environment": vix_analysis,
                 "energy_markets": energy_analysis,
                 "global_liquidity": macro_analysis.get("global_liquidity_analysis", {}),
-                "investment_implications": macro_analysis.get(
-                    "investment_implications", {}
-                ),
+                "investment_implications": macro_analysis.get("investment_implications", {}),
                 "risk_assessment": macro_analysis.get("risk_assessment", {}),
                 "confidence_score": macro_analysis.get("confidence_score", 0.7),
             }
@@ -213,9 +191,9 @@ class EnhancedTradeHistorySynthesizer:
     def _correlate_performance_macro(
         self,
         trade_data: pd.DataFrame,
-        macro_analysis: Dict[str, Any],
-        analysis_data: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        macro_analysis: dict[str, Any],
+        analysis_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Correlate trading performance with macro-economic conditions"""
 
         try:
@@ -244,21 +222,11 @@ class EnhancedTradeHistorySynthesizer:
                     "average_return": avg_return,
                     "analysis_period": self._get_analysis_period(trade_data),
                 },
-                "macro_environment_during_trades": self._assess_macro_during_trades(
-                    trade_data, macro_analysis
-                ),
-                "regime_performance_correlation": self._correlate_regime_performance(
-                    trade_data, macro_analysis
-                ),
-                "volatility_impact_analysis": self._analyze_volatility_impact(
-                    trade_data, macro_analysis
-                ),
-                "sector_macro_correlation": self._analyze_sector_macro_correlation(
-                    trade_data, macro_analysis
-                ),
-                "economic_cycle_impact": self._assess_economic_cycle_impact(
-                    trade_data, macro_analysis
-                ),
+                "macro_environment_during_trades": self._assess_macro_during_trades(trade_data, macro_analysis),
+                "regime_performance_correlation": self._correlate_regime_performance(trade_data, macro_analysis),
+                "volatility_impact_analysis": self._analyze_volatility_impact(trade_data, macro_analysis),
+                "sector_macro_correlation": self._analyze_sector_macro_correlation(trade_data, macro_analysis),
+                "economic_cycle_impact": self._assess_economic_cycle_impact(trade_data, macro_analysis),
             }
 
             return macro_correlation
@@ -270,8 +238,8 @@ class EnhancedTradeHistorySynthesizer:
             }
 
     def _generate_enhanced_market_context(
-        self, macro_analysis: Dict[str, Any], discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, macro_analysis: dict[str, Any], discovery_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate enhanced market context section for reports"""
 
         try:
@@ -283,55 +251,33 @@ class EnhancedTradeHistorySynthesizer:
             # Enhanced context with institutional-grade analysis
             enhanced_context = {
                 "comprehensive_market_assessment": {
-                    "overall_environment": macro_analysis.get(
-                        "overall_environment", "neutral"
-                    ),
-                    "regime_classification": market_regime.get(
-                        "regime_classification", {}
-                    ),
+                    "overall_environment": macro_analysis.get("overall_environment", "neutral"),
+                    "regime_classification": market_regime.get("regime_classification", {}),
                     "confidence_score": macro_analysis.get("confidence_score", 0.7),
-                    "stability_indicators": self._assess_market_stability(
-                        macro_analysis
-                    ),
+                    "stability_indicators": self._assess_market_stability(macro_analysis),
                 },
                 "volatility_regime_analysis": {
-                    "current_vix_environment": volatility_env.get(
-                        "volatility_regime", {}
-                    ),
+                    "current_vix_environment": volatility_env.get("volatility_regime", {}),
                     "term_structure": volatility_env.get("term_structure_analysis", {}),
-                    "sentiment_indicators": volatility_env.get(
-                        "sentiment_indicators", {}
-                    ),
-                    "trading_implications": volatility_env.get(
-                        "market_implications", []
-                    ),
+                    "sentiment_indicators": volatility_env.get("sentiment_indicators", {}),
+                    "trading_implications": volatility_env.get("market_implications", []),
                 },
                 "business_cycle_positioning": {
-                    "current_phase": business_cycle.get(
-                        "business_cycle_phase", "expansion"
-                    ),
+                    "current_phase": business_cycle.get("business_cycle_phase", "expansion"),
                     "phase_probability": business_cycle.get("phase_probability", 0.7),
-                    "recession_probability": business_cycle.get(
-                        "recession_probability", 0.15
-                    ),
+                    "recession_probability": business_cycle.get("recession_probability", 0.15),
                     "leading_indicators": business_cycle.get("leading_indicators", {}),
                 },
                 "liquidity_conditions": {
                     "global_assessment": macro_analysis.get("global_liquidity", {}),
-                    "money_supply_trends": self._assess_money_supply_trends(
-                        macro_analysis
-                    ),
+                    "money_supply_trends": self._assess_money_supply_trends(macro_analysis),
                     "credit_conditions": self._assess_credit_conditions(macro_analysis),
-                    "policy_implications": self._derive_policy_implications(
-                        macro_analysis
-                    ),
+                    "policy_implications": self._derive_policy_implications(macro_analysis),
                 },
                 "energy_commodity_backdrop": {
                     "oil_market_conditions": macro_analysis.get("energy_markets", {}),
                     "energy_price_trends": self._assess_energy_trends(macro_analysis),
-                    "inflation_implications": self._assess_inflation_implications(
-                        macro_analysis
-                    ),
+                    "inflation_implications": self._assess_inflation_implications(macro_analysis),
                 },
             }
 
@@ -344,8 +290,8 @@ class EnhancedTradeHistorySynthesizer:
             }
 
     def _generate_forward_looking_analysis(
-        self, macro_analysis: Dict[str, Any], performance_correlation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, macro_analysis: dict[str, Any], performance_correlation: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate forward-looking analysis and scenario planning"""
 
         try:
@@ -353,14 +299,10 @@ class EnhancedTradeHistorySynthesizer:
             scenarios = self._generate_economic_scenarios(macro_analysis)
 
             # Trading strategy implications
-            strategy_implications = self._derive_strategy_implications(
-                macro_analysis, performance_correlation
-            )
+            strategy_implications = self._derive_strategy_implications(macro_analysis, performance_correlation)
 
             # Risk management recommendations
-            risk_recommendations = self._generate_risk_recommendations(
-                macro_analysis, performance_correlation
-            )
+            risk_recommendations = self._generate_risk_recommendations(macro_analysis, performance_correlation)
 
             forward_analysis = {
                 "economic_scenarios": scenarios,
@@ -369,12 +311,8 @@ class EnhancedTradeHistorySynthesizer:
                 "portfolio_positioning_guidance": self._generate_positioning_guidance(
                     macro_analysis, performance_correlation
                 ),
-                "monitoring_priorities": self._identify_monitoring_priorities(
-                    macro_analysis
-                ),
-                "tactical_adjustments": self._recommend_tactical_adjustments(
-                    macro_analysis, performance_correlation
-                ),
+                "monitoring_priorities": self._identify_monitoring_priorities(macro_analysis),
+                "tactical_adjustments": self._recommend_tactical_adjustments(macro_analysis, performance_correlation),
                 "outlook_confidence": self._assess_outlook_confidence(macro_analysis),
             }
 
@@ -390,14 +328,14 @@ class EnhancedTradeHistorySynthesizer:
         self,
         portfolio_name: str,
         report_date: str,
-        discovery_data: Dict[str, Any],
-        analysis_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
+        analysis_data: dict[str, Any],
         trade_data: pd.DataFrame,
-        macro_analysis: Dict[str, Any],
-        performance_correlation: Dict[str, Any],
-        enhanced_context: Dict[str, Any],
-        forward_analysis: Dict[str, Any],
-    ) -> Dict[str, str]:
+        macro_analysis: dict[str, Any],
+        performance_correlation: dict[str, Any],
+        enhanced_context: dict[str, Any],
+        forward_analysis: dict[str, Any],
+    ) -> dict[str, str]:
         """Generate enhanced reports with macro-economic integration"""
 
         report_files = {}
@@ -416,11 +354,7 @@ class EnhancedTradeHistorySynthesizer:
                 forward_analysis,
             )
 
-            internal_file = (
-                self.outputs_root
-                / "internal"
-                / f"{portfolio_name}_{report_date}_enhanced.md"
-            )
+            internal_file = self.outputs_root / "internal" / f"{portfolio_name}_{report_date}_enhanced.md"
             internal_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(internal_file, "w") as f:
@@ -438,11 +372,7 @@ class EnhancedTradeHistorySynthesizer:
                 forward_analysis,
             )
 
-            live_file = (
-                self.outputs_root
-                / "live"
-                / f"{portfolio_name}_{report_date}_enhanced.md"
-            )
+            live_file = self.outputs_root / "live" / f"{portfolio_name}_{report_date}_enhanced.md"
             live_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(live_file, "w") as f:
@@ -463,11 +393,7 @@ class EnhancedTradeHistorySynthesizer:
                 forward_analysis,
             )
 
-            historical_file = (
-                self.outputs_root
-                / "historical"
-                / f"{portfolio_name}_{report_date}_enhanced.md"
-            )
+            historical_file = self.outputs_root / "historical" / f"{portfolio_name}_{report_date}_enhanced.md"
             historical_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(historical_file, "w") as f:
@@ -484,19 +410,17 @@ class EnhancedTradeHistorySynthesizer:
         self,
         portfolio_name: str,
         report_date: str,
-        discovery_data: Dict[str, Any],
-        analysis_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
+        analysis_data: dict[str, Any],
         trade_data: pd.DataFrame,
-        macro_analysis: Dict[str, Any],
-        performance_correlation: Dict[str, Any],
-        enhanced_context: Dict[str, Any],
-        forward_analysis: Dict[str, Any],
+        macro_analysis: dict[str, Any],
+        performance_correlation: dict[str, Any],
+        enhanced_context: dict[str, Any],
+        forward_analysis: dict[str, Any],
     ) -> str:
         """Create enhanced internal report with comprehensive macro integration"""
 
-        report_date_formatted = datetime.strptime(report_date, "%Y%m%d").strftime(
-            "%B %d, %Y"
-        )
+        report_date_formatted = datetime.strptime(report_date, "%Y%m%d").strftime("%B %d, %Y")
 
         report = f"""# 📊 Enhanced Live Signals Trading Performance Analysis
 ## Internal Trading Report with Macro-Economic Intelligence - {report_date_formatted}
@@ -525,8 +449,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 ## 🌍 **ENHANCED MACRO-ECONOMIC CONTEXT**
 
 ### Overall Economic Environment Assessment
-**Current Environment**: {macro_analysis.get('overall_environment', 'Neutral Conditions')}
-**Analysis Confidence**: {macro_analysis.get('confidence_score', 0.7):.0%}
+**Current Environment**: {macro_analysis.get("overall_environment", "Neutral Conditions")}
+**Analysis Confidence**: {macro_analysis.get("confidence_score", 0.7):.0%}
 **Framework Version**: Enhanced-DASV-2.0
 
 ### Market Regime Classification
@@ -539,10 +463,10 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         report += f"""
 | **Regime Component** | **Current Status** | **Confidence** | **Duration** | **Implications** |
 |---------------------|-------------------|----------------|--------------|------------------|
-| **Primary Regime** | {regime_classification.get('regime_type', 'Consolidation').title()} | {regime_classification.get('confidence_score', 0.75):.0%} | {regime_classification.get('regime_duration_days', 45)} days | Supportive for technical strategies |
-| **Volatility Environment** | {enhanced_context.get('volatility_regime_analysis', {}).get('current_vix_environment', {}).get('regime_type', 'Normal').title()} | {enhanced_context.get('volatility_regime_analysis', {}).get('current_vix_environment', {}).get('regime_probability', 0.8):.0%} | Stable | Low hedging costs |
-| **Business Cycle Phase** | {enhanced_context.get('business_cycle_positioning', {}).get('current_phase', 'Expansion').title()} | {enhanced_context.get('business_cycle_positioning', {}).get('phase_probability', 0.7):.0%} | Mid-cycle | Growth supportive |
-| **Liquidity Conditions** | {enhanced_context.get('liquidity_conditions', {}).get('global_assessment', {}).get('liquidity_environment', 'Accommodative').title()} | High | Expanding | Risk asset friendly |
+| **Primary Regime** | {regime_classification.get("regime_type", "Consolidation").title()} | {regime_classification.get("confidence_score", 0.75):.0%} | {regime_classification.get("regime_duration_days", 45)} days | Supportive for technical strategies |
+| **Volatility Environment** | {enhanced_context.get("volatility_regime_analysis", {}).get("current_vix_environment", {}).get("regime_type", "Normal").title()} | {enhanced_context.get("volatility_regime_analysis", {}).get("current_vix_environment", {}).get("regime_probability", 0.8):.0%} | Stable | Low hedging costs |
+| **Business Cycle Phase** | {enhanced_context.get("business_cycle_positioning", {}).get("current_phase", "Expansion").title()} | {enhanced_context.get("business_cycle_positioning", {}).get("phase_probability", 0.7):.0%} | Mid-cycle | Growth supportive |
+| **Liquidity Conditions** | {enhanced_context.get("liquidity_conditions", {}).get("global_assessment", {}).get("liquidity_environment", "Accommodative").title()} | High | Expanding | Risk asset friendly |
 
 ### Business Cycle & Economic Indicators Analysis
 """
@@ -551,9 +475,9 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         business_cycle = enhanced_context.get("business_cycle_positioning", {})
 
         report += f"""
-**Current Phase**: {business_cycle.get('current_phase', 'Expansion').title()}
-**Phase Probability**: {business_cycle.get('phase_probability', 0.7):.0%}
-**Recession Probability (12M)**: {business_cycle.get('recession_probability', 0.15):.0%}
+**Current Phase**: {business_cycle.get("current_phase", "Expansion").title()}
+**Phase Probability**: {business_cycle.get("phase_probability", 0.7):.0%}
+**Recession Probability (12M)**: {business_cycle.get("recession_probability", 0.15):.0%}
 
 **Leading Indicators Assessment**:
 - **Yield Curve**: Normal steepness, no inversion risk
@@ -568,13 +492,13 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         volatility_env = enhanced_context.get("volatility_regime_analysis", {})
 
         report += f"""
-**VIX Regime**: {volatility_env.get('current_vix_environment', {}).get('regime_type', 'Normal').title()}
-**Current VIX Level**: {volatility_env.get('current_vix_environment', {}).get('vix_level', 18.5):.1f}
-**Percentile Rank**: {volatility_env.get('current_vix_environment', {}).get('percentile_rank', 45):.0f}th percentile
+**VIX Regime**: {volatility_env.get("current_vix_environment", {}).get("regime_type", "Normal").title()}
+**Current VIX Level**: {volatility_env.get("current_vix_environment", {}).get("vix_level", 18.5):.1f}
+**Percentile Rank**: {volatility_env.get("current_vix_environment", {}).get("percentile_rank", 45):.0f}th percentile
 
 **Term Structure Analysis**:
-- **Structure Shape**: {volatility_env.get('term_structure', {}).get('structure_shape', 'Normal Contango').replace('_', ' ').title()}
-- **Market Stress Level**: {volatility_env.get('term_structure', {}).get('market_stress_level', 'Low').title()}
+- **Structure Shape**: {volatility_env.get("term_structure", {}).get("structure_shape", "Normal Contango").replace("_", " ").title()}
+- **Market Stress Level**: {volatility_env.get("term_structure", {}).get("market_stress_level", "Low").title()}
 - **Trading Implications**: Favorable environment for risk-taking
 
 ### Global Liquidity & Policy Environment
@@ -584,14 +508,14 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         liquidity_conditions = enhanced_context.get("liquidity_conditions", {})
 
         report += f"""
-**Global Liquidity**: {liquidity_conditions.get('global_assessment', {}).get('liquidity_environment', 'Accommodative').title()}
+**Global Liquidity**: {liquidity_conditions.get("global_assessment", {}).get("liquidity_environment", "Accommodative").title()}
 **M2 Money Supply Trends**: Expanding globally with regional variations
 **Central Bank Policy Stance**:
 - **Federal Reserve**: Neutral to accommodative
 - **ECB**: Accommodative stance maintained
 - **BOJ**: Ultra-accommodative policy continues
 
-**Credit Market Conditions**: {liquidity_conditions.get('credit_conditions', {}).get('credit_availability', 'Normal').title()}
+**Credit Market Conditions**: {liquidity_conditions.get("credit_conditions", {}).get("credit_availability", "Normal").title()}
 **Risk Appetite**: Moderate to elevated based on volatility metrics
 
 ---
@@ -606,10 +530,10 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 
         report += f"""
 **Portfolio Performance Summary**:
-- **Total Trades Analyzed**: {perf_correlation.get('total_trades', 38)}
-- **Win Rate**: {perf_correlation.get('win_rate', 0.68):.1%}
-- **Average Return**: {perf_correlation.get('average_return', 0.087):.1%}
-- **Analysis Period**: {perf_correlation.get('analysis_period', 'April 2025 - August 2025')}
+- **Total Trades Analyzed**: {perf_correlation.get("total_trades", 38)}
+- **Win Rate**: {perf_correlation.get("win_rate", 0.68):.1%}
+- **Average Return**: {perf_correlation.get("average_return", 0.087):.1%}
+- **Analysis Period**: {perf_correlation.get("analysis_period", "April 2025 - August 2025")}
 
 ### Macro-Economic Environment During Trade Period
 **Dominant Market Regime**: Low volatility expansion phase
@@ -643,7 +567,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 
 #### 🟢 **CAPITALIZE ON FAVORABLE CONDITIONS**
 1. **Low Volatility Environment Exploitation**
-   - Current VIX regime ({volatility_env.get('current_vix_environment', {}).get('vix_level', 18.5):.1f}) optimal for strategy
+   - Current VIX regime ({volatility_env.get("current_vix_environment", {}).get("vix_level", 18.5):.1f}) optimal for strategy
    - **Action**: Maintain or slightly increase position sizing
    - **Timeline**: Continue while VIX remains below 25
 
@@ -673,7 +597,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         # Add scenario analysis
         scenarios = forward_analysis.get("economic_scenarios", {})
 
-        report += f"""
+        report += """
 #### **Base Case (60% Probability): Continued Expansion**
 - **Economic Conditions**: Mid-cycle expansion continues, inflation contained
 - **Market Environment**: Low to normal volatility, supportive liquidity conditions
@@ -719,7 +643,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 ### Macro-Economic Risk Factors
 | **Risk Factor** | **Current Level** | **Trend** | **Impact on Strategy** | **Mitigation** |
 |----------------|-------------------|-----------|----------------------|----------------|
-| **Recession Risk** | {business_cycle.get('recession_probability', 0.15):.0%} | Stable | Low impact if <25% | Monitor leading indicators |
+| **Recession Risk** | {business_cycle.get("recession_probability", 0.15):.0%} | Stable | Low impact if <25% | Monitor leading indicators |
 | **Inflation Risk** | Moderate | Stable | Energy costs contained | Oil price monitoring |
 | **Policy Error Risk** | Low-Moderate | Stable | Fed communication key | FOMC meeting analysis |
 | **Geopolitical Risk** | Elevated | Variable | Market volatility spikes | VIX hedging strategy |
@@ -763,12 +687,12 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 - **VIX Term Structure**: Critical for volatility regime identification
 - **Global Liquidity Flows**: Central bank policy divergence monitoring
 
-**Next Enhanced Analysis**: {(datetime.now() + timedelta(days=7)).strftime('%B %d, %Y')}
-**Framework Confidence**: {macro_analysis.get('confidence_score', 0.7):.0%} (Institutional Grade)
+**Next Enhanced Analysis**: {(datetime.now() + timedelta(days=7)).strftime("%B %d, %Y")}
+**Framework Confidence**: {macro_analysis.get("confidence_score", 0.7):.0%} (Institutional Grade)
 
 ---
 
-*Enhanced Report Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}*
+*Enhanced Report Generated: {datetime.now().strftime("%B %d, %Y at %I:%M %p")}*
 *Macro-Economic Intelligence: Multi-Service Integration (FRED, EIA, Business Cycle, VIX Analysis)*
 *Data Sources: Trade History, Economic Indicators, Market Data, Volatility Metrics*
 """
@@ -778,9 +702,9 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
     # Helper methods for internal calculations
     def _assess_overall_macro_environment(
         self,
-        macro_analysis: Dict[str, Any],
-        vix_analysis: Dict[str, Any],
-        energy_analysis: Dict[str, Any],
+        macro_analysis: dict[str, Any],
+        vix_analysis: dict[str, Any],
+        energy_analysis: dict[str, Any],
     ) -> str:
         """Assess overall macro-economic environment"""
 
@@ -808,12 +732,11 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         # Overall assessment
         if len(environment_factors) >= 3:
             return "highly_supportive"
-        elif len(environment_factors) >= 2:
+        if len(environment_factors) >= 2:
             return "supportive"
-        elif len(environment_factors) >= 1:
+        if len(environment_factors) >= 1:
             return "neutral_to_supportive"
-        else:
-            return "challenging"
+        return "challenging"
 
     def _get_analysis_period(self, trade_data: pd.DataFrame) -> str:
         """Get analysis period from trade data"""
@@ -827,9 +750,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         except Exception:
             return "Period unavailable"
 
-    def _assess_macro_during_trades(
-        self, trade_data: pd.DataFrame, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_macro_during_trades(self, trade_data: pd.DataFrame, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess macro conditions during trading period"""
 
         return {
@@ -840,9 +761,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "energy_backdrop": "balanced_supply_demand",
         }
 
-    def _correlate_regime_performance(
-        self, trade_data: pd.DataFrame, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _correlate_regime_performance(self, trade_data: pd.DataFrame, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Correlate performance with market regimes"""
 
         # Mock correlation analysis - in production would use actual regime data
@@ -867,9 +786,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             },
         }
 
-    def _analyze_volatility_impact(
-        self, trade_data: pd.DataFrame, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_volatility_impact(self, trade_data: pd.DataFrame, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Analyze impact of volatility on performance"""
 
         return {
@@ -880,8 +797,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         }
 
     def _analyze_sector_macro_correlation(
-        self, trade_data: pd.DataFrame, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, trade_data: pd.DataFrame, macro_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze sector performance correlation with macro conditions"""
 
         return {
@@ -891,9 +808,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "financial_rate_sensitivity": "Interest rate environment impact",
         }
 
-    def _assess_economic_cycle_impact(
-        self, trade_data: pd.DataFrame, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_economic_cycle_impact(self, trade_data: pd.DataFrame, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess impact of economic cycle on trading performance"""
 
         return {
@@ -904,31 +819,25 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         }
 
     # Additional helper methods would continue here...
-    def _assess_market_stability(
-        self, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_market_stability(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess overall market stability"""
         return {
             "stability_score": 0.8,
             "key_factors": ["low_volatility", "stable_cycle"],
         }
 
-    def _assess_money_supply_trends(
-        self, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_money_supply_trends(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess money supply trends"""
         return {"global_trend": "expanding", "regional_variation": "moderate"}
 
-    def _assess_credit_conditions(
-        self, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_credit_conditions(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess credit market conditions"""
         return {
             "overall_conditions": "accommodative",
             "spread_environment": "contained",
         }
 
-    def _derive_policy_implications(self, macro_analysis: Dict[str, Any]) -> List[str]:
+    def _derive_policy_implications(self, macro_analysis: dict[str, Any]) -> list[str]:
         """Derive policy implications"""
         return [
             "Supportive monetary policy",
@@ -936,7 +845,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "Low intervention risk",
         ]
 
-    def _assess_energy_trends(self, macro_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_energy_trends(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess energy price trends"""
         return {
             "oil_trend": "stable",
@@ -944,9 +853,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "renewable_transition": "ongoing",
         }
 
-    def _assess_inflation_implications(
-        self, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_inflation_implications(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Assess inflation implications"""
         return {
             "current_risk": "moderate",
@@ -954,9 +861,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "policy_response": "measured",
         }
 
-    def _generate_economic_scenarios(
-        self, macro_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_economic_scenarios(self, macro_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate economic scenarios"""
         return {
             "base_case": {"probability": 0.6, "description": "Continued expansion"},
@@ -965,8 +870,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         }
 
     def _derive_strategy_implications(
-        self, macro_analysis: Dict[str, Any], performance_correlation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, macro_analysis: dict[str, Any], performance_correlation: dict[str, Any]
+    ) -> dict[str, Any]:
         """Derive strategy implications"""
         return {
             "current_environment": "favorable_for_technical_strategies",
@@ -975,8 +880,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         }
 
     def _generate_risk_recommendations(
-        self, macro_analysis: Dict[str, Any], performance_correlation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, macro_analysis: dict[str, Any], performance_correlation: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate risk management recommendations"""
         return {
             "position_sizing": "maintain_current",
@@ -989,8 +894,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         }
 
     def _generate_positioning_guidance(
-        self, macro_analysis: Dict[str, Any], performance_correlation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, macro_analysis: dict[str, Any], performance_correlation: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate portfolio positioning guidance"""
         return {
             "sector_allocation": {"technology": "35-40%", "healthcare": "20-25%"},
@@ -998,9 +903,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "tactical_adjustments": "growth_sector_bias",
         }
 
-    def _identify_monitoring_priorities(
-        self, macro_analysis: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_monitoring_priorities(self, macro_analysis: dict[str, Any]) -> list[str]:
         """Identify key monitoring priorities"""
         return [
             "Federal Reserve policy communications",
@@ -1010,8 +913,8 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         ]
 
     def _recommend_tactical_adjustments(
-        self, macro_analysis: Dict[str, Any], performance_correlation: Dict[str, Any]
-    ) -> List[str]:
+        self, macro_analysis: dict[str, Any], performance_correlation: dict[str, Any]
+    ) -> list[str]:
         """Recommend tactical adjustments"""
         return [
             "Maintain current technical approach",
@@ -1020,7 +923,7 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
             "Prepare for eventual cycle changes",
         ]
 
-    def _assess_outlook_confidence(self, macro_analysis: Dict[str, Any]) -> float:
+    def _assess_outlook_confidence(self, macro_analysis: dict[str, Any]) -> float:
         """Assess confidence in outlook"""
         return macro_analysis.get("confidence_score", 0.7)
 
@@ -1028,16 +931,16 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         self,
         portfolio_name: str,
         report_date: str,
-        discovery_data: Dict[str, Any],
-        analysis_data: Dict[str, Any],
-        enhanced_context: Dict[str, Any],
-        forward_analysis: Dict[str, Any],
+        discovery_data: dict[str, Any],
+        analysis_data: dict[str, Any],
+        enhanced_context: dict[str, Any],
+        forward_analysis: dict[str, Any],
     ) -> str:
         """Create enhanced live monitor with macro integration"""
 
         # Simplified version - full implementation would include comprehensive macro sections
         return f"""# 🔴 Enhanced Live Signals Monitor with Macro Intelligence
-## Real-Time Position Tracking & Economic Context - {datetime.strptime(report_date, '%Y%m%d').strftime('%B %d, %Y')}
+## Real-Time Position Tracking & Economic Context - {datetime.strptime(report_date, "%Y%m%d").strftime("%B %d, %Y")}
 
 ---
 
@@ -1049,9 +952,9 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
 ## 🌍 **MACRO-ECONOMIC ENVIRONMENT ASSESSMENT**
 
 ### Current Economic Backdrop
-**Overall Environment**: {enhanced_context.get('comprehensive_market_assessment', {}).get('overall_environment', 'Supportive')}
-**Business Cycle Phase**: {enhanced_context.get('business_cycle_positioning', {}).get('current_phase', 'Expansion').title()}
-**Volatility Regime**: {enhanced_context.get('volatility_regime_analysis', {}).get('current_vix_environment', {}).get('regime_type', 'Normal').title()}
+**Overall Environment**: {enhanced_context.get("comprehensive_market_assessment", {}).get("overall_environment", "Supportive")}
+**Business Cycle Phase**: {enhanced_context.get("business_cycle_positioning", {}).get("current_phase", "Expansion").title()}
+**Volatility Regime**: {enhanced_context.get("volatility_regime_analysis", {}).get("current_vix_environment", {}).get("regime_type", "Normal").title()}
 
 ### Trading Environment Assessment
 ✅ **Low Volatility Environment**: Favorable for technical strategies
@@ -1071,19 +974,19 @@ All signals are shared publicly on X/Twitter [@colemorton7](https://x.com/colemo
         self,
         portfolio_name: str,
         report_date: str,
-        discovery_data: Dict[str, Any],
-        analysis_data: Dict[str, Any],
+        discovery_data: dict[str, Any],
+        analysis_data: dict[str, Any],
         trade_data: pd.DataFrame,
-        macro_analysis: Dict[str, Any],
-        performance_correlation: Dict[str, Any],
-        enhanced_context: Dict[str, Any],
-        forward_analysis: Dict[str, Any],
+        macro_analysis: dict[str, Any],
+        performance_correlation: dict[str, Any],
+        enhanced_context: dict[str, Any],
+        forward_analysis: dict[str, Any],
     ) -> str:
         """Create enhanced historical report with comprehensive macro analysis"""
 
         # Simplified version - full implementation would include detailed historical correlation
         return f"""# 📈 Enhanced Live Signals Historical Performance Report
-## Closed Positions Analysis with Macro-Economic Intelligence - {datetime.strptime(report_date, '%Y%m%d').strftime('%B %d, %Y')}
+## Closed Positions Analysis with Macro-Economic Intelligence - {datetime.strptime(report_date, "%Y%m%d").strftime("%B %d, %Y")}
 
 ---
 
@@ -1120,9 +1023,7 @@ def main():
     """Main entry point for enhanced trade history synthesis"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Enhanced Trade History Synthesis with Macro Integration"
-    )
+    parser = argparse.ArgumentParser(description="Enhanced Trade History Synthesis with Macro Integration")
     parser.add_argument("portfolio", help="Portfolio name to analyze")
     parser.add_argument("--date", help="Report date (YYYYMMDD)", default=None)
     parser.add_argument("--env", help="Environment (dev/test/prod)", default="dev")
@@ -1146,9 +1047,7 @@ def main():
     for report_type, file_path in result.get("enhanced_reports", {}).items():
         print("   - {report_type}: {file_path}")
 
-    print(
-        f"🎯 Macro-economic confidence: {result.get('macro_economic_context', {}).get('confidence_score', 0.7):.0%}"
-    )
+    print(f"🎯 Macro-economic confidence: {result.get('macro_economic_context', {}).get('confidence_score', 0.7):.0%}")
     print("📅 Analysis timestamp: {result.get('synthesis_timestamp')}")
 
     return 0

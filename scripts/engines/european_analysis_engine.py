@@ -5,8 +5,8 @@ Specialized engine for European macro-economic analysis with ECB-focused methodo
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,7 @@ class EuropeanAnalysisEngine:
         self.currency_focus = "EUR/USD"
         self.volatility_index = "VSTOXX"
 
-    def analyze_ecb_monetary_policy(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def analyze_ecb_monetary_policy(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze ECB monetary policy stance and transmission"""
         logger.info("Analyzing ECB monetary policy...")
 
@@ -34,23 +32,17 @@ class EuropeanAnalysisEngine:
         # ECB-specific analysis
         ecb_analysis = {
             "deposit_rate": policy_stance.get("policy_rate", 3.75),
-            "deposit_rate_analysis": self._analyze_ecb_deposit_rate(
-                policy_stance.get("policy_rate", 3.75)
-            ),
+            "deposit_rate_analysis": self._analyze_ecb_deposit_rate(policy_stance.get("policy_rate", 3.75)),
             "app_unwinding": self._analyze_app_unwinding(monetary_policy),
-            "forward_guidance_assessment": self._assess_ecb_forward_guidance(
-                monetary_policy
-            ),
-            "transmission_effectiveness": self._evaluate_ecb_transmission(
-                monetary_policy
-            ),
+            "forward_guidance_assessment": self._assess_ecb_forward_guidance(monetary_policy),
+            "transmission_effectiveness": self._evaluate_ecb_transmission(monetary_policy),
             "policy_normalization_path": self._analyze_policy_normalization(),
             "confidence": 0.89,
         }
 
         return ecb_analysis
 
-    def _analyze_ecb_deposit_rate(self, current_rate: float) -> Dict[str, Any]:
+    def _analyze_ecb_deposit_rate(self, current_rate: float) -> dict[str, Any]:
         """Analyze ECB deposit rate positioning"""
         # ECB neutral rate estimated around 2.0-2.5%
         neutral_rate = 2.25
@@ -60,21 +52,15 @@ class EuropeanAnalysisEngine:
             "current_rate": current_rate,
             "neutral_rate_estimate": neutral_rate,
             "restrictiveness": (
-                "restrictive"
-                if rate_gap > 0.5
-                else "neutral"
-                if abs(rate_gap) <= 0.5
-                else "accommodative"
+                "restrictive" if rate_gap > 0.5 else "neutral" if abs(rate_gap) <= 0.5 else "accommodative"
             ),
             "rate_gap": rate_gap,
             "analysis": f"ECB deposit rate at {current_rate}% is {rate_gap:.2f}pp above estimated neutral rate, indicating {'restrictive' if rate_gap > 0.5 else 'neutral'} policy stance",
         }
 
-    def _analyze_app_unwinding(self, monetary_policy: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_app_unwinding(self, monetary_policy: dict[str, Any]) -> dict[str, Any]:
         """Analyze Asset Purchase Programme unwinding"""
-        balance_sheet_data = monetary_policy.get("policy_stance", {}).get(
-            "balance_sheet_size", 7200000
-        )
+        balance_sheet_data = monetary_policy.get("policy_stance", {}).get("balance_sheet_size", 7200000)
 
         return {
             "current_size": balance_sheet_data,
@@ -84,9 +70,7 @@ class EuropeanAnalysisEngine:
             "completion_timeline": "2025-2026_estimated_based_on_current_pace",
         }
 
-    def _assess_ecb_forward_guidance(
-        self, monetary_policy: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_ecb_forward_guidance(self, monetary_policy: dict[str, Any]) -> dict[str, Any]:
         """Assess ECB forward guidance credibility and market interpretation"""
         forward_guidance = monetary_policy.get("forward_guidance", {})
 
@@ -98,9 +82,7 @@ class EuropeanAnalysisEngine:
             "policy_optionality": "data_dependent_approach_maintains_policy_flexibility",
         }
 
-    def _evaluate_ecb_transmission(
-        self, monetary_policy: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_ecb_transmission(self, monetary_policy: dict[str, Any]) -> dict[str, Any]:
         """Evaluate ECB monetary policy transmission mechanisms"""
         transmission = monetary_policy.get("transmission_mechanisms", {})
 
@@ -123,7 +105,7 @@ class EuropeanAnalysisEngine:
             "overall_effectiveness": transmission.get("effectiveness", 0.82),
         }
 
-    def _analyze_policy_normalization(self) -> Dict[str, Any]:
+    def _analyze_policy_normalization(self) -> dict[str, Any]:
         """Analyze ECB policy normalization pathway"""
         return {
             "normalization_phase": "advanced_tightening_phase",
@@ -137,9 +119,7 @@ class EuropeanAnalysisEngine:
             ],
         }
 
-    def analyze_european_business_cycles(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def analyze_european_business_cycles(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze European-specific business cycle patterns"""
         logger.info("Analyzing European business cycle patterns...")
 
@@ -148,38 +128,26 @@ class EuropeanAnalysisEngine:
 
         european_cycle_analysis = {
             "current_phase": business_cycle.get("current_phase", "expansion"),
-            "cycle_characteristics": self._analyze_european_cycle_characteristics(
-                business_cycle
-            ),
-            "leading_indicators_analysis": self._analyze_european_leading_indicators(
-                economic_indicators
-            ),
+            "cycle_characteristics": self._analyze_european_cycle_characteristics(business_cycle),
+            "leading_indicators_analysis": self._analyze_european_leading_indicators(economic_indicators),
             "sectoral_cycle_dynamics": self._analyze_sectoral_dynamics(),
             "regional_divergence": self._analyze_regional_divergence(),
-            "comparison_to_us_cycle": self._compare_to_us_business_cycle(
-                business_cycle
-            ),
+            "comparison_to_us_cycle": self._compare_to_us_business_cycle(business_cycle),
             "confidence": 0.86,
         }
 
         return european_cycle_analysis
 
-    def _analyze_european_cycle_characteristics(
-        self, business_cycle: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_european_cycle_characteristics(self, business_cycle: dict[str, Any]) -> dict[str, Any]:
         """Analyze European business cycle characteristics"""
         current_phase = business_cycle.get("current_phase", "expansion")
-        phase_duration = business_cycle.get("historical_context", {}).get(
-            "phase_duration", 22
-        )
+        phase_duration = business_cycle.get("historical_context", {}).get("phase_duration", 22)
 
         return {
             "cycle_length": "european_cycles_historically_longer_than_us",
             "current_phase_duration": f"{phase_duration}_months",
             "phase_maturity": (
-                "late_expansion"
-                if current_phase == "expansion" and phase_duration > 18
-                else "mid_expansion"
+                "late_expansion" if current_phase == "expansion" and phase_duration > 18 else "mid_expansion"
             ),
             "structural_factors": {
                 "labor_market_rigidity": "extends_cycle_duration",
@@ -188,9 +156,7 @@ class EuropeanAnalysisEngine:
             },
         }
 
-    def _analyze_european_leading_indicators(
-        self, economic_indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_european_leading_indicators(self, economic_indicators: dict[str, Any]) -> dict[str, Any]:
         """Analyze European-specific leading indicators"""
         leading = economic_indicators.get("leading_indicators", {})
 
@@ -203,7 +169,7 @@ class EuropeanAnalysisEngine:
             "composite_assessment": "mixed_signals_with_slight_improvement_trend",
         }
 
-    def _analyze_sectoral_dynamics(self) -> Dict[str, Any]:
+    def _analyze_sectoral_dynamics(self) -> dict[str, Any]:
         """Analyze European sectoral business cycle dynamics"""
         return {
             "manufacturing": {
@@ -223,7 +189,7 @@ class EuropeanAnalysisEngine:
             },
         }
 
-    def _analyze_regional_divergence(self) -> Dict[str, Any]:
+    def _analyze_regional_divergence(self) -> dict[str, Any]:
         """Analyze business cycle divergence across European regions"""
         return {
             "core_europe": {
@@ -248,9 +214,7 @@ class EuropeanAnalysisEngine:
             ],
         }
 
-    def _compare_to_us_business_cycle(
-        self, business_cycle: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _compare_to_us_business_cycle(self, business_cycle: dict[str, Any]) -> dict[str, Any]:
         """Compare European business cycle to US cycle"""
         return {
             "synchronization": "moderate_synchronization_historically",
@@ -260,15 +224,11 @@ class EuropeanAnalysisEngine:
             "correlation": 0.72,  # Historical correlation coefficient
         }
 
-    def analyze_eur_usd_dynamics(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def analyze_eur_usd_dynamics(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze EUR/USD currency dynamics from European perspective"""
         logger.info("Analyzing EUR/USD dynamics...")
 
-        currency_data = discovery_data.get("global_economic_context", {}).get(
-            "currency_dynamics", {}
-        )
+        currency_data = discovery_data.get("global_economic_context", {}).get("currency_dynamics", {})
 
         eur_usd_analysis = {
             "current_level": self._get_current_eur_usd_level(currency_data),
@@ -282,9 +242,7 @@ class EuropeanAnalysisEngine:
 
         return eur_usd_analysis
 
-    def _get_current_eur_usd_level(
-        self, currency_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _get_current_eur_usd_level(self, currency_data: dict[str, Any]) -> dict[str, Any]:
         """Get current EUR/USD level and trend"""
         major_pairs = currency_data.get("major_pairs", {})
         eur_usd = major_pairs.get("eur_usd", "1.0950_range_bound_1.08_1.12")
@@ -296,7 +254,7 @@ class EuropeanAnalysisEngine:
             "volatility": "low_to_moderate",
         }
 
-    def _analyze_rate_differentials(self) -> Dict[str, Any]:
+    def _analyze_rate_differentials(self) -> dict[str, Any]:
         """Analyze interest rate differentials ECB vs Fed"""
         return {
             "policy_rate_differential": "ecb_deposit_rate_3.75_vs_fed_funds_5.25",
@@ -306,7 +264,7 @@ class EuropeanAnalysisEngine:
             "impact_on_eur": "negative_from_rate_differentials_but_improving",
         }
 
-    def _analyze_fundamental_drivers(self) -> Dict[str, Any]:
+    def _analyze_fundamental_drivers(self) -> dict[str, Any]:
         """Analyze fundamental EUR drivers"""
         return {
             "growth_differential": "us_growth_advantage_but_narrowing",
@@ -316,9 +274,7 @@ class EuropeanAnalysisEngine:
             "energy_security": "improving_significantly_from_2022_crisis",
         }
 
-    def _analyze_technical_positioning(
-        self, currency_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_technical_positioning(self, currency_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze EUR/USD technical positioning"""
         return {
             "key_support": "1.08_level_critical_support",
@@ -328,7 +284,7 @@ class EuropeanAnalysisEngine:
             "volatility_regime": "low_volatility_environment",
         }
 
-    def _assess_policy_impact_on_eur(self) -> Dict[str, Any]:
+    def _assess_policy_impact_on_eur(self) -> dict[str, Any]:
         """Assess ECB policy impact on EUR"""
         return {
             "ecb_policy_impact": "restrictive_policy_provides_eur_support",
@@ -337,7 +293,7 @@ class EuropeanAnalysisEngine:
             "policy_divergence": "narrowing_divergence_with_fed_supports_eur",
         }
 
-    def _generate_eur_usd_outlook(self) -> Dict[str, Any]:
+    def _generate_eur_usd_outlook(self) -> dict[str, Any]:
         """Generate EUR/USD outlook"""
         return {
             "1_month": "range_bound_1.08_1.12",
@@ -347,9 +303,7 @@ class EuropeanAnalysisEngine:
             "key_opportunities": ["policy_convergence", "current_account_surplus"],
         }
 
-    def analyze_energy_security_metrics(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def analyze_energy_security_metrics(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze European energy security and market dynamics"""
         logger.info("Analyzing European energy security...")
 
@@ -366,7 +320,7 @@ class EuropeanAnalysisEngine:
 
         return energy_security_analysis
 
-    def _analyze_gas_security(self, energy_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_gas_security(self, energy_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze natural gas security metrics"""
         gas_data = energy_data.get("natural_gas_analysis", {})
         storage_levels = gas_data.get("storage_levels", {})
@@ -390,9 +344,7 @@ class EuropeanAnalysisEngine:
             },
         }
 
-    def _analyze_renewable_transition(
-        self, energy_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_renewable_transition(self, energy_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze renewable energy transition progress"""
         electricity_data = energy_data.get("electricity_markets", {})
         generation_mix = electricity_data.get("generation_mix", {})
@@ -405,23 +357,19 @@ class EuropeanAnalysisEngine:
             "policy_support": "strong_regulatory_and_financial_backing",
         }
 
-    def _analyze_energy_price_impact(
-        self, energy_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_energy_price_impact(self, energy_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze energy price impact on European economy"""
         inflation_impact = energy_data.get("inflation_implications", {})
 
         return {
-            "inflation_contribution": inflation_impact.get(
-                "energy_inflation_contribution", 0.3
-            ),
+            "inflation_contribution": inflation_impact.get("energy_inflation_contribution", 0.3),
             "pass_through_mechanisms": inflation_impact.get("pass_through_effects", {}),
             "competitiveness_impact": "improving_due_to_price_normalization",
             "household_impact": "energy_bills_stabilizing_but_remain_elevated",
             "industrial_impact": "cost_pressures_easing_supporting_manufacturing",
         }
 
-    def _assess_energy_geopolitical_risks(self) -> Dict[str, Any]:
+    def _assess_energy_geopolitical_risks(self) -> dict[str, Any]:
         """Assess geopolitical risks to European energy security"""
         return {
             "supply_disruption_risk": "low_given_diversification",
@@ -430,7 +378,7 @@ class EuropeanAnalysisEngine:
             "policy_coordination_risk": "low_given_strong_eu_coordination",
         }
 
-    def _analyze_energy_infrastructure(self) -> Dict[str, Any]:
+    def _analyze_energy_infrastructure(self) -> dict[str, Any]:
         """Analyze energy infrastructure resilience"""
         return {
             "grid_stability": "stable_with_increasing_flexibility",
@@ -439,9 +387,7 @@ class EuropeanAnalysisEngine:
             "lng_terminals": "sufficient_capacity_with_expansion_planned",
         }
 
-    def generate_european_insights(
-        self, discovery_data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def generate_european_insights(self, discovery_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate European-specific analytical insights"""
         logger.info("Generating European-specific insights...")
 

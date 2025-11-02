@@ -9,6 +9,7 @@ including photo-booth-controls and Astro dev toolbar elements.
 import sys
 from pathlib import Path
 
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -89,7 +90,9 @@ def test_combined_logging():
         content = f.read()
 
     # Check for combined logging statement
-    logging_pattern = "console.log(`Hidden ${{controls.length}} control elements and ${{hiddenDevElements}} dev toolbar elements`);"
+    logging_pattern = (
+        "console.log(`Hidden ${{controls.length}} control elements and ${{hiddenDevElements}} dev toolbar elements`);"
+    )
 
     if logging_pattern not in content:
         print("❌ Missing combined element count logging")
@@ -212,7 +215,7 @@ def main():
                 passed += 1
             else:
                 failed += 1
-        except Exception as e:
+        except Exception:
             print("❌ Test {test.__name__} failed with exception: {e}")
             failed += 1
         print()
@@ -242,9 +245,8 @@ def main():
         print("- Zero UI controls or development tools")
 
         return 0
-    else:
-        print("💥 Some tests failed. Please fix the issues above.")
-        return 1
+    print("💥 Some tests failed. Please fix the issues above.")
+    return 1
 
 
 if __name__ == "__main__":

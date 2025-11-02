@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/local_data_references.json",
+  "$id": "https://colemorton.com/schemas/local_data_references.json",
   "title": "Local Data References Schema",
   "description": "Reusable schema for systematic discovery and referencing of related files from the ./data/ knowledge domain across all analysis types",
   "type": "object",

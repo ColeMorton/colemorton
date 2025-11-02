@@ -7,13 +7,11 @@ Provides workflow templates, dependency management, quality gates, and orchestra
 patterns for institutional-grade analysis execution.
 """
 
-import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from command_execution_service import (
     CommandExecutionService,
@@ -50,8 +48,8 @@ class WorkflowPhaseResult:
     phase: str
     execution_result: ExecutionResult
     quality_gate_result: QualityGateResult
-    confidence_score: Optional[float] = None
-    quality_issues: List[str] = field(default_factory=list)
+    confidence_score: float | None = None
+    quality_issues: list[str] = field(default_factory=list)
     passed_to_next_phase: bool = False
 
 
@@ -63,12 +61,12 @@ class WorkflowResult:
     domain: str
     status: WorkflowStatus
     start_time: datetime
-    end_time: Optional[datetime] = None
-    phase_results: Dict[str, WorkflowPhaseResult] = field(default_factory=dict)
-    final_outputs: List[str] = field(default_factory=list)
-    overall_confidence: Optional[float] = None
-    quality_summary: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    end_time: datetime | None = None
+    phase_results: dict[str, WorkflowPhaseResult] = field(default_factory=dict)
+    final_outputs: list[str] = field(default_factory=list)
+    overall_confidence: float | None = None
+    quality_summary: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DASVWorkflowOrchestrator:
@@ -100,7 +98,7 @@ class DASVWorkflowOrchestrator:
         # Workflow templates
         self.workflow_templates = self._load_workflow_templates()
 
-    def _load_workflow_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _load_workflow_templates(self) -> dict[str, dict[str, Any]]:
         """Load workflow templates for different domains"""
         return {
             "fundamental_analysis": {
@@ -230,7 +228,7 @@ class DASVWorkflowOrchestrator:
 
     def _evaluate_quality_gate(
         self, phase: str, execution_result: ExecutionResult, domain: str
-    ) -> Tuple[QualityGateResult, List[str]]:
+    ) -> tuple[QualityGateResult, list[str]]:
         """Evaluate quality gates for a specific phase"""
         issues = []
 
@@ -240,10 +238,7 @@ class DASVWorkflowOrchestrator:
 
         # Confidence score check
         if execution_result.confidence_score is not None:
-            if (
-                execution_result.confidence_score
-                < self.quality_thresholds["minimum_confidence"]
-            ):
+            if execution_result.confidence_score < self.quality_thresholds["minimum_confidence"]:
                 issues.append(
                     f"Confidence score {execution_result.confidence_score:.2f} below minimum {self.quality_thresholds['minimum_confidence']}"
                 )
@@ -273,35 +268,30 @@ class DASVWorkflowOrchestrator:
         if issues:
             if any("fail" in issue.lower() for issue in issues):
                 return QualityGateResult.FAIL, issues
-            else:
-                return QualityGateResult.WARNING, issues
+            return QualityGateResult.WARNING, issues
 
         return QualityGateResult.PASS, []
 
-    def _should_continue_workflow(
-        self, quality_result: QualityGateResult, phase: str
-    ) -> bool:
+    def _should_continue_workflow(self, quality_result: QualityGateResult, phase: str) -> bool:
         """Determine if workflow should continue based on quality gate result"""
         if quality_result == QualityGateResult.PASS:
             return True
-        elif quality_result == QualityGateResult.WARNING:
+        if quality_result == QualityGateResult.WARNING:
             # Continue with warnings, but flag for review
             return True
-        elif quality_result == QualityGateResult.FAIL:
+        if quality_result == QualityGateResult.FAIL:
             # Stop workflow on critical failures
             if phase in ["discover", "analyze"]:
                 return False  # Critical phases
-            else:
-                return True  # Allow synthesis/validation to proceed with warnings
-        else:
-            return True
+            return True  # Allow synthesis/validation to proceed with warnings
+        return True
 
     def execute_workflow(
         self,
         domain: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.DIRECT,
-        workflow_id: Optional[str] = None,
+        workflow_id: str | None = None,
     ) -> WorkflowResult:
         """
         Execute a complete DASV workflow with quality gates and orchestration
@@ -331,9 +321,7 @@ class DASVWorkflowOrchestrator:
             template = self.workflow_templates.get(domain)
             if not template:
                 workflow_result.status = WorkflowStatus.FAILED
-                workflow_result.metadata[
-                    "error"
-                ] = f"No workflow template for domain: {domain}"
+                workflow_result.metadata["error"] = f"No workflow template for domain: {domain}"
                 return workflow_result
 
             phases = template["phases"]
@@ -347,15 +335,11 @@ class DASVWorkflowOrchestrator:
 
                 # Execute phase
                 start_time = time.time()
-                execution_result = self.execution_service.execute_command(
-                    domain, phase, current_params, mode
-                )
+                execution_result = self.execution_service.execute_command(domain, phase, current_params, mode)
                 execution_time = time.time() - start_time
 
                 # Evaluate quality gates
-                quality_result, quality_issues = self._evaluate_quality_gate(
-                    phase, execution_result, domain
-                )
+                quality_result, quality_issues = self._evaluate_quality_gate(phase, execution_result, domain)
 
                 # Create phase result
                 phase_result = WorkflowPhaseResult(
@@ -376,9 +360,7 @@ class DASVWorkflowOrchestrator:
                     if quality_result == QualityGateResult.WARNING
                     else "❌"
                 )
-                print(
-                    f"   {status_emoji} {phase}: {execution_result.status.value} (Quality: {quality_result.value})"
-                )
+                print(f"   {status_emoji} {phase}: {execution_result.status.value} (Quality: {quality_result.value})")
 
                 if quality_issues:
                     for issue in quality_issues[:3]:  # Show first 3 issues
@@ -389,9 +371,7 @@ class DASVWorkflowOrchestrator:
 
                 # Check if should continue
                 if not self._should_continue_workflow(quality_result, phase):
-                    print(
-                        f"   🛑 Workflow stopped at {phase} due to quality gate failure"
-                    )
+                    print(f"   🛑 Workflow stopped at {phase} due to quality gate failure")
                     workflow_result.status = WorkflowStatus.QUALITY_GATE_FAILED
                     break
 
@@ -399,17 +379,11 @@ class DASVWorkflowOrchestrator:
                 if execution_result.output_files:
                     phase_result.passed_to_next_phase = True
                     if phase == "discover":
-                        current_params[
-                            "discovery_file"
-                        ] = execution_result.output_files[0]
+                        current_params["discovery_file"] = execution_result.output_files[0]
                     elif phase == "analyze":
-                        current_params["analysis_file"] = execution_result.output_files[
-                            0
-                        ]
+                        current_params["analysis_file"] = execution_result.output_files[0]
                     elif phase == "synthesize":
-                        current_params[
-                            "synthesis_file"
-                        ] = execution_result.output_files[0]
+                        current_params["synthesis_file"] = execution_result.output_files[0]
 
                 # Add to final outputs
                 if execution_result.output_files:
@@ -428,26 +402,20 @@ class DASVWorkflowOrchestrator:
                     if r.quality_gate_result == QualityGateResult.WARNING
                 ]
 
-                if failed_phases:
-                    workflow_result.status = WorkflowStatus.PARTIAL_SUCCESS
-                elif warning_phases:
+                if failed_phases or warning_phases:
                     workflow_result.status = WorkflowStatus.PARTIAL_SUCCESS
                 else:
                     workflow_result.status = WorkflowStatus.SUCCESS
 
             # Calculate overall confidence
             confidences = [
-                r.confidence_score
-                for r in workflow_result.phase_results.values()
-                if r.confidence_score is not None
+                r.confidence_score for r in workflow_result.phase_results.values() if r.confidence_score is not None
             ]
             if confidences:
                 workflow_result.overall_confidence = sum(confidences) / len(confidences)
 
             # Generate quality summary
-            workflow_result.quality_summary = self._generate_quality_summary(
-                workflow_result
-            )
+            workflow_result.quality_summary = self._generate_quality_summary(workflow_result)
 
         except Exception as e:
             workflow_result.status = WorkflowStatus.FAILED
@@ -462,29 +430,19 @@ class DASVWorkflowOrchestrator:
             status_emoji = (
                 "🎉"
                 if workflow_result.status == WorkflowStatus.SUCCESS
-                else (
-                    "⚠️"
-                    if workflow_result.status == WorkflowStatus.PARTIAL_SUCCESS
-                    else "💥"
-                )
+                else ("⚠️" if workflow_result.status == WorkflowStatus.PARTIAL_SUCCESS else "💥")
             )
-            print(
-                f"\n{status_emoji} Workflow {workflow_id} completed: {workflow_result.status.value}"
-            )
+            print(f"\n{status_emoji} Workflow {workflow_id} completed: {workflow_result.status.value}")
             print("   ⏱️  Duration: {duration}")
             print("   📊 Phases completed: {len(workflow_result.phase_results)}")
             print("   📁 Output files: {len(workflow_result.final_outputs)}")
 
             if workflow_result.overall_confidence:
-                print(
-                    f"   🎯 Overall confidence: {workflow_result.overall_confidence:.2f}"
-                )
+                print(f"   🎯 Overall confidence: {workflow_result.overall_confidence:.2f}")
 
         return workflow_result
 
-    def _generate_quality_summary(
-        self, workflow_result: WorkflowResult
-    ) -> Dict[str, Any]:
+    def _generate_quality_summary(self, workflow_result: WorkflowResult) -> dict[str, Any]:
         """Generate comprehensive quality summary for workflow"""
         summary = {
             "total_phases": len(workflow_result.phase_results),
@@ -507,9 +465,7 @@ class DASVWorkflowOrchestrator:
                 summary["warning_phases"] += 1
 
             # Collect quality issues
-            summary["quality_issues"].extend(
-                [f"{phase}: {issue}" for issue in result.quality_issues]
-            )
+            summary["quality_issues"].extend([f"{phase}: {issue}" for issue in result.quality_issues])
 
             # Record confidence scores
             if result.confidence_score:
@@ -517,15 +473,15 @@ class DASVWorkflowOrchestrator:
 
         return summary
 
-    def get_workflow_status(self, workflow_id: str) -> Optional[WorkflowResult]:
+    def get_workflow_status(self, workflow_id: str) -> WorkflowResult | None:
         """Get status of an active or completed workflow"""
         return self.active_workflows.get(workflow_id)
 
-    def list_available_workflows(self) -> List[str]:
+    def list_available_workflows(self) -> list[str]:
         """List all available workflow domains"""
         return list(self.workflow_templates.keys())
 
-    def get_workflow_template_info(self, domain: str) -> Optional[Dict[str, Any]]:
+    def get_workflow_template_info(self, domain: str) -> dict[str, Any] | None:
         """Get information about a workflow template"""
         return self.workflow_templates.get(domain)
 
@@ -550,9 +506,7 @@ def main():
     parser.add_argument("--ticker-2", help="Second ticker (for comparative analysis)")
     parser.add_argument("--date", help="Analysis date (YYYYMMDD format)")
     parser.add_argument("--workflow-id", help="Custom workflow identifier")
-    parser.add_argument(
-        "--list-workflows", action="store_true", help="List available workflows"
-    )
+    parser.add_argument("--list-workflows", action="store_true", help="List available workflows")
     parser.add_argument(
         "--template-info",
         action="store_true",
@@ -604,9 +558,7 @@ def main():
     # Execute workflow
     mode = ExecutionMode.DIRECT if args.mode == "direct" else ExecutionMode.SUB_AGENT
 
-    result = orchestrator.execute_workflow(
-        args.domain, parameters, mode, args.workflow_id
-    )
+    result = orchestrator.execute_workflow(args.domain, parameters, mode, args.workflow_id)
 
     # Print detailed results
     print("\n" + "=" * 60)
@@ -620,19 +572,11 @@ def main():
 
     print("\nPhase Results:")
     for phase, phase_result in result.phase_results.items():
-        status_emoji = (
-            "✅"
-            if phase_result.execution_result.status == ExecutionStatus.SUCCESS
-            else "❌"
-        )
+        status_emoji = "✅" if phase_result.execution_result.status == ExecutionStatus.SUCCESS else "❌"
         quality_emoji = (
             "✅"
             if phase_result.quality_gate_result == QualityGateResult.PASS
-            else (
-                "⚠️"
-                if phase_result.quality_gate_result == QualityGateResult.WARNING
-                else "❌"
-            )
+            else ("⚠️" if phase_result.quality_gate_result == QualityGateResult.WARNING else "❌")
         )
 
         print(

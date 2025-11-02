@@ -37,7 +37,7 @@ describe("Contact Form - Email Content Validation", () => {
       const testData = {
         name: "Cole Morton",
         email: "cole.morton@hotmail.com",
-        organization: "Sensylate Platform",
+        organization: "Cole Morton Platform",
         inquiryType: "technical-collaboration",
         message:
           "Test message for email validation with comprehensive content including technical details and professional context.",

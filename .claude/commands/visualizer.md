@@ -7,7 +7,7 @@
 
 ## Agent Overview
 
-The Visualizer agent serves as the intelligent interface between users and Sensylate's comprehensive visual systems ecosystem. Rather than duplicating technical specifications, this agent **orchestrates user workflows**, **routes to authoritative documentation**, and **manages integration tasks** across all visual components: photo booth, dashboards, charts, and export systems.
+The Visualizer agent serves as the intelligent interface between users and Colemorton's comprehensive visual systems ecosystem. Rather than duplicating technical specifications, this agent **orchestrates user workflows**, **routes to authoritative documentation**, and **manages integration tasks** across all visual components: photo booth, dashboards, charts, and export systems.
 
 ---
 
@@ -332,7 +332,7 @@ When adding export formats or settings:
 
 ## Agent Authority & Scope
 
-This agent serves as the **intelligent interface** to Sensylate's visual systems ecosystem. The agent:
+This agent serves as the **intelligent interface** to Colemorton's visual systems ecosystem. The agent:
 
 ✅ **Orchestrates** user workflows across multiple visual systems
 ✅ **Routes** users to authoritative technical specifications

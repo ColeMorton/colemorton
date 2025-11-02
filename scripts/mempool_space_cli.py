@@ -13,15 +13,16 @@ Command-line interface for Mempool.space Bitcoin blockchain data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from services.mempool_space import create_mempool_space_service
-from utils.cli_base import BaseFinancialCLI, OutputFormat, ValidationError
+from utils.cli_base import BaseFinancialCLI, OutputFormat
 
 
 class MempoolSpaceCLI(BaseFinancialCLI):
@@ -41,7 +42,7 @@ class MempoolSpaceCLI(BaseFinancialCLI):
             self.service = create_mempool_space_service(env)
         return self.service
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform Mempool.space service health check"""
         try:
             service = self._get_service(env)
@@ -55,7 +56,7 @@ class MempoolSpaceCLI(BaseFinancialCLI):
                 "error": str(e),
             }
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         return {
             "action": action,
@@ -114,7 +115,7 @@ class MempoolSpaceCLI(BaseFinancialCLI):
                 self._output_result(result, output_format, f"Recent {limit} Blocks")
 
             except Exception as e:
-                self._handle_error(e, f"Failed to get recent blocks")
+                self._handle_error(e, "Failed to get recent blocks")
 
         @self.app.command("block")
         def get_block_info(
@@ -165,9 +166,7 @@ class MempoolSpaceCLI(BaseFinancialCLI):
 
         @self.app.command("hashrate")
         def get_hashrate_info(
-            timeframe: str = typer.Option(
-                "1w", help="Timeframe (1d, 1w, 1m, 3m, 6m, 1y)"
-            ),
+            timeframe: str = typer.Option("1w", help="Timeframe (1d, 1w, 1m, 3m, 6m, 1y)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):

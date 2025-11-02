@@ -12,25 +12,25 @@ Core template selection algorithms:
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from error_handler import ErrorHandler
-from errors import ProcessingError, ValidationError
+from errors import ValidationError
 from logging_config import TwitterSystemLogger
 from result_types import TemplateSelectionResult
-from template_scoring import ScoringResult, TemplateScoringEngine
+from template_scoring import TemplateScoringEngine
 
 
 @dataclass
 class SelectionContext:
     """Context for template selection"""
 
-    market_conditions: Optional[str] = None
-    user_preferences: Dict[str, Any] = field(default_factory=dict)
-    historical_performance: Dict[str, float] = field(default_factory=dict)
-    a_b_test_group: Optional[str] = None
+    market_conditions: str | None = None
+    user_preferences: dict[str, Any] = field(default_factory=dict)
+    historical_performance: dict[str, float] = field(default_factory=dict)
+    a_b_test_group: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "market_conditions": self.market_conditions,
@@ -50,12 +50,11 @@ class BaseSelectionStrategy(ABC):
 
     @abstractmethod
     def select_template(
-        self, content_type: str, data: Dict[str, Any], context: SelectionContext
+        self, content_type: str, data: dict[str, Any], context: SelectionContext
     ) -> TemplateSelectionResult:
         """Select optimal template based on strategy"""
-        pass
 
-    def validate_selection_input(self, content_type: str, data: Dict[str, Any]) -> None:
+    def validate_selection_input(self, content_type: str, data: dict[str, Any]) -> None:
         """Validate input for template selection"""
 
         if not content_type:
@@ -72,7 +71,7 @@ class HighestScoreStrategy(BaseSelectionStrategy):
     """Select template with highest score"""
 
     def select_template(
-        self, content_type: str, data: Dict[str, Any], context: SelectionContext
+        self, content_type: str, data: dict[str, Any], context: SelectionContext
     ) -> TemplateSelectionResult:
         """Select template with highest score"""
 
@@ -80,9 +79,7 @@ class HighestScoreStrategy(BaseSelectionStrategy):
 
         # Score all templates
         try:
-            scoring_results = self.scoring_engine.score_all_templates(
-                content_type, data, context.to_dict()
-            )
+            scoring_results = self.scoring_engine.score_all_templates(content_type, data, context.to_dict())
         except Exception as e:
             self.error_handler.handle_processing_error(
                 "template_scoring",
@@ -92,14 +89,10 @@ class HighestScoreStrategy(BaseSelectionStrategy):
             raise
 
         if not scoring_results:
-            raise ValidationError(
-                f"No templates available for content type: {content_type}"
-            )
+            raise ValidationError(f"No templates available for content type: {content_type}")
 
         # Find highest scoring template
-        best_template = max(
-            scoring_results.keys(), key=lambda k: scoring_results[k].score
-        )
+        best_template = max(scoring_results.keys(), key=lambda k: scoring_results[k].score)
         best_result = scoring_results[best_template]
 
         # Create selection result
@@ -122,7 +115,7 @@ class ContextAwareStrategy(BaseSelectionStrategy):
     def __init__(
         self,
         scoring_engine: TemplateScoringEngine,
-        context_weights: Optional[Dict[str, float]] = None,
+        context_weights: dict[str, float] | None = None,
     ):
         super().__init__(scoring_engine)
         self.context_weights = context_weights or {
@@ -133,21 +126,17 @@ class ContextAwareStrategy(BaseSelectionStrategy):
         }
 
     def select_template(
-        self, content_type: str, data: Dict[str, Any], context: SelectionContext
+        self, content_type: str, data: dict[str, Any], context: SelectionContext
     ) -> TemplateSelectionResult:
         """Select template with context-aware scoring"""
 
         self.validate_selection_input(content_type, data)
 
         # Score all templates
-        scoring_results = self.scoring_engine.score_all_templates(
-            content_type, data, context.to_dict()
-        )
+        scoring_results = self.scoring_engine.score_all_templates(content_type, data, context.to_dict())
 
         if not scoring_results:
-            raise ValidationError(
-                f"No templates available for content type: {content_type}"
-            )
+            raise ValidationError(f"No templates available for content type: {content_type}")
 
         # Apply context-based adjustments
         adjusted_scores = {}
@@ -156,9 +145,7 @@ class ContextAwareStrategy(BaseSelectionStrategy):
 
             # Apply context adjustments
             context_bonus = self._calculate_context_bonus(template_name, context)
-            performance_bonus = self._calculate_performance_bonus(
-                template_name, context
-            )
+            performance_bonus = self._calculate_performance_bonus(template_name, context)
 
             adjusted_score = base_score + context_bonus + performance_bonus
             adjusted_scores[template_name] = min(1.0, max(0.0, adjusted_score))
@@ -176,57 +163,39 @@ class ContextAwareStrategy(BaseSelectionStrategy):
             selection_confidence=scoring_results[best_template].confidence,
         )
 
-    def _calculate_context_bonus(
-        self, template_name: str, context: SelectionContext
-    ) -> float:
+    def _calculate_context_bonus(self, template_name: str, context: SelectionContext) -> float:
         """Calculate context-based bonus for template"""
 
         bonus = 0.0
 
         # Market conditions bonus
         if context.market_conditions:
-            market_bonus = self._get_market_conditions_bonus(
-                template_name, context.market_conditions
-            )
+            market_bonus = self._get_market_conditions_bonus(template_name, context.market_conditions)
             bonus += market_bonus * self.context_weights.get("market_conditions", 0.0)
 
         # User preferences bonus
         if context.user_preferences:
-            preference_bonus = self._get_user_preferences_bonus(
-                template_name, context.user_preferences
-            )
-            bonus += preference_bonus * self.context_weights.get(
-                "user_preferences", 0.0
-            )
+            preference_bonus = self._get_user_preferences_bonus(template_name, context.user_preferences)
+            bonus += preference_bonus * self.context_weights.get("user_preferences", 0.0)
 
         return bonus
 
-    def _calculate_performance_bonus(
-        self, template_name: str, context: SelectionContext
-    ) -> float:
+    def _calculate_performance_bonus(self, template_name: str, context: SelectionContext) -> float:
         """Calculate performance-based bonus for template"""
 
         if not context.historical_performance:
             return 0.0
 
         template_performance = context.historical_performance.get(template_name, 0.0)
-        max_performance = (
-            max(context.historical_performance.values())
-            if context.historical_performance
-            else 1.0
-        )
+        max_performance = max(context.historical_performance.values()) if context.historical_performance else 1.0
 
         if max_performance > 0:
             normalized_performance = template_performance / max_performance
-            return normalized_performance * self.context_weights.get(
-                "historical_performance", 0.0
-            )
+            return normalized_performance * self.context_weights.get("historical_performance", 0.0)
 
         return 0.0
 
-    def _get_market_conditions_bonus(
-        self, template_name: str, market_conditions: str
-    ) -> float:
+    def _get_market_conditions_bonus(self, template_name: str, market_conditions: str) -> float:
         """Get market conditions bonus for template"""
 
         # Simple market condition matching
@@ -238,9 +207,7 @@ class ContextAwareStrategy(BaseSelectionStrategy):
 
         return condition_bonuses.get(market_conditions, {}).get(template_name, 0.0)
 
-    def _get_user_preferences_bonus(
-        self, template_name: str, user_preferences: Dict[str, Any]
-    ) -> float:
+    def _get_user_preferences_bonus(self, template_name: str, user_preferences: dict[str, Any]) -> float:
         """Get user preferences bonus for template"""
 
         # Simple preference matching
@@ -258,32 +225,24 @@ class ContextAwareStrategy(BaseSelectionStrategy):
 class ABTestStrategy(BaseSelectionStrategy):
     """A/B testing strategy for template selection"""
 
-    def __init__(
-        self, scoring_engine: TemplateScoringEngine, test_allocation: float = 0.5
-    ):
+    def __init__(self, scoring_engine: TemplateScoringEngine, test_allocation: float = 0.5):
         super().__init__(scoring_engine)
         self.test_allocation = test_allocation
 
     def select_template(
-        self, content_type: str, data: Dict[str, Any], context: SelectionContext
+        self, content_type: str, data: dict[str, Any], context: SelectionContext
     ) -> TemplateSelectionResult:
         """Select template with A/B testing logic"""
 
         self.validate_selection_input(content_type, data)
 
-        scoring_results = self.scoring_engine.score_all_templates(
-            content_type, data, context.to_dict()
-        )
+        scoring_results = self.scoring_engine.score_all_templates(content_type, data, context.to_dict())
 
         if not scoring_results:
-            raise ValidationError(
-                f"No templates available for content type: {content_type}"
-            )
+            raise ValidationError(f"No templates available for content type: {content_type}")
 
         # Sort templates by score
-        sorted_templates = sorted(
-            scoring_results.keys(), key=lambda k: scoring_results[k].score, reverse=True
-        )
+        sorted_templates = sorted(scoring_results.keys(), key=lambda k: scoring_results[k].score, reverse=True)
 
         # A/B test logic
         if context.a_b_test_group == "control" or not context.a_b_test_group:
@@ -291,11 +250,7 @@ class ABTestStrategy(BaseSelectionStrategy):
             selected_template = sorted_templates[0]
         else:
             # Use second highest scoring template for test group
-            selected_template = (
-                sorted_templates[1]
-                if len(sorted_templates) > 1
-                else sorted_templates[0]
-            )
+            selected_template = sorted_templates[1] if len(sorted_templates) > 1 else sorted_templates[0]
 
         all_scores = {k: v.score for k, v in scoring_results.items()}
 
@@ -313,7 +268,7 @@ class ABTestStrategy(BaseSelectionStrategy):
 class TemplateSelectionEngine:
     """Main template selection engine"""
 
-    def __init__(self, scoring_engine: Optional[TemplateScoringEngine] = None):
+    def __init__(self, scoring_engine: TemplateScoringEngine | None = None):
         self.scoring_engine = scoring_engine or TemplateScoringEngine()
         self.error_handler = ErrorHandler()
         self.logger = TwitterSystemLogger("TemplateSelectionEngine")
@@ -331,9 +286,9 @@ class TemplateSelectionEngine:
     def select_template(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[SelectionContext] = None,
-        strategy: Optional[str] = None,
+        data: dict[str, Any],
+        context: SelectionContext | None = None,
+        strategy: str | None = None,
     ) -> TemplateSelectionResult:
         """Select optimal template using specified strategy"""
 
@@ -381,10 +336,10 @@ class TemplateSelectionEngine:
     def get_template_recommendations(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[SelectionContext] = None,
+        data: dict[str, Any],
+        context: SelectionContext | None = None,
         limit: int = 3,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get ranked template recommendations"""
 
         if context is None:
@@ -392,17 +347,13 @@ class TemplateSelectionEngine:
 
         try:
             # Score all templates
-            scoring_results = self.scoring_engine.score_all_templates(
-                content_type, data, context.to_dict()
-            )
+            scoring_results = self.scoring_engine.score_all_templates(content_type, data, context.to_dict())
 
             if not scoring_results:
                 return []
 
             # Sort by score
-            sorted_results = sorted(
-                scoring_results.items(), key=lambda x: x[1].score, reverse=True
-            )
+            sorted_results = sorted(scoring_results.items(), key=lambda x: x[1].score, reverse=True)
 
             # Create recommendations
             recommendations = []
@@ -431,9 +382,9 @@ class TemplateSelectionEngine:
         self,
         content_type: str,
         selected_template: str,
-        data: Dict[str, Any],
-        context: Optional[SelectionContext] = None,
-    ) -> Dict[str, Any]:
+        data: dict[str, Any],
+        context: SelectionContext | None = None,
+    ) -> dict[str, Any]:
         """Validate a template selection"""
 
         if context is None:
@@ -441,9 +392,7 @@ class TemplateSelectionEngine:
 
         try:
             # Score the selected template
-            result = self.scoring_engine.score_template(
-                content_type, selected_template, data, context.to_dict()
-            )
+            result = self.scoring_engine.score_template(content_type, selected_template, data, context.to_dict())
 
             # Validate selection
             is_valid = result.score >= 0.5 and result.confidence >= 0.4
@@ -469,14 +418,12 @@ class TemplateSelectionEngine:
             )
             raise
 
-    def add_selection_strategy(
-        self, name: str, strategy: BaseSelectionStrategy
-    ) -> None:
+    def add_selection_strategy(self, name: str, strategy: BaseSelectionStrategy) -> None:
         """Add custom selection strategy"""
 
         if not isinstance(strategy, BaseSelectionStrategy):
             raise ValidationError(
-                f"Strategy must inherit from BaseSelectionStrategy",
+                "Strategy must inherit from BaseSelectionStrategy",
                 context={"strategy_type": type(strategy).__name__},
             )
 
@@ -487,7 +434,7 @@ class TemplateSelectionEngine:
             {"strategy_type": type(strategy).__name__},
         )
 
-    def get_strategy_performance(self) -> Dict[str, Dict[str, float]]:
+    def get_strategy_performance(self) -> dict[str, dict[str, float]]:
         """Get performance metrics for each strategy"""
 
         # This would be implemented with actual performance tracking

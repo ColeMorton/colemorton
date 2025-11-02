@@ -12,13 +12,14 @@ Production-grade BGeometrics Bitcoin on-chain data integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
     ServiceConfig,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -44,8 +45,8 @@ class BGeometricsService(BaseFinancialService):
             self.config.base_url = "https://bitcoin-data.com/api/v1"
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate BGeometrics response data"""
 
         if not data:
@@ -64,14 +65,13 @@ class BGeometricsService(BaseFinancialService):
 
         return data
 
-    def _format_date(self, date_input: Union[str, datetime]) -> str:
+    def _format_date(self, date_input: str | datetime) -> str:
         """Format date for API requests"""
         if isinstance(date_input, str):
             return date_input
-        elif isinstance(date_input, datetime):
+        if isinstance(date_input, datetime):
             return date_input.strftime("%Y-%m-%d")
-        else:
-            raise ValueError(f"Invalid date format: {date_input}")
+        raise ValueError(f"Invalid date format: {date_input}")
 
 
 def create_bgeometrics_service(env: str = "dev") -> BGeometricsService:

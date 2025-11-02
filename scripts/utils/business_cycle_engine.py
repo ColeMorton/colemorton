@@ -12,18 +12,14 @@ Advanced statistical modeling engine for business cycle identification and analy
 Provides institutional-grade business cycle intelligence for macro-economic analysis.
 """
 
-import sys
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 from scipy import stats
-from scipy.signal import find_peaks
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -38,7 +34,7 @@ class CyclePhase:
     duration_months: int  # Months in current phase
     phase_strength: float  # Strength of the current phase (0-1)
     transition_probability: float  # Probability of phase transition
-    expected_duration: Optional[int]  # Expected remaining duration
+    expected_duration: int | None  # Expected remaining duration
 
 
 @dataclass
@@ -48,8 +44,8 @@ class RecessionSignal:
     recession_probability: float  # Probability of recession (0-1)
     signal_strength: str  # 'weak', 'moderate', 'strong', 'extreme'
     time_horizon: str  # '3m', '6m', '12m'
-    confidence_interval: Tuple[float, float]  # (lower, upper) bounds
-    key_drivers: List[str]  # Main contributing indicators
+    confidence_interval: tuple[float, float]  # (lower, upper) bounds
+    key_drivers: list[str]  # Main contributing indicators
 
 
 @dataclass
@@ -106,10 +102,10 @@ class BusinessCycleEngine:
 
     def analyze_business_cycle(
         self,
-        leading_indicators: Dict[str, Any],
-        coincident_indicators: Dict[str, Any],
-        lagging_indicators: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        leading_indicators: dict[str, Any],
+        coincident_indicators: dict[str, Any],
+        lagging_indicators: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Comprehensive business cycle analysis with statistical modeling
 
@@ -124,33 +120,23 @@ class BusinessCycleEngine:
         try:
             # Process and score indicator groups
             leading_scores = self._score_indicator_group(leading_indicators, "leading")
-            coincident_scores = self._score_indicator_group(
-                coincident_indicators, "coincident"
-            )
+            coincident_scores = self._score_indicator_group(coincident_indicators, "coincident")
             lagging_scores = self._score_indicator_group(lagging_indicators, "lagging")
 
             # Calculate composite business cycle index
-            composite_index = self._calculate_composite_index(
-                leading_scores, coincident_scores, lagging_scores
-            )
+            composite_index = self._calculate_composite_index(leading_scores, coincident_scores, lagging_scores)
 
             # Identify current business cycle phase
-            current_phase = self._identify_cycle_phase(
-                leading_scores, coincident_scores, composite_index
-            )
+            current_phase = self._identify_cycle_phase(leading_scores, coincident_scores, composite_index)
 
             # Calculate recession probability
-            recession_analysis = self._calculate_recession_probability(
-                leading_scores, coincident_scores
-            )
+            recession_analysis = self._calculate_recession_probability(leading_scores, coincident_scores)
 
             # Perform regime switching analysis
             regime_analysis = self._detect_regime_switches(composite_index)
 
             # Generate nowcast and forecast
-            nowcast = self._generate_economic_nowcast(
-                leading_scores, coincident_scores, current_phase
-            )
+            nowcast = self._generate_economic_nowcast(leading_scores, coincident_scores, current_phase)
 
             return {
                 "business_cycle_phase": current_phase,
@@ -180,33 +166,24 @@ class BusinessCycleEngine:
                 "analysis_timestamp": datetime.now().isoformat(),
             }
 
-    def _score_indicator_group(
-        self, indicators: Dict[str, Any], group_type: str
-    ) -> Dict[str, IndicatorScore]:
+    def _score_indicator_group(self, indicators: dict[str, Any], group_type: str) -> dict[str, IndicatorScore]:
         """Score a group of economic indicators with statistical normalization"""
         scored_indicators = {}
 
         for indicator_name, indicator_data in indicators.items():
             try:
                 # Extract time series data (mock for now - would process real data)
-                if (
-                    isinstance(indicator_data, dict)
-                    and "observations" in indicator_data
-                ):
-                    time_series = self._extract_time_series(
-                        indicator_data["observations"]
-                    )
+                if isinstance(indicator_data, dict) and "observations" in indicator_data:
+                    time_series = self._extract_time_series(indicator_data["observations"])
                 else:
                     # Use mock data for development
                     time_series = np.random.normal(0, 1, 24)  # 24 months of data
 
                 # Calculate indicator score
-                score = self._calculate_indicator_score(
-                    time_series, indicator_name, group_type
-                )
+                score = self._calculate_indicator_score(time_series, indicator_name, group_type)
                 scored_indicators[indicator_name] = score
 
-            except Exception as e:
+            except Exception:
                 # Handle missing or invalid data gracefully
                 scored_indicators[indicator_name] = IndicatorScore(
                     indicator_name=indicator_name,
@@ -239,9 +216,7 @@ class BusinessCycleEngine:
         std_value = float(np.std(time_series)) if len(time_series) > 1 else 1.0
 
         # Calculate Z-score (normalized)
-        normalized_score = (
-            (raw_value - mean_value) / std_value if std_value > 0 else 0.0
-        )
+        normalized_score = (raw_value - mean_value) / std_value if std_value > 0 else 0.0
 
         # Determine trend direction
         if len(time_series) >= 6:
@@ -259,9 +234,7 @@ class BusinessCycleEngine:
         if len(time_series) >= 12:
             # Test for trend significance
             x = np.arange(len(time_series))
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                x, time_series
-            )
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x, time_series)
             significance_level = 1.0 - p_value
         else:
             significance_level = 0.5  # Neutral for insufficient data
@@ -272,9 +245,7 @@ class BusinessCycleEngine:
         return IndicatorScore(
             indicator_name=indicator_name,
             raw_value=raw_value,
-            normalized_score=float(
-                np.clip(normalized_score, -3.0, 3.0)
-            ),  # Clip extreme values
+            normalized_score=float(np.clip(normalized_score, -3.0, 3.0)),  # Clip extreme values
             contribution_weight=contribution_weight,
             trend_direction=trend_direction,
             significance_level=float(np.clip(significance_level, 0.0, 1.0)),
@@ -324,53 +295,34 @@ class BusinessCycleEngine:
 
     def _calculate_composite_index(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
-        lagging_scores: Dict[str, IndicatorScore],
-    ) -> Dict[str, Any]:
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
+        lagging_scores: dict[str, IndicatorScore],
+    ) -> dict[str, Any]:
         """Calculate composite business cycle index using PCA and weighted scoring"""
 
         try:
             # Extract normalized scores for composite calculation
-            leading_values = [
-                score.normalized_score * score.contribution_weight
-                for score in leading_scores.values()
-            ]
+            leading_values = [score.normalized_score * score.contribution_weight for score in leading_scores.values()]
             coincident_values = [
-                score.normalized_score * score.contribution_weight
-                for score in coincident_scores.values()
+                score.normalized_score * score.contribution_weight for score in coincident_scores.values()
             ]
-            lagging_values = [
-                score.normalized_score * score.contribution_weight
-                for score in lagging_scores.values()
-            ]
+            lagging_values = [score.normalized_score * score.contribution_weight for score in lagging_scores.values()]
 
             # Calculate group composites
-            leading_composite = (
-                float(np.mean(leading_values)) if leading_values else 0.0
-            )
-            coincident_composite = (
-                float(np.mean(coincident_values)) if coincident_values else 0.0
-            )
-            lagging_composite = (
-                float(np.mean(lagging_values)) if lagging_values else 0.0
-            )
+            leading_composite = float(np.mean(leading_values)) if leading_values else 0.0
+            coincident_composite = float(np.mean(coincident_values)) if coincident_values else 0.0
+            lagging_composite = float(np.mean(lagging_values)) if lagging_values else 0.0
 
             # Overall composite with time-based weighting (leading indicators get higher weight)
-            overall_composite = (
-                0.5 * leading_composite
-                + 0.35 * coincident_composite
-                + 0.15 * lagging_composite
-            )
+            overall_composite = 0.5 * leading_composite + 0.35 * coincident_composite + 0.15 * lagging_composite
 
             # Calculate momentum (rate of change)
             # In production, this would use historical composite values
             momentum = 0.1  # Placeholder - would calculate from time series
 
             # Statistical confidence based on indicator agreement
-            confidence = self._calculate_composite_confidence(
-                leading_scores, coincident_scores, lagging_scores
-            )
+            confidence = self._calculate_composite_confidence(leading_scores, coincident_scores, lagging_scores)
 
             return {
                 "overall_composite": float(overall_composite),
@@ -380,9 +332,7 @@ class BusinessCycleEngine:
                 "momentum": momentum,
                 "confidence": confidence,
                 "interpretation": self._interpret_composite_score(overall_composite),
-                "percentile_rank": self._calculate_composite_percentile(
-                    overall_composite
-                ),
+                "percentile_rank": self._calculate_composite_percentile(overall_composite),
             }
 
         except Exception as e:
@@ -393,9 +343,9 @@ class BusinessCycleEngine:
 
     def _identify_cycle_phase(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
-        composite_index: Dict[str, Any],
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
+        composite_index: dict[str, Any],
     ) -> CyclePhase:
         """Identify current business cycle phase using statistical thresholds"""
 
@@ -409,20 +359,12 @@ class BusinessCycleEngine:
 
             for phase_name, thresholds in self.phase_thresholds.items():
                 # Calculate phase probability based on threshold matching
-                leading_match = (
-                    1.0 if leading_composite > thresholds["leading"] else 0.0
-                )
-                coincident_match = (
-                    1.0 if coincident_composite > thresholds["coincident"] else 0.0
-                )
-                composite_match = (
-                    1.0 if overall_composite > thresholds["composite"] else 0.0
-                )
+                leading_match = 1.0 if leading_composite > thresholds["leading"] else 0.0
+                coincident_match = 1.0 if coincident_composite > thresholds["coincident"] else 0.0
+                composite_match = 1.0 if overall_composite > thresholds["composite"] else 0.0
 
                 # Weighted phase score
-                phase_score = (
-                    0.4 * leading_match + 0.4 * coincident_match + 0.2 * composite_match
-                )
+                phase_score = 0.4 * leading_match + 0.4 * coincident_match + 0.2 * composite_match
                 phase_scores[phase_name] = phase_score
 
             # Identify most likely phase
@@ -432,9 +374,7 @@ class BusinessCycleEngine:
 
             # Estimate phase duration and strength
             duration_months = self._estimate_phase_duration(phase_name, composite_index)
-            phase_strength = min(
-                abs(overall_composite), 1.0
-            )  # Strength based on composite magnitude
+            phase_strength = min(abs(overall_composite), 1.0)  # Strength based on composite magnitude
 
             # Calculate transition probability
             transition_probability = self._calculate_transition_probability(
@@ -442,9 +382,7 @@ class BusinessCycleEngine:
             )
 
             # Expected remaining duration
-            expected_duration = self._estimate_remaining_duration(
-                phase_name, duration_months
-            )
+            expected_duration = self._estimate_remaining_duration(phase_name, duration_months)
 
             return CyclePhase(
                 phase_name=phase_name,
@@ -455,7 +393,7 @@ class BusinessCycleEngine:
                 expected_duration=expected_duration,
             )
 
-        except Exception as e:
+        except Exception:
             # Return neutral phase on error
             return CyclePhase(
                 phase_name="expansion",  # Default to expansion
@@ -468,8 +406,8 @@ class BusinessCycleEngine:
 
     def _calculate_recession_probability(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
     ) -> RecessionSignal:
         """Calculate recession probability using NBER-style modeling"""
 
@@ -479,28 +417,18 @@ class BusinessCycleEngine:
 
             # Yield curve (most important leading indicator)
             yield_curve_score = self._get_indicator_score(leading_scores, "yield_curve")
-            recession_signals["yield_curve"] = max(
-                0.0, -yield_curve_score * 0.5
-            )  # Inverted curve increases risk
+            recession_signals["yield_curve"] = max(0.0, -yield_curve_score * 0.5)  # Inverted curve increases risk
 
             # Employment trends
-            employment_score = self._get_indicator_score(
-                coincident_scores, "employment"
-            )
+            employment_score = self._get_indicator_score(coincident_scores, "employment")
             recession_signals["employment"] = max(0.0, -employment_score * 0.3)
 
             # Industrial production
-            production_score = self._get_indicator_score(
-                coincident_scores, "industrial_production"
-            )
-            recession_signals["industrial_production"] = max(
-                0.0, -production_score * 0.25
-            )
+            production_score = self._get_indicator_score(coincident_scores, "industrial_production")
+            recession_signals["industrial_production"] = max(0.0, -production_score * 0.25)
 
             # Consumer confidence
-            confidence_score = self._get_indicator_score(
-                leading_scores, "consumer_confidence"
-            )
+            confidence_score = self._get_indicator_score(leading_scores, "consumer_confidence")
             recession_signals["consumer_confidence"] = max(0.0, -confidence_score * 0.2)
 
             # Calculate weighted recession probability
@@ -512,9 +440,7 @@ class BusinessCycleEngine:
                 recession_probability += (weight / total_weight) * signal_strength
 
             # Apply logistic transformation to keep probability in [0,1]
-            recession_probability = 1.0 / (
-                1.0 + np.exp(-5.0 * (recession_probability - 0.5))
-            )
+            recession_probability = 1.0 / (1.0 + np.exp(-5.0 * (recession_probability - 0.5)))
 
             # Determine signal strength
             if recession_probability < 0.2:
@@ -527,9 +453,7 @@ class BusinessCycleEngine:
                 signal_strength = "extreme"
 
             # Calculate confidence interval (simplified)
-            margin_error = 0.15 * (
-                1.0 - abs(recession_probability - 0.5) * 2
-            )  # Narrower CI for extreme values
+            margin_error = 0.15 * (1.0 - abs(recession_probability - 0.5) * 2)  # Narrower CI for extreme values
             confidence_interval = (
                 max(0.0, recession_probability - margin_error),
                 min(1.0, recession_probability + margin_error),
@@ -549,7 +473,7 @@ class BusinessCycleEngine:
                 key_drivers=key_drivers,
             )
 
-        except Exception as e:
+        except Exception:
             return RecessionSignal(
                 recession_probability=0.2,  # Conservative default
                 signal_strength="weak",
@@ -558,9 +482,7 @@ class BusinessCycleEngine:
                 key_drivers=["insufficient_data"],
             )
 
-    def _detect_regime_switches(
-        self, composite_index: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _detect_regime_switches(self, composite_index: dict[str, Any]) -> dict[str, Any]:
         """Detect regime switches in business cycle using statistical methods"""
 
         try:
@@ -585,9 +507,7 @@ class BusinessCycleEngine:
                 regime_probability = 0.5
 
             # Estimate regime persistence
-            regime_persistence = self._estimate_regime_persistence(
-                current_regime, overall_composite
-            )
+            regime_persistence = self._estimate_regime_persistence(current_regime, overall_composite)
 
             # Calculate switching probability
             switch_probability = 1.0 - regime_persistence
@@ -597,12 +517,8 @@ class BusinessCycleEngine:
                 "regime_probability": float(regime_probability),
                 "regime_persistence": float(regime_persistence),
                 "switch_probability": float(switch_probability),
-                "regime_duration_estimate": self._estimate_regime_duration(
-                    current_regime
-                ),
-                "next_likely_regime": self._predict_next_regime(
-                    current_regime, momentum
-                ),
+                "regime_duration_estimate": self._estimate_regime_duration(current_regime),
+                "next_likely_regime": self._predict_next_regime(current_regime, momentum),
             }
 
         except Exception as e:
@@ -614,20 +530,16 @@ class BusinessCycleEngine:
 
     def _generate_economic_nowcast(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
         current_phase: CyclePhase,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate nowcast for current economic conditions"""
 
         try:
             # Calculate nowcast based on leading and coincident indicators
-            leading_average = np.mean(
-                [score.normalized_score for score in leading_scores.values()]
-            )
-            coincident_average = np.mean(
-                [score.normalized_score for score in coincident_scores.values()]
-            )
+            leading_average = np.mean([score.normalized_score for score in leading_scores.values()])
+            coincident_average = np.mean([score.normalized_score for score in coincident_scores.values()])
 
             # Weighted nowcast (coincident indicators more important for current state)
             nowcast_score = 0.3 * leading_average + 0.7 * coincident_average
@@ -647,9 +559,7 @@ class BusinessCycleEngine:
                 growth_estimate = nowcast_score  # Negative growth
 
             # Calculate confidence in nowcast
-            nowcast_confidence = self._calculate_nowcast_confidence(
-                leading_scores, coincident_scores
-            )
+            nowcast_confidence = self._calculate_nowcast_confidence(leading_scores, coincident_scores)
 
             return {
                 "nowcast_outlook": nowcast_outlook,
@@ -659,9 +569,7 @@ class BusinessCycleEngine:
                 "phase_consistency": current_phase.phase_name in nowcast_outlook
                 or nowcast_outlook in current_phase.phase_name,
                 "forecast_horizon": "3_months",
-                "key_supporting_indicators": self._identify_supporting_indicators(
-                    leading_scores, coincident_scores
-                ),
+                "key_supporting_indicators": self._identify_supporting_indicators(leading_scores, coincident_scores),
             }
 
         except Exception as e:
@@ -672,7 +580,7 @@ class BusinessCycleEngine:
             }
 
     # Helper methods for internal calculations
-    def _extract_time_series(self, observations: List[Dict]) -> np.ndarray:
+    def _extract_time_series(self, observations: list[dict]) -> np.ndarray:
         """Extract time series values from observation data"""
         try:
             values = []
@@ -685,9 +593,7 @@ class BusinessCycleEngine:
         except Exception:
             return np.array([0.0])
 
-    def _get_indicator_score(
-        self, scores: Dict[str, IndicatorScore], indicator_key: str
-    ) -> float:
+    def _get_indicator_score(self, scores: dict[str, IndicatorScore], indicator_key: str) -> float:
         """Get indicator score with fuzzy matching"""
 
         # Direct match
@@ -703,9 +609,9 @@ class BusinessCycleEngine:
 
     def _calculate_composite_confidence(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
-        lagging_scores: Dict[str, IndicatorScore],
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
+        lagging_scores: dict[str, IndicatorScore],
     ) -> float:
         """Calculate confidence in composite index based on indicator agreement"""
 
@@ -741,14 +647,13 @@ class BusinessCycleEngine:
 
         if composite_score > 0.5:
             return "strong_expansion"
-        elif composite_score > 0.2:
+        if composite_score > 0.2:
             return "moderate_expansion"
-        elif composite_score > -0.2:
+        if composite_score > -0.2:
             return "neutral"
-        elif composite_score > -0.5:
+        if composite_score > -0.5:
             return "moderate_contraction"
-        else:
-            return "strong_contraction"
+        return "strong_contraction"
 
     def _calculate_composite_percentile(self, composite_score: float) -> float:
         """Calculate historical percentile rank of composite score"""
@@ -757,15 +662,11 @@ class BusinessCycleEngine:
         percentile = stats.norm.cdf(composite_score, loc=0, scale=0.5) * 100
         return float(np.clip(percentile, 0.0, 100.0))
 
-    def _estimate_phase_duration(
-        self, phase_name: str, composite_index: Dict[str, Any]
-    ) -> int:
+    def _estimate_phase_duration(self, phase_name: str, composite_index: dict[str, Any]) -> int:
         """Estimate how long the economy has been in current phase"""
         # Simplified estimation - would use historical composite data in production
 
-        base_duration = {"expansion": 18, "peak": 3, "contraction": 8, "trough": 2}.get(
-            phase_name, 12
-        )
+        base_duration = {"expansion": 18, "peak": 3, "contraction": 8, "trough": 2}.get(phase_name, 12)
 
         # Adjust based on composite strength
         strength_factor = abs(composite_index.get("overall_composite", 0.0))
@@ -773,15 +674,11 @@ class BusinessCycleEngine:
 
         return int(np.clip(adjusted_duration, 1, 120))  # 1-120 months
 
-    def _calculate_transition_probability(
-        self, phase_name: str, duration_months: int, composite_score: float
-    ) -> float:
+    def _calculate_transition_probability(self, phase_name: str, duration_months: int, composite_score: float) -> float:
         """Calculate probability of transitioning to next phase"""
 
         # Get historical phase statistics
-        phase_stats = self.historical_cycle_stats.get(
-            phase_name, {"mean": 24, "std": 12}
-        )
+        phase_stats = self.historical_cycle_stats.get(phase_name, {"mean": 24, "std": 12})
         mean_duration = phase_stats["mean"]
 
         # Probability increases with duration relative to historical mean
@@ -795,9 +692,7 @@ class BusinessCycleEngine:
 
         return float(np.clip(transition_prob, 0.0, 0.8))  # Cap at 80%
 
-    def _estimate_remaining_duration(
-        self, phase_name: str, current_duration: int
-    ) -> Optional[int]:
+    def _estimate_remaining_duration(self, phase_name: str, current_duration: int) -> int | None:
         """Estimate remaining duration of current phase"""
 
         phase_stats = self.historical_cycle_stats.get(phase_name)
@@ -813,9 +708,7 @@ class BusinessCycleEngine:
         remaining = mean_duration - current_duration
         return max(1, remaining)
 
-    def _estimate_regime_persistence(
-        self, regime: str, composite_score: float
-    ) -> float:
+    def _estimate_regime_persistence(self, regime: str, composite_score: float) -> float:
         """Estimate probability that current regime will persist"""
 
         base_persistence = {
@@ -848,9 +741,7 @@ class BusinessCycleEngine:
         """Predict most likely next regime"""
 
         regime_transitions = {
-            "strong_expansion": (
-                "moderate_expansion" if momentum < 0 else "strong_expansion"
-            ),
+            "strong_expansion": ("moderate_expansion" if momentum < 0 else "strong_expansion"),
             "moderate_expansion": "slowdown" if momentum < 0 else "strong_expansion",
             "slowdown": "contraction" if momentum < 0 else "moderate_expansion",
             "contraction": "transition" if momentum > 0 else "contraction",
@@ -861,8 +752,8 @@ class BusinessCycleEngine:
 
     def _calculate_nowcast_confidence(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
     ) -> float:
         """Calculate confidence in nowcast estimate"""
 
@@ -877,9 +768,7 @@ class BusinessCycleEngine:
             return 0.5
 
         avg_significance = np.mean(all_significance)
-        data_quality = (
-            len(all_significance) / 10.0
-        )  # Normalize by expected indicator count
+        data_quality = len(all_significance) / 10.0  # Normalize by expected indicator count
 
         confidence = 0.7 * avg_significance + 0.3 * min(data_quality, 1.0)
 
@@ -887,9 +776,9 @@ class BusinessCycleEngine:
 
     def _identify_supporting_indicators(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
-    ) -> List[str]:
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
+    ) -> list[str]:
         """Identify key indicators supporting the nowcast"""
 
         supporting = []
@@ -903,17 +792,15 @@ class BusinessCycleEngine:
 
     def _validate_analysis_quality(
         self,
-        leading_scores: Dict[str, IndicatorScore],
-        coincident_scores: Dict[str, IndicatorScore],
-        lagging_scores: Dict[str, IndicatorScore],
-    ) -> Dict[str, Any]:
+        leading_scores: dict[str, IndicatorScore],
+        coincident_scores: dict[str, IndicatorScore],
+        lagging_scores: dict[str, IndicatorScore],
+    ) -> dict[str, Any]:
         """Validate overall quality of business cycle analysis"""
 
         try:
             # Count available indicators
-            total_indicators = (
-                len(leading_scores) + len(coincident_scores) + len(lagging_scores)
-            )
+            total_indicators = len(leading_scores) + len(coincident_scores) + len(lagging_scores)
 
             # Calculate average significance
             all_significance = []
@@ -946,9 +833,7 @@ class BusinessCycleEngine:
                 "data_completeness": float(completeness),
                 "average_significance": float(avg_significance),
                 "total_indicators": total_indicators,
-                "recommendations": self._generate_quality_recommendations(
-                    quality_score, completeness
-                ),
+                "recommendations": self._generate_quality_recommendations(quality_score, completeness),
             }
 
         except Exception as e:
@@ -958,33 +843,21 @@ class BusinessCycleEngine:
                 "error": f"Quality validation failed: {str(e)}",
             }
 
-    def _generate_quality_recommendations(
-        self, quality_score: float, completeness: float
-    ) -> List[str]:
+    def _generate_quality_recommendations(self, quality_score: float, completeness: float) -> list[str]:
         """Generate recommendations for improving analysis quality"""
 
         recommendations = []
 
         if completeness < 0.7:
-            recommendations.append(
-                "Increase data coverage by adding more economic indicators"
-            )
+            recommendations.append("Increase data coverage by adding more economic indicators")
 
         if quality_score < 0.6:
-            recommendations.append(
-                "Improve data quality by using higher-frequency indicators"
-            )
-            recommendations.append(
-                "Consider longer historical periods for trend analysis"
-            )
+            recommendations.append("Improve data quality by using higher-frequency indicators")
+            recommendations.append("Consider longer historical periods for trend analysis")
 
         if quality_score < 0.4:
-            recommendations.append(
-                "Analysis reliability is low - use results with caution"
-            )
-            recommendations.append(
-                "Supplement with additional qualitative economic analysis"
-            )
+            recommendations.append("Analysis reliability is low - use results with caution")
+            recommendations.append("Supplement with additional qualitative economic analysis")
 
         return recommendations
 
@@ -992,23 +865,17 @@ class BusinessCycleEngine:
         self,
         current_phase: CyclePhase,
         recession_analysis: RecessionSignal,
-        regime_analysis: Dict[str, Any],
+        regime_analysis: dict[str, Any],
     ) -> float:
         """Calculate overall confidence in business cycle analysis"""
 
         try:
             phase_confidence = current_phase.phase_probability
-            recession_confidence = (
-                1.0 - abs(recession_analysis.recession_probability - 0.5) * 2
-            )
+            recession_confidence = 1.0 - abs(recession_analysis.recession_probability - 0.5) * 2
             regime_confidence = regime_analysis.get("regime_probability", 0.5)
 
             # Weighted average
-            overall_confidence = (
-                0.4 * phase_confidence
-                + 0.3 * recession_confidence
-                + 0.3 * regime_confidence
-            )
+            overall_confidence = 0.4 * phase_confidence + 0.3 * recession_confidence + 0.3 * regime_confidence
 
             return float(np.clip(overall_confidence, 0.0, 1.0))
 

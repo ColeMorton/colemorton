@@ -1,5 +1,8 @@
 # Brand Logo Generation System
 
+**Version**: 2.1 | **Last Updated**: 2024-09-24 | **Status**: Active
+**Authority**: Design Team | **Audience**: Designers & Developers
+
 This document outlines how to generate high-quality brand logo images identical to the h1 brand-text in the frontend header using the existing photo booth screenshot system.
 
 ## Overview

@@ -13,9 +13,10 @@ Command-line interface for Financial Modeling Prep data with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -95,9 +96,7 @@ class FMPCLI(BaseFinancialCLI):
                 ticker = self.validate_ticker(ticker)
                 service = self._get_service(env)
 
-                result = service.get_financial_statements(
-                    ticker, statement_type, period, limit
-                )
+                result = service.get_financial_statements(ticker, statement_type, period, limit)
                 self._output_result(
                     result,
                     output_format,
@@ -105,9 +104,7 @@ class FMPCLI(BaseFinancialCLI):
                 )
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to get financial statements for {ticker}"
-                )
+                self._handle_error(e, f"Failed to get financial statements for {ticker}")
 
         @self.app.command("metrics")
         def get_key_metrics(
@@ -142,9 +139,7 @@ class FMPCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_financial_ratios(ticker, period, limit)
-                self._output_result(
-                    result, output_format, f"Financial Ratios: {ticker}"
-                )
+                self._output_result(result, output_format, f"Financial Ratios: {ticker}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get financial ratios for {ticker}")
@@ -163,9 +158,7 @@ class FMPCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_historical_prices(ticker, from_date, to_date)
-                self._output_result(
-                    result, output_format, f"Historical Prices: {ticker}"
-                )
+                self._output_result(result, output_format, f"Historical Prices: {ticker}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get historical prices for {ticker}")
@@ -218,18 +211,14 @@ class FMPCLI(BaseFinancialCLI):
                     limit=limit,
                 )
 
-                self._output_result(
-                    result, output_format, f"Stock Screener Results (limit: {limit})"
-                )
+                self._output_result(result, output_format, f"Stock Screener Results (limit: {limit})")
 
             except Exception as e:
                 self._handle_error(e, "Failed to screen stocks")
 
         @self.app.command("movers")
         def get_market_movers(
-            mover_type: str = typer.Option(
-                "gainers", help="Type of movers (gainers, losers, actives)"
-            ),
+            mover_type: str = typer.Option("gainers", help="Type of movers (gainers, losers, actives)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
         ):
@@ -244,13 +233,9 @@ class FMPCLI(BaseFinancialCLI):
                 elif mover_type == "actives":
                     result = service.get_market_most_active()
                 else:
-                    raise ValidationError(
-                        "mover_type must be 'gainers', 'losers', or 'actives'"
-                    )
+                    raise ValidationError("mover_type must be 'gainers', 'losers', or 'actives'")
 
-                self._output_result(
-                    result, output_format, f"Market Movers: {mover_type}"
-                )
+                self._output_result(result, output_format, f"Market Movers: {mover_type}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get market {mover_type}")
@@ -292,9 +277,7 @@ class FMPCLI(BaseFinancialCLI):
         @self.app.command("analyze")
         def comprehensive_analysis(
             ticker: str = typer.Argument(..., help="Stock ticker symbol"),
-            include_financials: bool = typer.Option(
-                True, help="Include financial statements"
-            ),
+            include_financials: bool = typer.Option(True, help="Include financial statements"),
             include_insider: bool = typer.Option(True, help="Include insider trading"),
             periods: int = typer.Option(3, help="Number of periods for financials"),
             env: str = typer.Option("dev", help="Environment"),
@@ -312,42 +295,30 @@ class FMPCLI(BaseFinancialCLI):
                     "profile": service.get_company_profile(ticker),
                     "quote": service.get_stock_quote(ticker),
                     "key_metrics": service.get_key_metrics(ticker, limit=periods),
-                    "financial_ratios": service.get_financial_ratios(
-                        ticker, limit=periods
-                    ),
+                    "financial_ratios": service.get_financial_ratios(ticker, limit=periods),
                 }
 
                 # Add financial statements if requested
                 if include_financials:
                     analysis["financials"] = {
-                        "income_statement": service.get_financial_statements(
-                            ticker, "income-statement", limit=periods
-                        ),
+                        "income_statement": service.get_financial_statements(ticker, "income-statement", limit=periods),
                         "balance_sheet": service.get_financial_statements(
                             ticker, "balance-sheet-statement", limit=periods
                         ),
-                        "cash_flow": service.get_financial_statements(
-                            ticker, "cash-flow-statement", limit=periods
-                        ),
+                        "cash_flow": service.get_financial_statements(ticker, "cash-flow-statement", limit=periods),
                     }
 
                 # Add insider trading if requested
                 if include_insider:
                     try:
-                        analysis["insider_trading"] = service.get_insider_trading(
-                            ticker, limit=20
-                        )
+                        analysis["insider_trading"] = service.get_insider_trading(ticker, limit=20)
                     except Exception as e:
                         analysis["insider_trading"] = {"error": str(e)}
 
-                self._output_result(
-                    analysis, output_format, f"Comprehensive Analysis: {ticker}"
-                )
+                self._output_result(analysis, output_format, f"Comprehensive Analysis: {ticker}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to perform comprehensive analysis for {ticker}"
-                )
+                self._handle_error(e, f"Failed to perform comprehensive analysis for {ticker}")
 
         @self.app.command("batch")
         def batch_quotes(
@@ -364,11 +335,7 @@ class FMPCLI(BaseFinancialCLI):
                 for ticker in ticker_list:
                     try:
                         quote_data = service.get_stock_quote(ticker)
-                        if (
-                            quote_data
-                            and isinstance(quote_data, list)
-                            and len(quote_data) > 0
-                        ):
+                        if quote_data and isinstance(quote_data, list) and len(quote_data) > 0:
                             quote = quote_data[0]
                             row = {
                                 "ticker": ticker,
@@ -392,40 +359,37 @@ class FMPCLI(BaseFinancialCLI):
                         }
                         results.append(row)
 
-                self._output_result(
-                    results, output_format, f"Batch Quotes ({len(ticker_list)} tickers)"
-                )
+                self._output_result(results, output_format, f"Batch Quotes ({len(ticker_list)} tickers)")
 
             except Exception as e:
                 self._handle_error(e, "Batch quotes operation failed")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform FMP service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

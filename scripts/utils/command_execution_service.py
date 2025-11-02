@@ -11,12 +11,12 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -49,12 +49,12 @@ class ExecutionResult:
     """Result of command execution"""
 
     status: ExecutionStatus
-    output_files: List[str]
-    metadata: Dict[str, Any]
+    output_files: list[str]
+    metadata: dict[str, Any]
     execution_time: float
-    confidence_score: Optional[float] = None
-    error_message: Optional[str] = None
-    warnings: List[str] = None
+    confidence_score: float | None = None
+    error_message: str | None = None
+    warnings: list[str] = None
 
     def __post_init__(self):
         if self.warnings is None:
@@ -85,7 +85,7 @@ class CommandExecutionService:
         self.base_path = project_root
 
         # Load path variables
-        with open(self.config_path, "r") as f:
+        with open(self.config_path) as f:
             registry_data = json.load(f)
             self.path_variables = registry_data.get("path_variables", {})
 
@@ -104,9 +104,7 @@ class CommandExecutionService:
             resolved = resolved.replace(f"{{{var}}}", value)
         return resolved
 
-    def _validate_parameters(
-        self, domain: str, phase: str, parameters: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
+    def _validate_parameters(self, domain: str, phase: str, parameters: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate parameters for command execution"""
         errors = []
 
@@ -119,21 +117,14 @@ class CommandExecutionService:
         # Basic parameter validation based on phase
         if phase == "discover":
             # Discovery phase typically needs ticker/symbol parameters
-            if (
-                domain in ["fundamental_analysis", "trade_history"]
-                and "ticker" not in parameters
-            ):
+            if domain in ["fundamental_analysis", "trade_history"] and "ticker" not in parameters:
                 errors.append("ticker parameter required for discovery phase")
             elif domain in ["sector_analysis"] and "sector" not in parameters:
                 errors.append("sector parameter required for discovery phase")
             elif domain in ["industry_analysis"] and "industry" not in parameters:
                 errors.append("industry parameter required for discovery phase")
-            elif domain in ["comparative_analysis"] and (
-                "ticker_1" not in parameters or "ticker_2" not in parameters
-            ):
-                errors.append(
-                    "ticker_1 and ticker_2 parameters required for comparative analysis discovery"
-                )
+            elif domain in ["comparative_analysis"] and ("ticker_1" not in parameters or "ticker_2" not in parameters):
+                errors.append("ticker_1 and ticker_2 parameters required for comparative analysis discovery")
 
         elif phase == "analyze":
             # Analysis phase needs discovery file
@@ -152,9 +143,7 @@ class CommandExecutionService:
 
         return len(errors) == 0, errors
 
-    def _prepare_execution_environment(
-        self, domain: str, phase: str, parameters: Dict[str, Any]
-    ) -> Dict[str, str]:
+    def _prepare_execution_environment(self, domain: str, phase: str, parameters: dict[str, Any]) -> dict[str, str]:
         """Prepare execution environment variables"""
         env = os.environ.copy()
 
@@ -174,7 +163,7 @@ class CommandExecutionService:
         return env
 
     def _execute_direct_script(
-        self, script_path: str, parameters: Dict[str, Any], env: Dict[str, str]
+        self, script_path: str, parameters: dict[str, Any], env: dict[str, str]
     ) -> ExecutionResult:
         """Execute a script directly via subprocess"""
         start_time = datetime.now()
@@ -195,7 +184,7 @@ class CommandExecutionService:
             # Build command arguments
             cmd = ["python", str(script_file)]
             for key, value in parameters.items():
-                cmd.extend([f'--{key.replace("_", "-")}', str(value)])
+                cmd.extend([f"--{key.replace('_', '-')}", str(value)])
 
             # Execute script
             result = subprocess.run(
@@ -221,19 +210,18 @@ class CommandExecutionService:
                     },
                     execution_time=execution_time,
                 )
-            else:
-                return ExecutionResult(
-                    status=ExecutionStatus.FAILED,
-                    output_files=[],
-                    metadata={
-                        "stdout": result.stdout,
-                        "stderr": result.stderr,
-                        "returncode": result.returncode,
-                        "command": " ".join(cmd),
-                    },
-                    execution_time=execution_time,
-                    error_message=result.stderr,
-                )
+            return ExecutionResult(
+                status=ExecutionStatus.FAILED,
+                output_files=[],
+                metadata={
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                    "returncode": result.returncode,
+                    "command": " ".join(cmd),
+                },
+                execution_time=execution_time,
+                error_message=result.stderr,
+            )
 
         except subprocess.TimeoutExpired:
             return ExecutionResult(
@@ -253,9 +241,7 @@ class CommandExecutionService:
                 error_message=str(e),
             )
 
-    def _execute_via_sub_agent(
-        self, domain: str, phase: str, parameters: Dict[str, Any]
-    ) -> ExecutionResult:
+    def _execute_via_sub_agent(self, domain: str, phase: str, parameters: dict[str, Any]) -> ExecutionResult:
         """Execute command via Claude sub-agent"""
         start_time = datetime.now()
 
@@ -274,9 +260,7 @@ class CommandExecutionService:
             sub_agent_type = command_mapping.sub_agent
 
             # Prepare sub-agent prompt
-            prompt = self._build_sub_agent_prompt(
-                domain, phase, parameters, command_mapping
-            )
+            prompt = self._build_sub_agent_prompt(domain, phase, parameters, command_mapping)
 
             # Note: In a real implementation, this would integrate with Claude's sub-agent system
             # For now, we'll return a placeholder indicating sub-agent execution would be needed
@@ -291,9 +275,7 @@ class CommandExecutionService:
                     "note": "Sub-agent execution requires Claude API integration",
                 },
                 execution_time=(datetime.now() - start_time).total_seconds(),
-                warnings=[
-                    "Sub-agent execution placeholder - requires Claude API integration"
-                ],
+                warnings=["Sub-agent execution placeholder - requires Claude API integration"],
             )
 
         except Exception as e:
@@ -305,9 +287,7 @@ class CommandExecutionService:
                 error_message=str(e),
             )
 
-    def _build_sub_agent_prompt(
-        self, domain: str, phase: str, parameters: Dict[str, Any], mapping: Any
-    ) -> str:
+    def _build_sub_agent_prompt(self, domain: str, phase: str, parameters: dict[str, Any], mapping: Any) -> str:
         """Build prompt for sub-agent execution"""
         prompt_parts = [
             f"Execute {domain} {phase} phase with the following specifications:",
@@ -336,7 +316,7 @@ class CommandExecutionService:
 
         return "\n".join(prompt_parts)
 
-    def _extract_output_files(self, stdout: str) -> List[str]:
+    def _extract_output_files(self, stdout: str) -> list[str]:
         """Extract output file paths from script stdout"""
         output_files = []
 
@@ -344,11 +324,7 @@ class CommandExecutionService:
         lines = stdout.split("\n")
         for line in lines:
             # Look for file paths
-            if (
-                "saved to" in line.lower()
-                or "written to" in line.lower()
-                or "output:" in line.lower()
-            ):
+            if "saved to" in line.lower() or "written to" in line.lower() or "output:" in line.lower():
                 # Extract file path (simple heuristic)
                 parts = line.split()
                 for part in parts:
@@ -361,7 +337,7 @@ class CommandExecutionService:
         self,
         domain: str,
         phase: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.DIRECT,
     ) -> ExecutionResult:
         """
@@ -387,9 +363,7 @@ class CommandExecutionService:
 
         try:
             # Validate parameters
-            is_valid, validation_errors = self._validate_parameters(
-                domain, phase, parameters
-            )
+            is_valid, validation_errors = self._validate_parameters(domain, phase, parameters)
             if not is_valid:
                 return ExecutionResult(
                     status=ExecutionStatus.VALIDATION_FAILED,
@@ -415,21 +389,18 @@ class CommandExecutionService:
                         error_message=f"No mapping found for {domain}:{phase}",
                     )
 
-                return self._execute_direct_script(
-                    command_mapping.primary_script, parameters, env
-                )
+                return self._execute_direct_script(command_mapping.primary_script, parameters, env)
 
-            elif mode == ExecutionMode.SUB_AGENT:
+            if mode == ExecutionMode.SUB_AGENT:
                 return self._execute_via_sub_agent(domain, phase, parameters)
 
-            else:
-                return ExecutionResult(
-                    status=ExecutionStatus.FAILED,
-                    output_files=[],
-                    metadata={"error": f"Unsupported execution mode: {mode}"},
-                    execution_time=0.0,
-                    error_message=f"Unsupported execution mode: {mode}",
-                )
+            return ExecutionResult(
+                status=ExecutionStatus.FAILED,
+                output_files=[],
+                metadata={"error": f"Unsupported execution mode: {mode}"},
+                execution_time=0.0,
+                error_message=f"Unsupported execution mode: {mode}",
+            )
 
         finally:
             # Cleanup
@@ -438,9 +409,9 @@ class CommandExecutionService:
     def execute_full_dasv_workflow(
         self,
         domain: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: ExecutionMode = ExecutionMode.DIRECT,
-    ) -> Dict[str, ExecutionResult]:
+    ) -> dict[str, ExecutionResult]:
         """
         Execute a complete DASV workflow (Discover → Analyze → Synthesize → Validate)
 
@@ -466,9 +437,7 @@ class CommandExecutionService:
 
             # If phase failed, stop workflow
             if result.status == ExecutionStatus.FAILED:
-                print(
-                    f"Workflow stopped at {phase} due to failure: {result.error_message}"
-                )
+                print(f"Workflow stopped at {phase} due to failure: {result.error_message}")
                 break
 
             # Pass outputs to next phase
@@ -482,9 +451,9 @@ class CommandExecutionService:
 
         return results
 
-    def get_available_commands(self) -> Dict[str, List[str]]:
+    def get_available_commands(self) -> dict[str, list[str]]:
         """Get list of all available commands and their phases"""
-        with open(self.config_path, "r") as f:
+        with open(self.config_path) as f:
             registry_data = json.load(f)
 
         commands = {}
@@ -493,7 +462,7 @@ class CommandExecutionService:
 
         return commands
 
-    def get_command_info(self, domain: str, phase: str) -> Optional[Dict[str, Any]]:
+    def get_command_info(self, domain: str, phase: str) -> dict[str, Any] | None:
         """Get detailed information about a specific command"""
         command_mapping = self.resolver.get_scripts_for_command(domain, phase)
         if not command_mapping:
@@ -518,9 +487,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Unified Command Execution Service")
     parser.add_argument("domain", help="Command domain (e.g., fundamental_analysis)")
-    parser.add_argument(
-        "phase", help="DASV phase (discover, analyze, synthesize, validate)"
-    )
+    parser.add_argument("phase", help="DASV phase (discover, analyze, synthesize, validate)")
     parser.add_argument(
         "--mode",
         choices=["direct", "sub_agent"],
@@ -529,26 +496,14 @@ def main():
     )
     parser.add_argument("--ticker", help="Ticker symbol (for applicable commands)")
     parser.add_argument("--sector", help="Sector symbol (for sector analysis)")
-    parser.add_argument(
-        "--industry", help="Industry identifier (for industry analysis)"
-    )
+    parser.add_argument("--industry", help="Industry identifier (for industry analysis)")
     parser.add_argument("--region", help="Region identifier (for macro analysis)")
     parser.add_argument("--date", help="Analysis date (YYYYMMDD format)")
-    parser.add_argument(
-        "--discovery-file", help="Discovery file path (for analyze phase)"
-    )
-    parser.add_argument(
-        "--analysis-file", help="Analysis file path (for synthesize phase)"
-    )
-    parser.add_argument(
-        "--synthesis-file", help="Synthesis file path (for validate phase)"
-    )
-    parser.add_argument(
-        "--full-workflow", action="store_true", help="Execute complete DASV workflow"
-    )
-    parser.add_argument(
-        "--list-commands", action="store_true", help="List all available commands"
-    )
+    parser.add_argument("--discovery-file", help="Discovery file path (for analyze phase)")
+    parser.add_argument("--analysis-file", help="Analysis file path (for synthesize phase)")
+    parser.add_argument("--synthesis-file", help="Synthesis file path (for validate phase)")
+    parser.add_argument("--full-workflow", action="store_true", help="Execute complete DASV workflow")
+    parser.add_argument("--list-commands", action="store_true", help="List all available commands")
     parser.add_argument(
         "--info",
         action="store_true",

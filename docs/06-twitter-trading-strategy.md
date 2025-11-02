@@ -1,5 +1,8 @@
 # Universal Trading Strategy X (Twitter) Post Template
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Content Operations | **Audience**: Social Media Managers
+
 ## Master Template Structure
 
 ```

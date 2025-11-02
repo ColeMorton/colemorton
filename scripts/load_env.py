@@ -27,7 +27,7 @@ def load_env_file(env_path: str = ".env") -> dict:
         print("Warning: .env file not found at {env_file.absolute()}")
         return env_vars
 
-    with open(env_file, "r") as f:
+    with open(env_file) as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
 

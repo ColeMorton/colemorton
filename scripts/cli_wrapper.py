@@ -21,7 +21,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from error_handler import ErrorHandler
 
@@ -30,6 +30,7 @@ from errors import ConfigurationError, ProcessingError, ValidationError
 from result_types import ProcessingResult
 from script_config import ScriptConfig
 from script_registry import get_global_registry
+
 
 # Global service discovery cache to prevent repeated operations
 _GLOBAL_SERVICE_REGISTRY = None
@@ -49,8 +50,8 @@ class CLIServiceWrapper:
     def __init__(
         self,
         service_name: str,
-        config: Optional[ScriptConfig] = None,
-        scripts_dir: Optional[Path] = None,
+        config: ScriptConfig | None = None,
+        scripts_dir: Path | None = None,
     ):
         self.service_name = service_name
 
@@ -132,9 +133,7 @@ class CLIServiceWrapper:
 
             self.logger.error(f"Operation failed: {message}{error_details}")
 
-        def log_api_call(
-            service, command, args=None, response_time=None, status=None, details=None
-        ):
+        def log_api_call(service, command, args=None, response_time=None, status=None, details=None):
             """Detailed API call logging"""
             args_str = f"({', '.join(map(str, args))})" if args else ""
             timing_str = f" [{response_time:.2f}s]" if response_time else ""
@@ -152,9 +151,7 @@ class CLIServiceWrapper:
     def _validate_service_name(self, service_name: str) -> None:
         """Validate service name using fail-fast approach"""
         if not service_name or not service_name.strip():
-            raise ValidationError(
-                "Service name cannot be empty", context={"service_name": service_name}
-            )
+            raise ValidationError("Service name cannot be empty", context={"service_name": service_name})
 
         if not service_name.replace("_", "").isalnum():
             raise ValidationError(
@@ -176,9 +173,7 @@ class CLIServiceWrapper:
             is_available = global_path is not None
 
             # Log availability check at DEBUG level to reduce verbosity
-            self.logger.debug(
-                f"Global availability check for {self.service_name}: {is_available}"
-            )
+            self.logger.debug(f"Global availability check for {self.service_name}: {is_available}")
 
             return is_available
         except Exception as e:
@@ -196,14 +191,10 @@ class CLIServiceWrapper:
     def _check_local_availability(self) -> bool:
         """Check if CLI service is available as local Python script"""
         try:
-            is_available = (
-                self.cli_script_path.exists() and self.cli_script_path.is_file()
-            )
+            is_available = self.cli_script_path.exists() and self.cli_script_path.is_file()
 
             # Log availability check at DEBUG level to reduce verbosity
-            self.logger.debug(
-                f"Local availability check for {self.service_name}: {is_available}"
-            )
+            self.logger.debug(f"Local availability check for {self.service_name}: {is_available}")
 
             return is_available
         except Exception as e:
@@ -252,9 +243,7 @@ class CLIServiceWrapper:
 
         # Validate inputs
         if not command or not command.strip():
-            raise ValidationError(
-                "Command cannot be empty", context={"service_name": self.service_name}
-            )
+            raise ValidationError("Command cannot be empty", context={"service_name": self.service_name})
 
         if not self.is_available():
             raise ConfigurationError(
@@ -291,9 +280,7 @@ class CLIServiceWrapper:
                     success, stdout, stderr = self._execute_global_command(cmd_args)
                     execution_time = (datetime.now() - start_time).total_seconds()
 
-                    return self._create_result(
-                        success, stdout, stderr, "global", execution_time, cmd_args
-                    )
+                    return self._create_result(success, stdout, stderr, "global", execution_time, cmd_args)
                 except Exception as e:
                     self.logger.log_operation(  # type: ignore[attr-defined]
                         "Global command failed, falling back to local",
@@ -311,9 +298,7 @@ class CLIServiceWrapper:
                     success, stdout, stderr = self._execute_local_command(cmd_args)
                     execution_time = (datetime.now() - start_time).total_seconds()
 
-                    return self._create_result(
-                        success, stdout, stderr, "local", execution_time, cmd_args
-                    )
+                    return self._create_result(success, stdout, stderr, "local", execution_time, cmd_args)
                 except Exception as e:
                     self.error_handler.handle_processing_error(
                         "local_command_execution",
@@ -337,9 +322,7 @@ class CLIServiceWrapper:
         except Exception as e:
             execution_time = (datetime.now() - start_time).total_seconds()
 
-            if not isinstance(
-                e, (ValidationError, ConfigurationError, ProcessingError)
-            ):
+            if not isinstance(e, (ValidationError, ConfigurationError, ProcessingError)):
                 # Wrap unexpected errors in ProcessingError
                 raise ProcessingError(
                     f"CLI command execution failed: {str(e)}",
@@ -361,7 +344,7 @@ class CLIServiceWrapper:
         stderr: str,
         execution_mode: str,
         execution_time: float,
-        cmd_args: List[str],
+        cmd_args: list[str],
     ) -> ProcessingResult:
         """Create ProcessingResult from CLI execution"""
 
@@ -392,7 +375,7 @@ class CLIServiceWrapper:
 
         return result
 
-    def _execute_global_command(self, args: List[str]) -> Tuple[bool, str, str]:
+    def _execute_global_command(self, args: list[str]) -> tuple[bool, str, str]:
         """Execute command as global CLI"""
         cmd = [self.global_command_name] + args
         command_name = args[0] if args else "unknown"
@@ -422,14 +405,8 @@ class CLIServiceWrapper:
             success = result.returncode == 0
 
             # Enhanced API call logging
-            status = (
-                f"SUCCESS (rc={result.returncode})"
-                if success
-                else f"FAILED (rc={result.returncode})"
-            )
-            details = (
-                f"stdout={len(result.stdout)} chars, stderr={len(result.stderr)} chars"
-            )
+            status = f"SUCCESS (rc={result.returncode})" if success else f"FAILED (rc={result.returncode})"
+            details = f"stdout={len(result.stdout)} chars, stderr={len(result.stderr)} chars"
 
             self.logger.log_api_call(  # type: ignore[attr-defined]
                 service=self.service_name,
@@ -484,7 +461,7 @@ class CLIServiceWrapper:
                 context={"original_error": str(e)},
             )
 
-    def _execute_local_command(self, args: List[str]) -> Tuple[bool, str, str]:
+    def _execute_local_command(self, args: list[str]) -> tuple[bool, str, str]:
         """Execute command as local Python script"""
         cmd = [sys.executable, str(self.cli_script_path)] + args
         command_name = args[0] if args else "unknown"
@@ -506,11 +483,7 @@ class CLIServiceWrapper:
             success = result.returncode == 0
 
             # Enhanced API call logging
-            status = (
-                f"SUCCESS (rc={result.returncode})"
-                if success
-                else f"FAILED (rc={result.returncode})"
-            )
+            status = f"SUCCESS (rc={result.returncode})" if success else f"FAILED (rc={result.returncode})"
             details = f"stdout={len(result.stdout)} chars, stderr={len(result.stderr)} chars, script={self.cli_script_path.name}"
 
             self.logger.log_api_call(  # type: ignore[attr-defined]
@@ -566,7 +539,7 @@ class CLIServiceWrapper:
                 context={"original_error": str(e)},
             )
 
-    def get_service_info(self) -> Dict[str, Any]:
+    def get_service_info(self) -> dict[str, Any]:
         """Get service information and availability"""
         return {
             "service_name": self.service_name,
@@ -576,23 +549,17 @@ class CLIServiceWrapper:
             "local_available": self.local_available,
             "is_available": self.is_available(),
             "execution_mode": (
-                "global"
-                if self.global_available
-                else "local"
-                if self.local_available
-                else "unavailable"
+                "global" if self.global_available else "local" if self.local_available else "unavailable"
             ),
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on CLI service"""
         health_info = {
             "service_name": self.service_name,
             "status": "unknown",
             "details": {},
-            "timestamp": subprocess.run(
-                ["date", "-Iseconds"], capture_output=True, text=True
-            ).stdout.strip(),
+            "timestamp": subprocess.run(["date", "-Iseconds"], capture_output=True, text=True).stdout.strip(),
         }
 
         try:
@@ -632,9 +599,7 @@ class CLIServiceManager:
     - Error handling for service discovery
     """
 
-    def __init__(
-        self, config: Optional[ScriptConfig] = None, scripts_dir: Optional[Path] = None
-    ):
+    def __init__(self, config: ScriptConfig | None = None, scripts_dir: Path | None = None):
         # Initialize configuration
         if config:
             self.config = config
@@ -703,9 +668,7 @@ class CLIServiceManager:
 
             self.logger.error(f"Operation failed: {message}{error_details}")
 
-        def log_api_call(
-            service, command, args=None, response_time=None, status=None, details=None
-        ):
+        def log_api_call(service, command, args=None, response_time=None, status=None, details=None):
             """Detailed API call logging"""
             args_str = f"({', '.join(map(str, args))})" if args else ""
             timing_str = f" [{response_time:.2f}s]" if response_time else ""
@@ -826,9 +789,7 @@ class CLIServiceManager:
                 fail_fast=False,
             )
 
-    def execute_via_registry(
-        self, service_name: str, command: str, *args, **kwargs
-    ) -> ProcessingResult:
+    def execute_via_registry(self, service_name: str, command: str, *args, **kwargs) -> ProcessingResult:
         """Execute CLI service via script registry"""
         if not self.script_registry:
             raise ConfigurationError(
@@ -854,9 +815,7 @@ class CLIServiceManager:
     def get_service(self, service_name: str) -> CLIServiceWrapper:
         """Get CLI service wrapper"""
         if not service_name or not service_name.strip():
-            raise ValidationError(
-                "Service name cannot be empty", context={"service_name": service_name}
-            )
+            raise ValidationError("Service name cannot be empty", context={"service_name": service_name})
 
         if service_name not in self.services:
             raise ConfigurationError(
@@ -880,13 +839,11 @@ class CLIServiceManager:
 
         return wrapper
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         """Get list of available service names"""
-        return [
-            name for name, wrapper in self.services.items() if wrapper.is_available()
-        ]
+        return [name for name, wrapper in self.services.items() if wrapper.is_available()]
 
-    def get_service_status(self) -> Dict[str, Any]:
+    def get_service_status(self) -> dict[str, Any]:
         """Get status of all services"""
         status = {
             "total_services": len(self.services),
@@ -899,12 +856,10 @@ class CLIServiceManager:
 
         return status
 
-    def health_check_all(self) -> Dict[str, Any]:
+    def health_check_all(self) -> dict[str, Any]:
         """Perform health check on all services"""
         health_results = {
-            "timestamp": subprocess.run(
-                ["date", "-Iseconds"], capture_output=True, text=True
-            ).stdout.strip(),
+            "timestamp": subprocess.run(["date", "-Iseconds"], capture_output=True, text=True).stdout.strip(),
             "summary": {
                 "total": len(self.services),
                 "healthy": 0,
@@ -933,7 +888,7 @@ class CLIServiceManager:
 _service_manager = None
 
 
-def get_service_manager(config: Optional[ScriptConfig] = None) -> CLIServiceManager:
+def get_service_manager(config: ScriptConfig | None = None) -> CLIServiceManager:
     """Get global service manager instance"""
     global _service_manager
     if _service_manager is None:
@@ -946,9 +901,7 @@ def get_cli_service(service_name: str) -> CLIServiceWrapper:
     return get_service_manager().get_service(service_name)
 
 
-def execute_cli_command(
-    service_name: str, command: str, *args, **kwargs
-) -> ProcessingResult:
+def execute_cli_command(service_name: str, command: str, *args, **kwargs) -> ProcessingResult:
     """
     Execute CLI command with automatic service discovery and fallback
 
@@ -965,9 +918,7 @@ def execute_cli_command(
     return service.execute_command(command, *args, **kwargs)
 
 
-def execute_cli_command_legacy(
-    service_name: str, command: str, *args, **kwargs
-) -> Tuple[bool, str, str]:
+def execute_cli_command_legacy(service_name: str, command: str, *args, **kwargs) -> tuple[bool, str, str]:
     """
     Execute CLI command with legacy tuple return for backward compatibility
 
@@ -1006,8 +957,6 @@ if __name__ == "__main__":
             service = get_cli_service(test_service)
             result = service.execute_command("--help")
             print("Success: {result.success}")
-            print(
-                f"Output: {result.content[:200] if result.content else 'No output'}..."
-            )
-        except Exception as e:
+            print(f"Output: {result.content[:200] if result.content else 'No output'}...")
+        except Exception:
             print("Error: {e}")

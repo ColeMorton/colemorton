@@ -9,11 +9,9 @@ Standardized validation system for all Twitter content types:
 - Institutional quality standards enforcement
 """
 
-import json
 import re
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 
 class UnifiedValidationFramework:
@@ -67,9 +65,9 @@ class UnifiedValidationFramework:
         self,
         content: str,
         content_type: str,
-        source_data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        source_data: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Perform comprehensive validation of Twitter content
 
@@ -98,19 +96,13 @@ class UnifiedValidationFramework:
         }
 
         # Perform common validation
-        common_results = self._validate_common_criteria(
-            content, content_type, source_data
-        )
+        common_results = self._validate_common_criteria(content, content_type, source_data)
 
         # Perform content-specific validation
-        specific_results = self._validate_content_specific(
-            content, content_type, source_data
-        )
+        specific_results = self._validate_content_specific(content, content_type, source_data)
 
         # Perform real-time validation (if applicable)
-        realtime_results = self._validate_realtime_context(
-            content, content_type, metadata
-        )
+        realtime_results = self._validate_realtime_context(content, content_type, metadata)
 
         # Combine all validation results
         all_results = {**common_results, **specific_results, **realtime_results}
@@ -119,14 +111,10 @@ class UnifiedValidationFramework:
         overall_assessment = self._calculate_overall_assessment(all_results)
 
         # Generate findings matrix
-        findings_matrix = self._generate_findings_matrix(
-            all_results, content, source_data
-        )
+        findings_matrix = self._generate_findings_matrix(all_results, content, source_data)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            all_results, overall_assessment
-        )
+        recommendations = self._generate_recommendations(all_results, overall_assessment)
 
         # Compile final validation result
         validation_result.update(
@@ -135,17 +123,13 @@ class UnifiedValidationFramework:
                 "validation_breakdown": all_results,
                 "critical_findings_matrix": findings_matrix,
                 "actionable_recommendations": recommendations,
-                "methodology_notes": self._generate_methodology_notes(
-                    content_type, all_results
-                ),
+                "methodology_notes": self._generate_methodology_notes(content_type, all_results),
             }
         )
 
         return validation_result
 
-    def _validate_common_criteria(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_common_criteria(self, content: str, content_type: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate common criteria across all content types"""
 
         results = {}
@@ -153,40 +137,28 @@ class UnifiedValidationFramework:
         # Content structure validation
         results["content_structure"] = {}
         for criterion, validator in self.common_criteria["content_structure"].items():
-            results["content_structure"][criterion] = validator(
-                content, content_type, source_data
-            )
+            results["content_structure"][criterion] = validator(content, content_type, source_data)
 
         # Compliance standards validation
         results["compliance_standards"] = {}
-        for criterion, validator in self.common_criteria[
-            "compliance_standards"
-        ].items():
-            results["compliance_standards"][criterion] = validator(
-                content, content_type, source_data
-            )
+        for criterion, validator in self.common_criteria["compliance_standards"].items():
+            results["compliance_standards"][criterion] = validator(content, content_type, source_data)
 
         # Accuracy standards validation
         results["accuracy_standards"] = {}
         for criterion, validator in self.common_criteria["accuracy_standards"].items():
-            results["accuracy_standards"][criterion] = validator(
-                content, content_type, source_data
-            )
+            results["accuracy_standards"][criterion] = validator(content, content_type, source_data)
 
         # Engagement optimization validation
         results["engagement_optimization"] = {}
-        for criterion, validator in self.common_criteria[
-            "engagement_optimization"
-        ].items():
-            results["engagement_optimization"][criterion] = validator(
-                content, content_type, source_data
-            )
+        for criterion, validator in self.common_criteria["engagement_optimization"].items():
+            results["engagement_optimization"][criterion] = validator(content, content_type, source_data)
 
         return results
 
     def _validate_content_specific(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate content-specific criteria"""
 
         if content_type in self.content_specific_validators:
@@ -196,8 +168,8 @@ class UnifiedValidationFramework:
         return {"content_specific": {"score": 1.0, "issues": []}}
 
     def _validate_realtime_context(
-        self, content: str, content_type: str, metadata: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, metadata: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Validate real-time context relevance"""
 
         # Placeholder for real-time validation
@@ -213,8 +185,8 @@ class UnifiedValidationFramework:
 
     # Common validation methods
     def _validate_character_limits(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate character limits and structure"""
 
         issues = []
@@ -242,8 +214,8 @@ class UnifiedValidationFramework:
         }
 
     def _validate_required_elements(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate required elements are present"""
 
         issues = []
@@ -268,8 +240,8 @@ class UnifiedValidationFramework:
         }
 
     def _validate_formatting_rules(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate formatting rules"""
 
         issues = []
@@ -277,9 +249,7 @@ class UnifiedValidationFramework:
 
         # NO BOLD FORMATTING rule
         if "**" in content:
-            issues.append(
-                "Content contains bold formatting (violates institutional standards)"
-            )
+            issues.append("Content contains bold formatting (violates institutional standards)")
             score -= 0.5
 
         # Check for proper emoji usage
@@ -298,9 +268,7 @@ class UnifiedValidationFramework:
 
         return {"score": max(0.0, score), "issues": issues, "emoji_count": emoji_count}
 
-    def _validate_disclaimers(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_disclaimers(self, content: str, content_type: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate disclaimer presence and adequacy"""
 
         issues = []
@@ -313,10 +281,7 @@ class UnifiedValidationFramework:
             r"Do your own research",
         ]
 
-        disclaimer_found = any(
-            re.search(pattern, content, re.IGNORECASE)
-            for pattern in disclaimer_patterns
-        )
+        disclaimer_found = any(re.search(pattern, content, re.IGNORECASE) for pattern in disclaimer_patterns)
 
         if not disclaimer_found:
             issues.append("Missing required disclaimer")
@@ -328,9 +293,7 @@ class UnifiedValidationFramework:
             "disclaimer_found": disclaimer_found,
         }
 
-    def _validate_risk_warnings(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_risk_warnings(self, content: str, content_type: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate risk warnings"""
 
         issues = []
@@ -338,9 +301,7 @@ class UnifiedValidationFramework:
 
         # Check for risk-related language
         risk_keywords = ["risk", "loss", "volatile", "uncertain", "past performance"]
-        risk_mentions = sum(
-            1 for keyword in risk_keywords if keyword.lower() in content.lower()
-        )
+        risk_mentions = sum(1 for keyword in risk_keywords if keyword.lower() in content.lower())
 
         if risk_mentions == 0:
             issues.append("No risk warnings found")
@@ -353,8 +314,8 @@ class UnifiedValidationFramework:
         }
 
     def _validate_investment_advice(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate investment advice language compliance"""
 
         issues = []
@@ -376,9 +337,7 @@ class UnifiedValidationFramework:
 
         return {"score": max(0.0, score), "issues": issues}
 
-    def _validate_attribution(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_attribution(self, content: str, content_type: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate attribution requirements"""
 
         issues = []
@@ -392,8 +351,8 @@ class UnifiedValidationFramework:
         return {"score": max(0.0, score), "issues": issues}
 
     def _validate_data_consistency(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate data consistency"""
 
         issues = []
@@ -405,8 +364,8 @@ class UnifiedValidationFramework:
         return {"score": score, "issues": issues, "consistency_check": "basic"}
 
     def _validate_source_verification(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate source verification"""
 
         issues = []
@@ -420,8 +379,8 @@ class UnifiedValidationFramework:
         return {"score": max(0.0, score), "issues": issues}
 
     def _validate_claim_substantiation(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate claim substantiation"""
 
         issues = []
@@ -433,8 +392,8 @@ class UnifiedValidationFramework:
         return {"score": score, "issues": issues}
 
     def _validate_hook_effectiveness(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate hook effectiveness"""
 
         issues = []
@@ -462,8 +421,8 @@ class UnifiedValidationFramework:
         return {"score": max(0.0, score), "issues": issues, "hook_length": len(hook)}
 
     def _validate_content_accessibility(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate content accessibility"""
 
         issues = []
@@ -474,9 +433,7 @@ class UnifiedValidationFramework:
 
         return {"score": score, "issues": issues}
 
-    def _validate_call_to_action(
-        self, content: str, content_type: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_call_to_action(self, content: str, content_type: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate call to action effectiveness"""
 
         issues = []
@@ -490,9 +447,7 @@ class UnifiedValidationFramework:
             r"Learn more:",
         ]
 
-        cta_found = any(
-            re.search(pattern, content, re.IGNORECASE) for pattern in cta_patterns
-        )
+        cta_found = any(re.search(pattern, content, re.IGNORECASE) for pattern in cta_patterns)
 
         if not cta_found:
             issues.append("No clear call to action found")
@@ -501,9 +456,7 @@ class UnifiedValidationFramework:
         return {"score": max(0.0, score), "issues": issues, "cta_found": cta_found}
 
     # Content-specific validation methods
-    def _validate_fundamental_specific(
-        self, content: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_fundamental_specific(self, content: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate fundamental analysis specific criteria"""
 
         issues = []
@@ -511,9 +464,7 @@ class UnifiedValidationFramework:
 
         # Check for valuation-related content
         valuation_keywords = ["fair value", "price target", "valuation", "DCF"]
-        valuation_mentions = sum(
-            1 for keyword in valuation_keywords if keyword.lower() in content.lower()
-        )
+        valuation_mentions = sum(1 for keyword in valuation_keywords if keyword.lower() in content.lower())
 
         if valuation_mentions == 0:
             issues.append("No valuation content found in fundamental analysis")
@@ -525,9 +476,7 @@ class UnifiedValidationFramework:
             "valuation_mentions": valuation_mentions,
         }
 
-    def _validate_strategy_specific(
-        self, content: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_strategy_specific(self, content: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate strategy specific criteria"""
 
         issues = []
@@ -535,9 +484,7 @@ class UnifiedValidationFramework:
 
         # Check for strategy metrics
         strategy_keywords = ["win rate", "performance", "signal", "strategy"]
-        strategy_mentions = sum(
-            1 for keyword in strategy_keywords if keyword.lower() in content.lower()
-        )
+        strategy_mentions = sum(1 for keyword in strategy_keywords if keyword.lower() in content.lower())
 
         if strategy_mentions == 0:
             issues.append("No strategy metrics found")
@@ -549,9 +496,7 @@ class UnifiedValidationFramework:
             "strategy_mentions": strategy_mentions,
         }
 
-    def _validate_sector_specific(
-        self, content: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_sector_specific(self, content: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate sector analysis specific criteria"""
 
         issues = []
@@ -559,9 +504,7 @@ class UnifiedValidationFramework:
 
         # Check for sector-specific content
         sector_keywords = ["sector", "allocation", "rotation", "ETF"]
-        sector_mentions = sum(
-            1 for keyword in sector_keywords if keyword.lower() in content.lower()
-        )
+        sector_mentions = sum(1 for keyword in sector_keywords if keyword.lower() in content.lower())
 
         if sector_mentions == 0:
             issues.append("No sector-specific content found")
@@ -573,9 +516,7 @@ class UnifiedValidationFramework:
             "sector_mentions": sector_mentions,
         }
 
-    def _validate_trade_history_specific(
-        self, content: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_trade_history_specific(self, content: str, source_data: dict[str, Any]) -> dict[str, Any]:
         """Validate trade history specific criteria"""
 
         issues = []
@@ -583,9 +524,7 @@ class UnifiedValidationFramework:
 
         # Check for performance data
         performance_keywords = ["return", "trades", "performance", "portfolio"]
-        performance_mentions = sum(
-            1 for keyword in performance_keywords if keyword.lower() in content.lower()
-        )
+        performance_mentions = sum(1 for keyword in performance_keywords if keyword.lower() in content.lower())
 
         if performance_mentions == 0:
             issues.append("No performance data found")
@@ -597,9 +536,7 @@ class UnifiedValidationFramework:
             "performance_mentions": performance_mentions,
         }
 
-    def _calculate_overall_assessment(
-        self, all_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_overall_assessment(self, all_results: dict[str, Any]) -> dict[str, Any]:
         """Calculate overall assessment scores"""
 
         # Collect all scores
@@ -617,16 +554,15 @@ class UnifiedValidationFramework:
         def score_to_grade(score):
             if score >= 0.95:
                 return "A+"
-            elif score >= 0.90:
+            if score >= 0.90:
                 return "A"
-            elif score >= 0.85:
+            if score >= 0.85:
                 return "B+"
-            elif score >= 0.80:
+            if score >= 0.80:
                 return "B"
-            elif score >= 0.70:
+            if score >= 0.70:
                 return "C"
-            else:
-                return "F"
+            return "F"
 
         # Determine compliance status
         compliance_score = overall_reliability
@@ -646,8 +582,8 @@ class UnifiedValidationFramework:
         }
 
     def _generate_findings_matrix(
-        self, all_results: Dict[str, Any], content: str, source_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, all_results: dict[str, Any], content: str, source_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate critical findings matrix"""
 
         verified_claims = []
@@ -661,20 +597,11 @@ class UnifiedValidationFramework:
                 for criterion, result in results.items():
                     if isinstance(result, dict) and "issues" in result:
                         for issue in result["issues"]:
-                            if (
-                                "missing" in issue.lower()
-                                or "not found" in issue.lower()
-                            ):
+                            if "missing" in issue.lower() or "not found" in issue.lower():
                                 unverifiable_claims.append(issue)
-                            elif (
-                                "inaccurate" in issue.lower()
-                                or "incorrect" in issue.lower()
-                            ):
+                            elif "inaccurate" in issue.lower() or "incorrect" in issue.lower():
                                 inaccurate_statements.append(issue)
-                            elif (
-                                "questionable" in issue.lower()
-                                or "uncertain" in issue.lower()
-                            ):
+                            elif "questionable" in issue.lower() or "uncertain" in issue.lower():
                                 questionable_assertions.append(issue)
                             else:
                                 verified_claims.append(f"Issue identified: {issue}")
@@ -687,8 +614,8 @@ class UnifiedValidationFramework:
         }
 
     def _generate_recommendations(
-        self, all_results: Dict[str, Any], overall_assessment: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, all_results: dict[str, Any], overall_assessment: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate actionable recommendations"""
 
         high_priority = []
@@ -735,9 +662,7 @@ class UnifiedValidationFramework:
             },
         }
 
-    def _generate_methodology_notes(
-        self, content_type: str, all_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_methodology_notes(self, content_type: str, all_results: dict[str, Any]) -> dict[str, Any]:
         """Generate methodology notes"""
 
         return {

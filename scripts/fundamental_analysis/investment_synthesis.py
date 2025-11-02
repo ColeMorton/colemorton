@@ -9,7 +9,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sector_cross_reference import SectorCrossReference
 
@@ -20,7 +20,7 @@ class InvestmentSynthesizer:
     def __init__(
         self,
         ticker: str,
-        analysis_data: Optional[Dict[str, Any]] = None,
+        analysis_data: dict[str, Any] | None = None,
         output_dir: str = "./data/outputs/fundamental_analysis",
     ):
         """
@@ -80,7 +80,7 @@ class InvestmentSynthesizer:
             },
         }
 
-    def load_analysis_data(self, analysis_file_path: Optional[str] = None) -> bool:
+    def load_analysis_data(self, analysis_file_path: str | None = None) -> bool:
         """Load analysis data from file if not provided"""
         if self.analysis_data is not None:
             return True
@@ -89,21 +89,18 @@ class InvestmentSynthesizer:
             # Try to find analysis file with today's date
             today = self.timestamp.strftime("%Y%m%d")
             analysis_dir = "./data/outputs/fundamental_analysis/analysis"
-            analysis_file_path = os.path.join(
-                analysis_dir, f"{self.ticker}_{today}_analysis.json"
-            )
+            analysis_file_path = os.path.join(analysis_dir, f"{self.ticker}_{today}_analysis.json")
 
         try:
             if os.path.exists(analysis_file_path):
-                with open(analysis_file_path, "r") as f:
+                with open(analysis_file_path) as f:
                     self.analysis_data = json.load(f)
-                print("📂 Loaded analysis data from: {analysis_file_path}")
+                print(f"📂 Loaded analysis data from: {analysis_file_path}")
                 return True
-            else:
-                print("❌ Analysis file not found: {analysis_file_path}")
-                return False
+            print(f"❌ Analysis file not found: {analysis_file_path}")
+            return False
         except Exception as e:
-            print("❌ Error loading analysis data: {str(e)}")
+            print(f"❌ Error loading analysis data: {str(e)}")
             return False
 
     def load_discovery_data(self) -> bool:
@@ -111,20 +108,17 @@ class InvestmentSynthesizer:
         try:
             today = self.timestamp.strftime("%Y%m%d")
             discovery_dir = "./data/outputs/fundamental_analysis/discovery"
-            discovery_file_path = os.path.join(
-                discovery_dir, f"{self.ticker}_{today}_discovery.json"
-            )
+            discovery_file_path = os.path.join(discovery_dir, f"{self.ticker}_{today}_discovery.json")
 
             if os.path.exists(discovery_file_path):
-                with open(discovery_file_path, "r") as f:
+                with open(discovery_file_path) as f:
                     self.discovery_data = json.load(f)
                 print("📂 Loaded discovery data for context")
                 return True
-            else:
-                print("⚠️ Discovery data not found, proceeding with analysis data only")
-                return False
+            print("⚠️ Discovery data not found, proceeding with analysis data only")
+            return False
         except Exception as e:
-            print("⚠️ Could not load discovery data: {str(e)}")
+            print(f"⚠️ Could not load discovery data: {str(e)}")
             return False
 
     def determine_investment_category(self) -> str:
@@ -137,39 +131,33 @@ class InvestmentSynthesizer:
             market_cap = self.discovery_data.get("market_data", {}).get("market_cap", 0)
             if market_cap > 200_000_000_000:
                 return "mega_cap"
-            elif market_cap > 10_000_000_000:
+            if market_cap > 10_000_000_000:
                 return "large_cap"
-            elif market_cap > 2_000_000_000:
+            if market_cap > 2_000_000_000:
                 return "mid_cap"
-            else:
-                return "small_cap"
+            return "small_cap"
 
         # Fallback to competitive analysis
-        competitive_analysis = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
         market_position = competitive_analysis.get("market_position", {})
         category = market_position.get("category", "Large-cap").lower()
 
         if "mega" in category:
             return "mega_cap"
-        elif "large" in category:
+        if "large" in category:
             return "large_cap"
-        elif "mid" in category:
+        if "mid" in category:
             return "mid_cap"
-        else:
-            return "small_cap"
+        return "small_cap"
 
-    def generate_executive_summary(self) -> Dict[str, Any]:
+    def generate_executive_summary(self) -> dict[str, Any]:
         """Generate executive summary of investment opportunity"""
         if not self.analysis_data:
             raise ValueError("Analysis data not available for synthesis")
 
         # Extract key metrics
         financial_health = self.analysis_data.get("financial_health_analysis", {})
-        competitive_position = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_position = self.analysis_data.get("competitive_position_analysis", {})
         risk_profile = self.analysis_data.get("risk_profile_analysis", {})
         investment_metrics = self.analysis_data.get("investment_metrics", {})
 
@@ -201,7 +189,7 @@ class InvestmentSynthesizer:
             },
         }
 
-    def develop_investment_thesis(self) -> Dict[str, Any]:
+    def develop_investment_thesis(self) -> dict[str, Any]:
         """Develop comprehensive investment thesis"""
         category = self.determine_investment_category()
         template = self.thesis_templates[category]
@@ -222,7 +210,7 @@ class InvestmentSynthesizer:
 
         return thesis
 
-    def create_valuation_analysis(self) -> Dict[str, Any]:
+    def create_valuation_analysis(self) -> dict[str, Any]:
         """Create comprehensive valuation analysis"""
         if not self.analysis_data:
             raise ValueError("Analysis data not available for valuation")
@@ -234,17 +222,13 @@ class InvestmentSynthesizer:
         current_valuation = self._assess_current_valuation(valuation_metrics)
 
         # Fair value estimation
-        fair_value_analysis = self._estimate_fair_value(
-            valuation_metrics, investment_metrics
-        )
+        fair_value_analysis = self._estimate_fair_value(valuation_metrics, investment_metrics)
 
         # Scenario analysis
         scenario_analysis = self._perform_scenario_analysis(valuation_metrics)
 
         # Price targets
-        price_targets = self._calculate_price_targets(
-            fair_value_analysis, scenario_analysis
-        )
+        price_targets = self._calculate_price_targets(fair_value_analysis, scenario_analysis)
 
         return {
             "current_valuation_assessment": current_valuation,
@@ -255,7 +239,7 @@ class InvestmentSynthesizer:
             "peer_comparison": self._generate_peer_comparison_summary(),
         }
 
-    def generate_investment_framework(self) -> Dict[str, Any]:
+    def generate_investment_framework(self) -> dict[str, Any]:
         """Generate actionable investment framework"""
         return {
             "investment_approach": self._recommend_investment_approach(),
@@ -268,7 +252,7 @@ class InvestmentSynthesizer:
             "risk_management": self._provide_risk_management_guidance(),
         }
 
-    def compile_supporting_evidence(self) -> Dict[str, Any]:
+    def compile_supporting_evidence(self) -> dict[str, Any]:
         """Compile supporting evidence and data sources"""
         evidence = {
             "quantitative_evidence": self._gather_quantitative_evidence(),
@@ -281,7 +265,7 @@ class InvestmentSynthesizer:
 
         return evidence
 
-    def generate_markdown_report(self, synthesis_data: Dict[str, Any]) -> str:
+    def generate_markdown_report(self, synthesis_data: dict[str, Any]) -> str:
         """Generate comprehensive markdown investment report"""
         executive_summary = synthesis_data["executive_summary"]
         investment_thesis = synthesis_data["investment_thesis"]
@@ -302,7 +286,7 @@ class InvestmentSynthesizer:
 **Template**: fundamental_analysis_template.md
 
 ## Data Summary
-- **Investment Thesis**: {investment_thesis['thesis_statement'][:100]}...
+- **Investment Thesis**: {investment_thesis["thesis_statement"][:100]}...
 - **Recommendation**: {recommendation}
 - **Confidence**: {confidence}
 
@@ -332,16 +316,14 @@ All analysis components have been processed and structured for template-complian
 
 **Disclaimer:** This analysis is for informational purposes only and does not constitute investment advice. Past performance does not guarantee future results. All investments carry risk of loss.
 
-**Generated by:** Sensylate Fundamental Analysis Engine
+**Generated by:** Cole Morton Fundamental Analysis Engine
 **Framework:** DASV (Discover → Analyze → Synthesize → Validate)
 **Analysis Date:** {self.timestamp.strftime("%Y-%m-%d %H:%M")}
 """
 
         return markdown_content
 
-    def execute_synthesis(
-        self, analysis_file_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def execute_synthesis(self, analysis_file_path: str | None = None) -> dict[str, Any]:
         """Execute complete synthesis workflow"""
         print("🔬 Starting investment synthesis for {self.ticker}")
 
@@ -420,17 +402,11 @@ All analysis components have been processed and structured for template-complian
             synthesis_result["markdown_content"] = markdown_content
 
             # Calculate synthesis confidence
-            synthesis_result[
-                "synthesis_confidence"
-            ] = self._calculate_synthesis_confidence(synthesis_result)
+            synthesis_result["synthesis_confidence"] = self._calculate_synthesis_confidence(synthesis_result)
 
             # Integrate sector cross-reference
             print("🔗 Integrating sector analysis cross-references for {self.ticker}")
-            synthesis_result = (
-                self.sector_cross_ref.integrate_with_fundamental_analysis(
-                    self.ticker, synthesis_result
-                )
-            )
+            synthesis_result = self.sector_cross_ref.integrate_with_fundamental_analysis(self.ticker, synthesis_result)
 
             # Save synthesis results
             self._save_synthesis_results(synthesis_result, markdown_content)
@@ -446,10 +422,10 @@ All analysis components have been processed and structured for template-complian
     # Helper methods for synthesis components
     def _generate_investment_recommendation(
         self,
-        financial_health: Dict[str, Any],
-        competitive_position: Dict[str, Any],
-        risk_profile: Dict[str, Any],
-        investment_metrics: Dict[str, Any],
+        financial_health: dict[str, Any],
+        competitive_position: dict[str, Any],
+        risk_profile: dict[str, Any],
+        investment_metrics: dict[str, Any],
     ) -> str:
         """Generate overall investment recommendation"""
         health_score = financial_health.get("overall_health_score", 0.5)
@@ -461,14 +437,13 @@ All analysis components have been processed and structured for template-complian
 
         if investment_score >= 0.8:
             return "Strong Buy"
-        elif investment_score >= 0.65:
+        if investment_score >= 0.65:
             return "Buy"
-        elif investment_score >= 0.45:
+        if investment_score >= 0.45:
             return "Hold"
-        elif investment_score >= 0.3:
+        if investment_score >= 0.3:
             return "Weak Hold"
-        else:
-            return "Sell"
+        return "Sell"
 
     def _calculate_thesis_confidence(self) -> str:
         """Calculate confidence level in investment thesis"""
@@ -480,10 +455,9 @@ All analysis components have been processed and structured for template-complian
 
         if analysis_confidence >= 0.8:
             return "High"
-        elif analysis_confidence >= 0.6:
+        if analysis_confidence >= 0.6:
             return "Moderate"
-        else:
-            return "Low"
+        return "Low"
 
     def _determine_target_investor(self) -> str:
         """Determine target investor profile"""
@@ -494,12 +468,11 @@ All analysis components have been processed and structured for template-complian
 
         if risk_tolerance == "conservative":
             return "Income and conservative growth investors"
-        elif risk_tolerance == "moderate":
+        if risk_tolerance == "moderate":
             return "Balanced growth and income investors"
-        elif risk_tolerance == "growth-oriented":
+        if risk_tolerance == "growth-oriented":
             return "Growth-focused investors with moderate risk tolerance"
-        else:
-            return "Aggressive growth investors with high risk tolerance"
+        return "Aggressive growth investors with high risk tolerance"
 
     def _suggest_investment_horizon(self) -> str:
         """Suggest appropriate investment time horizon"""
@@ -507,12 +480,11 @@ All analysis components have been processed and structured for template-complian
 
         if category in ["mega_cap", "large_cap"]:
             return "3-5 years (Long-term)"
-        elif category == "mid_cap":
+        if category == "mid_cap":
             return "2-4 years (Medium-term)"
-        else:
-            return "1-3 years (Short to medium-term with higher volatility)"
+        return "1-3 years (Short to medium-term with higher volatility)"
 
-    def _extract_key_highlights(self) -> List[str]:
+    def _extract_key_highlights(self) -> list[str]:
         """Extract key investment highlights"""
         highlights = []
 
@@ -523,14 +495,10 @@ All analysis components have been processed and structured for template-complian
         financial_health = self.analysis_data.get("financial_health_analysis", {})
         health_score = financial_health.get("overall_health_score", 0)
         if health_score > 0.7:
-            highlights.append(
-                f"Strong financial health (Score: {health_score:.1f}/1.0)"
-            )
+            highlights.append(f"Strong financial health (Score: {health_score:.1f}/1.0)")
 
         # Competitive highlights
-        competitive_analysis = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
         moat_assessment = competitive_analysis.get("moat_assessment", {})
         if moat_assessment.get("strength_score", 0) > 0.6:
             highlights.append("Strong competitive moat and market position")
@@ -544,7 +512,7 @@ All analysis components have been processed and structured for template-complian
 
         return highlights
 
-    def _extract_primary_risks(self) -> List[str]:
+    def _extract_primary_risks(self) -> list[str]:
         """Extract primary risk factors"""
         risks = []
 
@@ -569,30 +537,24 @@ All analysis components have been processed and structured for template-complian
 
         return risks[:5]  # Top 5 risks
 
-    def _develop_key_themes(self, theme_templates: List[str]) -> Dict[str, str]:
+    def _develop_key_themes(self, theme_templates: list[str]) -> dict[str, str]:
         """Develop detailed key investment themes"""
         themes = {}
 
         for theme in theme_templates:
             if theme == "Market dominance" and self.analysis_data:
-                competitive_analysis = self.analysis_data.get(
-                    "competitive_position_analysis", {}
-                )
+                competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
                 market_position = competitive_analysis.get("market_position", {})
-                themes[
-                    theme
-                ] = f"Company maintains {market_position.get('category', 'strong')} market position with {market_position.get('description', 'competitive advantages')}"
+                themes[theme] = (
+                    f"Company maintains {market_position.get('category', 'strong')} market position with {market_position.get('description', 'competitive advantages')}"
+                )
             elif theme == "Growth potential" and self.analysis_data:
                 investment_metrics = self.analysis_data.get("investment_metrics", {})
                 growth_metrics = investment_metrics.get("growth_metrics", {})
                 revenue_growth = growth_metrics.get("revenue_growth", 0)
-                themes[
-                    theme
-                ] = f"Revenue growth of {revenue_growth:.1%} demonstrates expansion potential"
+                themes[theme] = f"Revenue growth of {revenue_growth:.1%} demonstrates expansion potential"
             else:
-                themes[
-                    theme
-                ] = f"Analysis supports {theme.lower()} as key investment driver"
+                themes[theme] = f"Analysis supports {theme.lower()} as key investment driver"
 
         return themes
 
@@ -602,26 +564,22 @@ All analysis components have been processed and structured for template-complian
             return "Investment opportunity based on systematic fundamental analysis."
 
         financial_health = self.analysis_data.get("financial_health_analysis", {})
-        competitive_position = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_position = self.analysis_data.get("competitive_position_analysis", {})
 
         health_grade = financial_health.get("health_grade", "B")
         competitive_score = competitive_position.get("competitive_strength_score", 0.5)
 
         return f"Strong fundamental profile with {health_grade} financial health grade and competitive strength score of {competitive_score:.2f}, positioning the company for sustained value creation."
 
-    def _summarize_competitive_advantages(self) -> List[str]:
+    def _summarize_competitive_advantages(self) -> list[str]:
         """Summarize key competitive advantages"""
         if not self.analysis_data:
             return ["Systematic analysis indicates competitive positioning"]
 
-        competitive_analysis = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
         return competitive_analysis.get("competitive_advantages", [])
 
-    def _identify_growth_drivers(self) -> List[str]:
+    def _identify_growth_drivers(self) -> list[str]:
         """Identify key growth drivers"""
         drivers = []
 
@@ -643,7 +601,7 @@ All analysis components have been processed and structured for template-complian
 
         return drivers if drivers else ["Market expansion and operational efficiency"]
 
-    def _highlight_financial_strengths(self) -> List[str]:
+    def _highlight_financial_strengths(self) -> list[str]:
         """Highlight key financial strengths"""
         strengths = []
 
@@ -663,11 +621,11 @@ All analysis components have been processed and structured for template-complian
 
         return strengths if strengths else ["Solid financial foundation"]
 
-    def _outline_risk_considerations(self) -> List[str]:
+    def _outline_risk_considerations(self) -> list[str]:
         """Outline key risk considerations"""
         return self._extract_primary_risks()
 
-    def _project_catalyst_timeline(self) -> Dict[str, List[str]]:
+    def _project_catalyst_timeline(self) -> dict[str, list[str]]:
         """Project timeline of potential catalysts"""
         return {
             "near_term": ["Quarterly earnings results", "Management guidance updates"],
@@ -678,7 +636,7 @@ All analysis components have been processed and structured for template-complian
             "long_term": ["Market share gains", "Industry consolidation opportunities"],
         }
 
-    def _craft_thesis_statement(self, template: Dict[str, Any]) -> str:
+    def _craft_thesis_statement(self, template: dict[str, Any]) -> str:
         """Craft comprehensive thesis statement"""
         company_name = "The company"
         if self.discovery_data:
@@ -689,9 +647,7 @@ All analysis components have been processed and structured for template-complian
         return f"{company_name} presents an attractive investment opportunity based on its {focus}, supported by systematic fundamental analysis indicating strong positioning for long-term value creation."
 
     # Valuation analysis helper methods
-    def _assess_current_valuation(
-        self, valuation_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_current_valuation(self, valuation_metrics: dict[str, Any]) -> dict[str, Any]:
         """Assess current valuation levels"""
         pe_ratio = valuation_metrics.get("pe_ratio", 0)
         pb_ratio = valuation_metrics.get("price_to_book", 0)
@@ -706,13 +662,7 @@ All analysis components have been processed and structured for template-complian
 
         return {
             "overall_assessment": assessment,
-            "pe_assessment": (
-                "Reasonable"
-                if 15 <= pe_ratio <= 25
-                else "Extended"
-                if pe_ratio > 25
-                else "Attractive"
-            ),
+            "pe_assessment": ("Reasonable" if 15 <= pe_ratio <= 25 else "Extended" if pe_ratio > 25 else "Attractive"),
             "valuation_metrics_summary": {
                 "pe_ratio": pe_ratio,
                 "pb_ratio": pb_ratio,
@@ -721,16 +671,14 @@ All analysis components have been processed and structured for template-complian
         }
 
     def _estimate_fair_value(
-        self, valuation_metrics: Dict[str, Any], investment_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, valuation_metrics: dict[str, Any], investment_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Estimate fair value using multiple methods"""
         # This is a simplified fair value estimation
         # In practice, would use DCF, comparable company analysis, etc.
 
         current_pe = valuation_metrics.get("pe_ratio", 20)
-        growth_rate = investment_metrics.get("growth_metrics", {}).get(
-            "revenue_growth", 0.05
-        )
+        growth_rate = investment_metrics.get("growth_metrics", {}).get("revenue_growth", 0.05)
 
         # Simple PEG-based fair value estimation
         fair_pe = min(current_pe * (1 + growth_rate), 30)  # Cap at 30x
@@ -742,9 +690,7 @@ All analysis components have been processed and structured for template-complian
             "valuation_range": "Based on systematic analysis of financial metrics",
         }
 
-    def _perform_scenario_analysis(
-        self, valuation_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _perform_scenario_analysis(self, valuation_metrics: dict[str, Any]) -> dict[str, Any]:
         """Perform scenario analysis for valuation"""
         base_pe = valuation_metrics.get("pe_ratio", 20)
 
@@ -764,8 +710,8 @@ All analysis components have been processed and structured for template-complian
         }
 
     def _calculate_price_targets(
-        self, fair_value_analysis: Dict[str, Any], scenario_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, fair_value_analysis: dict[str, Any], scenario_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate price targets based on analysis"""
         # This would integrate with current price data
         # For now, provide framework
@@ -778,7 +724,7 @@ All analysis components have been processed and structured for template-complian
             "recommendation": "Target prices would be calculated using current stock price and estimated fair values",
         }
 
-    def _document_valuation_methodology(self) -> List[str]:
+    def _document_valuation_methodology(self) -> list[str]:
         """Document valuation methodology used"""
         return [
             "Systematic fundamental analysis of financial health",
@@ -802,12 +748,11 @@ All analysis components have been processed and structured for template-complian
 
         if category == "mega_cap":
             return "Core holding strategy with dividend reinvestment focus"
-        elif category == "large_cap":
+        if category == "large_cap":
             return "Growth and income balanced approach"
-        elif category == "mid_cap":
+        if category == "mid_cap":
             return "Growth-oriented strategy with regular monitoring"
-        else:
-            return "Growth focus with active position management"
+        return "Growth focus with active position management"
 
     def _suggest_position_sizing(self) -> str:
         """Suggest position sizing guidelines"""
@@ -819,16 +764,15 @@ All analysis components have been processed and structured for template-complian
 
         if "Low Risk" in risk_grade:
             return "5-10% of portfolio for conservative investors, up to 15% for balanced portfolios"
-        elif "High Risk" in risk_grade:
+        if "High Risk" in risk_grade:
             return "1-3% of portfolio, suitable only for aggressive growth allocations"
-        else:
-            return "3-7% of portfolio for balanced approach"
+        return "3-7% of portfolio for balanced approach"
 
     def _develop_entry_strategy(self) -> str:
         """Develop entry strategy recommendations"""
         return "Dollar-cost averaging over 3-6 months to reduce timing risk, with potential for accelerated accumulation on market weakness"
 
-    def _create_monitoring_framework(self) -> Dict[str, List[str]]:
+    def _create_monitoring_framework(self) -> dict[str, list[str]]:
         """Create monitoring framework"""
         return {
             "quarterly_metrics": [
@@ -853,7 +797,7 @@ All analysis components have been processed and structured for template-complian
             ],
         }
 
-    def _define_exit_criteria(self) -> Dict[str, str]:
+    def _define_exit_criteria(self) -> dict[str, str]:
         """Define exit criteria"""
         return {
             "profit_taking": "Consider partial profit-taking if position appreciates >50% in 12 months",
@@ -862,7 +806,7 @@ All analysis components have been processed and structured for template-complian
             "better_opportunities": "Consider rebalancing if significantly better opportunities emerge",
         }
 
-    def _identify_rebalancing_triggers(self) -> List[str]:
+    def _identify_rebalancing_triggers(self) -> list[str]:
         """Identify rebalancing triggers"""
         return [
             "Position size exceeds target allocation by >2%",
@@ -872,7 +816,7 @@ All analysis components have been processed and structured for template-complian
             "Changed investment objectives or risk tolerance",
         ]
 
-    def _outline_tax_considerations(self) -> List[str]:
+    def _outline_tax_considerations(self) -> list[str]:
         """Outline tax considerations"""
         return [
             "Consider tax-loss harvesting opportunities",
@@ -882,7 +826,7 @@ All analysis components have been processed and structured for template-complian
             "Monitor wash sale rules for trading activity",
         ]
 
-    def _provide_risk_management_guidance(self) -> List[str]:
+    def _provide_risk_management_guidance(self) -> list[str]:
         """Provide risk management guidance"""
         return [
             "Maintain position size within risk tolerance limits",
@@ -893,7 +837,7 @@ All analysis components have been processed and structured for template-complian
         ]
 
     # Supporting evidence helper methods
-    def _gather_quantitative_evidence(self) -> Dict[str, Any]:
+    def _gather_quantitative_evidence(self) -> dict[str, Any]:
         """Gather quantitative supporting evidence"""
         if not self.analysis_data:
             return {}
@@ -908,23 +852,17 @@ All analysis components have been processed and structured for template-complian
             "growth_metrics": investment_metrics.get("growth_metrics", {}),
         }
 
-    def _gather_qualitative_factors(self) -> List[str]:
+    def _gather_qualitative_factors(self) -> list[str]:
         """Gather qualitative supporting factors"""
         factors = []
 
         if self.analysis_data:
-            competitive_analysis = self.analysis_data.get(
-                "competitive_position_analysis", {}
-            )
+            competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
             factors.extend(competitive_analysis.get("competitive_advantages", []))
 
-        return (
-            factors
-            if factors
-            else ["Systematic fundamental analysis supports investment thesis"]
-        )
+        return factors if factors else ["Systematic fundamental analysis supports investment thesis"]
 
-    def _document_data_sources(self) -> List[str]:
+    def _document_data_sources(self) -> list[str]:
         """Document data sources used"""
         return [
             "Yahoo Finance - Market data and financial statements",
@@ -933,7 +871,7 @@ All analysis components have been processed and structured for template-complian
             "Systematic fundamental analysis framework",
         ]
 
-    def _identify_analysis_limitations(self) -> List[str]:
+    def _identify_analysis_limitations(self) -> list[str]:
         """Identify analysis limitations"""
         return [
             "Historical data may not predict future performance",
@@ -943,7 +881,7 @@ All analysis components have been processed and structured for template-complian
             "Valuation models contain inherent assumptions",
         ]
 
-    def _establish_confidence_intervals(self) -> Dict[str, str]:
+    def _establish_confidence_intervals(self) -> dict[str, str]:
         """Establish confidence intervals"""
         return {
             "financial_analysis": "High confidence based on systematic methodology",
@@ -952,7 +890,7 @@ All analysis components have been processed and structured for template-complian
             "risk_assessment": "High confidence in identified risk factors",
         }
 
-    def _perform_sensitivity_analysis(self) -> Dict[str, str]:
+    def _perform_sensitivity_analysis(self) -> dict[str, str]:
         """Perform sensitivity analysis"""
         return {
             "growth_assumptions": "Investment thesis sensitive to revenue growth sustainability",
@@ -962,7 +900,7 @@ All analysis components have been processed and structured for template-complian
         }
 
     # Formatting methods for markdown report
-    def _format_executive_summary(self, executive_summary: Dict[str, Any]) -> str:
+    def _format_executive_summary(self, executive_summary: dict[str, Any]) -> str:
         """Format executive summary for markdown"""
         recommendation = executive_summary["investment_recommendation"]
         confidence = executive_summary["confidence_level"]
@@ -980,7 +918,7 @@ All analysis components have been processed and structured for template-complian
 **Key Investment Highlights:**
 {highlight_text}"""
 
-    def _format_key_themes(self, key_themes: Dict[str, str]) -> str:
+    def _format_key_themes(self, key_themes: dict[str, str]) -> str:
         """Format key themes for markdown"""
         formatted_themes = []
         for theme, description in key_themes.items():
@@ -1003,21 +941,19 @@ All analysis components have been processed and structured for template-complian
         if not self.analysis_data:
             return "Competitive position assessed through systematic analysis."
 
-        competitive_analysis = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
         competitive_score = competitive_analysis.get("competitive_strength_score", 0.5)
 
         return f"Competitive strength score: {competitive_score:.2f}/1.0"
 
-    def _format_valuation_analysis(self, valuation_analysis: Dict[str, Any]) -> str:
+    def _format_valuation_analysis(self, valuation_analysis: dict[str, Any]) -> str:
         """Format valuation analysis for markdown"""
         current_valuation = valuation_analysis["current_valuation_assessment"]
         assessment = current_valuation["overall_assessment"]
 
         return f"**Current Valuation Assessment:** {assessment}\n\n{valuation_analysis['fair_value_analysis']['methodology']}"
 
-    def _format_risk_factors(self, risk_factors: List[str]) -> str:
+    def _format_risk_factors(self, risk_factors: list[str]) -> str:
         """Format risk factors for markdown"""
         if not risk_factors:
             return "Risk factors identified through systematic analysis."
@@ -1035,7 +971,7 @@ All analysis components have been processed and structured for template-complian
             return "\n".join([f"- {mitigation}" for mitigation in mitigations])
         return "Diversification and position sizing recommended for risk management."
 
-    def _format_investment_strategy(self, investment_framework: Dict[str, Any]) -> str:
+    def _format_investment_strategy(self, investment_framework: dict[str, Any]) -> str:
         """Format investment strategy for markdown"""
         approach = investment_framework["investment_approach"]
         position_sizing = investment_framework["position_sizing_guidance"]
@@ -1047,23 +983,21 @@ All analysis components have been processed and structured for template-complian
 
 **Entry Strategy:** {entry_strategy}"""
 
-    def _format_monitoring_framework(self, investment_framework: Dict[str, Any]) -> str:
+    def _format_monitoring_framework(self, investment_framework: dict[str, Any]) -> str:
         """Format monitoring framework for markdown"""
         monitoring = investment_framework["monitoring_framework"]
         exit_criteria = investment_framework["exit_criteria"]
 
-        quarterly_metrics = "\n".join(
-            [f"- {metric}" for metric in monitoring["quarterly_metrics"]]
-        )
+        quarterly_metrics = "\n".join([f"- {metric}" for metric in monitoring["quarterly_metrics"]])
 
         return f"""**Quarterly Monitoring:**
 {quarterly_metrics}
 
 **Exit Criteria:**
-- Profit taking: {exit_criteria['profit_taking']}
-- Stop loss: {exit_criteria['stop_loss']}"""
+- Profit taking: {exit_criteria["profit_taking"]}
+- Stop loss: {exit_criteria["stop_loss"]}"""
 
-    def _format_supporting_evidence(self, supporting_evidence: Dict[str, Any]) -> str:
+    def _format_supporting_evidence(self, supporting_evidence: dict[str, Any]) -> str:
         """Format supporting evidence for markdown"""
         data_sources = supporting_evidence["data_sources"]
         limitations = supporting_evidence["analysis_limitations"]
@@ -1077,7 +1011,7 @@ All analysis components have been processed and structured for template-complian
 **Analysis Limitations:**
 {limitations_text}"""
 
-    def _generate_conclusion(self, synthesis_data: Dict[str, Any]) -> str:
+    def _generate_conclusion(self, synthesis_data: dict[str, Any]) -> str:
         """Generate conclusion for markdown report"""
         executive_summary = synthesis_data["executive_summary"]
         recommendation = executive_summary["investment_recommendation"]
@@ -1087,9 +1021,7 @@ All analysis components have been processed and structured for template-complian
 
 The investment thesis is supported by quantitative analysis and qualitative assessment of business fundamentals, positioning this as a suitable investment for the identified target investor profile within the recommended investment horizon."""
 
-    def _calculate_synthesis_confidence(
-        self, synthesis_result: Dict[str, Any]
-    ) -> float:
+    def _calculate_synthesis_confidence(self, synthesis_result: dict[str, Any]) -> float:
         """Calculate institutional-grade synthesis confidence (0.90+ standard)"""
         # Start with institutional baseline confidence
         base_confidence = 0.90  # Institutional minimum standard
@@ -1104,9 +1036,7 @@ The investment thesis is supported by quantitative analysis and qualitative asse
 
         # Discovery phase confidence factor
         if self.discovery_data and "data_quality_assessment" in self.discovery_data:
-            discovery_confidence = self.discovery_data["data_quality_assessment"].get(
-                "overall_confidence", 0.90
-            )
+            discovery_confidence = self.discovery_data["data_quality_assessment"].get("overall_confidence", 0.90)
             confidence_factors.append(discovery_confidence)
         else:
             confidence_factors.append(0.87)  # Penalize missing discovery data
@@ -1155,9 +1085,7 @@ The investment thesis is supported by quantitative analysis and qualitative asse
 
         return round(final_confidence, 3)
 
-    def _save_synthesis_results(
-        self, synthesis_result: Dict[str, Any], markdown_content: str
-    ) -> Tuple[str, str]:
+    def _save_synthesis_results(self, synthesis_result: dict[str, Any], markdown_content: str) -> tuple[str, str]:
         """Save synthesis results to output directory"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -1186,9 +1114,7 @@ The investment thesis is supported by quantitative analysis and qualitative asse
 
 def main():
     """Command-line interface for investment synthesis"""
-    parser = argparse.ArgumentParser(
-        description="Execute investment synthesis for any stock ticker"
-    )
+    parser = argparse.ArgumentParser(description="Execute investment synthesis for any stock ticker")
     parser.add_argument("ticker", help="Stock ticker symbol (e.g., AAPL, MSFT, MA)")
     parser.add_argument("--analysis-file", help="Path to analysis data file")
     parser.add_argument(

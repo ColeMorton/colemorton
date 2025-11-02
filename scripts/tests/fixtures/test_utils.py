@@ -8,7 +8,7 @@ of Bitcoin CLI services without external API dependencies.
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import requests
@@ -17,7 +17,7 @@ import requests
 class MockResponse:
     """Mock HTTP response object"""
 
-    def __init__(self, json_data: Dict[str, Any], status_code: int = 200):
+    def __init__(self, json_data: dict[str, Any], status_code: int = 200):
         self.json_data = json_data
         self.status_code = status_code
         self.text = json.dumps(json_data)
@@ -258,15 +258,9 @@ class MockServiceFactory:
     def create_mock_mempool_service():
         """Create mock Mempool.space service"""
         mock_service = MagicMock()
-        mock_service.get_fee_estimates.return_value = (
-            BitcoinTestFixtures.mempool_space_fee_estimates()
-        )
-        mock_service.get_mempool_info.return_value = (
-            BitcoinTestFixtures.mempool_space_mempool_info()
-        )
-        mock_service.get_network_stats.return_value = (
-            BitcoinTestFixtures.mempool_space_network_stats()
-        )
+        mock_service.get_fee_estimates.return_value = BitcoinTestFixtures.mempool_space_fee_estimates()
+        mock_service.get_mempool_info.return_value = BitcoinTestFixtures.mempool_space_mempool_info()
+        mock_service.get_network_stats.return_value = BitcoinTestFixtures.mempool_space_network_stats()
         mock_service.get_bitcoin_price.return_value = {"price": 65429.50}
         mock_service.get_difficulty_info.return_value = {"difficulty": 88104191118077.4}
         mock_service.get_hashrate_info.return_value = {"hashrate": 6.28e20}
@@ -276,12 +270,8 @@ class MockServiceFactory:
     def create_mock_blockchain_service():
         """Create mock Blockchain.com service"""
         mock_service = MagicMock()
-        mock_service.get_latest_block.return_value = (
-            BitcoinTestFixtures.blockchain_com_latest_block()
-        )
-        mock_service.get_network_stats.return_value = (
-            BitcoinTestFixtures.blockchain_com_network_stats()
-        )
+        mock_service.get_latest_block.return_value = BitcoinTestFixtures.blockchain_com_latest_block()
+        mock_service.get_network_stats.return_value = BitcoinTestFixtures.blockchain_com_network_stats()
         mock_service.get_blockchain_summary.return_value = {
             "network_stats": BitcoinTestFixtures.blockchain_com_network_stats(),
             "difficulty": 88104191118077,
@@ -299,27 +289,17 @@ class MockServiceFactory:
     def create_mock_coinmetrics_service():
         """Create mock CoinMetrics service"""
         mock_service = MagicMock()
-        mock_service.get_network_data.return_value = (
-            BitcoinTestFixtures.coinmetrics_network_data()
-        )
-        mock_service.get_market_data.return_value = (
-            BitcoinTestFixtures.coinmetrics_market_data()
-        )
-        mock_service.get_mining_data.return_value = (
-            BitcoinTestFixtures.coinmetrics_mining_data()
-        )
-        mock_service.get_supported_assets.return_value = [
-            {"asset": "btc", "name": "Bitcoin"}
-        ]
+        mock_service.get_network_data.return_value = BitcoinTestFixtures.coinmetrics_network_data()
+        mock_service.get_market_data.return_value = BitcoinTestFixtures.coinmetrics_market_data()
+        mock_service.get_mining_data.return_value = BitcoinTestFixtures.coinmetrics_mining_data()
+        mock_service.get_supported_assets.return_value = [{"asset": "btc", "name": "Bitcoin"}]
         return mock_service
 
     @staticmethod
     def create_mock_alternative_me_service():
         """Create mock Alternative.me service"""
         mock_service = MagicMock()
-        mock_service.get_current_fear_greed.return_value = (
-            BitcoinTestFixtures.alternative_me_fear_greed()["data"][0]
-        )
+        mock_service.get_current_fear_greed.return_value = BitcoinTestFixtures.alternative_me_fear_greed()["data"][0]
         mock_service.get_historical_fear_greed.return_value = (
             BitcoinTestFixtures.alternative_me_historical_fear_greed()["data"]
         )
@@ -334,15 +314,9 @@ class MockServiceFactory:
     def create_mock_binance_service():
         """Create mock Binance API service"""
         mock_service = MagicMock()
-        mock_service.get_exchange_info.return_value = (
-            BitcoinTestFixtures.binance_exchange_info()
-        )
-        mock_service.get_24hr_ticker_stats.return_value = (
-            BitcoinTestFixtures.binance_24hr_ticker()
-        )
-        mock_service.get_server_time.return_value = {
-            "serverTime": int(datetime.now().timestamp() * 1000)
-        }
+        mock_service.get_exchange_info.return_value = BitcoinTestFixtures.binance_exchange_info()
+        mock_service.get_24hr_ticker_stats.return_value = BitcoinTestFixtures.binance_24hr_ticker()
+        mock_service.get_server_time.return_value = {"serverTime": int(datetime.now().timestamp() * 1000)}
         mock_service.get_symbol_price_ticker.return_value = {
             "symbol": "BTCUSDT",
             "price": "65426.00",
@@ -386,9 +360,7 @@ class MockHTTPAdapter:
             # Binance endpoints
             "https://api.binance.com/api/v3/exchangeInfo": BitcoinTestFixtures.binance_exchange_info(),
             "https://api.binance.com/api/v3/ticker/24hr": BitcoinTestFixtures.binance_24hr_ticker(),
-            "https://api.binance.com/api/v3/time": {
-                "serverTime": int(datetime.now().timestamp() * 1000)
-            },
+            "https://api.binance.com/api/v3/time": {"serverTime": int(datetime.now().timestamp() * 1000)},
         }
 
     def get_mock_response(self, url: str) -> MockResponse:
@@ -452,7 +424,7 @@ class CLIMockingUtilities:
     """CLI-level mocking utilities for subprocess and command testing"""
 
     @staticmethod
-    def mock_successful_cli_command(cli_output: Dict[str, Any]) -> Mock:
+    def mock_successful_cli_command(cli_output: dict[str, Any]) -> Mock:
         """Create mock for successful CLI command execution"""
         mock_result = Mock()
         mock_result.returncode = 0
@@ -506,16 +478,12 @@ class BitcoinCLITestScenarios:
     @staticmethod
     def mempool_space_fee_estimates_success():
         """Successful mempool.space fees command scenario"""
-        return CLIMockingUtilities.mock_successful_cli_command(
-            BitcoinTestFixtures.mempool_space_fee_estimates()
-        )
+        return CLIMockingUtilities.mock_successful_cli_command(BitcoinTestFixtures.mempool_space_fee_estimates())
 
     @staticmethod
     def blockchain_com_latest_block_success():
         """Successful blockchain.com latest block command scenario"""
-        return CLIMockingUtilities.mock_successful_cli_command(
-            BitcoinTestFixtures.blockchain_com_latest_block()
-        )
+        return CLIMockingUtilities.mock_successful_cli_command(BitcoinTestFixtures.blockchain_com_latest_block())
 
     @staticmethod
     def alternative_me_fear_greed_success():
@@ -552,20 +520,14 @@ class BitcoinCLITestScenarios:
     @staticmethod
     def api_rate_limit_error():
         """API rate limit error scenario"""
-        return CLIMockingUtilities.mock_failed_cli_command(
-            "Rate limit exceeded. Please try again later.", 429
-        )
+        return CLIMockingUtilities.mock_failed_cli_command("Rate limit exceeded. Please try again later.", 429)
 
     @staticmethod
     def network_connection_error():
         """Network connection error scenario"""
-        return CLIMockingUtilities.mock_failed_cli_command(
-            "Connection error: Unable to reach API endpoint", 503
-        )
+        return CLIMockingUtilities.mock_failed_cli_command("Connection error: Unable to reach API endpoint", 503)
 
     @staticmethod
     def invalid_command_error():
         """Invalid command error scenario"""
-        return CLIMockingUtilities.mock_failed_cli_command(
-            "No such command 'invalid_command'", 2
-        )
+        return CLIMockingUtilities.mock_failed_cli_command("No such command 'invalid_command'", 2)

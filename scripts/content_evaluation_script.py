@@ -17,7 +17,8 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Import the unified validation framework
 sys.path.append(str(Path(__file__).parent))
@@ -59,8 +60,8 @@ class ContentEvaluationEngine:
         filename: str,
         evaluation_depth: str = "comprehensive",
         real_time_validation: bool = True,
-        validation_focus: List[str] = None,
-    ) -> Dict[str, Any]:
+        validation_focus: list[str] = None,
+    ) -> dict[str, Any]:
         """
         Perform comprehensive content evaluation
 
@@ -104,13 +105,9 @@ class ContentEvaluationEngine:
                 content_data, validation_focus, real_time_validation
             )
         elif evaluation_depth == "standard":
-            evaluation_result["evaluation_breakdown"] = self._standard_evaluation(
-                content_data, validation_focus
-            )
+            evaluation_result["evaluation_breakdown"] = self._standard_evaluation(content_data, validation_focus)
         else:
-            evaluation_result["evaluation_breakdown"] = self._basic_evaluation(
-                content_data
-            )
+            evaluation_result["evaluation_breakdown"] = self._basic_evaluation(content_data)
 
         # Calculate overall assessment
         evaluation_result["overall_assessment"] = self._calculate_overall_assessment(
@@ -128,21 +125,19 @@ class ContentEvaluationEngine:
         )
 
         # Generate recommendations
-        evaluation_result[
-            "actionable_recommendations"
-        ] = self._generate_recommendations(
+        evaluation_result["actionable_recommendations"] = self._generate_recommendations(
             evaluation_result["evaluation_breakdown"],
             evaluation_result["overall_assessment"],
         )
 
         # Institutional certification
-        evaluation_result[
-            "institutional_certification"
-        ] = self._institutional_certification(evaluation_result["overall_assessment"])
+        evaluation_result["institutional_certification"] = self._institutional_certification(
+            evaluation_result["overall_assessment"]
+        )
 
         return evaluation_result
 
-    def _load_content(self, filename: str) -> Dict[str, Any]:
+    def _load_content(self, filename: str) -> dict[str, Any]:
         """Load and parse the content file"""
 
         file_path = Path(filename)
@@ -150,7 +145,7 @@ class ContentEvaluationEngine:
             raise FileNotFoundError(f"File not found: {filename}")
 
         # Read the content
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Parse frontmatter and content
@@ -178,98 +173,72 @@ class ContentEvaluationEngine:
 
     def _comprehensive_evaluation(
         self,
-        content_data: Dict[str, Any],
-        validation_focus: List[str],
+        content_data: dict[str, Any],
+        validation_focus: list[str],
         real_time_validation: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform comprehensive evaluation"""
 
         evaluation_results = {}
 
         # Financial data accuracy evaluation
         if "financial_data" in validation_focus:
-            evaluation_results[
-                "financial_data_accuracy"
-            ] = self._evaluate_financial_data_accuracy(
+            evaluation_results["financial_data_accuracy"] = self._evaluate_financial_data_accuracy(
                 content_data, real_time_validation
             )
 
         # Market analysis quality evaluation
         if "market_analysis" in validation_focus:
-            evaluation_results[
-                "market_analysis_quality"
-            ] = self._evaluate_market_analysis_quality(content_data)
+            evaluation_results["market_analysis_quality"] = self._evaluate_market_analysis_quality(content_data)
 
         # Methodology rigor evaluation
-        evaluation_results["methodology_rigor"] = self._evaluate_methodology_rigor(
-            content_data
-        )
+        evaluation_results["methodology_rigor"] = self._evaluate_methodology_rigor(content_data)
 
         # Data completeness evaluation
-        evaluation_results["data_completeness"] = self._evaluate_data_completeness(
-            content_data
-        )
+        evaluation_results["data_completeness"] = self._evaluate_data_completeness(content_data)
 
         # Economic context evaluation
-        evaluation_results["economic_context"] = self._evaluate_economic_context(
-            content_data
-        )
+        evaluation_results["economic_context"] = self._evaluate_economic_context(content_data)
 
         # Risk assessment evaluation
-        evaluation_results["risk_assessment"] = self._evaluate_risk_assessment(
-            content_data
-        )
+        evaluation_results["risk_assessment"] = self._evaluate_risk_assessment(content_data)
 
         # Structural compliance evaluation
-        evaluation_results[
-            "structural_compliance"
-        ] = self._evaluate_structural_compliance(content_data)
+        evaluation_results["structural_compliance"] = self._evaluate_structural_compliance(content_data)
 
         return evaluation_results
 
-    def _standard_evaluation(
-        self, content_data: Dict[str, Any], validation_focus: List[str]
-    ) -> Dict[str, Any]:
+    def _standard_evaluation(self, content_data: dict[str, Any], validation_focus: list[str]) -> dict[str, Any]:
         """Perform standard evaluation"""
 
         evaluation_results = {}
 
         # Core evaluations for standard depth
         if "financial_data" in validation_focus:
-            evaluation_results[
-                "financial_data_accuracy"
-            ] = self._evaluate_financial_data_accuracy(content_data, False)
+            evaluation_results["financial_data_accuracy"] = self._evaluate_financial_data_accuracy(content_data, False)
 
         if "market_analysis" in validation_focus:
-            evaluation_results[
-                "market_analysis_quality"
-            ] = self._evaluate_market_analysis_quality(content_data)
+            evaluation_results["market_analysis_quality"] = self._evaluate_market_analysis_quality(content_data)
 
-        evaluation_results["methodology_rigor"] = self._evaluate_methodology_rigor(
-            content_data
-        )
-        evaluation_results[
-            "structural_compliance"
-        ] = self._evaluate_structural_compliance(content_data)
+        evaluation_results["methodology_rigor"] = self._evaluate_methodology_rigor(content_data)
+        evaluation_results["structural_compliance"] = self._evaluate_structural_compliance(content_data)
 
         return evaluation_results
 
-    def _basic_evaluation(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _basic_evaluation(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Perform basic evaluation"""
 
         evaluation_results = {}
 
         # Basic structural and compliance checks
-        evaluation_results[
-            "structural_compliance"
-        ] = self._evaluate_structural_compliance(content_data)
+        evaluation_results["structural_compliance"] = self._evaluate_structural_compliance(content_data)
         evaluation_results["basic_quality"] = self._evaluate_basic_quality(content_data)
 
         return evaluation_results
 
     def _evaluate_financial_data_accuracy(
-        self, content_data: Dict[str, Any], real_time_validation: bool
-    ) -> Dict[str, Any]:
+        self, content_data: dict[str, Any], real_time_validation: bool
+    ) -> dict[str, Any]:
         """Evaluate financial data accuracy"""
 
         content = content_data["main_content"]
@@ -315,18 +284,14 @@ class ContentEvaluationEngine:
         confidence_matches = re.findall(confidence_pattern, content, re.IGNORECASE)
 
         if confidence_matches:
-            evidence.append(
-                f"Confidence scores provided: {len(confidence_matches)} instances"
-            )
+            evidence.append(f"Confidence scores provided: {len(confidence_matches)} instances")
         else:
             issues.append("Missing confidence scores for financial data")
             score -= 0.5
 
         # Check for data freshness indicators
         date_patterns = [r"2025-07-30", r"Generated:", r"Latest Data Point:"]
-        fresh_data_indicators = sum(
-            1 for pattern in date_patterns if re.search(pattern, content)
-        )
+        fresh_data_indicators = sum(1 for pattern in date_patterns if re.search(pattern, content))
 
         if fresh_data_indicators >= 2:
             evidence.append("Data freshness indicators present")
@@ -344,11 +309,7 @@ class ContentEvaluationEngine:
                 "today",
                 "this month",
             ]
-            market_context_count = sum(
-                1
-                for keyword in market_context_keywords
-                if keyword.lower() in content.lower()
-            )
+            market_context_count = sum(1 for keyword in market_context_keywords if keyword.lower() in content.lower())
 
             if market_context_count >= 5:
                 evidence.append("Strong real-time market context integration")
@@ -365,9 +326,7 @@ class ContentEvaluationEngine:
             "confidence_scores_count": len(confidence_matches),
         }
 
-    def _evaluate_market_analysis_quality(
-        self, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_market_analysis_quality(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate market analysis quality"""
 
         content = content_data["main_content"]
@@ -395,9 +354,7 @@ class ContentEvaluationEngine:
                 f"Comprehensive analysis structure: {len(sections_found)}/{len(required_sections)} sections"
             )
         else:
-            issues.append(
-                f"Missing analysis sections: {len(required_sections) - len(sections_found)} missing"
-            )
+            issues.append(f"Missing analysis sections: {len(required_sections) - len(sections_found)} missing")
             score -= (len(required_sections) - len(sections_found)) * 0.5
 
         # Check for quantitative analysis
@@ -415,18 +372,14 @@ class ContentEvaluationEngine:
             quant_matches += len(re.findall(pattern, content))
 
         if quant_matches >= 20:
-            evidence.append(
-                f"Strong quantitative analysis: {quant_matches} quantitative elements"
-            )
+            evidence.append(f"Strong quantitative analysis: {quant_matches} quantitative elements")
         else:
             issues.append("Insufficient quantitative analysis")
             score -= 1.0
 
         # Check for scenario analysis
         scenario_keywords = ["scenario", "bear", "bull", "base case", "stress test"]
-        scenario_mentions = sum(
-            1 for keyword in scenario_keywords if keyword.lower() in content.lower()
-        )
+        scenario_mentions = sum(1 for keyword in scenario_keywords if keyword.lower() in content.lower())
 
         if scenario_mentions >= 3:
             evidence.append("Scenario analysis present")
@@ -436,9 +389,7 @@ class ContentEvaluationEngine:
 
         # Check for catalyst identification
         catalyst_keywords = ["catalyst", "driver", "opportunity", "risk factor"]
-        catalyst_mentions = sum(
-            1 for keyword in catalyst_keywords if keyword.lower() in content.lower()
-        )
+        catalyst_mentions = sum(1 for keyword in catalyst_keywords if keyword.lower() in content.lower())
 
         if catalyst_mentions >= 5:
             evidence.append("Comprehensive catalyst analysis")
@@ -455,9 +406,7 @@ class ContentEvaluationEngine:
             "scenario_coverage": scenario_mentions,
         }
 
-    def _evaluate_methodology_rigor(
-        self, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_methodology_rigor(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate methodology rigor"""
 
         content = content_data["main_content"]
@@ -474,9 +423,7 @@ class ContentEvaluationEngine:
             "assumption",
         ]
 
-        methodology_mentions = sum(
-            1 for keyword in methodology_keywords if keyword.lower() in content.lower()
-        )
+        methodology_mentions = sum(1 for keyword in methodology_keywords if keyword.lower() in content.lower())
 
         if methodology_mentions >= 5:
             evidence.append("Clear methodology disclosure")
@@ -492,9 +439,7 @@ class ContentEvaluationEngine:
             "quality assurance",
         ]
 
-        validation_mentions = sum(
-            1 for keyword in validation_keywords if keyword.lower() in content.lower()
-        )
+        validation_mentions = sum(1 for keyword in validation_keywords if keyword.lower() in content.lower())
 
         if validation_mentions >= 3:
             evidence.append("Validation processes documented")
@@ -505,10 +450,7 @@ class ContentEvaluationEngine:
         # Check for assumption transparency
         assumption_patterns = [r"assumption", r"estimate", r"projected", r"expected"]
 
-        assumption_count = sum(
-            len(re.findall(pattern, content, re.IGNORECASE))
-            for pattern in assumption_patterns
-        )
+        assumption_count = sum(len(re.findall(pattern, content, re.IGNORECASE)) for pattern in assumption_patterns)
 
         if assumption_count >= 10:
             evidence.append("Transparent assumption documentation")
@@ -535,9 +477,7 @@ class ContentEvaluationEngine:
             "valuation_methods": methods_found,
         }
 
-    def _evaluate_data_completeness(
-        self, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_data_completeness(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate data completeness"""
 
         content = content_data["main_content"]
@@ -557,9 +497,7 @@ class ContentEvaluationEngine:
 
         # Check for data tables
         table_indicators = ["|", "Metric", "Score", "Value", "Ratio"]
-        table_count = sum(
-            1 for indicator in table_indicators if content.count(indicator) >= 5
-        )
+        table_count = sum(1 for indicator in table_indicators if content.count(indicator) >= 5)
 
         if table_count >= 3:
             evidence.append("Comprehensive data tables present")
@@ -569,9 +507,7 @@ class ContentEvaluationEngine:
 
         # Check for historical context
         historical_keywords = ["historical", "trend", "3Y", "5Y", "average", "past"]
-        historical_mentions = sum(
-            1 for keyword in historical_keywords if keyword.lower() in content.lower()
-        )
+        historical_mentions = sum(1 for keyword in historical_keywords if keyword.lower() in content.lower())
 
         if historical_mentions >= 8:
             evidence.append("Strong historical context")
@@ -581,9 +517,7 @@ class ContentEvaluationEngine:
 
         # Check for peer comparison
         peer_keywords = ["vs Peers", "sector", "industry", "comparison", "relative"]
-        peer_mentions = sum(
-            1 for keyword in peer_keywords if keyword.lower() in content.lower()
-        )
+        peer_mentions = sum(1 for keyword in peer_keywords if keyword.lower() in content.lower())
 
         if peer_mentions >= 5:
             evidence.append("Comprehensive peer analysis")
@@ -600,9 +534,7 @@ class ContentEvaluationEngine:
             "historical_context": historical_mentions,
         }
 
-    def _evaluate_economic_context(
-        self, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_economic_context(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate economic context integration"""
 
         content = content_data["main_content"]
@@ -623,16 +555,10 @@ class ContentEvaluationEngine:
             "Interest Rate",
         ]
 
-        indicators_found = [
-            indicator
-            for indicator in economic_indicators
-            if indicator.lower() in content.lower()
-        ]
+        indicators_found = [indicator for indicator in economic_indicators if indicator.lower() in content.lower()]
 
         if len(indicators_found) >= 6:
-            evidence.append(
-                f"Comprehensive economic context: {len(indicators_found)} indicators"
-            )
+            evidence.append(f"Comprehensive economic context: {len(indicators_found)} indicators")
         else:
             issues.append("Insufficient economic context integration")
             score -= 1.0
@@ -645,10 +571,7 @@ class ContentEvaluationEngine:
             r"sensitivity",
         ]
 
-        correlation_mentions = sum(
-            len(re.findall(pattern, content, re.IGNORECASE))
-            for pattern in correlation_patterns
-        )
+        correlation_mentions = sum(len(re.findall(pattern, content, re.IGNORECASE)) for pattern in correlation_patterns)
 
         if correlation_mentions >= 5:
             evidence.append("Strong correlation analysis")
@@ -658,9 +581,7 @@ class ContentEvaluationEngine:
 
         # Check for cycle positioning
         cycle_keywords = ["cycle", "phase", "expansion", "contraction", "recovery"]
-        cycle_mentions = sum(
-            1 for keyword in cycle_keywords if keyword.lower() in content.lower()
-        )
+        cycle_mentions = sum(1 for keyword in cycle_keywords if keyword.lower() in content.lower())
 
         if cycle_mentions >= 5:
             evidence.append("Clear business cycle positioning")
@@ -676,7 +597,7 @@ class ContentEvaluationEngine:
             "correlation_analysis": correlation_mentions,
         }
 
-    def _evaluate_risk_assessment(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _evaluate_risk_assessment(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate risk assessment quality"""
 
         content = content_data["main_content"]
@@ -687,9 +608,7 @@ class ContentEvaluationEngine:
         # Check for risk identification
         risk_keywords = ["risk", "threat", "vulnerability", "downside", "challenge"]
 
-        risk_mentions = sum(
-            1 for keyword in risk_keywords if keyword.lower() in content.lower()
-        )
+        risk_mentions = sum(1 for keyword in risk_keywords if keyword.lower() in content.lower())
 
         if risk_mentions >= 10:
             evidence.append("Comprehensive risk identification")
@@ -707,8 +626,7 @@ class ContentEvaluationEngine:
         ]
 
         quantified_risks = sum(
-            len(re.findall(pattern, content, re.IGNORECASE))
-            for pattern in risk_quantification_patterns
+            len(re.findall(pattern, content, re.IGNORECASE)) for pattern in risk_quantification_patterns
         )
 
         if quantified_risks >= 5:
@@ -725,9 +643,7 @@ class ContentEvaluationEngine:
             "manage",
             "monitoring",
         ]
-        mitigation_mentions = sum(
-            1 for keyword in mitigation_keywords if keyword.lower() in content.lower()
-        )
+        mitigation_mentions = sum(1 for keyword in mitigation_keywords if keyword.lower() in content.lower())
 
         if mitigation_mentions >= 5:
             evidence.append("Risk mitigation strategies present")
@@ -743,9 +659,7 @@ class ContentEvaluationEngine:
             "quantified_risks": quantified_risks,
         }
 
-    def _evaluate_structural_compliance(
-        self, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _evaluate_structural_compliance(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate structural compliance"""
 
         content = content_data["main_content"]
@@ -795,11 +709,7 @@ class ContentEvaluationEngine:
             "risk warning",
         ]
 
-        disclaimers_found = [
-            pattern
-            for pattern in disclaimer_patterns
-            if pattern.lower() in content.lower()
-        ]
+        disclaimers_found = [pattern for pattern in disclaimer_patterns if pattern.lower() in content.lower()]
 
         if disclaimers_found:
             evidence.append("Appropriate disclaimers present")
@@ -815,7 +725,7 @@ class ContentEvaluationEngine:
             "section_structure": len(sections_present),
         }
 
-    def _evaluate_basic_quality(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _evaluate_basic_quality(self, content_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate basic content quality"""
 
         content = content_data["main_content"]
@@ -824,9 +734,7 @@ class ContentEvaluationEngine:
         evidence = []
 
         # Check for spelling and grammar (basic patterns)
-        grammar_issues = len(
-            re.findall(r"\b(teh|thier|recieve|seperate)\b", content, re.IGNORECASE)
-        )
+        grammar_issues = len(re.findall(r"\b(teh|thier|recieve|seperate)\b", content, re.IGNORECASE))
         if grammar_issues > 0:
             issues.append(f"Potential spelling issues: {grammar_issues} found")
             score -= grammar_issues * 0.1
@@ -850,14 +758,10 @@ class ContentEvaluationEngine:
             "issues": issues,
             "evidence": evidence,
             "grammar_check": grammar_issues,
-            "readability_check": (
-                f"{avg_sentence_length:.1f} words/sentence" if sentences > 0 else "N/A"
-            ),
+            "readability_check": (f"{avg_sentence_length:.1f} words/sentence" if sentences > 0 else "N/A"),
         }
 
-    def _calculate_overall_assessment(
-        self, evaluation_breakdown: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_overall_assessment(self, evaluation_breakdown: dict[str, Any]) -> dict[str, Any]:
         """Calculate overall assessment from evaluation breakdown"""
 
         # Calculate weighted score
@@ -879,16 +783,15 @@ class ContentEvaluationEngine:
         def score_to_grade(score):
             if score >= 9.5:
                 return "A+"
-            elif score >= 9.0:
+            if score >= 9.0:
                 return "A"
-            elif score >= 8.5:
+            if score >= 8.5:
                 return "B+"
-            elif score >= 8.0:
+            if score >= 8.0:
                 return "B"
-            elif score >= 7.0:
+            if score >= 7.0:
                 return "C"
-            else:
-                return "F"
+            return "F"
 
         # Determine institutional status
         if overall_score >= self.quality_thresholds["institutional_minimum"]:
@@ -902,16 +805,12 @@ class ContentEvaluationEngine:
             "overall_score": f"{overall_score:.2f}/10.0",
             "quality_grade": score_to_grade(overall_score),
             "institutional_status": institutional_status,
-            "meets_institutional_standards": overall_score
-            >= self.quality_thresholds["institutional_minimum"],
+            "meets_institutional_standards": overall_score >= self.quality_thresholds["institutional_minimum"],
             "weighted_breakdown": {
                 category: {
                     "score": evaluation_breakdown.get(category, {}).get("score", 0.0),
                     "weight": weight,
-                    "weighted_contribution": evaluation_breakdown.get(category, {}).get(
-                        "score", 0.0
-                    )
-                    * weight,
+                    "weighted_contribution": evaluation_breakdown.get(category, {}).get("score", 0.0) * weight,
                 }
                 for category, weight in self.evaluation_weights.items()
                 if category in evaluation_breakdown
@@ -919,11 +818,11 @@ class ContentEvaluationEngine:
         }
 
     def _generate_evidence_scoring(
-        self, content_data: Dict[str, Any], evaluation_breakdown: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content_data: dict[str, Any], evaluation_breakdown: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate evidence-based scoring details"""
 
-        evidence_summary: Dict[str, Any] = {
+        evidence_summary: dict[str, Any] = {
             "positive_evidence": [],
             "areas_of_concern": [],
             "quantitative_metrics": {},
@@ -945,17 +844,10 @@ class ContentEvaluationEngine:
             "word_count": content_data["word_count"],
             "content_length": content_data["file_size"],
             "section_coverage": len(
-                [
-                    cat
-                    for cat in evaluation_breakdown.keys()
-                    if evaluation_breakdown[cat].get("score", 0) >= 8.0
-                ]
+                [cat for cat in evaluation_breakdown if evaluation_breakdown[cat].get("score", 0) >= 8.0]
             ),
             "average_score": (
-                sum(
-                    results.get("score", 0) for results in evaluation_breakdown.values()
-                )
-                / len(evaluation_breakdown)
+                sum(results.get("score", 0) for results in evaluation_breakdown.values()) / len(evaluation_breakdown)
                 if evaluation_breakdown
                 else 0
             ),
@@ -971,29 +863,21 @@ class ContentEvaluationEngine:
                 else "Limited"
             ),
             "analysis_rigor": (
-                "High"
-                if evaluation_breakdown.get("methodology_rigor", {}).get("score", 0)
-                >= 8.5
-                else "Moderate"
+                "High" if evaluation_breakdown.get("methodology_rigor", {}).get("score", 0) >= 8.5 else "Moderate"
             ),
             "data_integration": (
                 "Strong"
-                if evaluation_breakdown.get("financial_data_accuracy", {}).get(
-                    "score", 0
-                )
-                >= 9.0
+                if evaluation_breakdown.get("financial_data_accuracy", {}).get("score", 0) >= 9.0
                 else "Adequate"
             ),
         }
 
         return evidence_summary
 
-    def _generate_critical_findings(
-        self, evaluation_breakdown: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_critical_findings(self, evaluation_breakdown: dict[str, Any]) -> dict[str, Any]:
         """Generate critical findings from evaluation"""
 
-        critical_findings: Dict[str, Any] = {
+        critical_findings: dict[str, Any] = {
             "strengths": [],
             "weaknesses": [],
             "critical_issues": [],
@@ -1020,17 +904,11 @@ class ContentEvaluationEngine:
         for category, results in evaluation_breakdown.items():
             issues = results.get("issues", [])
             for issue in issues:
-                if any(
-                    word in issue.lower()
-                    for word in ["missing", "insufficient", "critical", "required"]
-                ):
+                if any(word in issue.lower() for word in ["missing", "insufficient", "critical", "required"]):
                     critical_findings["critical_issues"].append(f"{category}: {issue}")
 
         # Improvement priorities (lowest scoring categories)
-        category_scores = [
-            (category, results.get("score", 0))
-            for category, results in evaluation_breakdown.items()
-        ]
+        category_scores = [(category, results.get("score", 0)) for category, results in evaluation_breakdown.items()]
         category_scores.sort(key=lambda x: x[1])
 
         for category, score in category_scores[:3]:  # Top 3 improvement areas
@@ -1042,11 +920,11 @@ class ContentEvaluationEngine:
         return critical_findings
 
     def _generate_recommendations(
-        self, evaluation_breakdown: Dict[str, Any], overall_assessment: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, evaluation_breakdown: dict[str, Any], overall_assessment: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate actionable recommendations"""
 
-        recommendations: Dict[str, Any] = {
+        recommendations: dict[str, Any] = {
             "immediate_actions": [],
             "medium_term_improvements": [],
             "long_term_enhancements": [],
@@ -1090,9 +968,7 @@ class ContentEvaluationEngine:
 
         return recommendations
 
-    def _institutional_certification(
-        self, overall_assessment: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _institutional_certification(self, overall_assessment: dict[str, Any]) -> dict[str, Any]:
         """Generate institutional certification assessment"""
 
         overall_score = float(overall_assessment["overall_score"].split("/")[0])
@@ -1103,12 +979,9 @@ class ContentEvaluationEngine:
             "certification_level": "",
             "compliance_score": f"{overall_score:.2f}/10.0",
             "certification_requirements": {
-                "accuracy_standard": overall_score
-                >= self.quality_thresholds["accuracy_minimum"],
-                "compliance_standard": overall_score
-                >= self.quality_thresholds["compliance_minimum"],
-                "institutional_standard": overall_score
-                >= self.quality_thresholds["institutional_minimum"],
+                "accuracy_standard": overall_score >= self.quality_thresholds["accuracy_minimum"],
+                "compliance_standard": overall_score >= self.quality_thresholds["compliance_minimum"],
+                "institutional_standard": overall_score >= self.quality_thresholds["institutional_minimum"],
             },
             "certification_date": datetime.now().isoformat(),
             "valid_until": "Next quarterly review",
@@ -1152,9 +1025,7 @@ def main():
         default=["financial_data", "market_analysis"],
         help="Focus areas for validation",
     )
-    parser.add_argument(
-        "--output_file", help="Output file for evaluation results (optional)"
-    )
+    parser.add_argument("--output_file", help="Output file for evaluation results (optional)")
 
     args = parser.parse_args()
 

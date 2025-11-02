@@ -8,11 +8,11 @@ Part of Phase 2 optimization for macro analysis system
 import json
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
+
 
 warnings.filterwarnings("ignore")
 
@@ -25,8 +25,8 @@ class GeopoliticalRiskEvent:
     probability: float  # 0-1 probability of occurrence
     severity: str  # 'low', 'moderate', 'high', 'extreme'
     time_horizon: str  # 'immediate', '3m', '6m', '12m', '24m'
-    affected_regions: List[str]  # Regions impacted
-    economic_channels: List[str]  # How it affects economy
+    affected_regions: list[str]  # Regions impacted
+    economic_channels: list[str]  # How it affects economy
     confidence: float  # Confidence in assessment
 
 
@@ -47,8 +47,8 @@ class ContagionAnalysis:
     """Cross-regional contagion analysis"""
 
     contagion_probability: float
-    transmission_channels: List[str]
-    affected_regions: List[str]
+    transmission_channels: list[str]
+    affected_regions: list[str]
     severity_multiplier: float
     time_to_transmission: int  # Months
 
@@ -192,35 +192,27 @@ class GeopoliticalRiskEngine:
         }
 
     def analyze_geopolitical_risks(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Comprehensive geopolitical risk analysis"""
 
         # Extract current geopolitical context
-        current_context = self._extract_geopolitical_context(
-            discovery_data, analysis_data
-        )
+        current_context = self._extract_geopolitical_context(discovery_data, analysis_data)
 
         # Identify and quantify active risk factors
         active_risks = self._identify_active_risks(current_context)
 
         # Calculate economic impact assessments
-        economic_impacts = self._calculate_economic_impacts(
-            active_risks, current_context
-        )
+        economic_impacts = self._calculate_economic_impacts(active_risks, current_context)
 
         # Analyze cross-regional contagion
-        contagion_analysis = self._analyze_contagion_risks(
-            active_risks, current_context
-        )
+        contagion_analysis = self._analyze_contagion_risks(active_risks, current_context)
 
         # Generate risk scenarios
         risk_scenarios = self._generate_risk_scenarios(active_risks, economic_impacts)
 
         # Create geopolitical risk index
-        gpr_index = self._calculate_geopolitical_risk_index(
-            active_risks, economic_impacts
-        )
+        gpr_index = self._calculate_geopolitical_risk_index(active_risks, economic_impacts)
 
         # Generate investment implications
         investment_implications = self._generate_investment_implications(
@@ -232,9 +224,7 @@ class GeopoliticalRiskEngine:
                 "methodology": "quantified_geopolitical_risk_modeling",
                 "region": self.region,
                 "analysis_timestamp": datetime.now().isoformat(),
-                "risk_assessment_confidence": self._calculate_assessment_confidence(
-                    current_context
-                ),
+                "risk_assessment_confidence": self._calculate_assessment_confidence(current_context),
             },
             "current_geopolitical_context": current_context,
             "active_risk_factors": active_risks,
@@ -248,9 +238,7 @@ class GeopoliticalRiskEngine:
             ),
         }
 
-    def _extract_geopolitical_context(
-        self, discovery_data: Dict, analysis_data: Dict
-    ) -> Dict[str, Any]:
+    def _extract_geopolitical_context(self, discovery_data: dict, analysis_data: dict) -> dict[str, Any]:
         """Extract current geopolitical context from available data"""
 
         # Extract from discovery data
@@ -259,22 +247,16 @@ class GeopoliticalRiskEngine:
 
         # Trade tensions
         trade_flows = global_context.get("trade_flows", {})
-        trade_tension_level = self._assess_trade_tension_level(
-            trade_flows, geopolitical_data
-        )
+        trade_tension_level = self._assess_trade_tension_level(trade_flows, geopolitical_data)
 
         # Policy uncertainty
-        policy_uncertainty_level = self._assess_policy_uncertainty(
-            discovery_data, analysis_data
-        )
+        policy_uncertainty_level = self._assess_policy_uncertainty(discovery_data, analysis_data)
 
         # Market stress indicators
         market_stress = self._assess_market_stress_indicators(discovery_data)
 
         # Currency dynamics
-        currency_stress = self._assess_currency_stress(
-            global_context.get("currency_dynamics", {})
-        )
+        currency_stress = self._assess_currency_stress(global_context.get("currency_dynamics", {}))
 
         # Energy/commodity stress
         energy_data = discovery_data.get("energy_market_integration", {})
@@ -283,29 +265,19 @@ class GeopoliticalRiskEngine:
         return {
             "overall_risk_level": geopolitical_data.get("risk_level", "moderate"),
             "key_conflicts": geopolitical_data.get("key_conflicts", []),
-            "economic_impact_assessment": geopolitical_data.get(
-                "economic_impact", "moderate"
-            ),
+            "economic_impact_assessment": geopolitical_data.get("economic_impact", "moderate"),
             "trade_tension_level": trade_tension_level,
             "policy_uncertainty_index": policy_uncertainty_level,
             "market_stress_level": market_stress,
             "currency_stress_index": currency_stress,
             "commodity_stress_level": commodity_stress,
-            "regional_vulnerabilities": self.regional_vulnerabilities.get(
-                self.region, {}
-            ),
+            "regional_vulnerabilities": self.regional_vulnerabilities.get(self.region, {}),
             "current_safe_haven_flows": (
-                "high"
-                if market_stress > 0.6
-                else "moderate"
-                if market_stress > 0.3
-                else "low"
+                "high" if market_stress > 0.6 else "moderate" if market_stress > 0.3 else "low"
             ),
         }
 
-    def _assess_trade_tension_level(
-        self, trade_flows: Dict, geopolitical_data: Dict
-    ) -> float:
+    def _assess_trade_tension_level(self, trade_flows: dict, geopolitical_data: dict) -> float:
         """Assess current trade tension level"""
 
         # Base assessment from trade growth
@@ -324,19 +296,13 @@ class GeopoliticalRiskEngine:
 
         # Key conflicts adjustment
         key_conflicts = geopolitical_data.get("key_conflicts", [])
-        conflict_adjustment = (
-            len([c for c in key_conflicts if "trade" in c or "tariff" in c]) * 0.2
-        )
+        conflict_adjustment = len([c for c in key_conflicts if "trade" in c or "tariff" in c]) * 0.2
 
-        tension_level = (
-            base_tension * tension_factor * supply_factor
-        ) + conflict_adjustment
+        tension_level = (base_tension * tension_factor * supply_factor) + conflict_adjustment
 
         return round(min(1.0, tension_level), 3)
 
-    def _assess_policy_uncertainty(
-        self, discovery_data: Dict, analysis_data: Dict
-    ) -> float:
+    def _assess_policy_uncertainty(self, discovery_data: dict, analysis_data: dict) -> float:
         """Assess policy uncertainty level"""
 
         uncertainty_indicators = []
@@ -348,33 +314,21 @@ class GeopoliticalRiskEngine:
                 uncertainty_indicators.append(0.7)
 
         # Market sentiment indicators
-        market_sentiment = discovery_data.get("alpha_vantage_market_data", {}).get(
-            "market_sentiment", {}
-        )
+        market_sentiment = discovery_data.get("alpha_vantage_market_data", {}).get("market_sentiment", {})
         key_drivers = market_sentiment.get("key_drivers", [])
-        policy_mentions = len(
-            [
-                d
-                for d in key_drivers
-                if "policy" in d or "tariff" in d or "uncertainty" in d
-            ]
-        )
+        policy_mentions = len([d for d in key_drivers if "policy" in d or "tariff" in d or "uncertainty" in d])
         if policy_mentions > 0:
             uncertainty_indicators.append(policy_mentions * 0.3)
 
         # Volatility proxy
-        volatility_data = discovery_data.get("cli_market_intelligence", {}).get(
-            "volatility_analysis", {}
-        )
+        volatility_data = discovery_data.get("cli_market_intelligence", {}).get("volatility_analysis", {})
         vix_level = volatility_data.get("vix_analysis", {}).get("current_level", 20.0)
         if vix_level > 25:
             uncertainty_indicators.append((vix_level - 20) / 20)
 
         # Business cycle uncertainty
         business_cycle = discovery_data.get("business_cycle_data", {})
-        recession_prob = business_cycle.get("transition_probabilities", {}).get(
-            "next_12m", 0.2
-        )
+        recession_prob = business_cycle.get("transition_probabilities", {}).get("next_12m", 0.2)
         if recession_prob > 0.25:
             uncertainty_indicators.append(recession_prob * 0.8)
 
@@ -386,40 +340,32 @@ class GeopoliticalRiskEngine:
 
         return round(min(1.0, policy_uncertainty), 3)
 
-    def _assess_market_stress_indicators(self, discovery_data: Dict) -> float:
+    def _assess_market_stress_indicators(self, discovery_data: dict) -> float:
         """Assess market stress level"""
 
         stress_indicators = []
 
         # VIX level
-        volatility_data = discovery_data.get("cli_market_intelligence", {}).get(
-            "volatility_analysis", {}
-        )
+        volatility_data = discovery_data.get("cli_market_intelligence", {}).get("volatility_analysis", {})
         vix_level = volatility_data.get("vix_analysis", {}).get("current_level", 20.0)
         vix_stress = min(1.0, max(0, (vix_level - 15) / 25))  # Normalize 15-40 range
         stress_indicators.append(vix_stress)
 
         # Market sentiment
-        market_sentiment = discovery_data.get("alpha_vantage_market_data", {}).get(
-            "market_sentiment", {}
-        )
+        market_sentiment = discovery_data.get("alpha_vantage_market_data", {}).get("market_sentiment", {})
         sentiment_score = market_sentiment.get("sentiment_score", 0.5)
         sentiment_stress = 1.0 - sentiment_score  # Invert sentiment
         stress_indicators.append(sentiment_stress)
 
         # Risk appetite
-        risk_appetite = discovery_data.get("cli_market_intelligence", {}).get(
-            "risk_appetite", {}
-        )
+        risk_appetite = discovery_data.get("cli_market_intelligence", {}).get("risk_appetite", {})
         risk_level = risk_appetite.get("current_level", "neutral")
-        risk_stress = {"low": 0.8, "moderate": 0.5, "neutral": 0.4, "high": 0.2}.get(
-            risk_level, 0.4
-        )
+        risk_stress = {"low": 0.8, "moderate": 0.5, "neutral": 0.4, "high": 0.2}.get(risk_level, 0.4)
         stress_indicators.append(risk_stress)
 
         return round(np.mean(stress_indicators), 3)
 
-    def _assess_currency_stress(self, currency_dynamics: Dict) -> float:
+    def _assess_currency_stress(self, currency_dynamics: dict) -> float:
         """Assess currency stress level"""
 
         stress_indicators = []
@@ -433,9 +379,7 @@ class GeopoliticalRiskEngine:
         # Emerging market currency stress
         em_currencies = currency_dynamics.get("emerging_market_currencies", {})
         em_stress_level = em_currencies.get("stress_level", "moderate")
-        em_stress = {"low": 0.2, "moderate": 0.5, "elevated": 0.7, "high": 0.9}.get(
-            em_stress_level, 0.5
-        )
+        em_stress = {"low": 0.2, "moderate": 0.5, "elevated": 0.7, "high": 0.9}.get(em_stress_level, 0.5)
         stress_indicators.append(em_stress)
 
         # Capital flow pressures
@@ -449,7 +393,7 @@ class GeopoliticalRiskEngine:
 
         return round(np.mean(stress_indicators), 3)
 
-    def _assess_commodity_stress(self, energy_data: Dict) -> float:
+    def _assess_commodity_stress(self, energy_data: dict) -> float:
         """Assess commodity/energy stress level"""
 
         stress_indicators = []
@@ -485,7 +429,7 @@ class GeopoliticalRiskEngine:
 
         return round(np.mean(stress_indicators), 3)
 
-    def _identify_active_risks(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _identify_active_risks(self, context: dict[str, Any]) -> dict[str, Any]:
         """Identify and quantify currently active geopolitical risks"""
 
         active_risks = {}
@@ -507,9 +451,7 @@ class GeopoliticalRiskEngine:
             active_risks["policy_uncertainty"] = GeopoliticalRiskEvent(
                 event_type="policy_uncertainty",
                 probability=context["policy_uncertainty_index"],
-                severity=self._classify_risk_severity(
-                    context["policy_uncertainty_index"]
-                ),
+                severity=self._classify_risk_severity(context["policy_uncertainty_index"]),
                 time_horizon="12m",
                 affected_regions=[self.region],
                 economic_channels=["investment", "sentiment", "currency_volatility"],
@@ -545,9 +487,7 @@ class GeopoliticalRiskEngine:
             active_risks["energy_disruption"] = GeopoliticalRiskEvent(
                 event_type="energy_disruption",
                 probability=context["commodity_stress_level"],
-                severity=self._classify_risk_severity(
-                    context["commodity_stress_level"]
-                ),
+                severity=self._classify_risk_severity(context["commodity_stress_level"]),
                 time_horizon="12m",
                 affected_regions=["EU", "ASIA"],
                 economic_channels=["commodity_prices", "inflation", "supply_chains"],
@@ -572,16 +512,13 @@ class GeopoliticalRiskEngine:
 
         if risk_level >= 0.8:
             return "extreme"
-        elif risk_level >= 0.6:
+        if risk_level >= 0.6:
             return "high"
-        elif risk_level >= 0.4:
+        if risk_level >= 0.4:
             return "moderate"
-        else:
-            return "low"
+        return "low"
 
-    def _calculate_economic_impacts(
-        self, active_risks: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_economic_impacts(self, active_risks: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         """Calculate economic impacts of identified geopolitical risks"""
 
         impact_assessments = {}
@@ -609,25 +546,15 @@ class GeopoliticalRiskEngine:
                         "extreme": 2.0,
                     }[severity]
 
-                    gdp_impact = (
-                        channel_data["gdp_coefficient"]
-                        * severity_multiplier
-                        * probability
-                    )
-                    inflation_impact = (
-                        channel_data["inflation_coefficient"]
-                        * severity_multiplier
-                        * probability
-                    )
+                    gdp_impact = channel_data["gdp_coefficient"] * severity_multiplier * probability
+                    inflation_impact = channel_data["inflation_coefficient"] * severity_multiplier * probability
 
                     total_gdp_impact += gdp_impact
                     total_inflation_impact += inflation_impact
 
                     # Trade impact (simplified)
                     if channel in ["trade_flows", "supply_chains"]:
-                        total_trade_impact += (
-                            -15 * severity_multiplier * probability
-                        )  # Negative trade impact
+                        total_trade_impact += -15 * severity_multiplier * probability  # Negative trade impact
 
             # Regional vulnerability adjustment
             regional_vuln = context.get("regional_vulnerabilities", {})
@@ -653,22 +580,16 @@ class GeopoliticalRiskEngine:
                 "gdp_impact_percentage_points": round(total_gdp_impact, 3),
                 "inflation_impact_percentage_points": round(total_inflation_impact, 3),
                 "trade_impact_percentage": round(total_trade_impact, 1),
-                "currency_impact_percentage": round(
-                    total_gdp_impact * -5, 1
-                ),  # GDP impact drives currency
-                "market_impact_percentage": round(
-                    total_gdp_impact * -8, 1
-                ),  # Market multiple of GDP impact
+                "currency_impact_percentage": round(total_gdp_impact * -5, 1),  # GDP impact drives currency
+                "market_impact_percentage": round(total_gdp_impact * -8, 1),  # Market multiple of GDP impact
                 "expected_duration_months": duration,
                 "peak_impact_timeline": "3-6_months",
-                "recovery_timeline": f"{duration//2}-{duration}_months",
+                "recovery_timeline": f"{duration // 2}-{duration}_months",
             }
 
         return impact_assessments
 
-    def _analyze_contagion_risks(
-        self, active_risks: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_contagion_risks(self, active_risks: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         """Analyze cross-regional contagion risks"""
 
         contagion_assessments = {}
@@ -682,15 +603,9 @@ class GeopoliticalRiskEngine:
 
             for source_region in affected_regions:
                 if source_region in self.contagion_matrix:
-                    for target_region, contagion_coeff in self.contagion_matrix[
-                        source_region
-                    ].items():
-                        if (
-                            target_region not in affected_regions
-                        ):  # Not already affected
-                            contagion_prob = (
-                                probability * contagion_coeff * 0.8
-                            )  # Reduced probability for contagion
+                    for target_region, contagion_coeff in self.contagion_matrix[source_region].items():
+                        if target_region not in affected_regions:  # Not already affected
+                            contagion_prob = probability * contagion_coeff * 0.8  # Reduced probability for contagion
 
                             if target_region not in contagion_map:
                                 contagion_map[target_region] = {
@@ -703,13 +618,9 @@ class GeopoliticalRiskEngine:
                                 contagion_map[target_region]["contagion_probability"],
                                 contagion_prob,
                             )
-                            contagion_map[target_region][
-                                "transmission_channels"
-                            ] = list(
+                            contagion_map[target_region]["transmission_channels"] = list(
                                 set(
-                                    contagion_map[target_region][
-                                        "transmission_channels"
-                                    ]
+                                    contagion_map[target_region]["transmission_channels"]
                                     + [
                                         "trade_links",
                                         "financial_flows",
@@ -729,16 +640,10 @@ class GeopoliticalRiskEngine:
                 "contagion_mapping": contagion_map,
                 "overall_contagion_risk": (
                     "high"
-                    if any(
-                        region_data["contagion_probability"] > 0.4
-                        for region_data in contagion_map.values()
-                    )
+                    if any(region_data["contagion_probability"] > 0.4 for region_data in contagion_map.values())
                     else (
                         "moderate"
-                        if any(
-                            region_data["contagion_probability"] > 0.2
-                            for region_data in contagion_map.values()
-                        )
+                        if any(region_data["contagion_probability"] > 0.2 for region_data in contagion_map.values())
                         else "low"
                     )
                 ),
@@ -747,16 +652,14 @@ class GeopoliticalRiskEngine:
         return contagion_assessments
 
     def _generate_risk_scenarios(
-        self, active_risks: Dict[str, Any], economic_impacts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], economic_impacts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate risk scenario analysis"""
 
         scenarios = {}
 
         # Base case: Current risks don't escalate
-        base_case_impact = self._calculate_aggregate_impact(
-            active_risks, economic_impacts, 0.6
-        )
+        base_case_impact = self._calculate_aggregate_impact(active_risks, economic_impacts, 0.6)
         scenarios["base_case"] = {
             "description": "Current geopolitical risks remain at present levels",
             "probability": 0.5,
@@ -769,9 +672,7 @@ class GeopoliticalRiskEngine:
         }
 
         # Escalation case: Risks intensify
-        escalation_impact = self._calculate_aggregate_impact(
-            active_risks, economic_impacts, 1.4
-        )
+        escalation_impact = self._calculate_aggregate_impact(active_risks, economic_impacts, 1.4)
         scenarios["escalation_case"] = {
             "description": "Geopolitical risks escalate significantly",
             "probability": 0.25,
@@ -784,9 +685,7 @@ class GeopoliticalRiskEngine:
         }
 
         # De-escalation case: Risks subside
-        deescalation_impact = self._calculate_aggregate_impact(
-            active_risks, economic_impacts, 0.3
-        )
+        deescalation_impact = self._calculate_aggregate_impact(active_risks, economic_impacts, 0.3)
         scenarios["de_escalation_case"] = {
             "description": "Geopolitical tensions ease substantially",
             "probability": 0.25,
@@ -802,10 +701,10 @@ class GeopoliticalRiskEngine:
 
     def _calculate_aggregate_impact(
         self,
-        active_risks: Dict[str, Any],
-        economic_impacts: Dict[str, Any],
+        active_risks: dict[str, Any],
+        economic_impacts: dict[str, Any],
         scenario_multiplier: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate aggregate economic impact across all risks"""
 
         total_gdp_impact = 0
@@ -817,21 +716,11 @@ class GeopoliticalRiskEngine:
                 # Weight by risk probability
                 probability = active_risks[risk_name]["probability"]
 
-                total_gdp_impact += (
-                    impact_data["gdp_impact_percentage_points"]
-                    * probability
-                    * scenario_multiplier
-                )
+                total_gdp_impact += impact_data["gdp_impact_percentage_points"] * probability * scenario_multiplier
                 total_inflation_impact += (
-                    impact_data["inflation_impact_percentage_points"]
-                    * probability
-                    * scenario_multiplier
+                    impact_data["inflation_impact_percentage_points"] * probability * scenario_multiplier
                 )
-                total_trade_impact += (
-                    impact_data["trade_impact_percentage"]
-                    * probability
-                    * scenario_multiplier
-                )
+                total_trade_impact += impact_data["trade_impact_percentage"] * probability * scenario_multiplier
 
         return {
             "gdp_impact_percentage_points": round(total_gdp_impact, 3),
@@ -841,8 +730,8 @@ class GeopoliticalRiskEngine:
         }
 
     def _calculate_geopolitical_risk_index(
-        self, active_risks: Dict[str, Any], economic_impacts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], economic_impacts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate composite geopolitical risk index"""
 
         # Weight risks by probability and severity
@@ -887,40 +776,30 @@ class GeopoliticalRiskEngine:
             "geopolitical_risk_index": round(gpr_index, 1),
             "risk_classification": risk_classification,
             "index_components": risk_contributions,
-            "historical_percentile": min(
-                95, max(5, gpr_index)
-            ),  # Approximate percentile
+            "historical_percentile": min(95, max(5, gpr_index)),  # Approximate percentile
             "trend": "increasing" if gpr_index > 50 else "stable",
             "next_review_priority": "high" if gpr_index > 60 else "moderate",
         }
 
     def _generate_investment_implications(
         self,
-        active_risks: Dict[str, Any],
-        economic_impacts: Dict[str, Any],
-        contagion_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        active_risks: dict[str, Any],
+        economic_impacts: dict[str, Any],
+        contagion_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate investment implications from geopolitical risk analysis"""
 
         # Asset allocation adjustments
-        allocation_adjustments = self._calculate_allocation_adjustments(
-            active_risks, economic_impacts
-        )
+        allocation_adjustments = self._calculate_allocation_adjustments(active_risks, economic_impacts)
 
         # Regional positioning
-        regional_positioning = self._determine_regional_positioning(
-            active_risks, contagion_analysis
-        )
+        regional_positioning = self._determine_regional_positioning(active_risks, contagion_analysis)
 
         # Sector implications
-        sector_implications = self._analyze_sector_implications(
-            active_risks, economic_impacts
-        )
+        sector_implications = self._analyze_sector_implications(active_risks, economic_impacts)
 
         # Hedging strategies
-        hedging_strategies = self._recommend_hedging_strategies(
-            active_risks, economic_impacts
-        )
+        hedging_strategies = self._recommend_hedging_strategies(active_risks, economic_impacts)
 
         return {
             "asset_allocation_adjustments": allocation_adjustments,
@@ -933,14 +812,12 @@ class GeopoliticalRiskEngine:
         }
 
     def _calculate_allocation_adjustments(
-        self, active_risks: Dict[str, Any], economic_impacts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], economic_impacts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate recommended asset allocation adjustments"""
 
         # Calculate aggregate impact
-        base_impact = self._calculate_aggregate_impact(
-            active_risks, economic_impacts, 1.0
-        )
+        base_impact = self._calculate_aggregate_impact(active_risks, economic_impacts, 1.0)
 
         gdp_impact = base_impact["gdp_impact_percentage_points"]
         inflation_impact = base_impact["inflation_impact_percentage_points"]
@@ -957,10 +834,7 @@ class GeopoliticalRiskEngine:
             recommendations["equities"] = "neutral"
 
         # Bonds: Flight to quality during geopolitical stress
-        if any(
-            risk_data["severity"] in ["high", "extreme"]
-            for risk_data in active_risks.values()
-        ):
+        if any(risk_data["severity"] in ["high", "extreme"] for risk_data in active_risks.values()):
             recommendations["government_bonds"] = "overweight"
             recommendations["corporate_bonds"] = "underweight"
         else:
@@ -988,17 +862,15 @@ class GeopoliticalRiskEngine:
         }
 
     def _determine_regional_positioning(
-        self, active_risks: Dict[str, Any], contagion_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], contagion_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Determine regional investment positioning"""
 
         regional_recommendations = {}
 
         # Analyze each major region
         for region in ["US", "EU", "ASIA", "EMERGING_MARKETS"]:
-            risk_exposure = self._calculate_regional_risk_exposure(
-                region, active_risks, contagion_analysis
-            )
+            risk_exposure = self._calculate_regional_risk_exposure(region, active_risks, contagion_analysis)
 
             if risk_exposure < 0.3:
                 recommendation = "overweight"
@@ -1010,31 +882,26 @@ class GeopoliticalRiskEngine:
             regional_recommendations[region] = {
                 "positioning": recommendation,
                 "risk_exposure_score": round(risk_exposure, 3),
-                "primary_risk_factors": self._identify_regional_risk_factors(
-                    region, active_risks
-                ),
+                "primary_risk_factors": self._identify_regional_risk_factors(region, active_risks),
             }
 
         return {
             "regional_allocation_guidance": regional_recommendations,
             "safe_haven_preferences": (
                 ["US", "EU"]
-                if "US" in regional_recommendations
-                and regional_recommendations["US"]["risk_exposure_score"] < 0.4
+                if "US" in regional_recommendations and regional_recommendations["US"]["risk_exposure_score"] < 0.4
                 else ["US"]
             ),
             "highest_risk_regions": [
-                region
-                for region, data in regional_recommendations.items()
-                if data["risk_exposure_score"] > 0.6
+                region for region, data in regional_recommendations.items() if data["risk_exposure_score"] > 0.6
             ],
         }
 
     def _calculate_regional_risk_exposure(
         self,
         region: str,
-        active_risks: Dict[str, Any],
-        contagion_analysis: Dict[str, Any],
+        active_risks: dict[str, Any],
+        contagion_analysis: dict[str, Any],
     ) -> float:
         """Calculate risk exposure score for a region"""
 
@@ -1058,9 +925,7 @@ class GeopoliticalRiskEngine:
 
         return np.mean(exposure_scores) if exposure_scores else 0.3
 
-    def _identify_regional_risk_factors(
-        self, region: str, active_risks: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_regional_risk_factors(self, region: str, active_risks: dict[str, Any]) -> list[str]:
         """Identify primary risk factors for a region"""
 
         risk_factors = []
@@ -1072,8 +937,8 @@ class GeopoliticalRiskEngine:
         return list(set(risk_factors))
 
     def _analyze_sector_implications(
-        self, active_risks: Dict[str, Any], economic_impacts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], economic_impacts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze sector-specific implications of geopolitical risks"""
 
         sector_impacts = {}
@@ -1134,19 +999,15 @@ class GeopoliticalRiskEngine:
                 "impact_classification": classification,
                 "primary_risk_drivers": contributing_risks,
                 "investment_recommendation": (
-                    "overweight"
-                    if sector_impact > 0.2
-                    else "underweight"
-                    if sector_impact < -0.3
-                    else "neutral"
+                    "overweight" if sector_impact > 0.2 else "underweight" if sector_impact < -0.3 else "neutral"
                 ),
             }
 
         return sector_impacts
 
     def _recommend_hedging_strategies(
-        self, active_risks: Dict[str, Any], economic_impacts: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, active_risks: dict[str, Any], economic_impacts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Recommend risk hedging strategies"""
 
         hedging_strategies = []
@@ -1158,18 +1019,12 @@ class GeopoliticalRiskEngine:
                     "strategy_type": "currency_hedging",
                     "instruments": ["currency_forwards", "currency_ETFs"],
                     "rationale": "Hedge against currency volatility from geopolitical instability",
-                    "urgency": (
-                        "high"
-                        if active_risks["currency_instability"]["probability"] > 0.6
-                        else "moderate"
-                    ),
+                    "urgency": ("high" if active_risks["currency_instability"]["probability"] > 0.6 else "moderate"),
                 }
             )
 
         # Volatility hedging
-        high_vol_risks = [
-            r for r in active_risks.values() if r["severity"] in ["high", "extreme"]
-        ]
+        high_vol_risks = [r for r in active_risks.values() if r["severity"] in ["high", "extreme"]]
         if high_vol_risks:
             hedging_strategies.append(
                 {
@@ -1223,16 +1078,14 @@ class GeopoliticalRiskEngine:
 
     def _create_positioning_summary(
         self,
-        allocation_adjustments: Dict[str, Any],
-        regional_positioning: Dict[str, Any],
-        sector_implications: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        allocation_adjustments: dict[str, Any],
+        regional_positioning: dict[str, Any],
+        sector_implications: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create integrated portfolio positioning summary"""
 
         # Overall risk stance
-        equity_rec = allocation_adjustments["asset_class_recommendations"].get(
-            "equities", "neutral"
-        )
+        equity_rec = allocation_adjustments["asset_class_recommendations"].get("equities", "neutral")
         if equity_rec in ["significant_underweight", "modest_underweight"]:
             overall_stance = "defensive"
         elif equity_rec == "overweight":
@@ -1244,9 +1097,7 @@ class GeopoliticalRiskEngine:
         themes = []
 
         if allocation_adjustments["rebalancing_urgency"] == "high":
-            themes.append(
-                "Immediate portfolio repositioning recommended due to elevated geopolitical risks"
-            )
+            themes.append("Immediate portfolio repositioning recommended due to elevated geopolitical risks")
 
         safe_havens = regional_positioning.get("safe_haven_preferences", [])
         if len(safe_havens) <= 2:
@@ -1258,26 +1109,23 @@ class GeopoliticalRiskEngine:
             if data["impact_classification"] in ["negative", "severely_negative"]
         ]
         if len(negative_sectors) >= 3:
-            themes.append(
-                "Broad-based sector headwinds require selective stock picking"
-            )
+            themes.append("Broad-based sector headwinds require selective stock picking")
 
         return {
             "overall_positioning_stance": overall_stance,
             "key_positioning_themes": themes,
-            "immediate_actions_required": allocation_adjustments["rebalancing_urgency"]
-            == "high",
+            "immediate_actions_required": allocation_adjustments["rebalancing_urgency"] == "high",
             "monitoring_frequency": allocation_adjustments["monitoring_frequency"],
             "risk_budget_allocation": "Conservative - limit geopolitical risk exposure to 10-15% of portfolio",
         }
 
     def _create_integrated_assessment(
         self,
-        active_risks: Dict[str, Any],
-        economic_impacts: Dict[str, Any],
-        contagion_analysis: Dict[str, Any],
-        gpr_index: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        active_risks: dict[str, Any],
+        economic_impacts: dict[str, Any],
+        contagion_analysis: dict[str, Any],
+        gpr_index: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create integrated geopolitical risk assessment"""
 
         # Overall assessment
@@ -1294,29 +1142,17 @@ class GeopoliticalRiskEngine:
         # Key findings
         findings = []
 
-        high_prob_risks = [
-            name for name, data in active_risks.items() if data["probability"] > 0.7
-        ]
+        high_prob_risks = [name for name, data in active_risks.items() if data["probability"] > 0.7]
         if high_prob_risks:
-            findings.append(
-                f"High-probability risks identified: {', '.join(high_prob_risks)}"
-            )
+            findings.append(f"High-probability risks identified: {', '.join(high_prob_risks)}")
 
         severe_impacts = [
-            name
-            for name, data in economic_impacts.items()
-            if abs(data["gdp_impact_percentage_points"]) > 0.5
+            name for name, data in economic_impacts.items() if abs(data["gdp_impact_percentage_points"]) > 0.5
         ]
         if severe_impacts:
-            findings.append(
-                f"Severe economic impact potential: {', '.join(severe_impacts)}"
-            )
+            findings.append(f"Severe economic impact potential: {', '.join(severe_impacts)}")
 
-        high_contagion = [
-            name
-            for name, data in contagion_analysis.items()
-            if data["overall_contagion_risk"] == "high"
-        ]
+        high_contagion = [name for name, data in contagion_analysis.items() if data["overall_contagion_risk"] == "high"]
         if high_contagion:
             findings.append(f"High contagion risk events: {', '.join(high_contagion)}")
 
@@ -1326,15 +1162,11 @@ class GeopoliticalRiskEngine:
             "risk_classification": risk_classification,
             "key_findings": findings,
             "investment_impact": "significant" if index_level > 60 else "moderate",
-            "recommended_actions": self._generate_recommended_actions(
-                index_level, active_risks
-            ),
+            "recommended_actions": self._generate_recommended_actions(index_level, active_risks),
             "next_review_timeline": "1_month" if index_level > 65 else "3_months",
         }
 
-    def _generate_recommended_actions(
-        self, index_level: float, active_risks: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_recommended_actions(self, index_level: float, active_risks: dict[str, Any]) -> list[str]:
         """Generate recommended actions based on risk assessment"""
 
         actions = []
@@ -1358,7 +1190,7 @@ class GeopoliticalRiskEngine:
 
         return actions
 
-    def _calculate_assessment_confidence(self, context: Dict[str, Any]) -> float:
+    def _calculate_assessment_confidence(self, context: dict[str, Any]) -> float:
         """Calculate confidence in geopolitical risk assessment"""
 
         confidence_factors = []
@@ -1407,9 +1239,7 @@ def validate_geopolitical_risk_engine():
                 },
             },
         },
-        "cli_market_intelligence": {
-            "volatility_analysis": {"vix_analysis": {"current_level": 22.3}}
-        },
+        "cli_market_intelligence": {"volatility_analysis": {"vix_analysis": {"current_level": 22.3}}},
         "energy_market_integration": {"oil_analysis": {"geopolitical_premium": 5.0}},
     }
 

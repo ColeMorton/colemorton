@@ -1,5 +1,8 @@
 # Industry Analysis Framework Version Documentation
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: System Architects
+
 ## Overview
 
 This document tracks the evolution of the Industry Analysis DASV (Discover → Analyze → Synthesize → Validate) framework, documenting methodology improvements, quality enhancements, and breaking changes across versions.

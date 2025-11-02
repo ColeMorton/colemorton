@@ -8,7 +8,8 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -31,7 +32,7 @@ class CacheValidator:
         ]
         self.validation_results = {}
 
-    def test_service_caching(self, service_name: str) -> Dict[str, Any]:
+    def test_service_caching(self, service_name: str) -> dict[str, Any]:
         """Test caching for a specific service"""
         print("Testing caching for {service_name}...")
 
@@ -84,7 +85,7 @@ class CacheValidator:
 
         return result
 
-    def test_cli_service_integration(self) -> Dict[str, Any]:
+    def test_cli_service_integration(self) -> dict[str, Any]:
         """Test that CLI services are using caching"""
         print("\nTesting CLI service integration...")
 
@@ -104,7 +105,7 @@ class CacheValidator:
             }
 
             try:
-                with open(cli_script, "r") as f:
+                with open(cli_script) as f:
                     content = f.read()
 
                 # Check if it uses service layer (good sign for caching)
@@ -126,7 +127,7 @@ class CacheValidator:
         )
         return integration_results
 
-    def check_cache_directories(self) -> Dict[str, Any]:
+    def check_cache_directories(self) -> dict[str, Any]:
         """Check cache directory structure and sizes"""
         print("\nChecking cache directories...")
 
@@ -168,7 +169,7 @@ class CacheValidator:
 
         return directory_info
 
-    def validate_ttl_consistency(self) -> Dict[str, Any]:
+    def validate_ttl_consistency(self) -> dict[str, Any]:
         """Validate TTL consistency across services"""
         print("\nValidating TTL consistency...")
 
@@ -198,14 +199,10 @@ class CacheValidator:
                 ttl_analysis["services_analyzed"] += 1
 
             except Exception as e:
-                ttl_analysis["services"].append(
-                    {"service_name": service_name, "error": str(e)}
-                )
+                ttl_analysis["services"].append({"service_name": service_name, "error": str(e)})
 
         # Generate recommendations
-        non_standard = [
-            s for s in ttl_analysis["services"] if not s.get("is_standard", False)
-        ]
+        non_standard = [s for s in ttl_analysis["services"] if not s.get("is_standard", False)]
         if non_standard:
             ttl_analysis["recommendations"].append(
                 f"Consider standardizing TTL for {len(non_standard)} services to 15 minutes"
@@ -221,14 +218,13 @@ class CacheValidator:
         """Categorize TTL values"""
         if ttl_seconds <= 300:
             return "short (≤5 min)"
-        elif ttl_seconds <= 900:
+        if ttl_seconds <= 900:
             return "standard (≤15 min)"
-        elif ttl_seconds <= 3600:
+        if ttl_seconds <= 3600:
             return "medium (≤1 hour)"
-        else:
-            return "long (>1 hour)"
+        return "long (>1 hour)"
 
-    def run_full_validation(self) -> Dict[str, Any]:
+    def run_full_validation(self) -> dict[str, Any]:
         """Run comprehensive cache validation"""
         print("🔍 Starting Comprehensive Cache Validation\n")
         print("=" * 60)
@@ -237,9 +233,7 @@ class CacheValidator:
         print("\n1. Testing Individual Service Caching")
         print("-" * 40)
         for service_name in self.services_to_test:
-            self.validation_results[service_name] = self.test_service_caching(
-                service_name
-            )
+            self.validation_results[service_name] = self.test_service_caching(service_name)
 
         # Test CLI integration
         print("\n2. Testing CLI Service Integration")
@@ -272,13 +266,9 @@ class CacheValidator:
 
         return full_results
 
-    def _generate_summary(self) -> Dict[str, Any]:
+    def _generate_summary(self) -> dict[str, Any]:
         """Generate validation summary"""
-        working_services = sum(
-            1
-            for r in self.validation_results.values()
-            if r.get("cache_get_works", False)
-        )
+        working_services = sum(1 for r in self.validation_results.values() if r.get("cache_get_works", False))
 
         return {
             "total_services_tested": len(self.services_to_test),
@@ -288,7 +278,7 @@ class CacheValidator:
             "recommendations": self._generate_recommendations(),
         }
 
-    def _identify_critical_issues(self) -> List[str]:
+    def _identify_critical_issues(self) -> list[str]:
         """Identify critical caching issues"""
         issues = []
 
@@ -302,7 +292,7 @@ class CacheValidator:
 
         return issues
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate improvement recommendations"""
         recommendations = []
 
@@ -310,24 +300,16 @@ class CacheValidator:
         ttls = [r.get("ttl_seconds", 0) for r in self.validation_results.values()]
         unique_ttls = set(ttls)
         if len(unique_ttls) > 3:
-            recommendations.append(
-                "Standardize TTL values across services (consider using 900s for most services)"
-            )
+            recommendations.append("Standardize TTL values across services (consider using 900s for most services)")
 
         # Check for missing cache
-        non_working = [
-            name
-            for name, r in self.validation_results.items()
-            if not r.get("cache_get_works", False)
-        ]
+        non_working = [name for name, r in self.validation_results.items() if not r.get("cache_get_works", False)]
         if non_working:
-            recommendations.append(
-                f"Fix caching for services: {', '.join(non_working)}"
-            )
+            recommendations.append(f"Fix caching for services: {', '.join(non_working)}")
 
         return recommendations
 
-    def _print_summary(self, summary: Dict[str, Any]) -> None:
+    def _print_summary(self, summary: dict[str, Any]) -> None:
         """Print validation summary"""
         print("\n" + "=" * 60)
         print("🏆 CACHE VALIDATION SUMMARY")
@@ -348,15 +330,11 @@ class CacheValidator:
                 print("   • {rec}")
 
         if summary["cache_success_rate"] >= 0.9:
-            print(
-                f"\n🎉 Excellent! Cache implementation is working well across services."
-            )
+            print("\n🎉 Excellent! Cache implementation is working well across services.")
         elif summary["cache_success_rate"] >= 0.7:
             print("\n👍 Good cache implementation with room for improvement.")
         else:
-            print(
-                f"\n⚠️  Cache implementation needs attention - several services have issues."
-            )
+            print("\n⚠️  Cache implementation needs attention - several services have issues.")
 
 
 if __name__ == "__main__":

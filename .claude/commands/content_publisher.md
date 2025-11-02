@@ -724,7 +724,7 @@ FRONTMATTER COMPLIANCE VALIDATION:
 
 ---
 
-**Integration with Framework**: This command defines strategic content publication requirements for publisher-generated blog content within the broader Sensylate ecosystem through standardized template specifications, quality enforcement protocols, and cross-command coordination.
+**Integration with Framework**: This command defines strategic content publication requirements for publisher-generated blog content within the broader Colemorton ecosystem through standardized template specifications, quality enforcement protocols, and cross-command coordination.
 
 **Author**: Cole Morton
 **Framework**: Content Publication Strategy Framework

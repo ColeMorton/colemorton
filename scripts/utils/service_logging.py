@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -26,9 +26,9 @@ class ServiceHealthEvent:
     service_name: str
     status: str  # "healthy", "degraded", "unhealthy"
     response_time_ms: float
-    error_message: Optional[str] = None
-    endpoint: Optional[str] = None
-    request_id: Optional[str] = None
+    error_message: str | None = None
+    endpoint: str | None = None
+    request_id: str | None = None
 
 
 @dataclass
@@ -56,8 +56,8 @@ class ServiceLogger:
         self._setup_loggers()
 
         # Storage for metrics
-        self.health_events: List[ServiceHealthEvent] = []
-        self.performance_cache: Dict[str, ServicePerformanceMetrics] = {}
+        self.health_events: list[ServiceHealthEvent] = []
+        self.performance_cache: dict[str, ServicePerformanceMetrics] = {}
 
     def _setup_loggers(self):
         """Setup specialized loggers for different aspects"""
@@ -80,9 +80,7 @@ class ServiceLogger:
     def _setup_file_handlers(self):
         """Setup rotating file handlers for different log types"""
 
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Service interactions log
         service_handler = RotatingFileHandler(
@@ -183,17 +181,14 @@ class ServiceLogger:
             f"{f', Error: {error_message}' if error_message else ''}",
         )
 
-    def log_performance_metrics(self, service_name: str, metrics: Dict[str, Any]):
+    def log_performance_metrics(self, service_name: str, metrics: dict[str, Any]):
         """Log service performance metrics"""
 
         self.performance_logger.info(
-            f"Performance metrics - Service: {service_name}, "
-            f"Metrics: {json.dumps(metrics, indent=None)}"
+            f"Performance metrics - Service: {service_name}, Metrics: {json.dumps(metrics, indent=None)}"
         )
 
-    def get_service_health_summary(
-        self, service_name: str, hours: int = 24
-    ) -> Dict[str, Any]:
+    def get_service_health_summary(self, service_name: str, hours: int = 24) -> dict[str, Any]:
         """Get service health summary for specified time period"""
 
         cutoff_time = datetime.now() - timedelta(hours=hours)
@@ -202,10 +197,7 @@ class ServiceLogger:
         service_events = [
             event
             for event in self.health_events
-            if (
-                event.service_name == service_name
-                and datetime.fromisoformat(event.timestamp) > cutoff_time
-            )
+            if (event.service_name == service_name and datetime.fromisoformat(event.timestamp) > cutoff_time)
         ]
 
         if not service_events:
@@ -222,9 +214,7 @@ class ServiceLogger:
         degraded_events = len([e for e in service_events if e.status == "degraded"])
         unhealthy_events = len([e for e in service_events if e.status == "unhealthy"])
 
-        avg_response_time = (
-            sum(e.response_time_ms for e in service_events) / total_events
-        )
+        avg_response_time = sum(e.response_time_ms for e in service_events) / total_events
 
         uptime_percentage = (healthy_events / total_events) * 100
 
@@ -243,7 +233,7 @@ class ServiceLogger:
             "time_period_hours": hours,
         }
 
-    def get_all_services_health(self, hours: int = 24) -> Dict[str, Any]:
+    def get_all_services_health(self, hours: int = 24) -> dict[str, Any]:
         """Get health summary for all monitored services"""
 
         services = set(event.service_name for event in self.health_events)
@@ -252,8 +242,7 @@ class ServiceLogger:
             "summary_timestamp": datetime.now().isoformat(),
             "time_period_hours": hours,
             "services": {
-                service_name: self.get_service_health_summary(service_name, hours)
-                for service_name in services
+                service_name: self.get_service_health_summary(service_name, hours) for service_name in services
             },
         }
 
@@ -275,7 +264,7 @@ class ServiceLogger:
 
         self.service_logger.info(f"Health report exported to {output_file}")
 
-    def _get_recent_failures(self, hours: int = 24) -> List[Dict[str, Any]]:
+    def _get_recent_failures(self, hours: int = 24) -> list[dict[str, Any]]:
         """Get recent service failures"""
 
         cutoff_time = datetime.now() - timedelta(hours=hours)
@@ -283,10 +272,7 @@ class ServiceLogger:
         failures = [
             asdict(event)
             for event in self.health_events
-            if (
-                event.status in ["degraded", "unhealthy"]
-                and datetime.fromisoformat(event.timestamp) > cutoff_time
-            )
+            if (event.status in ["degraded", "unhealthy"] and datetime.fromisoformat(event.timestamp) > cutoff_time)
         ]
 
         return sorted(failures, key=lambda x: x["timestamp"], reverse=True)
@@ -296,13 +282,11 @@ class ServiceLogger:
 
         if len(self.health_events) > 5000:
             # Keep only most recent 3000 events
-            self.health_events = sorted(
-                self.health_events, key=lambda e: e.timestamp, reverse=True
-            )[:3000]
+            self.health_events = sorted(self.health_events, key=lambda e: e.timestamp, reverse=True)[:3000]
 
 
 # Global service logger instance
-_service_logger: Optional[ServiceLogger] = None
+_service_logger: ServiceLogger | None = None
 
 
 def get_service_logger() -> ServiceLogger:
@@ -315,7 +299,7 @@ def get_service_logger() -> ServiceLogger:
     return _service_logger
 
 
-def log_cli_service_health(service_name: str, health_data: Dict[str, Any]):
+def log_cli_service_health(service_name: str, health_data: dict[str, Any]):
     """Convenience function to log CLI service health check"""
 
     logger = get_service_logger()

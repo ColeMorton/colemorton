@@ -10,7 +10,8 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,7 +25,7 @@ class ServiceHealthChecker:
         self.services = {}
         self.fallback_data = {}
 
-    def check_yahoo_finance_service(self) -> Dict[str, Any]:
+    def check_yahoo_finance_service(self) -> dict[str, Any]:
         """Check Yahoo Finance CLI service health"""
         try:
             sys.path.insert(0, str(Path(__file__).parent.parent / "services"))
@@ -49,7 +50,7 @@ class ServiceHealthChecker:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def check_all_services(self) -> Dict[str, Any]:
+    def check_all_services(self) -> dict[str, Any]:
         """Check health of all available services"""
         results = {
             "timestamp": datetime.now().isoformat(),
@@ -81,15 +82,11 @@ class ServiceHealthChecker:
             results["total_count"] += 1
             results["overall_health"] = False
 
-        results["health_percentage"] = (
-            results["operational_count"] / results["total_count"]
-        ) * 100
+        results["health_percentage"] = (results["operational_count"] / results["total_count"]) * 100
 
         return results
 
-    def get_fallback_data(
-        self, data_type: str, symbol: str = None
-    ) -> Optional[Dict[str, Any]]:
+    def get_fallback_data(self, data_type: str, symbol: str = None) -> dict[str, Any] | None:
         """Get fallback data when services are unavailable"""
         fallback_templates = {
             "stock_quote": {
@@ -108,9 +105,7 @@ class ServiceHealthChecker:
 
         return fallback_templates.get(data_type)
 
-    def validate_with_fallback(
-        self, data_type: str, symbol: str = None
-    ) -> Dict[str, Any]:
+    def validate_with_fallback(self, data_type: str, symbol: str = None) -> dict[str, Any]:
         """Attempt validation with fallback on failure"""
         health_check = self.check_all_services()
 
@@ -149,16 +144,10 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Service Health Checker")
-    parser.add_argument(
-        "command", choices=["health", "validate"], help="Command to execute"
-    )
+    parser.add_argument("command", choices=["health", "validate"], help="Command to execute")
     parser.add_argument("--symbol", help="Stock symbol for validation")
-    parser.add_argument(
-        "--data-type", default="stock_quote", help="Data type for validation"
-    )
-    parser.add_argument(
-        "--output-format", default="json", choices=["json"], help="Output format"
-    )
+    parser.add_argument("--data-type", default="stock_quote", help="Data type for validation")
+    parser.add_argument("--output-format", default="json", choices=["json"], help="Output format")
 
     args = parser.parse_args()
 

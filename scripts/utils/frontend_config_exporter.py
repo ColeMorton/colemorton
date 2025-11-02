@@ -11,7 +11,7 @@ import json
 import time
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from scripts.utils.dashboard_parser import (
     MonthlyPerformance,
@@ -33,22 +33,18 @@ class FrontendConfigExporter:
             schema_generator: Optional JSON schema generator instance
         """
         self.theme_manager = theme_manager
-        self.schema_generator = schema_generator or create_json_schema_generator(
-            theme_manager
-        )
+        self.schema_generator = schema_generator or create_json_schema_generator(theme_manager)
         self.export_history = []
 
     def export_chart_config(
         self,
         chart_type: str,
-        data: Union[
-            List[MonthlyPerformance], List[QualityDistribution], List[TradeData]
-        ],
+        data: list[MonthlyPerformance] | list[QualityDistribution] | list[TradeData],
         theme_mode: str = "light",
-        layout_options: Optional[Dict[str, Any]] = None,
-        styling_options: Optional[Dict[str, Any]] = None,
-        export_options: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        layout_options: dict[str, Any] | None = None,
+        styling_options: dict[str, Any] | None = None,
+        export_options: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Export chart configuration for frontend consumption.
 
@@ -110,7 +106,7 @@ class FrontendConfigExporter:
         normalized = chart_type.lower().replace("create_", "").replace("enhanced_", "")
         return type_mapping.get(normalized, chart_type)
 
-    def _build_theme_config(self, mode: str) -> Dict[str, Any]:
+    def _build_theme_config(self, mode: str) -> dict[str, Any]:
         """Build theme configuration section."""
         theme_config = {
             "mode": mode,
@@ -148,9 +144,7 @@ class FrontendConfigExporter:
 
         return theme_config
 
-    def _build_layout_config(
-        self, chart_type: str, options: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _build_layout_config(self, chart_type: str, options: dict[str, Any] | None) -> dict[str, Any]:
         """Build layout configuration section."""
         defaults = {
             "width": 800,
@@ -169,9 +163,7 @@ class FrontendConfigExporter:
                 }
             )
         elif "donut" in chart_type.lower():
-            defaults.update(
-                {"show_center_text": True, "show_legend": True, "donut_hole_size": 0.4}
-            )
+            defaults.update({"show_center_text": True, "show_legend": True, "donut_hole_size": 0.4})
         elif "waterfall" in chart_type.lower():
             defaults.update(
                 {
@@ -195,9 +187,7 @@ class FrontendConfigExporter:
 
         return defaults
 
-    def _build_styling_config(
-        self, chart_type: str, options: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _build_styling_config(self, chart_type: str, options: dict[str, Any] | None) -> dict[str, Any]:
         """Build styling configuration section."""
         defaults = {"opacity": 0.8, "border_width": 1}
 
@@ -223,9 +213,7 @@ class FrontendConfigExporter:
                 }
             )
         elif "scatter" in chart_type.lower():
-            defaults.update(
-                {"base_marker_size": 15, "size_scaling_factor": 20, "border_width": 0.8}
-            )
+            defaults.update({"base_marker_size": 15, "size_scaling_factor": 20, "border_width": 0.8})
 
         # Merge with provided options
         if options:
@@ -233,7 +221,7 @@ class FrontendConfigExporter:
 
         return defaults
 
-    def _build_export_config(self, options: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _build_export_config(self, options: dict[str, Any] | None) -> dict[str, Any]:
         """Build export configuration section."""
         defaults = {
             "formats": ["png"],
@@ -256,11 +244,11 @@ class FrontendConfigExporter:
 
         return defaults
 
-    def _build_scalability_config(self) -> Dict[str, Any]:
+    def _build_scalability_config(self) -> dict[str, Any]:
         """Build scalability configuration for waterfall charts."""
         return {"max_bars": 50, "use_performance_bands": False, "volume_threshold": 100}
 
-    def _build_clustering_config(self) -> Dict[str, Any]:
+    def _build_clustering_config(self) -> dict[str, Any]:
         """Build clustering configuration for scatter charts."""
         return {
             "enabled": False,
@@ -270,7 +258,7 @@ class FrontendConfigExporter:
             "volume_threshold": 100,
         }
 
-    def _build_metadata_config(self, chart_type: str) -> Dict[str, Any]:
+    def _build_metadata_config(self, chart_type: str) -> dict[str, Any]:
         """Build metadata configuration section."""
         return {
             "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -283,10 +271,10 @@ class FrontendConfigExporter:
 
     def export_dashboard_config(
         self,
-        charts: List[Dict[str, Any]],
-        layout_options: Optional[Dict[str, Any]] = None,
+        charts: list[dict[str, Any]],
+        layout_options: dict[str, Any] | None = None,
         theme_mode: str = "light",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Export complete dashboard configuration.
 
@@ -313,9 +301,7 @@ class FrontendConfigExporter:
 
         return dashboard_config
 
-    def _build_dashboard_layout_config(
-        self, options: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _build_dashboard_layout_config(self, options: dict[str, Any] | None) -> dict[str, Any]:
         """Build dashboard layout configuration."""
         defaults = {
             "grid": {
@@ -344,7 +330,7 @@ class FrontendConfigExporter:
 
     def save_config_to_file(
         self,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         filename: str,
         output_dir: str = "data/outputs/frontend_configs",
     ) -> str:
@@ -381,9 +367,9 @@ class FrontendConfigExporter:
 
     def batch_export_configs(
         self,
-        chart_configs: Dict[str, Dict[str, Any]],
+        chart_configs: dict[str, dict[str, Any]],
         output_dir: str = "data/outputs/frontend_configs",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Export multiple chart configurations in batch.
 
@@ -403,7 +389,7 @@ class FrontendConfigExporter:
 
         return exported_files
 
-    def validate_config(self, config: Dict[str, Any]) -> tuple[bool, List[str]]:
+    def validate_config(self, config: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         Validate configuration against schema.
 
@@ -429,7 +415,7 @@ class FrontendConfigExporter:
 
         return self.schema_generator.validate_chart_config(config, schema_name)
 
-    def generate_react_component_props(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_react_component_props(self, config: dict[str, Any]) -> dict[str, Any]:
         """
         Generate React component props from configuration.
 
@@ -459,7 +445,7 @@ class FrontendConfigExporter:
 
         return props
 
-    def get_export_history(self) -> List[Dict[str, Any]]:
+    def get_export_history(self) -> list[dict[str, Any]]:
         """
         Get export history.
 
@@ -496,9 +482,7 @@ if __name__ == "__main__":
     ]
 
     # Export configuration
-    config = exporter.export_chart_config(
-        chart_type="enhanced_monthly_bars", data=monthly_data, theme_mode="light"
-    )
+    config = exporter.export_chart_config(chart_type="enhanced_monthly_bars", data=monthly_data, theme_mode="light")
 
     print("📊 Generated Frontend Configuration:")
     print("  Chart Type: {config['chart_type']}")

@@ -15,7 +15,7 @@ import logging.config
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 
 class TwitterSystemLogger:
@@ -25,7 +25,7 @@ class TwitterSystemLogger:
         self,
         name: str = "twitter_system",
         log_level: str = "INFO",
-        log_file: Optional[Path] = None,
+        log_file: Path | None = None,
         structured_output: bool = True,
     ):
         """Initialize structured logger"""
@@ -34,9 +34,7 @@ class TwitterSystemLogger:
         self.logger = self._setup_logger(name, log_level, log_file)
         self.start_time = time.time()
 
-    def _setup_logger(
-        self, name: str, log_level: str, log_file: Optional[Path]
-    ) -> logging.Logger:
+    def _setup_logger(self, name: str, log_level: str, log_file: Path | None) -> logging.Logger:
         """Setup logger with structured formatting"""
 
         logger = logging.getLogger(name)
@@ -52,9 +50,7 @@ class TwitterSystemLogger:
         if self.structured_output:
             console_formatter = StructuredFormatter()
         else:
-            console_formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            console_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
@@ -72,9 +68,9 @@ class TwitterSystemLogger:
     def log_operation(
         self,
         operation: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         level: str = "INFO",
-        duration: Optional[float] = None,
+        duration: float | None = None,
     ) -> None:
         """Log operations with structured context"""
 
@@ -97,9 +93,7 @@ class TwitterSystemLogger:
             extra={"structured_data": log_data},
         )
 
-    def log_error(
-        self, error: Exception, context: Dict[str, Any], operation: Optional[str] = None
-    ) -> None:
+    def log_error(self, error: Exception, context: dict[str, Any], operation: str | None = None) -> None:
         """Log errors with full context for debugging"""
 
         log_data = {
@@ -118,9 +112,7 @@ class TwitterSystemLogger:
 
         self.logger.error(f"Error: {str(error)}", extra={"structured_data": log_data})
 
-    def log_validation_result(
-        self, content_type: str, validation_result: Dict[str, Any], identifier: str
-    ) -> None:
+    def log_validation_result(self, content_type: str, validation_result: dict[str, Any], identifier: str) -> None:
         """Log validation results with metrics"""
 
         score = validation_result.get("overall_score", 0.0)
@@ -137,15 +129,13 @@ class TwitterSystemLogger:
 
         level = "INFO" if score >= 8.5 else "WARNING" if score >= 7.0 else "ERROR"
 
-        self.log_operation(
-            f"Content validation - {content_type}", log_data, level=level
-        )
+        self.log_operation(f"Content validation - {content_type}", log_data, level=level)
 
     def log_template_selection(
         self,
         content_type: str,
         selected_template: str,
-        scores: Dict[str, float],
+        scores: dict[str, float],
         identifier: str,
     ) -> None:
         """Log template selection with scoring details"""
@@ -163,9 +153,7 @@ class TwitterSystemLogger:
 
         self.log_operation(f"Template selection - {content_type}", log_data)
 
-    def log_performance_metrics(
-        self, operation: str, metrics: Dict[str, Any], identifier: Optional[str] = None
-    ) -> None:
+    def log_performance_metrics(self, operation: str, metrics: dict[str, Any], identifier: str | None = None) -> None:
         """Log performance metrics"""
 
         log_data = {
@@ -182,9 +170,9 @@ class TwitterSystemLogger:
     def log_data_processing(
         self,
         data_type: str,
-        source_path: Union[str, Path],
+        source_path: str | Path,
         success: bool,
-        record_count: Optional[int] = None,
+        record_count: int | None = None,
     ) -> None:
         """Log data processing operations"""
 
@@ -202,7 +190,7 @@ class TwitterSystemLogger:
 
         self.log_operation(f"Data processing - {data_type}", log_data, level=level)
 
-    def log_system_startup(self, config: Dict[str, Any]) -> None:
+    def log_system_startup(self, config: dict[str, Any]) -> None:
         """Log system startup with configuration"""
 
         log_data = {
@@ -229,7 +217,7 @@ class TwitterSystemLogger:
 
         self.log_operation("System shutdown", log_data)
 
-    def create_context_logger(self, context: Dict[str, Any]) -> "ContextLogger":
+    def create_context_logger(self, context: dict[str, Any]) -> "ContextLogger":
         """Create logger with persistent context"""
         return ContextLogger(self, context)
 
@@ -254,16 +242,16 @@ class TwitterSystemLogger:
 class ContextLogger:
     """Logger with persistent context for specific operations"""
 
-    def __init__(self, parent_logger: TwitterSystemLogger, context: Dict[str, Any]):
+    def __init__(self, parent_logger: TwitterSystemLogger, context: dict[str, Any]):
         self.parent = parent_logger
         self.base_context = context
 
     def log_operation(
         self,
         operation: str,
-        additional_context: Optional[Dict[str, Any]] = None,
+        additional_context: dict[str, Any] | None = None,
         level: str = "INFO",
-        duration: Optional[float] = None,
+        duration: float | None = None,
     ) -> None:
         """Log operation with combined context"""
 
@@ -276,8 +264,8 @@ class ContextLogger:
     def log_error(
         self,
         error: Exception,
-        additional_context: Optional[Dict[str, Any]] = None,
-        operation: Optional[str] = None,
+        additional_context: dict[str, Any] | None = None,
+        operation: str | None = None,
     ) -> None:
         """Log error with combined context"""
 
@@ -312,9 +300,7 @@ class StructuredFormatter(logging.Formatter):
 class PerformanceTimer:
     """Context manager for timing operations"""
 
-    def __init__(
-        self, logger: TwitterSystemLogger, operation: str, context: Dict[str, Any]
-    ):
+    def __init__(self, logger: TwitterSystemLogger, operation: str, context: dict[str, Any]):
         self.logger = logger
         self.operation = operation
         self.context = context
@@ -328,17 +314,13 @@ class PerformanceTimer:
         duration = time.time() - self.start_time
 
         if exc_type is not None:
-            self.logger.log_error(
-                exc_val, {**self.context, "duration_seconds": duration}, self.operation
-            )
+            self.logger.log_error(exc_val, {**self.context, "duration_seconds": duration}, self.operation)
         else:
             self.logger.log_operation(self.operation, self.context, duration=duration)
 
 
 # Convenience functions for common logging scenarios
-def setup_default_logger(
-    log_level: str = "INFO", log_file: Optional[Path] = None
-) -> TwitterSystemLogger:
+def setup_default_logger(log_level: str = "INFO", log_file: Path | None = None) -> TwitterSystemLogger:
     """Setup default logger with standard configuration"""
 
     return TwitterSystemLogger(
@@ -349,9 +331,7 @@ def setup_default_logger(
     )
 
 
-def log_script_execution(
-    logger: TwitterSystemLogger, script_name: str, parameters: Dict[str, Any]
-) -> ContextLogger:
+def log_script_execution(logger: TwitterSystemLogger, script_name: str, parameters: dict[str, Any]) -> ContextLogger:
     """Create context logger for script execution"""
 
     context = {

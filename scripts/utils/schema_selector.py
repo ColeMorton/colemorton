@@ -7,7 +7,8 @@ Dynamically selects appropriate schema based on region parameter
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +20,7 @@ class SchemaSelector:
         self.schema_dir = Path(__file__).parent.parent / "schemas"
         self._schema_cache = {}
 
-    def get_schema_for_region(
-        self, region: str, analysis_type: str = "discovery"
-    ) -> Dict[str, Any]:
+    def get_schema_for_region(self, region: str, analysis_type: str = "discovery") -> dict[str, Any]:
         """
         Get appropriate schema for region and analysis type
 
@@ -55,7 +54,7 @@ class SchemaSelector:
             raise FileNotFoundError(f"No schema found for {region} {analysis_type}")
 
         # Load and cache schema
-        with open(schema_file, "r", encoding="utf-8") as f:
+        with open(schema_file, encoding="utf-8") as f:
             schema = json.load(f)
 
         self._schema_cache[schema_key] = schema
@@ -88,7 +87,7 @@ class SchemaSelector:
         supported_regions = ["US", "EUROPE", "ASIA", "GLOBAL", "AMERICAS"]
         return region in supported_regions
 
-    def get_regional_requirements(self, region: str) -> Dict[str, Any]:
+    def get_regional_requirements(self, region: str) -> dict[str, Any]:
         """Get region-specific requirements and mappings"""
         region = region.upper()
 
@@ -165,7 +164,7 @@ class SchemaSelector:
 
         return requirements.get(region, requirements["US"])  # Default to US
 
-    def get_field_mapping(self, region: str) -> Dict[str, str]:
+    def get_field_mapping(self, region: str) -> dict[str, str]:
         """Get field name mappings for region-specific data structures"""
         region = region.upper()
 
@@ -210,16 +209,14 @@ def create_schema_selector() -> SchemaSelector:
     return SchemaSelector()
 
 
-def get_schema_for_region(
-    region: str, analysis_type: str = "discovery"
-) -> Dict[str, Any]:
+def get_schema_for_region(region: str, analysis_type: str = "discovery") -> dict[str, Any]:
     """Convenience function to get schema for region"""
     selector = create_schema_selector()
     return selector.get_schema_for_region(region, analysis_type)
 
 
 def validate_data_against_regional_schema(
-    data: Dict[str, Any], region: str, analysis_type: str = "discovery"
+    data: dict[str, Any], region: str, analysis_type: str = "discovery"
 ) -> tuple[bool, list]:
     """
     Validate data against region-appropriate schema
@@ -264,5 +261,5 @@ if __name__ == "__main__":
             print("  Volatility Index: {requirements['volatility_index']}")
             print("  Schema ID: {schema.get('$id', 'Unknown')}")
 
-        except Exception as e:
+        except Exception:
             print("{region} Schema Error: {e}")

@@ -15,10 +15,10 @@ import sys
 import unittest
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, patch
+from typing import Any
 
 import jsonschema
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -41,12 +41,8 @@ class BitcoinSchemaValidationTestBase(unittest.TestCase):
         self.schemas_dir = self.project_root / "scripts" / "schemas"
 
         # Load schemas
-        self.discovery_schema = self._load_schema(
-            "bitcoin_cycle_intelligence_discovery_schema.json"
-        )
-        self.analysis_schema = self._load_schema(
-            "bitcoin_cycle_intelligence_analysis_schema.json"
-        )
+        self.discovery_schema = self._load_schema("bitcoin_cycle_intelligence_discovery_schema.json")
+        self.analysis_schema = self._load_schema("bitcoin_cycle_intelligence_analysis_schema.json")
 
         # Initialize services for data testing
         self.services = {
@@ -58,19 +54,17 @@ class BitcoinSchemaValidationTestBase(unittest.TestCase):
             "bitcoin_network_stats": create_bitcoin_network_stats_service("test"),
         }
 
-    def _load_schema(self, schema_file: str) -> Dict[str, Any]:
+    def _load_schema(self, schema_file: str) -> dict[str, Any]:
         """Load JSON schema from file"""
         schema_path = self.schemas_dir / schema_file
 
         if not schema_path.exists():
             self.fail(f"Schema file not found: {schema_path}")
 
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             return json.load(f)
 
-    def validate_against_schema(
-        self, data: Dict[str, Any], schema: Dict[str, Any]
-    ) -> List[str]:
+    def validate_against_schema(self, data: dict[str, Any], schema: dict[str, Any]) -> list[str]:
         """Validate data against schema and return list of validation errors"""
         try:
             jsonschema.validate(instance=data, schema=schema)
@@ -80,7 +74,7 @@ class BitcoinSchemaValidationTestBase(unittest.TestCase):
         except jsonschema.SchemaError as e:
             return [f"Schema error: {str(e)}"]
 
-    def create_minimal_discovery_document(self) -> Dict[str, Any]:
+    def create_minimal_discovery_document(self) -> dict[str, Any]:
         """Create minimal discovery document that should pass schema validation"""
         return {
             "metadata": {
@@ -323,24 +317,20 @@ class BitcoinSchemaValidationTestBase(unittest.TestCase):
             },
         }
 
-    def extract_real_data_for_validation(self) -> Dict[str, Any]:
+    def extract_real_data_for_validation(self) -> dict[str, Any]:
         """Extract real data from Bitcoin services and structure for schema validation"""
         extracted_data = {}
 
         # Try to get real price data for validation
         try:
-            binance_data = self.services["binance_api"].get_symbol_price_ticker(
-                "BTCUSDT"
-            )
+            binance_data = self.services["binance_api"].get_symbol_price_ticker("BTCUSDT")
             extracted_data["binance_price"] = float(binance_data.get("price", 0))
         except:
             extracted_data["binance_price"] = 45000.0  # Fallback
 
         try:
             blockchain_price = self.services["blockchain_com"].get_market_price_usd()
-            extracted_data["blockchain_price"] = float(
-                blockchain_price.get("price_usd", 0)
-            )
+            extracted_data["blockchain_price"] = float(blockchain_price.get("price_usd", 0))
         except:
             extracted_data["blockchain_price"] = 45000.0  # Fallback
 
@@ -353,9 +343,7 @@ class BitcoinSchemaValidationTestBase(unittest.TestCase):
 
         # Try to get network stats
         try:
-            network_overview = self.services[
-                "bitcoin_network_stats"
-            ].get_network_overview()
+            network_overview = self.services["bitcoin_network_stats"].get_network_overview()
             extracted_data["network_sources"] = network_overview.get("sources", [])
             extracted_data["network_errors"] = len(network_overview.get("errors", []))
         except:
@@ -399,9 +387,7 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
         ]
 
         for field in expected_required_fields:
-            self.assertIn(
-                field, required_fields, f"Required field '{field}' missing from schema"
-            )
+            self.assertIn(field, required_fields, f"Required field '{field}' missing from schema")
 
     def test_cli_services_enum_matches_implemented_services(self):
         """Test that schema CLI services enum includes our implemented services"""
@@ -436,25 +422,16 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
         real_data = self.extract_real_data_for_validation()
 
         # Test that we can create valid price validation structure
-        if (
-            real_data.get("binance_price", 0) > 0
-            and real_data.get("blockchain_price", 0) > 0
-        ):
+        if real_data.get("binance_price", 0) > 0 and real_data.get("blockchain_price", 0) > 0:
             price_validation = {
                 "coingecko_price": real_data["binance_price"],  # Using Binance as proxy
                 "binance_price": real_data["binance_price"],
-                "coinmetrics_price": real_data[
-                    "blockchain_price"
-                ],  # Using Blockchain.com as proxy
-                "price_consistency": abs(
-                    real_data["binance_price"] - real_data["blockchain_price"]
-                )
+                "coinmetrics_price": real_data["blockchain_price"],  # Using Blockchain.com as proxy
+                "price_consistency": abs(real_data["binance_price"] - real_data["blockchain_price"])
                 / real_data["binance_price"]
                 < 0.05,
                 "confidence_score": 1.0
-                if abs(real_data["binance_price"] - real_data["blockchain_price"])
-                / real_data["binance_price"]
-                < 0.05
+                if abs(real_data["binance_price"] - real_data["blockchain_price"]) / real_data["binance_price"] < 0.05
                 else 0.9,
             }
 
@@ -499,9 +476,7 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
 
     def test_bitcoin_market_data_schema_compatibility(self):
         """Test Bitcoin market data schema field compatibility with our services"""
-        market_data_props = self.discovery_schema["properties"]["bitcoin_market_data"][
-            "properties"
-        ]
+        market_data_props = self.discovery_schema["properties"]["bitcoin_market_data"]["properties"]
 
         # Test required numeric fields have appropriate types
         numeric_fields = [
@@ -517,19 +492,13 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
         for field in numeric_fields:
             if field in market_data_props:
                 field_def = market_data_props[field]
-                self.assertEqual(
-                    field_def["type"], "number", f"Field {field} should be number type"
-                )
+                self.assertEqual(field_def["type"], "number", f"Field {field} should be number type")
                 if "minimum" in field_def:
-                    self.assertEqual(
-                        field_def["minimum"], 0, f"Field {field} should have minimum 0"
-                    )
+                    self.assertEqual(field_def["minimum"], 0, f"Field {field} should have minimum 0")
 
     def test_cycle_indicators_schema_structure(self):
         """Test cycle indicators schema structure matches expected data"""
-        cycle_props = self.discovery_schema["properties"]["cycle_indicators"][
-            "properties"
-        ]
+        cycle_props = self.discovery_schema["properties"]["cycle_indicators"]["properties"]
 
         required_indicators = [
             "mvrv_z_score",
@@ -540,9 +509,7 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
         ]
 
         for indicator in required_indicators:
-            self.assertIn(
-                indicator, cycle_props, f"Indicator {indicator} should be in schema"
-            )
+            self.assertIn(indicator, cycle_props, f"Indicator {indicator} should be in schema")
             self.assertEqual(
                 cycle_props[indicator]["type"],
                 "object",
@@ -551,27 +518,19 @@ class TestBitcoinDiscoverySchemaCompliance(BitcoinSchemaValidationTestBase):
 
     def test_cli_service_validation_requirements(self):
         """Test CLI service validation requirements are realistic"""
-        validation_props = self.discovery_schema["properties"][
-            "cli_service_validation"
-        ]["properties"]
+        validation_props = self.discovery_schema["properties"]["cli_service_validation"]["properties"]
 
         # Test health score requirement
         health_score_const = validation_props["health_score"]["const"]
-        self.assertEqual(
-            health_score_const, 1.0, "Health score requirement should be 1.0"
-        )
+        self.assertEqual(health_score_const, 1.0, "Health score requirement should be 1.0")
 
         # Test minimum services requirement
         min_services = validation_props["services_operational"]["minimum"]
-        self.assertEqual(
-            min_services, 5, "Should require minimum 5 operational services"
-        )
+        self.assertEqual(min_services, 5, "Should require minimum 5 operational services")
 
         # Test services healthy requirement
         services_healthy_const = validation_props["services_healthy"]["const"]
-        self.assertTrue(
-            services_healthy_const, "Services healthy should be required to be true"
-        )
+        self.assertTrue(services_healthy_const, "Services healthy should be required to be true")
 
 
 class TestBitcoinAnalysisSchemaCompliance(BitcoinSchemaValidationTestBase):
@@ -591,9 +550,7 @@ class TestBitcoinAnalysisSchemaCompliance(BitcoinSchemaValidationTestBase):
 
         # Test command name requirement
         command_name_const = metadata_props["command_name"]["const"]
-        self.assertEqual(
-            command_name_const, "cli_enhanced_bitcoin_cycle_intelligence_analyze"
-        )
+        self.assertEqual(command_name_const, "cli_enhanced_bitcoin_cycle_intelligence_analyze")
 
         # Test framework phase requirement
         framework_phase_const = metadata_props["framework_phase"]["const"]
@@ -672,15 +629,10 @@ class TestBitcoinSchemaDataTransformation(BitcoinSchemaValidationTestBase):
 
         # Transform to NUPL-like structure (as an example)
         nupl_simulation = {
-            "current_nupl": (fear_greed_value - 50)
-            / 100.0,  # Transform 0-100 scale to -0.5 to 0.5
-            "zone_classification": self._classify_fear_greed_to_nupl_zone(
-                fear_greed_value
-            ),
-            "lth_nupl": (fear_greed_value - 50) / 100.0
-            + 0.1,  # Simulate LTH difference
-            "sth_nupl": (fear_greed_value - 50) / 100.0
-            - 0.1,  # Simulate STH difference
+            "current_nupl": (fear_greed_value - 50) / 100.0,  # Transform 0-100 scale to -0.5 to 0.5
+            "zone_classification": self._classify_fear_greed_to_nupl_zone(fear_greed_value),
+            "lth_nupl": (fear_greed_value - 50) / 100.0 + 0.1,  # Simulate LTH difference
+            "sth_nupl": (fear_greed_value - 50) / 100.0 - 0.1,  # Simulate STH difference
         }
 
         # Validate transformation
@@ -731,9 +683,9 @@ class TestBitcoinSchemaDataTransformation(BitcoinSchemaValidationTestBase):
         ]
 
         # Filter to only services that are in the schema enum
-        schema_enum = self.discovery_schema["properties"]["metadata"]["properties"][
-            "cli_services_utilized"
-        ]["items"]["enum"]
+        schema_enum = self.discovery_schema["properties"]["metadata"]["properties"]["cli_services_utilized"]["items"][
+            "enum"
+        ]
         valid_services = [s for s in implemented_services if s in schema_enum]
 
         # Should have at least 5 services (schema requirement)
@@ -750,27 +702,22 @@ class TestBitcoinSchemaDataTransformation(BitcoinSchemaValidationTestBase):
 
         # Validate reliability scores meet schema requirements
         for score in source_reliability_scores.values():
-            self.assertGreaterEqual(
-                score, 0.90, "Reliability scores should meet schema minimum"
-            )
-            self.assertLessEqual(
-                score, 1.0, "Reliability scores should not exceed maximum"
-            )
+            self.assertGreaterEqual(score, 0.90, "Reliability scores should meet schema minimum")
+            self.assertLessEqual(score, 1.0, "Reliability scores should not exceed maximum")
 
     def _classify_fear_greed_to_nupl_zone(self, fear_greed_value: int) -> str:
         """Helper to classify Fear & Greed value to NUPL-like zones"""
         if fear_greed_value <= 20:
             return "capitulation"
-        elif fear_greed_value <= 35:
+        if fear_greed_value <= 35:
             return "hope"
-        elif fear_greed_value <= 50:
+        if fear_greed_value <= 50:
             return "optimism"
-        elif fear_greed_value <= 65:
+        if fear_greed_value <= 65:
             return "belief"
-        elif fear_greed_value <= 80:
+        if fear_greed_value <= 80:
             return "euphoria"
-        else:
-            return "greed"
+        return "greed"
 
 
 class TestBitcoinSchemaIntegration(BitcoinSchemaValidationTestBase):
@@ -805,12 +752,8 @@ class TestBitcoinSchemaIntegration(BitcoinSchemaValidationTestBase):
 
         # Update with real data
         if real_data.get("binance_price", 0) > 0:
-            simulated_doc["bitcoin_market_data"]["current_price"] = real_data[
-                "binance_price"
-            ]
-            simulated_doc["bitcoin_market_data"]["price_validation"][
-                "binance_price"
-            ] = real_data["binance_price"]
+            simulated_doc["bitcoin_market_data"]["current_price"] = real_data["binance_price"]
+            simulated_doc["bitcoin_market_data"]["price_validation"]["binance_price"] = real_data["binance_price"]
 
         if real_data.get("fear_greed_value"):
             # Could integrate Fear & Greed into cycle indicators
@@ -818,16 +761,12 @@ class TestBitcoinSchemaIntegration(BitcoinSchemaValidationTestBase):
 
         # Validate updated document
         errors = self.validate_against_schema(simulated_doc, self.discovery_schema)
-        self.assertEqual(
-            len(errors), 0, f"Simulated document should validate: {errors}"
-        )
+        self.assertEqual(len(errors), 0, f"Simulated document should validate: {errors}")
 
     def _can_get_bitcoin_price_data(self) -> bool:
         """Test if we can get Bitcoin price data"""
         try:
-            binance_data = self.services["binance_api"].get_symbol_price_ticker(
-                "BTCUSDT"
-            )
+            binance_data = self.services["binance_api"].get_symbol_price_ticker("BTCUSDT")
             return "price" in binance_data and float(binance_data["price"]) > 0
         except:
             return False
@@ -835,9 +774,7 @@ class TestBitcoinSchemaIntegration(BitcoinSchemaValidationTestBase):
     def _can_get_network_health_data(self) -> bool:
         """Test if we can get network health data"""
         try:
-            network_overview = self.services[
-                "bitcoin_network_stats"
-            ].get_network_overview()
+            network_overview = self.services["bitcoin_network_stats"].get_network_overview()
             return len(network_overview.get("sources", [])) > 0
         except:
             return False

@@ -10,12 +10,10 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict
+
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +33,7 @@ class CacheOptimizer:
             "deleted_files": 0,
         }
 
-    def analyze_cache_performance(self) -> Dict[str, any]:
+    def analyze_cache_performance(self) -> dict[str, any]:
         """Analyze current cache performance and identify issues."""
         analysis = {
             "total_files": 0,
@@ -55,7 +53,7 @@ class CacheOptimizer:
             # Analyze file distribution by service
             for cache_file in cache_files:
                 try:
-                    with open(cache_file, "r") as f:
+                    with open(cache_file) as f:
                         data = json.load(f)
 
                     service = data.get("service", "unknown")
@@ -71,8 +69,7 @@ class CacheOptimizer:
 
                         if age_hours > 24:
                             analysis["expiration_analysis"]["expired_24h"] = (
-                                analysis["expiration_analysis"].get("expired_24h", 0)
-                                + 1
+                                analysis["expiration_analysis"].get("expired_24h", 0) + 1
                             )
                         elif age_hours > 4:
                             analysis["expiration_analysis"]["expired_4h"] = (
@@ -89,20 +86,14 @@ class CacheOptimizer:
         # Generate recommendations
         expired_count = analysis["expiration_analysis"].get("expired_24h", 0)
         if expired_count > 50:
-            analysis["recommendations"].append(
-                f"Clean up {expired_count} expired cache files"
-            )
+            analysis["recommendations"].append(f"Clean up {expired_count} expired cache files")
 
         if len(analysis["key_format_issues"]) > 0:
-            analysis["recommendations"].append(
-                f"Fix {len(analysis['key_format_issues'])} corrupted cache files"
-            )
+            analysis["recommendations"].append(f"Fix {len(analysis['key_format_issues'])} corrupted cache files")
 
         total_files = analysis["total_files"]
         if total_files > 200:
-            analysis["recommendations"].append(
-                f"Implement cache size limits (current: {total_files} files)"
-            )
+            analysis["recommendations"].append(f"Implement cache size limits (current: {total_files} files)")
 
         return analysis
 
@@ -119,7 +110,7 @@ class CacheOptimizer:
 
             for cache_file in cache_files:
                 try:
-                    with open(cache_file, "r") as f:
+                    with open(cache_file) as f:
                         data = json.load(f)
 
                     timestamp = data.get("timestamp")
@@ -151,13 +142,11 @@ class CacheOptimizer:
 
         # This would be implemented if we had specific key migration rules
         # For now, we'll just clean up and let the system rebuild with correct keys
-        logger.info(
-            "Cache key migration not needed - system will rebuild with consistent keys"
-        )
+        logger.info("Cache key migration not needed - system will rebuild with consistent keys")
 
         return migrated_count
 
-    def optimize_cache_structure(self) -> Dict[str, int]:
+    def optimize_cache_structure(self) -> dict[str, int]:
         """Optimize cache directory structure and organization."""
         optimization_stats = {
             "directories_created": 0,
@@ -241,7 +230,7 @@ class CacheOptimizer:
 
         return "\n".join(report)
 
-    def run_full_optimization(self) -> Dict[str, any]:
+    def run_full_optimization(self) -> dict[str, any]:
         """Run complete cache optimization process."""
         logger.info("Starting cache optimization process...")
 
@@ -303,9 +292,7 @@ def main():
         print("=" * 60)
         print("📁 Files deleted: {results['files_deleted']}")
         print("🔄 Files migrated: {results['files_migrated']}")
-        print(
-            f"📂 Directories created: {results['structure_optimization']['directories_created']}"
-        )
+        print(f"📂 Directories created: {results['structure_optimization']['directories_created']}")
         print("✅ Cache system optimized for improved performance")
         print("=" * 60)
 

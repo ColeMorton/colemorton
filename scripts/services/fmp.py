@@ -12,7 +12,7 @@ Production-grade Financial Modeling Prep (FMP) integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -20,6 +20,7 @@ from .base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -47,8 +48,8 @@ class FMPService(BaseFinancialService):
             raise ValidationError("FMP API key is required")
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate FMP response data"""
 
         # FMP often returns lists for many endpoints
@@ -73,7 +74,7 @@ class FMPService(BaseFinancialService):
 
         return data
 
-    def get_stock_quote(self, symbol: str) -> List[Dict[str, Any]]:
+    def get_stock_quote(self, symbol: str) -> list[dict[str, Any]]:
         """
         Get real-time stock quote with comprehensive market data
 
@@ -92,7 +93,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_company_profile(self, symbol: str) -> List[Dict[str, Any]]:
+    def get_company_profile(self, symbol: str) -> list[dict[str, Any]]:
         """
         Get comprehensive company profile and business information
 
@@ -117,7 +118,7 @@ class FMPService(BaseFinancialService):
         statement_type: str = "income-statement",
         period: str = "annual",
         limit: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get detailed financial statements with historical data
 
@@ -139,9 +140,7 @@ class FMPService(BaseFinancialService):
             raise ValidationError(f"statement_type must be one of: {valid_statements}")
 
         params = {"period": period, "limit": limit}
-        result = self._make_request_with_retry(
-            f"{statement_type}/{symbol.upper()}", params
-        )
+        result = self._make_request_with_retry(f"{statement_type}/{symbol.upper()}", params)
 
         # Add metadata
         for item in result if isinstance(result, list) else [result]:
@@ -156,9 +155,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_key_metrics(
-        self, symbol: str, period: str = "annual", limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_key_metrics(self, symbol: str, period: str = "annual", limit: int = 10) -> list[dict[str, Any]]:
         """
         Get key financial metrics and ratios
 
@@ -180,9 +177,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_financial_ratios(
-        self, symbol: str, period: str = "annual", limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_financial_ratios(self, symbol: str, period: str = "annual", limit: int = 10) -> list[dict[str, Any]]:
         """
         Get financial ratios
 
@@ -204,9 +199,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_historical_prices(
-        self, symbol: str, from_date: str = None, to_date: str = None
-    ) -> Dict[str, Any]:
+    def get_historical_prices(self, symbol: str, from_date: str = None, to_date: str = None) -> dict[str, Any]:
         """
         Get historical stock price data
 
@@ -224,9 +217,7 @@ class FMPService(BaseFinancialService):
         if to_date:
             params["to"] = to_date
 
-        result = self._make_request_with_retry(
-            f"historical-price-full/{symbol.upper()}", params
-        )
+        result = self._make_request_with_retry(f"historical-price-full/{symbol.upper()}", params)
 
         # Add metadata
         if isinstance(result, dict):
@@ -241,9 +232,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_insider_trading(
-        self, symbol: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    def get_insider_trading(self, symbol: str, limit: int = 100) -> list[dict[str, Any]]:
         """
         Get insider trading data for a company
 
@@ -275,7 +264,7 @@ class FMPService(BaseFinancialService):
         dividend_more_than: float = None,
         dividend_lower_than: float = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Screen stocks based on financial criteria
 
@@ -321,7 +310,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_market_gainers(self) -> List[Dict[str, Any]]:
+    def get_market_gainers(self) -> list[dict[str, Any]]:
         """
         Get market gainers
 
@@ -343,7 +332,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_market_losers(self) -> List[Dict[str, Any]]:
+    def get_market_losers(self) -> list[dict[str, Any]]:
         """
         Get market losers
 
@@ -365,7 +354,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_market_most_active(self) -> List[Dict[str, Any]]:
+    def get_market_most_active(self) -> list[dict[str, Any]]:
         """
         Get most active stocks
 
@@ -387,9 +376,7 @@ class FMPService(BaseFinancialService):
 
         return result
 
-    def get_earnings_calendar(
-        self, from_date: str = None, to_date: str = None
-    ) -> List[Dict[str, Any]]:
+    def get_earnings_calendar(self, from_date: str = None, to_date: str = None) -> list[dict[str, Any]]:
         """
         Get earnings calendar for upcoming earnings releases
 
@@ -411,15 +398,11 @@ class FMPService(BaseFinancialService):
         # Add metadata
         for item in result if isinstance(result, list) else [result]:
             if isinstance(item, dict):
-                item.update(
-                    {"from_date": from_date, "to_date": to_date, "source": "fmp"}
-                )
+                item.update({"from_date": from_date, "to_date": to_date, "source": "fmp"})
 
         return result
 
-    def get_economic_calendar(
-        self, from_date: str = None, to_date: str = None
-    ) -> List[Dict[str, Any]]:
+    def get_economic_calendar(self, from_date: str = None, to_date: str = None) -> list[dict[str, Any]]:
         """
         Get economic calendar
 
@@ -441,13 +424,11 @@ class FMPService(BaseFinancialService):
         # Add metadata
         for item in result if isinstance(result, list) else [result]:
             if isinstance(item, dict):
-                item.update(
-                    {"from_date": from_date, "to_date": to_date, "source": "fmp"}
-                )
+                item.update({"from_date": from_date, "to_date": to_date, "source": "fmp"})
 
         return result
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with a simple quote request

@@ -36,7 +36,7 @@ describe("Photo Booth Real Data Integration", () => {
       const filePath = path.join(projectRoot, dataFile);
       try {
         await fs.access(filePath);
-      } catch (error) {
+      } catch {
         console.warn(`⚠️  Required data file not found: ${dataFile}`);
         console.warn("   Real data integration tests may be limited");
       }
@@ -426,11 +426,6 @@ describe("Photo Booth Real Data Integration", () => {
       });
 
       await photoBoothE2EHelper.waitForPhotoBoothReady(page, 45000);
-
-      // Get network request count
-      const firstLoadRequests = await page.evaluate(() => {
-        return performance.getEntriesByType("resource").length;
-      });
 
       // Reload same dashboard (should use cache)
       await page.reload();

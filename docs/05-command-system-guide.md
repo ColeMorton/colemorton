@@ -20,7 +20,7 @@
 
 ### System Architecture
 
-The Sensylate command system implements a sophisticated orchestration framework enabling AI agents to execute complex analysis workflows through standardized interfaces. Commands serve as the primary interaction layer between users and the underlying DASV (Discovery-Analyze-Synthesize-Validate) framework.
+The Colemorton command system implements a sophisticated orchestration framework enabling AI agents to execute complex analysis workflows through standardized interfaces. Commands serve as the primary interaction layer between users and the underlying DASV (Discovery-Analyze-Synthesize-Validate) framework.
 
 ### Command Classifications
 
@@ -237,7 +237,7 @@ template_mapping = {
 SCRIPTS_BASE:
   default: "./scripts"
   description: "Root directory for all Python scripts"
-  environment_variable: "SENSYLATE_SCRIPTS_BASE"
+  environment_variable: "COLEMORTON_SCRIPTS_BASE"
   examples:
     - "{SCRIPTS_BASE}/yahoo_finance_cli.py"
     - "{SCRIPTS_BASE}/base_scripts/fundamental_analysis_script.py"
@@ -246,7 +246,7 @@ SCRIPTS_BASE:
 DATA_OUTPUTS:
   default: "./data/outputs"
   description: "Root directory for all generated outputs"
-  environment_variable: "SENSYLATE_DATA_OUTPUTS"
+  environment_variable: "COLEMORTON_DATA_OUTPUTS"
   examples:
     - "{DATA_OUTPUTS}/fundamental_analysis/AAPL_20250718.md"
     - "{DATA_OUTPUTS}/twitter/fundamental_analysis/TSLA_20250718.md"
@@ -255,7 +255,7 @@ DATA_OUTPUTS:
 TEMPLATES_BASE:
   default: "./scripts/templates"
   description: "Root directory for all Jinja2 templates"
-  environment_variable: "SENSYLATE_TEMPLATES_BASE"
+  environment_variable: "COLEMORTON_TEMPLATES_BASE"
   examples:
     - "{TEMPLATES_BASE}/twitter/fundamental/twitter_fundamental_A_valuation.j2"
     - "{TEMPLATES_BASE}/shared/base_twitter.j2"
@@ -264,7 +264,7 @@ TEMPLATES_BASE:
 DATA_IMAGES:
   default: "./data/images"
   description: "Root directory for all image data"
-  environment_variable: "SENSYLATE_DATA_IMAGES"
+  environment_variable: "COLEMORTON_DATA_IMAGES"
   examples:
     - "{DATA_IMAGES}/trendspider_tabular/AAPL_20250718.png"
     - "{DATA_IMAGES}/tradingview/TSLA_20250718.png"
@@ -277,7 +277,7 @@ DATA_IMAGES:
 CONFIG_BASE:
   default: "./config"
   description: "Configuration files and settings"
-  environment_variable: "SENSYLATE_CONFIG_BASE"
+  environment_variable: "COLEMORTON_CONFIG_BASE"
   examples:
     - "{CONFIG_BASE}/financial_services.yaml"
     - "{CONFIG_BASE}/script_registry.json"
@@ -286,7 +286,7 @@ CONFIG_BASE:
 LOGS_BASE:
   default: "./logs"
   description: "Application logs and execution traces"
-  environment_variable: "SENSYLATE_LOGS_BASE"
+  environment_variable: "COLEMORTON_LOGS_BASE"
   examples:
     - "{LOGS_BASE}/twitter_system.log"
     - "{LOGS_BASE}/cli_services.log"
@@ -310,12 +310,12 @@ class PathResolver:
 
     def __init__(self):
         self.base_paths = {
-            'SCRIPTS_BASE': self._resolve_path('SENSYLATE_SCRIPTS_BASE', './scripts'),
-            'DATA_OUTPUTS': self._resolve_path('SENSYLATE_DATA_OUTPUTS', './data/outputs'),
-            'TEMPLATES_BASE': self._resolve_path('SENSYLATE_TEMPLATES_BASE', './scripts/templates'),
-            'DATA_IMAGES': self._resolve_path('SENSYLATE_DATA_IMAGES', './data/images'),
-            'CONFIG_BASE': self._resolve_path('SENSYLATE_CONFIG_BASE', './config'),
-            'LOGS_BASE': self._resolve_path('SENSYLATE_LOGS_BASE', './logs')
+            'SCRIPTS_BASE': self._resolve_path('COLEMORTON_SCRIPTS_BASE', './scripts'),
+            'DATA_OUTPUTS': self._resolve_path('COLEMORTON_DATA_OUTPUTS', './data/outputs'),
+            'TEMPLATES_BASE': self._resolve_path('COLEMORTON_TEMPLATES_BASE', './scripts/templates'),
+            'DATA_IMAGES': self._resolve_path('COLEMORTON_DATA_IMAGES', './data/images'),
+            'CONFIG_BASE': self._resolve_path('COLEMORTON_CONFIG_BASE', './config'),
+            'LOGS_BASE': self._resolve_path('COLEMORTON_LOGS_BASE', './logs')
         }
 
     def _resolve_path(self, env_var: str, default: str) -> Path:

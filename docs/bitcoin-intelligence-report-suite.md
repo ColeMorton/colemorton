@@ -1,4 +1,8 @@
 # Bitcoin Intelligence Report Suite
+
+**Version**: 2.1 | **Last Updated**: 2024-09-07 | **Status**: Active
+**Authority**: Research Team | **Audience**: Investment Analysts
+
 *Transforming 80+ Data Sources into Institutional-Grade Investment Intelligence*
 
 ---

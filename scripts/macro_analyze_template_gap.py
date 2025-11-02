@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class MacroTemplateGapAnalyzer:
@@ -19,23 +19,19 @@ class MacroTemplateGapAnalyzer:
         self.confidence_threshold = confidence_threshold
         self.discovery_data = self._load_discovery_data()
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load discovery JSON data"""
-        with open(self.discovery_file, "r") as f:
+        with open(self.discovery_file) as f:
             return json.load(f)
 
-    def analyze_business_cycle_modeling(self) -> Dict[str, Any]:
+    def analyze_business_cycle_modeling(self) -> dict[str, Any]:
         """Phase 1: Advanced Business Cycle Modeling"""
         # Extract existing data
         current_phase = self.discovery_data["business_cycle_data"]["current_phase"]
-        recession_prob = self.discovery_data["business_cycle_data"][
-            "transition_probabilities"
-        ]["next_12m"]
+        recession_prob = self.discovery_data["business_cycle_data"]["transition_probabilities"]["next_12m"]
 
         # Multi-dimensional phase identification
-        leading_score = self.discovery_data["economic_indicators"]["composite_scores"][
-            "business_cycle_score"
-        ]
+        leading_score = self.discovery_data["economic_indicators"]["composite_scores"]["business_cycle_score"]
 
         # NBER-style recession probability with confidence intervals
         recession_probability = {
@@ -54,16 +50,14 @@ class MacroTemplateGapAnalyzer:
         }
 
         # Monetary policy transmission assessment
-        fed_rate = self.discovery_data["monetary_policy_context"]["policy_stance"][
-            "policy_rate"
-        ]
+        fed_rate = self.discovery_data["monetary_policy_context"]["policy_stance"]["policy_rate"]
         transmission_assessment = {
             "interest_rate_effectiveness": 0.85 if fed_rate > 4.0 else 0.75,
             "transmission_lag_quarters": 3 if fed_rate > 5.0 else 4,
             "asset_price_impact": "high" if fed_rate > 5.0 else "moderate",
-            "credit_channel_functioning": self.discovery_data[
-                "monetary_policy_context"
-            ]["transmission_mechanisms"]["credit_channel"]["functioning"],
+            "credit_channel_functioning": self.discovery_data["monetary_policy_context"]["transmission_mechanisms"][
+                "credit_channel"
+            ]["functioning"],
         }
 
         # Inflation dynamics
@@ -103,7 +97,7 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.87,
         }
 
-    def analyze_global_liquidity(self) -> Dict[str, Any]:
+    def analyze_global_liquidity(self) -> dict[str, Any]:
         """Phase 2: Global Liquidity and Monetary Policy Analysis"""
         # Central bank coordination
         policy_coordination = {
@@ -152,11 +146,11 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.85,
         }
 
-    def classify_market_regime(self) -> Dict[str, Any]:
+    def classify_market_regime(self) -> dict[str, Any]:
         """Phase 3: Market Regime Classification"""
-        vix_level = self.discovery_data["cli_market_intelligence"][
-            "volatility_analysis"
-        ]["vix_analysis"]["current_level"]
+        vix_level = self.discovery_data["cli_market_intelligence"]["volatility_analysis"]["vix_analysis"][
+            "current_level"
+        ]
 
         # Volatility regime
         volatility_regime = {
@@ -206,7 +200,7 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.88,
         }
 
-    def generate_economic_scenarios(self) -> Dict[str, Any]:
+    def generate_economic_scenarios(self) -> dict[str, Any]:
         """Phase 4: Economic Scenario Analysis"""
         base_gdp = 2.3
 
@@ -242,15 +236,9 @@ class MacroTemplateGapAnalyzer:
 
         # Probability-weighted forecast
         weighted_forecast = {
-            "gdp_growth": sum(
-                s["gdp_growth"] * s["probability"] for s in scenarios.values()
-            ),
-            "inflation": sum(
-                s["inflation"] * s["probability"] for s in scenarios.values()
-            ),
-            "unemployment": sum(
-                s["unemployment"] * s["probability"] for s in scenarios.values()
-            ),
+            "gdp_growth": sum(s["gdp_growth"] * s["probability"] for s in scenarios.values()),
+            "inflation": sum(s["inflation"] * s["probability"] for s in scenarios.values()),
+            "unemployment": sum(s["unemployment"] * s["probability"] for s in scenarios.values()),
             "confidence_bands": {
                 "gdp_range": [0.5, 3.5],
                 "inflation_range": [2.0, 3.5],
@@ -288,7 +276,7 @@ class MacroTemplateGapAnalyzer:
             ],
         }
 
-    def build_risk_assessment_matrix(self) -> Dict[str, Any]:
+    def build_risk_assessment_matrix(self) -> dict[str, Any]:
         """Phase 5: Quantified Risk Assessment Matrix"""
         risk_matrix = {
             "recession_risk": {
@@ -396,11 +384,9 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.86,
         }
 
-    def analyze_cross_asset_transmission(self) -> Dict[str, Any]:
+    def analyze_cross_asset_transmission(self) -> dict[str, Any]:
         """Phase 6: Cross-Asset Economic Transmission Analysis"""
-        fed_rate = self.discovery_data["monetary_policy_context"]["policy_stance"][
-            "policy_rate"
-        ]
+        fed_rate = self.discovery_data["monetary_policy_context"]["policy_stance"]["policy_rate"]
 
         # Interest rate transmission
         rate_transmission = {
@@ -476,7 +462,7 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.84,
         }
 
-    def generate_integrated_risk_scoring(self) -> Dict[str, Any]:
+    def generate_integrated_risk_scoring(self) -> dict[str, Any]:
         """Phase 7: Integrated Macroeconomic Risk Scoring"""
         # GDP-based risk assessment
         gdp_risks = {
@@ -547,7 +533,7 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.85,
         }
 
-    def assess_economic_policy_outlook(self) -> Dict[str, Any]:
+    def assess_economic_policy_outlook(self) -> dict[str, Any]:
         """Phase 8: Economic Policy Assessment and Outlook"""
         # Monetary policy effectiveness
         monetary_assessment = {
@@ -663,7 +649,7 @@ class MacroTemplateGapAnalyzer:
             "confidence": 0.87,
         }
 
-    def generate_analysis_output(self) -> Dict[str, Any]:
+    def generate_analysis_output(self) -> dict[str, Any]:
         """Generate complete analysis output"""
         # Execute all analysis phases
         business_cycle = self.analyze_business_cycle_modeling()
@@ -715,12 +701,8 @@ def main():
     date_str = "20250804"  # Match discovery file date
 
     # File paths
-    discovery_file = (
-        f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
-    )
-    output_file = (
-        f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
-    )
+    discovery_file = f"data/outputs/macro_analysis/discovery/{region}_{date_str}_discovery.json"
+    output_file = f"data/outputs/macro_analysis/analysis/{region}_{date_str}_analysis.json"
 
     # Check if discovery file exists
     if not Path(discovery_file).exists():
@@ -739,12 +721,8 @@ def main():
         json.dump(analysis_output, f, indent=2)
 
     print("Analysis complete. Output saved to: {output_file}")
-    print(
-        f"Gap coverage: {analysis_output['analysis_quality_metrics']['gap_coverage']:.1%}"
-    )
-    print(
-        f"Overall confidence: {analysis_output['analysis_quality_metrics']['confidence_propagation']:.2f}"
-    )
+    print(f"Gap coverage: {analysis_output['analysis_quality_metrics']['gap_coverage']:.1%}")
+    print(f"Overall confidence: {analysis_output['analysis_quality_metrics']['confidence_propagation']:.2f}")
 
 
 if __name__ == "__main__":

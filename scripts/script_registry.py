@@ -16,10 +16,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
-    Type,
     Union,
     get_args,
     get_origin,
@@ -39,25 +35,25 @@ class ScriptMetadata:
 
     name: str
     description: str
-    script_class: Type
+    script_class: type
 
     # Parameter information
-    required_parameters: List[str] = field(default_factory=list)
-    optional_parameters: List[str] = field(default_factory=list)
-    parameter_types: Dict[str, Type] = field(default_factory=dict)
+    required_parameters: list[str] = field(default_factory=list)
+    optional_parameters: list[str] = field(default_factory=list)
+    parameter_types: dict[str, type] = field(default_factory=dict)
 
     # Content type support
-    supported_content_types: List[str] = field(default_factory=list)
+    supported_content_types: list[str] = field(default_factory=list)
 
     # Execution metadata
-    estimated_runtime: Optional[float] = None
-    resource_requirements: Dict[str, Any] = field(default_factory=dict)
+    estimated_runtime: float | None = None
+    resource_requirements: dict[str, Any] = field(default_factory=dict)
 
     # Version and compatibility
     version: str = "1.0.0"
     requires_validation: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metadata to dictionary"""
         return {
             "name": self.name,
@@ -91,18 +87,16 @@ class BaseScript(ABC):
     @abstractmethod
     def execute(self, **kwargs) -> ProcessingResult:
         """Execute script with parameters"""
-        pass
 
     @abstractmethod
     def validate_inputs(self, **kwargs) -> None:
         """Validate inputs before execution (fail-fast)"""
-        pass
 
     def _get_script_metadata(self) -> ScriptMetadata:
         """Get script metadata from class annotations"""
 
         # Get type hints from execute method
-        execute_method = getattr(self.__class__, "execute")
+        execute_method = self.__class__.execute
         type_hints = get_type_hints(execute_method)
 
         # Extract parameter information
@@ -140,14 +134,10 @@ class BaseScript(ABC):
             if param_name in self.metadata.parameter_types:
                 expected_type = self.metadata.parameter_types[param_name]
 
-                if expected_type != Any and not self._is_valid_type(
-                    param_value, expected_type
-                ):
-                    self.error_handler.handle_type_validation_error(
-                        param_value, expected_type, param_name
-                    )
+                if expected_type != Any and not self._is_valid_type(param_value, expected_type):
+                    self.error_handler.handle_type_validation_error(param_value, expected_type, param_name)
 
-    def _is_valid_type(self, value: Any, expected_type: Type[Any]) -> bool:
+    def _is_valid_type(self, value: Any, expected_type: type[Any]) -> bool:
         """Check if value matches expected type, handling generic types properly"""
 
         if expected_type == Any:
@@ -174,7 +164,7 @@ class BaseScript(ABC):
             return any(self._is_valid_type(value, arg) for arg in args)
 
         # Handle List types
-        if origin is list or origin is List:
+        if origin is list or origin is list:
             if not isinstance(value, list):
                 return False
             args = get_args(expected_type)
@@ -184,16 +174,14 @@ class BaseScript(ABC):
             return True
 
         # Handle Dict types
-        if origin is dict or origin is Dict:
+        if origin is dict or origin is dict:
             if not isinstance(value, dict):
                 return False
             args = get_args(expected_type)
             if len(args) >= 2:
                 key_type, value_type = args[0], args[1]
                 return all(
-                    self._is_valid_type(k, key_type)
-                    and self._is_valid_type(v, value_type)
-                    for k, v in value.items()
+                    self._is_valid_type(k, key_type) and self._is_valid_type(v, value_type) for k, v in value.items()
                 )
             return True
 
@@ -213,7 +201,7 @@ class BaseScript(ABC):
                 kwargs, self.metadata.required_parameters, self.__class__.__name__
             )
 
-    def get_parameter_documentation(self) -> Dict[str, str]:
+    def get_parameter_documentation(self) -> dict[str, str]:
         """Get parameter documentation from docstring"""
 
         if not self.__doc__:
@@ -223,7 +211,7 @@ class BaseScript(ABC):
         # In a full implementation, this would parse docstring formats like Google or Sphinx
         return {}
 
-    def get_usage_examples(self) -> List[Dict[str, Any]]:
+    def get_usage_examples(self) -> list[dict[str, Any]]:
         """Get usage examples for the script"""
 
         # This would be implemented by subclasses
@@ -236,17 +224,13 @@ class ScriptRegistry:
     def __init__(self, config: ScriptConfig):
         self.config = config
         self.error_handler = ErrorHandler()
-        self.logger = TwitterSystemLogger(
-            name="ScriptRegistry", log_level=config.log_level
-        )
+        self.logger = TwitterSystemLogger(name="ScriptRegistry", log_level=config.log_level)
 
         # Registry storage
-        self._scripts: Dict[str, ScriptMetadata] = {}
-        self._script_instances: Dict[str, BaseScript] = {}
+        self._scripts: dict[str, ScriptMetadata] = {}
+        self._script_instances: dict[str, BaseScript] = {}
 
-    def register_script(
-        self, script_class: Type[BaseScript], name: Optional[str] = None
-    ) -> None:
+    def register_script(self, script_class: type[BaseScript], name: str | None = None) -> None:
         """Register a script class for dynamic discovery"""
 
         if not issubclass(script_class, BaseScript):
@@ -267,9 +251,7 @@ class ScriptRegistry:
             self.logger.info(f"Registered script: {script_name}")
 
             # Log detailed metadata at DEBUG level only
-            self.logger.debug(
-                f"Script {script_name} metadata: {instance.metadata.to_dict()}"
-            )
+            self.logger.debug(f"Script {script_name} metadata: {instance.metadata.to_dict()}")
 
         except Exception as e:
             self.error_handler.handle_processing_error(
@@ -287,34 +269,28 @@ class ScriptRegistry:
             for name in dir(module):
                 obj = getattr(module, name)
 
-                if (
-                    inspect.isclass(obj)
-                    and issubclass(obj, BaseScript)
-                    and obj != BaseScript
-                ):
+                if inspect.isclass(obj) and issubclass(obj, BaseScript) and obj != BaseScript:
                     self.register_script(obj)
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "module_registration", {"module_path": module_path}, e
-            )
+            self.error_handler.handle_processing_error("module_registration", {"module_path": module_path}, e)
 
-    def get_script(self, script_name: str) -> Optional[BaseScript]:
+    def get_script(self, script_name: str) -> BaseScript | None:
         """Get script instance by name"""
 
         return self._script_instances.get(script_name)
 
-    def get_script_metadata(self, script_name: str) -> Optional[ScriptMetadata]:
+    def get_script_metadata(self, script_name: str) -> ScriptMetadata | None:
         """Get script metadata by name"""
 
         return self._scripts.get(script_name)
 
-    def list_available_scripts(self) -> List[str]:
+    def list_available_scripts(self) -> list[str]:
         """List all available script names"""
 
         return list(self._scripts.keys())
 
-    def list_scripts_for_content_type(self, content_type: str) -> List[str]:
+    def list_scripts_for_content_type(self, content_type: str) -> list[str]:
         """List scripts that support a specific content type"""
 
         matching_scripts = []
@@ -343,9 +319,7 @@ class ScriptRegistry:
             script.validate_inputs(**kwargs)
 
             # Execute script
-            self.logger.log_operation(
-                f"Executing script: {script_name}", {"parameters": list(kwargs.keys())}
-            )
+            self.logger.log_operation(f"Executing script: {script_name}", {"parameters": list(kwargs.keys())})
 
             result = script.execute(**kwargs)
 
@@ -367,7 +341,7 @@ class ScriptRegistry:
 
             return error_result
 
-    def validate_script_parameters(self, script_name: str, **kwargs) -> List[str]:
+    def validate_script_parameters(self, script_name: str, **kwargs) -> list[str]:
         """Validate parameters for a script without executing"""
 
         script = self.get_script(script_name)
@@ -383,7 +357,7 @@ class ScriptRegistry:
 
         return validation_errors
 
-    def get_script_documentation(self, script_name: str) -> Dict[str, Any]:
+    def get_script_documentation(self, script_name: str) -> dict[str, Any]:
         """Get comprehensive documentation for a script"""
 
         metadata = self.get_script_metadata(script_name)
@@ -405,14 +379,10 @@ class ScriptRegistry:
 
         registry_info = {
             "total_scripts": len(self._scripts),
-            "scripts": {
-                name: metadata.to_dict() for name, metadata in self._scripts.items()
-            },
+            "scripts": {name: metadata.to_dict() for name, metadata in self._scripts.items()},
             "content_type_support": self._get_content_type_support(),
             "export_timestamp": (
-                TwitterSystemLogger()
-                .logger.handlers[0]
-                .formatter.formatTime(None, None)
+                TwitterSystemLogger().logger.handlers[0].formatter.formatTime(None, None)
                 if TwitterSystemLogger().logger.handlers
                 else "unknown"
             ),
@@ -425,14 +395,12 @@ class ScriptRegistry:
                 json.dump(registry_info, f, indent=2)
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "registry_export", {"output_file": str(output_file)}, e
-            )
+            self.error_handler.handle_processing_error("registry_export", {"output_file": str(output_file)}, e)
 
-    def _get_content_type_support(self) -> Dict[str, List[str]]:
+    def _get_content_type_support(self) -> dict[str, list[str]]:
         """Get mapping of content types to supporting scripts"""
 
-        content_type_support: Dict[str, List[str]] = {}
+        content_type_support: dict[str, list[str]] = {}
 
         for script_name, metadata in self._scripts.items():
             for content_type in metadata.supported_content_types:
@@ -442,7 +410,7 @@ class ScriptRegistry:
 
         return content_type_support
 
-    def auto_discover_scripts(self, search_paths: List[Path]) -> None:
+    def auto_discover_scripts(self, search_paths: list[Path]) -> None:
         """Auto-discover scripts in specified paths"""
 
         for search_path in search_paths:
@@ -461,31 +429,22 @@ class ScriptRegistry:
                     self.register_script_module(module_name)
 
                 except Exception as e:
-                    self.logger.log_error(
-                        e, {"file": str(python_file), "search_path": str(search_path)}
-                    )
+                    self.logger.log_error(e, {"file": str(python_file), "search_path": str(search_path)})
 
-    def get_registry_stats(self) -> Dict[str, Any]:
+    def get_registry_stats(self) -> dict[str, Any]:
         """Get registry statistics"""
 
-        content_type_counts: Dict[str, int] = {}
+        content_type_counts: dict[str, int] = {}
         for metadata in self._scripts.values():
             for content_type in metadata.supported_content_types:
-                content_type_counts[content_type] = (
-                    content_type_counts.get(content_type, 0) + 1
-                )
+                content_type_counts[content_type] = content_type_counts.get(content_type, 0) + 1
 
         return {
             "total_scripts": len(self._scripts),
             "content_type_support": content_type_counts,
-            "validation_required": sum(
-                1 for m in self._scripts.values() if m.requires_validation
-            ),
+            "validation_required": sum(1 for m in self._scripts.values() if m.requires_validation),
             "average_parameters": (
-                sum(
-                    len(m.required_parameters) + len(m.optional_parameters)
-                    for m in self._scripts.values()
-                )
+                sum(len(m.required_parameters) + len(m.optional_parameters) for m in self._scripts.values())
                 / len(self._scripts)
                 if self._scripts
                 else 0
@@ -494,10 +453,10 @@ class ScriptRegistry:
 
 
 # Global registry instance
-_global_registry: Optional[ScriptRegistry] = None
+_global_registry: ScriptRegistry | None = None
 
 
-def get_global_registry(config: Optional[ScriptConfig] = None) -> ScriptRegistry:
+def get_global_registry(config: ScriptConfig | None = None) -> ScriptRegistry:
     """Get or create global script registry"""
 
     global _global_registry
@@ -513,7 +472,7 @@ def get_global_registry(config: Optional[ScriptConfig] = None) -> ScriptRegistry
     return _global_registry
 
 
-def register_script(script_class: Type[BaseScript], name: Optional[str] = None) -> None:
+def register_script(script_class: type[BaseScript], name: str | None = None) -> None:
     """Register a script in the global registry"""
 
     registry = get_global_registry()
@@ -522,13 +481,13 @@ def register_script(script_class: Type[BaseScript], name: Optional[str] = None) 
 
 # Decorator for automatic script registration
 def twitter_script(
-    name: Optional[str] = None,
-    content_types: Optional[List[str]] = None,
+    name: str | None = None,
+    content_types: list[str] | None = None,
     requires_validation: bool = True,
 ):
     """Decorator for automatic script registration"""
 
-    def decorator(script_class: Type[BaseScript]):
+    def decorator(script_class: type[BaseScript]):
         # Add metadata to class
         if content_types:
             script_class.SUPPORTED_CONTENT_TYPES = content_types

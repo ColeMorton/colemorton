@@ -11,7 +11,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
 class DependencyTester:
@@ -37,9 +37,8 @@ class DependencyTester:
             if result.returncode == 0:
                 self.logger.info("Python tests passed")
                 return True
-            else:
-                self.logger.error(f"Python tests failed: {result.stderr}")
-                return False
+            self.logger.error(f"Python tests failed: {result.stderr}")
+            return False
 
         except subprocess.TimeoutExpired:
             self.logger.error("Python tests timed out")
@@ -63,9 +62,8 @@ class DependencyTester:
             if result.returncode == 0:
                 self.logger.info("Frontend tests passed")
                 return True
-            else:
-                self.logger.error(f"Frontend tests failed: {result.stderr}")
-                return False
+            self.logger.error(f"Frontend tests failed: {result.stderr}")
+            return False
 
         except subprocess.TimeoutExpired:
             self.logger.error("Frontend tests timed out")
@@ -119,9 +117,8 @@ class DependencyTester:
             if result.returncode == 0:
                 self.logger.info("Frontend build succeeded")
                 return True
-            else:
-                self.logger.error(f"Frontend build failed: {result.stderr}")
-                return False
+            self.logger.error(f"Frontend build failed: {result.stderr}")
+            return False
 
         except subprocess.TimeoutExpired:
             self.logger.error("Frontend build timed out")
@@ -130,7 +127,7 @@ class DependencyTester:
             self.logger.error(f"Error testing frontend build: {e}")
             return False
 
-    def run_security_scans(self) -> Dict[str, Any]:
+    def run_security_scans(self) -> dict[str, Any]:
         """Run security scans on dependencies."""
         results = {
             "python_safety": False,
@@ -177,12 +174,10 @@ class DependencyTester:
 
         return results
 
-    def generate_compatibility_report(self) -> Dict[str, Any]:
+    def generate_compatibility_report(self) -> dict[str, Any]:
         """Generate comprehensive compatibility report."""
         report = {
-            "timestamp": subprocess.check_output(["date", "+%Y-%m-%d %H:%M:%S"])
-            .decode()
-            .strip(),
+            "timestamp": subprocess.check_output(["date", "+%Y-%m-%d %H:%M:%S"]).decode().strip(),
             "python_build": self.test_python_build(),
             "frontend_build": self.test_frontend_build(),
             "python_tests": self.run_python_tests(),
@@ -226,20 +221,11 @@ def main() -> int:
     print("Frontend Tests:   {'✅ PASS' if report['frontend_tests'] else '❌ FAIL'}")
 
     security = report["security_scans"]
-    print(
-        f"Python Safety:    {'✅ PASS' if security['python_safety'] else '⚠️  ISSUES'}"
-    )
-    print(
-        f"Python Bandit:    {'✅ PASS' if security['python_bandit'] else '⚠️  ISSUES'}"
-    )
-    print(
-        f"Frontend Audit:   {'✅ PASS' if security['frontend_audit'] else '⚠️  ISSUES'}"
-    )
+    print(f"Python Safety:    {'✅ PASS' if security['python_safety'] else '⚠️  ISSUES'}")
+    print(f"Python Bandit:    {'✅ PASS' if security['python_bandit'] else '⚠️  ISSUES'}")
+    print(f"Frontend Audit:   {'✅ PASS' if security['frontend_audit'] else '⚠️  ISSUES'}")
 
-    print(
-        f"\nOverall Status:   "
-        f"{'✅ COMPATIBLE' if report['overall_status'] else '❌ ISSUES FOUND'}"
-    )
+    print(f"\nOverall Status:   {'✅ COMPATIBLE' if report['overall_status'] else '❌ ISSUES FOUND'}")
 
     # Save detailed report
     report_file = Path("dependency_compatibility_report.json")

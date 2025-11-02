@@ -1,12 +1,12 @@
-# Sensylate Documentation Hub
+# Colemorton Documentation Hub
 
-**Version**: 2.0 | **Last Updated**: 2025-08-12 | **Status**: Restructured & Optimized
+**Version**: 2.1 | **Last Updated**: 2025-10-30 | **Status**: Active
 **Authority**: Documentation Owner | **Audience**: All Users
 
 ## 🎯 Quick Navigation
 
 ### 🚀 Getting Started (01-xx)
-**New to Sensylate? Start here:**
+**New to Colemorton? Start here:**
 - **[01-project-overview.md](01-project-overview.md)** - Complete project introduction and architecture overview
 - **[01-quick-start-guide.md](01-quick-start-guide.md)** - 5-minute setup and first run
 - **[01-user-manual.md](01-user-manual.md)** - Comprehensive usage manual (853 lines)
@@ -56,7 +56,7 @@
 ## 🗺️ User Journey Guides
 
 ### New User Journey (First Day)
-1. **[01-project-overview.md](01-project-overview.md)** (15 minutes) - Understand what Sensylate is
+1. **[01-project-overview.md](01-project-overview.md)** (15 minutes) - Understand what Colemorton is
 2. **[01-quick-start-guide.md](01-quick-start-guide.md)** (30 minutes) - Get up and running
 3. **[01-user-manual.md](01-user-manual.md)** (Browse relevant sections) - Learn specific features
 4. **[02-dasv-framework.md](02-dasv-framework.md)** (Optional) - Understand the analysis framework
@@ -122,6 +122,8 @@
 5. **[03-development-standards.md](03-development-standards.md)** - 600 lines (Development standards)
 
 ### Latest Updates
+- **Frontmatter standardized** across all 37 documentation files (2025-10-30)
+- **Consistent metadata** with version, last updated, status, authority, and audience fields
 - **Documentation restructured** for optimal navigation (2025-08-12)
 - **Major consolidations completed** eliminating 30% redundancy
 - **Naming convention standardized** with logical prefixes
@@ -158,4 +160,4 @@
 **Content Quality**: Institutional-grade with zero information loss
 **Status**: Production-ready with optimized user experience
 
-*Welcome to Sensylate - your institutional-grade trading analysis platform with world-class documentation!*
+*Welcome to Colemorton - your institutional-grade trading analysis platform with world-class documentation!*

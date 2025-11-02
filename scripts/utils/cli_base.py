@@ -18,7 +18,7 @@ import os
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import typer
 import yaml
@@ -28,6 +28,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .config_loader import ConfigLoader, FinancialServiceConfig
+
 
 # Ensure load_env is available
 try:
@@ -54,19 +55,13 @@ class OutputFormat:
 class CLIError(Exception):
     """Base exception for CLI errors"""
 
-    pass
-
 
 class ValidationError(CLIError):
     """Raised when input validation fails"""
 
-    pass
-
 
 class ServiceError(CLIError):
     """Raised when service operation fails"""
-
-    pass
 
 
 class BaseFinancialCLI(ABC):
@@ -81,17 +76,13 @@ class BaseFinancialCLI(ABC):
     - Logging
     """
 
-    def __init__(
-        self, service_name: str, description: str = "Financial data service CLI"
-    ):
+    def __init__(self, service_name: str, description: str = "Financial data service CLI"):
         # Load environment variables first (critical for API key access)
         self._ensure_environment_loaded()
 
         self.service_name = service_name
         self.description = description
-        self.app = typer.Typer(
-            name=service_name, help=description, add_completion=False
-        )
+        self.app = typer.Typer(name=service_name, help=description, add_completion=False)
         self.console = Console()
         self.config_loader = ConfigLoader()
         self.logger = self._setup_logger()
@@ -106,7 +97,7 @@ class BaseFinancialCLI(ABC):
             self._validate_environment_variables()
         except Exception as e:
             # Don't fail CLI initialization, but log the issue
-            print("Warning: Failed to load environment variables: {e}")
+            print(f"Warning: Failed to load environment variables: {e}")
 
     def _validate_environment_variables(self):
         """Validate that critical environment variables are available"""
@@ -136,9 +127,7 @@ class BaseFinancialCLI(ABC):
         logger = logging.getLogger(f"financial_cli.{self.service_name}")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
@@ -150,9 +139,7 @@ class BaseFinancialCLI(ABC):
         @self.app.command("health")
         def health_check(
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
-            verbose: bool = typer.Option(
-                False, "--verbose", "-v", help="Verbose output"
-            ),
+            verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
         ):
             """Check service health and configuration"""
             try:
@@ -174,18 +161,14 @@ class BaseFinancialCLI(ABC):
                 except ImportError:
                     pass  # Service logging not available
 
-                self._output_result(
-                    result, OutputFormat.JSON if verbose else OutputFormat.TABLE
-                )
+                self._output_result(result, OutputFormat.JSON if verbose else OutputFormat.TABLE)
             except Exception as e:
                 self._handle_error(e, "Health check failed")
 
         @self.app.command("config")
         def show_config(
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
-            validate: bool = typer.Option(
-                False, "--validate", help="Validate configuration"
-            ),
+            validate: bool = typer.Option(False, "--validate", help="Validate configuration"),
         ):
             """Show service configuration"""
             try:
@@ -200,9 +183,7 @@ class BaseFinancialCLI(ABC):
 
         @self.app.command("cache")
         def cache_management(
-            action: str = typer.Argument(
-                ..., help="Cache action (clear/cleanup/stats)"
-            ),
+            action: str = typer.Argument(..., help="Cache action (clear/cleanup/stats)"),
             env: str = typer.Option("dev", help="Environment"),
         ):
             """Manage service cache"""
@@ -236,7 +217,7 @@ class BaseFinancialCLI(ABC):
         self,
         data: Any,
         format_type: str = OutputFormat.JSON,
-        title: Optional[str] = None,
+        title: str | None = None,
     ) -> None:
         """Output result in specified format"""
 
@@ -263,7 +244,7 @@ class BaseFinancialCLI(ABC):
         else:
             raise CLIError(f"Unsupported output format: {format_type}")
 
-    def _output_table(self, data: Any, title: Optional[str] = None) -> None:
+    def _output_table(self, data: Any, title: str | None = None) -> None:
         """Output data as a formatted table"""
 
         if isinstance(data, dict):
@@ -326,9 +307,7 @@ class BaseFinancialCLI(ABC):
             else:
                 raise CLIError("CSV format not supported for this data type")
 
-    def _handle_error(
-        self, error: Exception, context: str = "Operation failed"
-    ) -> None:
+    def _handle_error(self, error: Exception, context: str = "Operation failed") -> None:
         """Handle and display errors consistently"""
 
         # Log error details for debugging
@@ -349,27 +328,23 @@ class BaseFinancialCLI(ABC):
         # Exit with error code
         raise typer.Exit(1)
 
-    def add_standard_options(self) -> Dict[str, Any]:
+    def add_standard_options(self) -> dict[str, Any]:
         """Get standard CLI options for financial service commands"""
         return {
             "env": typer.Option("dev", help="Environment (dev/test/prod)"),
-            "output_format": typer.Option(
-                OutputFormat.JSON, help="Output format (json/yaml/table/csv)"
-            ),
+            "output_format": typer.Option(OutputFormat.JSON, help="Output format (json/yaml/table/csv)"),
             "verbose": typer.Option(False, "--verbose", "-v", help="Verbose output"),
             "no_cache": typer.Option(False, "--no-cache", help="Disable caching"),
             "timeout": typer.Option(30, help="Request timeout in seconds"),
         }
 
     @abstractmethod
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform service-specific health check"""
-        pass
 
     @abstractmethod
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
-        pass
 
     def run(self) -> None:
         """Run the CLI application"""
@@ -424,15 +399,13 @@ class FinancialDataCLI:
                 }
 
                 for service in services:
-                    description = service_descriptions.get(
-                        service, "Financial data service"
-                    )
+                    description = service_descriptions.get(service, "Financial data service")
                     table.add_row(service, description)
 
                 self.console.print(table)
 
             except Exception as e:
-                self.console.print("[red]Error:[/red] {str(e)}")
+                self.console.print(f"[red]Error:[/red] {str(e)}")
                 raise typer.Exit(1)
 
         @self.app.command("validate-config")
@@ -455,9 +428,7 @@ class FinancialDataCLI:
 
                     if result["warnings"]:
                         error_panel += "\n\n⚠️  Warnings:\n"
-                        error_panel += "\n".join(
-                            f"• {warning}" for warning in result["warnings"]
-                        )
+                        error_panel += "\n".join(f"• {warning}" for warning in result["warnings"])
 
                     self.console.print(
                         Panel(
@@ -468,7 +439,7 @@ class FinancialDataCLI:
                     )
 
             except Exception as e:
-                self.console.print("[red]Error:[/red] {str(e)}")
+                self.console.print(f"[red]Error:[/red] {str(e)}")
                 raise typer.Exit(1)
 
     def run(self) -> None:

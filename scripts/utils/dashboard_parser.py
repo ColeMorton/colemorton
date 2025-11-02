@@ -12,7 +12,8 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -77,7 +78,7 @@ class DashboardDataParser:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
-    def parse_report(self, file_path: Path) -> Dict[str, Any]:
+    def parse_report(self, file_path: Path) -> dict[str, Any]:
         """
         Parse a historical performance markdown report.
 
@@ -88,7 +89,7 @@ class DashboardDataParser:
             Dictionary containing structured performance data
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
+            with open(file_path, encoding="utf-8") as file:
                 content = file.read()
 
             return {
@@ -115,27 +116,19 @@ class DashboardDataParser:
         win_rate = float(win_rate_match.group(1)) if win_rate_match else 0.0
 
         # Extract total return
-        total_return_match = re.search(
-            r"\*\*Total Return\*\*:\s*([+-]?[\d.]+)%", content
-        )
+        total_return_match = re.search(r"\*\*Total Return\*\*:\s*([+-]?[\d.]+)%", content)
         total_return = float(total_return_match.group(1)) if total_return_match else 0.0
 
         # Extract average duration
-        avg_duration_match = re.search(
-            r"\*\*Average Trade Duration\*\*:\s*([\d.]+)\s*days", content
-        )
+        avg_duration_match = re.search(r"\*\*Average Trade Duration\*\*:\s*([\d.]+)\s*days", content)
         avg_duration = float(avg_duration_match.group(1)) if avg_duration_match else 0.0
 
         # Extract profit factor
         profit_factor_match = re.search(r"\*\*Profit Factor\*\*:\s*([\d.]+)", content)
-        profit_factor = (
-            float(profit_factor_match.group(1)) if profit_factor_match else 0.0
-        )
+        profit_factor = float(profit_factor_match.group(1)) if profit_factor_match else 0.0
 
         # Extract average winner/loser
-        avg_winner_match = re.search(
-            r"\*\*Average Winner\*\*:\s*([+-]?[\d.]+)%", content
-        )
+        avg_winner_match = re.search(r"\*\*Average Winner\*\*:\s*([+-]?[\d.]+)%", content)
         avg_winner = float(avg_winner_match.group(1)) if avg_winner_match else 0.0
 
         avg_loser_match = re.search(r"\*\*Average Loser\*\*:\s*([+-]?[\d.]+)%", content)
@@ -145,9 +138,7 @@ class DashboardDataParser:
         best_trade_match = re.search(r"\*\*Best Trade\*\*:\s*([^(]+\([^)]+\))", content)
         best_trade = best_trade_match.group(1).strip() if best_trade_match else ""
 
-        worst_trade_match = re.search(
-            r"\*\*Worst Trade\*\*:\s*([^(]+\([^)]+\))", content
-        )
+        worst_trade_match = re.search(r"\*\*Worst Trade\*\*:\s*([^(]+\([^)]+\))", content)
         worst_trade = worst_trade_match.group(1).strip() if worst_trade_match else ""
 
         return PerformanceMetrics(
@@ -162,14 +153,12 @@ class DashboardDataParser:
             worst_trade=worst_trade,
         )
 
-    def _extract_trade_data(self, content: str) -> List[TradeData]:
+    def _extract_trade_data(self, content: str) -> list[TradeData]:
         """Extract individual trade data from the markdown table."""
         trades = []
 
         # Find the trade table section
-        table_match = re.search(
-            r"\|\s*\*\*Rank\*\*.*?\n((?:\|.*?\n)*)", content, re.MULTILINE | re.DOTALL
-        )
+        table_match = re.search(r"\|\s*\*\*Rank\*\*.*?\n((?:\|.*?\n)*)", content, re.MULTILINE | re.DOTALL)
 
         if not table_match:
             self.logger.warning("Could not find trade data table")
@@ -190,9 +179,7 @@ class DashboardDataParser:
                         # parts[2] is P&L ($) - skip for now
 
                         # Extract return percentage from column 3
-                        return_str = (
-                            parts[3].replace("**", "").replace("%", "").replace("+", "")
-                        )
+                        return_str = parts[3].replace("**", "").replace("%", "").replace("+", "")
                         return_pct = float(return_str)
 
                         # Extract duration from column 4
@@ -228,7 +215,7 @@ class DashboardDataParser:
 
         return trades
 
-    def _extract_monthly_performance(self, content: str) -> List[MonthlyPerformance]:
+    def _extract_monthly_performance(self, content: str) -> list[MonthlyPerformance]:
         """Extract monthly performance data."""
         monthly_data = []
 
@@ -249,30 +236,20 @@ class DashboardDataParser:
             trades_match = re.search(r"\*\*Trades Closed\*\*:\s*(\d+)", section_content)
             trades_closed = int(trades_match.group(1)) if trades_match else 0
             if not trades_match:
-                self.logger.warning(
-                    f"Could not extract trades closed for {month} {year}"
-                )
+                self.logger.warning(f"Could not extract trades closed for {month} {year}")
 
-            win_rate_match = re.search(
-                r"\*\*Win Rate\*\*:\s*([\d.]+)%?", section_content
-            )
+            win_rate_match = re.search(r"\*\*Win Rate\*\*:\s*([\d.]+)%?", section_content)
             win_rate = float(win_rate_match.group(1)) if win_rate_match else 0.0
             if not win_rate_match:
                 self.logger.warning(f"Could not extract win rate for {month} {year}")
 
-            avg_return_match = re.search(
-                r"\*\*Average Return\*\*:\s*([+-]?[\d.]+)%?", section_content
-            )
+            avg_return_match = re.search(r"\*\*Average Return\*\*:\s*([+-]?[\d.]+)%?", section_content)
             avg_return = float(avg_return_match.group(1)) if avg_return_match else 0.0
             if not avg_return_match:
-                self.logger.warning(
-                    f"Could not extract average return for {month} {year}"
-                )
+                self.logger.warning(f"Could not extract average return for {month} {year}")
 
             # Extract market context
-            context_match = re.search(
-                r"\*\*Market Context\*\*:\s*([^\n]*)", section_content
-            )
+            context_match = re.search(r"\*\*Market Context\*\*:\s*([^\n]*)", section_content)
             market_context = context_match.group(1).strip() if context_match else ""
 
             # Log extracted values for validation
@@ -293,7 +270,7 @@ class DashboardDataParser:
 
         return monthly_data
 
-    def _extract_quality_distribution(self, content: str) -> List[QualityDistribution]:
+    def _extract_quality_distribution(self, content: str) -> list[QualityDistribution]:
         """Extract quality distribution data."""
         quality_data = []
 
@@ -316,14 +293,10 @@ class DashboardDataParser:
             section_content = content[section_start:section_end]
 
             # Extract win rate and average return
-            win_rate_match = re.search(
-                r"\*\*Win Rate\*\*:\s*([\d.]+)%", section_content
-            )
+            win_rate_match = re.search(r"\*\*Win Rate\*\*:\s*([\d.]+)%", section_content)
             win_rate = float(win_rate_match.group(1)) if win_rate_match else 0.0
 
-            avg_return_match = re.search(
-                r"\*\*Average Return\*\*:\s*([+-]?[\d.]+)%", section_content
-            )
+            avg_return_match = re.search(r"\*\*Average Return\*\*:\s*([+-]?[\d.]+)%", section_content)
             avg_return = float(avg_return_match.group(1)) if avg_return_match else 0.0
 
             quality_data.append(
@@ -338,20 +311,16 @@ class DashboardDataParser:
 
         return quality_data
 
-    def _extract_metadata(self, content: str) -> Dict[str, Any]:
+    def _extract_metadata(self, content: str) -> dict[str, Any]:
         """Extract metadata from the report."""
         metadata = {}
 
         # Extract title and date range
         title_match = re.search(r"#\s*([^\n]+)", content)
-        metadata["title"] = (
-            title_match.group(1).strip() if title_match else "Historical Performance"
-        )
+        metadata["title"] = title_match.group(1).strip() if title_match else "Historical Performance"
 
         date_range_match = re.search(r"\*\*.*?\|\s*([^*]+)\*\*", content)
-        metadata["date_range"] = (
-            date_range_match.group(1).strip() if date_range_match else ""
-        )
+        metadata["date_range"] = date_range_match.group(1).strip() if date_range_match else ""
 
         # Extract generation timestamp
         metadata["parsed_at"] = datetime.now().isoformat()
@@ -359,7 +328,7 @@ class DashboardDataParser:
         return metadata
 
 
-def parse_dashboard_data(file_path: str) -> Dict[str, Any]:
+def parse_dashboard_data(file_path: str) -> dict[str, Any]:
     """
     Convenience function to parse dashboard data from a markdown file.
 
@@ -380,15 +349,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
     else:
-        file_path = (
-            "data/outputs/trade_history/HISTORICAL_PERFORMANCE_REPORT_20250626.md"
-        )
+        file_path = "data/outputs/trade_history/HISTORICAL_PERFORMANCE_REPORT_20250626.md"
 
     try:
         data = parse_dashboard_data(file_path)
         print("Successfully parsed {data['performance_metrics'].total_trades} trades")
         print("Monthly data points: {len(data['monthly_performance'])}")
         print("Quality categories: {len(data['quality_distribution'])}")
-    except Exception as e:
+    except Exception:
         print("Error parsing file: {e}")
         sys.exit(1)

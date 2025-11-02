@@ -7,10 +7,9 @@ supporting subplot systems, spacing, and component positioning.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import plotly.graph_objects as go
-import plotly.io as pio
 from plotly.subplots import make_subplots
 
 
@@ -20,8 +19,8 @@ class PlotlyLayoutComponent:
 
     name: str
     component_type: str  # 'chart', 'metric', 'text'
-    position: Tuple[int, int]  # (row, col)
-    span: Tuple[int, int] = (1, 1)  # (row_span, col_span)
+    position: tuple[int, int]  # (row, col)
+    span: tuple[int, int] = (1, 1)  # (row_span, col_span)
     secondary_y: bool = False
     subplot_type: str = "xy"  # 'xy', 'pie', 'indicator'
 
@@ -32,19 +31,19 @@ class PlotlyGridConfig:
 
     rows: int
     cols: int
-    figure_size: Tuple[int, int]  # (width, height) in pixels
-    row_heights: Optional[List[float]] = None
-    column_widths: Optional[List[float]] = None
+    figure_size: tuple[int, int]  # (width, height) in pixels
+    row_heights: list[float] | None = None
+    column_widths: list[float] | None = None
     vertical_spacing: float = 0.1
     horizontal_spacing: float = 0.1
-    subplot_titles: Optional[List[str]] = None
-    specs: Optional[List[List[Dict[str, Any]]]] = None
+    subplot_titles: list[str] | None = None
+    specs: list[list[dict[str, Any]]] | None = None
 
 
 class PlotlyLayoutManager:
     """Advanced layout manager for Plotly dashboard generation."""
 
-    def __init__(self, config: Dict[str, Any], theme_manager=None):
+    def __init__(self, config: dict[str, Any], theme_manager=None):
         """
         Initialize Plotly layout manager.
 
@@ -56,7 +55,7 @@ class PlotlyLayoutManager:
         self.layout_config = config.get("layout", {})
         self.theme_manager = theme_manager
         self.grid_config = self._create_grid_config()
-        self.components: List[PlotlyLayoutComponent] = []
+        self.components: list[PlotlyLayoutComponent] = []
 
     def _create_grid_config(self) -> PlotlyGridConfig:
         """Create Plotly grid configuration from layout config."""
@@ -74,15 +73,13 @@ class PlotlyLayoutManager:
             row_heights=grid.get("height_ratios", [0.2, 0.4, 0.4]),
             column_widths=grid.get("width_ratios", None),
             vertical_spacing=self.layout_config.get("spacing", {}).get("vertical", 0.1),
-            horizontal_spacing=self.layout_config.get("spacing", {}).get(
-                "horizontal", 0.1
-            ),
+            horizontal_spacing=self.layout_config.get("spacing", {}).get("horizontal", 0.1),
         )
 
     def create_dashboard_subplot(
         self,
-        subplot_titles: Optional[List[str]] = None,
-        specs: Optional[List[List[Dict[str, Any]]]] = None,
+        subplot_titles: list[str] | None = None,
+        specs: list[list[dict[str, Any]]] | None = None,
     ) -> go.Figure:
         """
         Create optimized dashboard figure with subplot layout.
@@ -133,10 +130,10 @@ class PlotlyLayoutManager:
     def add_chart_to_subplot(
         self,
         fig: go.Figure,
-        chart_traces: List[Any],
+        chart_traces: list[Any],
         row: int,
         col: int,
-        chart_title: Optional[str] = None,
+        chart_title: str | None = None,
     ) -> go.Figure:
         """
         Add chart traces to specific subplot position.
@@ -164,9 +161,7 @@ class PlotlyLayoutManager:
         """Calculate subplot index from row/col position."""
         return (row - 1) * self.grid_config.cols + col
 
-    def create_metrics_row(
-        self, fig: go.Figure, metrics_data: List[Dict[str, Any]], mode: str = "light"
-    ) -> go.Figure:
+    def create_metrics_row(self, fig: go.Figure, metrics_data: list[dict[str, Any]], mode: str = "light") -> go.Figure:
         """
         Create enhanced metrics row using Plotly indicators.
 
@@ -207,9 +202,7 @@ class PlotlyLayoutManager:
 
         return fig
 
-    def apply_dashboard_theme(
-        self, fig: go.Figure, title: str, subtitle: str = "", mode: str = "light"
-    ) -> go.Figure:
+    def apply_dashboard_theme(self, fig: go.Figure, title: str, subtitle: str = "", mode: str = "light") -> go.Figure:
         """
         Apply comprehensive dashboard theme to figure.
 
@@ -231,11 +224,7 @@ class PlotlyLayoutManager:
         # Apply global theme
         fig.update_layout(
             title={
-                "text": (
-                    f"<b>{title}</b><br><sub>{subtitle}</sub>"
-                    if subtitle
-                    else f"<b>{title}</b>"
-                ),
+                "text": (f"<b>{title}</b><br><sub>{subtitle}</sub>" if subtitle else f"<b>{title}</b>"),
                 "x": 0.5,
                 "xanchor": "center",
                 "font": {
@@ -280,9 +269,7 @@ class PlotlyLayoutManager:
 
         return fig
 
-    def optimize_chart_layout(
-        self, fig: go.Figure, chart_type: str, row: int, col: int
-    ) -> go.Figure:
+    def optimize_chart_layout(self, fig: go.Figure, chart_type: str, row: int, col: int) -> go.Figure:
         """
         Optimize layout for specific chart types.
 
@@ -334,7 +321,7 @@ class PlotlyLayoutManager:
 
         return fig
 
-    def configure_high_dpi_export(self, scale: float = 2.0) -> Dict[str, Any]:
+    def configure_high_dpi_export(self, scale: float = 2.0) -> dict[str, Any]:
         """
         Configure high-DPI export settings for Plotly.
 
@@ -382,9 +369,7 @@ class PlotlyLayoutManager:
 
         return filepath
 
-    def create_responsive_layout(
-        self, breakpoints: Dict[str, int] = None
-    ) -> Dict[str, Any]:
+    def create_responsive_layout(self, breakpoints: dict[str, int] = None) -> dict[str, Any]:
         """
         Create responsive layout configuration for different screen sizes.
 
@@ -415,9 +400,7 @@ class PlotlyLayoutManager:
         return layouts
 
 
-def create_plotly_layout_manager(
-    config: Dict[str, Any], theme_manager=None
-) -> PlotlyLayoutManager:
+def create_plotly_layout_manager(config: dict[str, Any], theme_manager=None) -> PlotlyLayoutManager:
     """
     Factory function to create a PlotlyLayoutManager instance.
 
@@ -445,9 +428,7 @@ if __name__ == "__main__":
     fig = layout_manager.create_dashboard_subplot()
 
     print("Created Plotly figure: {fig.layout.width}x{fig.layout.height}")
-    print(
-        f"Subplot grid: {layout_manager.grid_config.rows}x{layout_manager.grid_config.cols}"
-    )
+    print(f"Subplot grid: {layout_manager.grid_config.rows}x{layout_manager.grid_config.cols}")
 
     # Test export configuration
     export_config = layout_manager.configure_high_dpi_export(scale=2.0)

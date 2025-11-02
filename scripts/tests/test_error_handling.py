@@ -13,9 +13,9 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
 
 import pytest
+
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -49,9 +49,7 @@ class TestErrorHierarchy:
     def test_base_error_creation(self):
         """Test TwitterSystemError base functionality"""
 
-        error = TwitterSystemError(
-            "Test error", context={"key": "value"}, error_code="TEST_001"
-        )
+        error = TwitterSystemError("Test error", context={"key": "value"}, error_code="TEST_001")
 
         assert error.message == "Test error"
         assert error.context == {"key": "value"}
@@ -181,9 +179,7 @@ class TestConvenienceFunctions:
     def test_validation_failed_function(self):
         """Test validation_failed convenience function"""
 
-        error = validation_failed(
-            "Score too low", "fundamental", 6.5, ["disclaimer", "accuracy"]
-        )
+        error = validation_failed("Score too low", "fundamental", 6.5, ["disclaimer", "accuracy"])
 
         assert isinstance(error, ValidationError)
         assert error.content_type == "fundamental"
@@ -281,9 +277,7 @@ class TestErrorHandler:
             self.error_handler.handle_validation_error("fundamental", validation_result)
 
         # Test with fail_fast=False
-        error = self.error_handler.handle_validation_error(
-            "fundamental", validation_result, fail_fast=False
-        )
+        error = self.error_handler.handle_validation_error("fundamental", validation_result, fail_fast=False)
 
         assert isinstance(error, ValidationError)
         assert error.validation_score == 6.5
@@ -301,9 +295,7 @@ class TestErrorHandler:
 
         # Test other template errors
         with pytest.raises(TemplateError):
-            self.error_handler.handle_template_error(
-                "A_valuation", data_context, Exception("Rendering failed")
-            )
+            self.error_handler.handle_template_error("A_valuation", data_context, Exception("Rendering failed"))
 
     def test_data_validation_error_handling(self):
         """Test data validation error handling"""
@@ -313,15 +305,11 @@ class TestErrorHandler:
 
         # Test with missing fields
         with pytest.raises(TypeValidationError):
-            self.error_handler.handle_data_validation_error(
-                incomplete_data, required_fields, "fundamental_analysis"
-            )
+            self.error_handler.handle_data_validation_error(incomplete_data, required_fields, "fundamental_analysis")
 
         # Test with complete data (no error)
         complete_data = {"ticker": "AAPL", "date": "20240101", "fair_value": 185}
-        result = self.error_handler.handle_data_validation_error(
-            complete_data, required_fields, "fundamental_analysis"
-        )
+        result = self.error_handler.handle_data_validation_error(complete_data, required_fields, "fundamental_analysis")
 
         assert result is None  # No error expected
 
@@ -331,13 +319,13 @@ class TestErrorHandler:
         # Test invalid type
         with pytest.raises(TypeValidationError):
             self.error_handler.handle_type_validation_error(
-                "150", float, "validation_score"  # String instead of float
+                "150",
+                float,
+                "validation_score",  # String instead of float
             )
 
         # Test valid type (no error)
-        result = self.error_handler.handle_type_validation_error(
-            8.5, float, "validation_score"
-        )
+        result = self.error_handler.handle_type_validation_error(8.5, float, "validation_score")
 
         assert result is None  # No error expected
 
@@ -347,9 +335,7 @@ class TestErrorHandler:
         input_data = {"ticker": "AAPL", "content_type": "fundamental"}
 
         with pytest.raises(ProcessingError):
-            self.error_handler.handle_processing_error(
-                "template_rendering", input_data, Exception("Processing failed")
-            )
+            self.error_handler.handle_processing_error("template_rendering", input_data, Exception("Processing failed"))
 
     def test_file_format_validation(self):
         """Test file format validation"""
@@ -371,9 +357,7 @@ class TestErrorHandler:
 
         # Test missing file
         with pytest.raises(DataError):
-            self.error_handler.validate_file_format(
-                Path("/nonexistent/file.json"), ".json"
-            )
+            self.error_handler.validate_file_format(Path("/nonexistent/file.json"), ".json")
 
     def test_error_history_tracking(self):
         """Test error history tracking"""
@@ -430,7 +414,7 @@ class TestErrorHandler:
             self.error_handler.export_error_log(temp_path)
 
             # Verify export
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 log_data = json.load(f)
 
             assert "error_summary" in log_data

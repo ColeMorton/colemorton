@@ -12,10 +12,10 @@ Configurable validation criteria management:
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from error_handler import ErrorHandler
-from errors import ConfigurationError, ValidationError
+from errors import ValidationError
 from logging_config import TwitterSystemLogger
 from template_scoring import ScoringCriteria
 
@@ -26,11 +26,11 @@ class TemplateRequirement:
 
     name: str
     description: str
-    required_fields: List[str] = field(default_factory=list)
-    optional_fields: List[str] = field(default_factory=list)
-    validation_rules: Dict[str, Any] = field(default_factory=dict)
+    required_fields: list[str] = field(default_factory=list)
+    optional_fields: list[str] = field(default_factory=list)
+    validation_rules: dict[str, Any] = field(default_factory=dict)
 
-    def validate_data(self, data: Dict[str, Any]) -> List[str]:
+    def validate_data(self, data: dict[str, Any]) -> list[str]:
         """Validate data against template requirements"""
 
         issues = []
@@ -49,7 +49,7 @@ class TemplateRequirement:
 
         return issues
 
-    def _validate_field(self, value: Any, rule: Dict[str, Any]) -> bool:
+    def _validate_field(self, value: Any, rule: dict[str, Any]) -> bool:
         """Validate a single field against a rule"""
 
         rule_type = rule.get("type", "any")
@@ -91,7 +91,7 @@ class TemplateRequirement:
 
         return True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "name": self.name,
@@ -108,31 +108,25 @@ class CriteriaProfile:
 
     name: str
     content_type: str
-    scoring_criteria: Dict[str, List[ScoringCriteria]] = field(default_factory=dict)
-    template_requirements: Dict[str, TemplateRequirement] = field(default_factory=dict)
-    performance_thresholds: Dict[str, float] = field(default_factory=dict)
+    scoring_criteria: dict[str, list[ScoringCriteria]] = field(default_factory=dict)
+    template_requirements: dict[str, TemplateRequirement] = field(default_factory=dict)
+    performance_thresholds: dict[str, float] = field(default_factory=dict)
 
-    def get_criteria_for_template(self, template_name: str) -> List[ScoringCriteria]:
+    def get_criteria_for_template(self, template_name: str) -> list[ScoringCriteria]:
         """Get scoring criteria for a specific template"""
         return self.scoring_criteria.get(template_name, [])
 
-    def get_requirements_for_template(
-        self, template_name: str
-    ) -> Optional[TemplateRequirement]:
+    def get_requirements_for_template(self, template_name: str) -> TemplateRequirement | None:
         """Get requirements for a specific template"""
         return self.template_requirements.get(template_name)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "name": self.name,
             "content_type": self.content_type,
-            "scoring_criteria": {
-                k: [c.__dict__ for c in v] for k, v in self.scoring_criteria.items()
-            },
-            "template_requirements": {
-                k: v.to_dict() for k, v in self.template_requirements.items()
-            },
+            "scoring_criteria": {k: [c.__dict__ for c in v] for k, v in self.scoring_criteria.items()},
+            "template_requirements": {k: v.to_dict() for k, v in self.template_requirements.items()},
             "performance_thresholds": self.performance_thresholds,
         }
 
@@ -140,7 +134,7 @@ class CriteriaProfile:
 class TemplateCriteriaManager:
     """Manager for template criteria and requirements"""
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Path | None = None):
         self.config_dir = config_dir or Path(__file__).parent / "config"
         self.config_dir.mkdir(exist_ok=True)
 
@@ -148,7 +142,7 @@ class TemplateCriteriaManager:
         self.logger = TwitterSystemLogger("TemplateCriteriaManager")
 
         # Criteria profiles
-        self.criteria_profiles: Dict[str, CriteriaProfile] = {}
+        self.criteria_profiles: dict[str, CriteriaProfile] = {}
 
         # Load default criteria
         self._load_default_criteria()
@@ -157,9 +151,7 @@ class TemplateCriteriaManager:
         """Load default criteria configurations"""
 
         # Fundamental analysis criteria
-        fundamental_profile = CriteriaProfile(
-            name="fundamental_default", content_type="fundamental"
-        )
+        fundamental_profile = CriteriaProfile(name="fundamental_default", content_type="fundamental")
 
         # A_valuation template criteria
         fundamental_profile.scoring_criteria["A_valuation"] = [
@@ -220,9 +212,7 @@ class TemplateCriteriaManager:
         self.criteria_profiles["fundamental"] = fundamental_profile
 
         # Strategy analysis criteria
-        strategy_profile = CriteriaProfile(
-            name="strategy_default", content_type="strategy"
-        )
+        strategy_profile = CriteriaProfile(name="strategy_default", content_type="strategy")
 
         strategy_profile.scoring_criteria["default"] = [
             ScoringCriteria("win_rate", 0.3, 0.6),
@@ -290,9 +280,7 @@ class TemplateCriteriaManager:
         self.criteria_profiles["sector"] = sector_profile
 
         # Trade history criteria
-        trade_history_profile = CriteriaProfile(
-            name="trade_history_default", content_type="trade_history"
-        )
+        trade_history_profile = CriteriaProfile(name="trade_history_default", content_type="trade_history")
 
         trade_history_profile.scoring_criteria["performance"] = [
             ScoringCriteria("performance_metrics", 0.4, 0.5, True),
@@ -300,9 +288,7 @@ class TemplateCriteriaManager:
             ScoringCriteria("transparency_level", 0.3, 0.5),
         ]
 
-        trade_history_profile.template_requirements[
-            "performance"
-        ] = TemplateRequirement(
+        trade_history_profile.template_requirements["performance"] = TemplateRequirement(
             name="performance_template",
             description="Trade performance analysis",
             required_fields=["analysis_name", "performance_metrics"],
@@ -315,13 +301,11 @@ class TemplateCriteriaManager:
 
         self.criteria_profiles["trade_history"] = trade_history_profile
 
-    def get_criteria_profile(self, content_type: str) -> Optional[CriteriaProfile]:
+    def get_criteria_profile(self, content_type: str) -> CriteriaProfile | None:
         """Get criteria profile for content type"""
         return self.criteria_profiles.get(content_type)
 
-    def get_scoring_criteria(
-        self, content_type: str, template_name: str
-    ) -> List[ScoringCriteria]:
+    def get_scoring_criteria(self, content_type: str, template_name: str) -> list[ScoringCriteria]:
         """Get scoring criteria for specific template"""
 
         profile = self.get_criteria_profile(content_type)
@@ -330,9 +314,7 @@ class TemplateCriteriaManager:
 
         return profile.get_criteria_for_template(template_name)
 
-    def get_template_requirements(
-        self, content_type: str, template_name: str
-    ) -> Optional[TemplateRequirement]:
+    def get_template_requirements(self, content_type: str, template_name: str) -> TemplateRequirement | None:
         """Get template requirements"""
 
         profile = self.get_criteria_profile(content_type)
@@ -341,9 +323,7 @@ class TemplateCriteriaManager:
 
         return profile.get_requirements_for_template(template_name)
 
-    def validate_template_data(
-        self, content_type: str, template_name: str, data: Dict[str, Any]
-    ) -> List[str]:
+    def validate_template_data(self, content_type: str, template_name: str, data: dict[str, Any]) -> list[str]:
         """Validate data against template requirements"""
 
         requirements = self.get_template_requirements(content_type, template_name)
@@ -360,16 +340,12 @@ class TemplateCriteriaManager:
             )
             return [f"Validation error: {str(e)}"]
 
-    def update_scoring_criteria(
-        self, content_type: str, template_name: str, criteria: List[ScoringCriteria]
-    ) -> None:
+    def update_scoring_criteria(self, content_type: str, template_name: str, criteria: list[ScoringCriteria]) -> None:
         """Update scoring criteria for template"""
 
         profile = self.get_criteria_profile(content_type)
         if not profile:
-            raise ValidationError(
-                f"No criteria profile found for content type: {content_type}"
-            )
+            raise ValidationError(f"No criteria profile found for content type: {content_type}")
 
         profile.scoring_criteria[template_name] = criteria
 
@@ -385,9 +361,7 @@ class TemplateCriteriaManager:
 
         profile = self.get_criteria_profile(content_type)
         if not profile:
-            raise ValidationError(
-                f"No criteria profile found for content type: {content_type}"
-            )
+            raise ValidationError(f"No criteria profile found for content type: {content_type}")
 
         profile.template_requirements[template_name] = requirements
 
@@ -416,10 +390,7 @@ class TemplateCriteriaManager:
         """Export criteria configuration to file"""
 
         config_data = {
-            "profiles": {
-                content_type: profile.to_dict()
-                for content_type, profile in self.criteria_profiles.items()
-            },
+            "profiles": {content_type: profile.to_dict() for content_type, profile in self.criteria_profiles.items()},
             "export_timestamp": (
                 self.logger.logger.handlers[0].formatter.formatTime(None, None)
                 if self.logger.logger.handlers
@@ -437,29 +408,23 @@ class TemplateCriteriaManager:
             )
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "criteria_export", {"output_path": str(output_path)}, e
-            )
+            self.error_handler.handle_processing_error("criteria_export", {"output_path": str(output_path)}, e)
 
     def import_criteria_configuration(self, config_path: Path) -> None:
         """Import criteria configuration from file"""
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config_data = json.load(f)
 
             profiles_data = config_data.get("profiles", {})
 
             for content_type, profile_data in profiles_data.items():
                 # Reconstruct criteria profile
-                profile = CriteriaProfile(
-                    name=profile_data["name"], content_type=profile_data["content_type"]
-                )
+                profile = CriteriaProfile(name=profile_data["name"], content_type=profile_data["content_type"])
 
                 # Reconstruct scoring criteria
-                for template_name, criteria_data in profile_data.get(
-                    "scoring_criteria", {}
-                ).items():
+                for template_name, criteria_data in profile_data.get("scoring_criteria", {}).items():
                     criteria = [
                         ScoringCriteria(
                             name=c["name"],
@@ -472,9 +437,7 @@ class TemplateCriteriaManager:
                     profile.scoring_criteria[template_name] = criteria
 
                 # Reconstruct template requirements
-                for template_name, req_data in profile_data.get(
-                    "template_requirements", {}
-                ).items():
+                for template_name, req_data in profile_data.get("template_requirements", {}).items():
                     requirement = TemplateRequirement(
                         name=req_data["name"],
                         description=req_data["description"],
@@ -484,9 +447,7 @@ class TemplateCriteriaManager:
                     )
                     profile.template_requirements[template_name] = requirement
 
-                profile.performance_thresholds = profile_data.get(
-                    "performance_thresholds", {}
-                )
+                profile.performance_thresholds = profile_data.get("performance_thresholds", {})
 
                 self.criteria_profiles[content_type] = profile
 
@@ -496,11 +457,9 @@ class TemplateCriteriaManager:
             )
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "criteria_import", {"config_path": str(config_path)}, e
-            )
+            self.error_handler.handle_processing_error("criteria_import", {"config_path": str(config_path)}, e)
 
-    def get_available_templates(self, content_type: str) -> List[str]:
+    def get_available_templates(self, content_type: str) -> list[str]:
         """Get list of available templates for content type"""
 
         profile = self.get_criteria_profile(content_type)
@@ -514,7 +473,7 @@ class TemplateCriteriaManager:
 
         return sorted(list(templates))
 
-    def get_criteria_statistics(self) -> Dict[str, Any]:
+    def get_criteria_statistics(self) -> dict[str, Any]:
         """Get statistics about criteria configuration"""
 
         stats = {

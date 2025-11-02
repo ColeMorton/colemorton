@@ -8,11 +8,12 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
+
 
 # Add scripts directory to path for service integration
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,14 +29,13 @@ try:
     from services.yahoo_finance import create_yahoo_finance_service
 
     CLI_SERVICES_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     print("⚠️  CLI services not available: {e}")
     CLI_SERVICES_AVAILABLE = False
 
 # Import base script and registry for integration
 try:
     from base_script import BaseScript
-
     from script_registry import ScriptConfig, twitter_script
 
     REGISTRY_AVAILABLE = True
@@ -50,7 +50,7 @@ class IndustryDiscovery:
     def __init__(
         self,
         industry: str,
-        sector: Optional[str] = None,
+        sector: str | None = None,
         depth: str = "comprehensive",
         output_dir: str = "./data/outputs/industry_analysis/discovery",
     ):
@@ -97,7 +97,7 @@ class IndustryDiscovery:
             }
             print("✅ Initialized {len(self.cli_services)} CLI services")
             self._check_cli_service_health()
-        except Exception as e:
+        except Exception:
             print("⚠️  Failed to initialize CLI services: {e}")
             self.cli_services = {}
 
@@ -123,12 +123,10 @@ class IndustryDiscovery:
                     "last_check": datetime.now().isoformat(),
                 }
 
-        healthy_count = sum(
-            1 for s in self.cli_service_health.values() if s["status"] == "healthy"
-        )
+        healthy_count = sum(1 for s in self.cli_service_health.values() if s["status"] == "healthy")
         print("📊 CLI Service Health: {healthy_count}/{len(self.cli_services)} healthy")
 
-    def discover_industry_scope(self) -> Dict[str, Any]:
+    def discover_industry_scope(self) -> dict[str, Any]:
         """Define industry scope and boundaries"""
         industry_scope = {
             "industry_name": self.industry,
@@ -144,7 +142,7 @@ class IndustryDiscovery:
         }
         return industry_scope
 
-    def discover_representative_companies(self) -> List[Dict[str, Any]]:
+    def discover_representative_companies(self) -> list[dict[str, Any]]:
         """Identify representative companies for the industry"""
         # In a real implementation, this would use FMP or other services
         # to identify leading companies in the industry
@@ -155,7 +153,7 @@ class IndustryDiscovery:
             try:
                 # Would call FMP industry screening endpoint
                 pass
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to discover companies via FMP: {e}")
 
         # Default representative companies by industry
@@ -185,7 +183,7 @@ class IndustryDiscovery:
 
         return companies
 
-    def collect_industry_trends(self) -> Dict[str, Any]:
+    def collect_industry_trends(self) -> dict[str, Any]:
         """Collect and analyze industry-wide trends"""
         trends = {
             "technology_trends": self._analyze_technology_trends(),
@@ -196,7 +194,7 @@ class IndustryDiscovery:
         }
         return trends
 
-    def collect_economic_indicators(self) -> Dict[str, Any]:
+    def collect_economic_indicators(self) -> dict[str, Any]:
         """Collect relevant economic indicators for the industry"""
         indicators = {}
 
@@ -212,9 +210,7 @@ class IndustryDiscovery:
 
                 # Industry-specific indicators
                 if self.sector == "technology":
-                    indicators["tech_employment"] = self._get_fred_indicator(
-                        "CES5051000001"
-                    )
+                    indicators["tech_employment"] = self._get_fred_indicator("CES5051000001")
                     indicators["tech_production"] = self._get_fred_indicator("IPG334")
 
                 indicators["collection_timestamp"] = datetime.now().isoformat()
@@ -231,9 +227,7 @@ class IndustryDiscovery:
         confidence_factors = []
 
         # CLI service health factor
-        healthy_services = sum(
-            1 for s in self.cli_service_health.values() if s["status"] == "healthy"
-        )
+        healthy_services = sum(1 for s in self.cli_service_health.values() if s["status"] == "healthy")
         service_factor = healthy_services / max(len(self.cli_services), 1)
         confidence_factors.append(service_factor)
 
@@ -253,7 +247,7 @@ class IndustryDiscovery:
             return round(9.0 + (base_confidence * 1.0), 1)
         return 9.0
 
-    def generate_discovery_output(self) -> Dict[str, Any]:
+    def generate_discovery_output(self) -> dict[str, Any]:
         """Generate comprehensive discovery phase output"""
         discovery_data = {
             "metadata": {
@@ -280,7 +274,7 @@ class IndustryDiscovery:
         }
         return discovery_data
 
-    def save_discovery_output(self, data: Dict[str, Any]) -> str:
+    def save_discovery_output(self, data: dict[str, Any]) -> str:
         """Save discovery output to file"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -294,7 +288,7 @@ class IndustryDiscovery:
         return filepath
 
     # Helper methods
-    def _identify_sub_industries(self) -> List[str]:
+    def _identify_sub_industries(self) -> list[str]:
         """Identify sub-industries within the main industry"""
         # Placeholder - would use actual classification data
         return [f"{self.industry}_segment_1", f"{self.industry}_segment_2"]
@@ -306,11 +300,9 @@ class IndustryDiscovery:
             "semiconductors": "Industry focused on semiconductor design and manufacturing",
             "consumer_electronics": "Industry focused on consumer electronic devices and services",
         }
-        return descriptions.get(
-            self.industry, f"Industry focused on {self.industry.replace('_', ' ')}"
-        )
+        return descriptions.get(self.industry, f"Industry focused on {self.industry.replace('_', ' ')}")
 
-    def _identify_key_technologies(self) -> List[str]:
+    def _identify_key_technologies(self) -> list[str]:
         """Identify key technologies in the industry"""
         tech_map = {
             "software_infrastructure": [
@@ -332,11 +324,9 @@ class IndustryDiscovery:
                 "display_tech",
             ],
         }
-        return tech_map.get(
-            self.industry, ["emerging_technology", "digital_transformation"]
-        )
+        return tech_map.get(self.industry, ["emerging_technology", "digital_transformation"])
 
-    def _identify_market_segments(self) -> List[str]:
+    def _identify_market_segments(self) -> list[str]:
         """Identify key market segments"""
         return ["enterprise", "consumer"] if self.depth != "summary" else ["general"]
 
@@ -347,10 +337,9 @@ class IndustryDiscovery:
 
         if self.industry in growth_industries:
             return "growth"
-        elif self.industry in mature_industries:
+        if self.industry in mature_industries:
             return "mature"
-        else:
-            return "growth_to_mature"
+        return "growth_to_mature"
 
     def _get_company_name(self, symbol: str) -> str:
         """Get company name from symbol"""
@@ -364,7 +353,7 @@ class IndustryDiscovery:
         }
         return company_names.get(symbol, f"{symbol} Corporation")
 
-    def _analyze_technology_trends(self) -> Dict[str, Any]:
+    def _analyze_technology_trends(self) -> dict[str, Any]:
         """Analyze technology trends in the industry"""
         trends = {
             "ai_integration": {
@@ -385,7 +374,7 @@ class IndustryDiscovery:
         }
         return trends
 
-    def _analyze_market_trends(self) -> Dict[str, Any]:
+    def _analyze_market_trends(self) -> dict[str, Any]:
         """Analyze market trends"""
         return {
             "consolidation": {
@@ -405,7 +394,7 @@ class IndustryDiscovery:
             },
         }
 
-    def _analyze_consumer_trends(self) -> Dict[str, Any]:
+    def _analyze_consumer_trends(self) -> dict[str, Any]:
         """Analyze consumer behavior trends"""
         return {
             "digital_first": {
@@ -425,7 +414,7 @@ class IndustryDiscovery:
             },
         }
 
-    def _analyze_regulatory_trends(self) -> Dict[str, Any]:
+    def _analyze_regulatory_trends(self) -> dict[str, Any]:
         """Analyze regulatory trends"""
         return {
             "data_privacy": {
@@ -450,7 +439,7 @@ class IndustryDiscovery:
         # Base confidence on data availability and quality
         return 9.0 if self.cli_services else 8.5
 
-    def _get_fred_indicator(self, series_id: str) -> Optional[Dict[str, Any]]:
+    def _get_fred_indicator(self, series_id: str) -> dict[str, Any] | None:
         """Get FRED economic indicator"""
         try:
             service = self.cli_services.get("fred_economic")
@@ -475,9 +464,7 @@ class IndustryDiscovery:
 
         # Check representative companies
         if self.representative_companies:
-            completeness_factors.append(
-                min(len(self.representative_companies) / 5, 1.0)
-            )
+            completeness_factors.append(min(len(self.representative_companies) / 5, 1.0))
 
         # Check trend analysis
         if hasattr(self, "trend_analysis") and self.trend_analysis:
@@ -508,9 +495,7 @@ class IndustryDiscovery:
         if not self.cli_service_health:
             return 0.0
 
-        healthy = sum(
-            1 for s in self.cli_service_health.values() if s["status"] == "healthy"
-        )
+        healthy = sum(1 for s in self.cli_service_health.values() if s["status"] == "healthy")
         return healthy / len(self.cli_service_health)
 
 
@@ -525,7 +510,7 @@ if REGISTRY_AVAILABLE:
     class IndustryDiscoveryScript(BaseScript):
         """Registry-integrated industry discovery script"""
 
-        def execute(self, **kwargs) -> Dict[str, Any]:
+        def execute(self, **kwargs) -> dict[str, Any]:
             """Execute industry discovery workflow"""
             industry = kwargs.get("industry", "software_infrastructure")
             sector = kwargs.get("sector")

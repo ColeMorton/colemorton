@@ -8,13 +8,11 @@ Part of Phase 2 optimization for macro analysis system
 import json
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
-from scipy import stats
-from sklearn.cluster import KMeans
+
 
 warnings.filterwarnings("ignore")
 
@@ -82,7 +80,7 @@ class SectorRotationSignal:
     """Sector rotation signal based on business cycle positioning"""
 
     cycle_stage: str
-    preferred_sectors: List[str]
+    preferred_sectors: list[str]
     rotation_probability: float
     rotation_timing: str  # 'early', 'mid', 'late'
     confidence: float
@@ -141,14 +139,12 @@ class AdvancedBusinessCycleEngine:
         }
 
     def analyze_advanced_business_cycle(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Comprehensive advanced business cycle analysis"""
 
         # Extract current indicators
-        current_indicators = self._extract_cycle_indicators(
-            discovery_data, analysis_data
-        )
+        current_indicators = self._extract_cycle_indicators(discovery_data, analysis_data)
 
         # Enhanced Markov chain transition analysis
         markov_analysis = self._analyze_markov_transitions(current_indicators)
@@ -157,17 +153,13 @@ class AdvancedBusinessCycleEngine:
         regime_analysis = self._detect_regime_switches(current_indicators)
 
         # Sector rotation signals
-        rotation_analysis = self._analyze_sector_rotation(
-            current_indicators, markov_analysis
-        )
+        rotation_analysis = self._analyze_sector_rotation(current_indicators, markov_analysis)
 
         # Historical pattern matching
         historical_patterns = self._match_historical_patterns(current_indicators)
 
         # Advanced recession probability with multiple horizons
-        multi_horizon_recession = self._calculate_multi_horizon_recession_probability(
-            current_indicators
-        )
+        multi_horizon_recession = self._calculate_multi_horizon_recession_probability(current_indicators)
 
         # Volatility regime analysis
         volatility_regime = self._analyze_volatility_regime(current_indicators)
@@ -177,9 +169,7 @@ class AdvancedBusinessCycleEngine:
                 "methodology": "markov_chain_regime_switching_analysis",
                 "region": self.region,
                 "analysis_timestamp": datetime.now().isoformat(),
-                "model_confidence": self._calculate_model_confidence(
-                    current_indicators
-                ),
+                "model_confidence": self._calculate_model_confidence(current_indicators),
             },
             "markov_transition_analysis": markov_analysis,
             "regime_switching_detection": regime_analysis,
@@ -192,9 +182,7 @@ class AdvancedBusinessCycleEngine:
             ),
         }
 
-    def _extract_cycle_indicators(
-        self, discovery_data: Dict, analysis_data: Dict
-    ) -> Dict[str, Any]:
+    def _extract_cycle_indicators(self, discovery_data: dict, analysis_data: dict) -> dict[str, Any]:
         """Extract business cycle indicators from discovery and analysis data"""
 
         # Current business cycle state
@@ -222,25 +210,17 @@ class AdvancedBusinessCycleEngine:
         )
         current_unemployment = 4.5  # Default
         if employment_data.get("unemployment_data", {}).get("observations"):
-            current_unemployment = employment_data["unemployment_data"]["observations"][
-                0
-            ].get("value", 4.5)
+            current_unemployment = employment_data["unemployment_data"]["observations"][0].get("value", 4.5)
 
         # Volatility proxy
-        volatility_data = discovery_data.get("cli_market_intelligence", {}).get(
-            "volatility_analysis", {}
-        )
+        volatility_data = discovery_data.get("cli_market_intelligence", {}).get("volatility_analysis", {})
         current_vix = volatility_data.get("vix_analysis", {}).get("current_level", 20.0)
 
         # Financial conditions
-        recession_prob = economic_indicators.get("composite_scores", {}).get(
-            "recession_probability", 0.25
-        )
+        recession_prob = economic_indicators.get("composite_scores", {}).get("recession_probability", 0.25)
 
         # Yield curve
-        yield_curve = economic_indicators.get("leading_indicators", {}).get(
-            "yield_curve", {}
-        )
+        yield_curve = economic_indicators.get("leading_indicators", {}).get("yield_curve", {})
         yield_spread = (
             yield_curve.get("current_spread", {}).get("10y_2y", 0.5)
             if isinstance(yield_curve.get("current_spread"), dict)
@@ -248,9 +228,7 @@ class AdvancedBusinessCycleEngine:
         )
 
         # Phase duration estimate
-        phase_duration = business_cycle_data.get("historical_context", {}).get(
-            "phase_duration", 36
-        )
+        phase_duration = business_cycle_data.get("historical_context", {}).get("phase_duration", 36)
 
         return {
             "current_phase": current_phase,
@@ -260,12 +238,10 @@ class AdvancedBusinessCycleEngine:
             "recession_probability": recession_prob,
             "yield_spread": yield_spread,
             "phase_duration_months": phase_duration,
-            "cycle_maturity": business_cycle_data.get("historical_context", {}).get(
-                "cycle_maturity", "mid"
-            ),
+            "cycle_maturity": business_cycle_data.get("historical_context", {}).get("cycle_maturity", "mid"),
         }
 
-    def _analyze_markov_transitions(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_markov_transitions(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Analyze business cycle transitions using Markov chain modeling"""
 
         current_phase = indicators["current_phase"]
@@ -279,14 +255,10 @@ class AdvancedBusinessCycleEngine:
         adjusted_transitions = self._adjust_transition_probabilities(indicators)
 
         # Calculate transition probabilities for next 1, 2, 4, and 8 quarters
-        multi_period_transitions = self._calculate_multi_period_transitions(
-            current_phase, adjusted_transitions
-        )
+        multi_period_transitions = self._calculate_multi_period_transitions(current_phase, adjusted_transitions)
 
         # Phase transition timing analysis
-        transition_timing = self._analyze_transition_timing(
-            indicators, adjusted_transitions
-        )
+        transition_timing = self._analyze_transition_timing(indicators, adjusted_transitions)
 
         # Transition risk factors
         risk_factors = self._identify_transition_risk_factors(indicators)
@@ -296,25 +268,13 @@ class AdvancedBusinessCycleEngine:
             "current_phase_duration_months": phase_duration,
             "adjusted_transition_matrix": {
                 "expansion_to_peak": round(adjusted_transitions.expansion_to_peak, 3),
-                "expansion_to_contraction": round(
-                    adjusted_transitions.expansion_to_contraction, 3
-                ),
-                "peak_to_contraction": round(
-                    adjusted_transitions.peak_to_contraction, 3
-                ),
+                "expansion_to_contraction": round(adjusted_transitions.expansion_to_contraction, 3),
+                "peak_to_contraction": round(adjusted_transitions.peak_to_contraction, 3),
                 "peak_to_expansion": round(adjusted_transitions.peak_to_expansion, 3),
-                "contraction_to_trough": round(
-                    adjusted_transitions.contraction_to_trough, 3
-                ),
-                "contraction_to_expansion": round(
-                    adjusted_transitions.contraction_to_expansion, 3
-                ),
-                "trough_to_expansion": round(
-                    adjusted_transitions.trough_to_expansion, 3
-                ),
-                "trough_to_contraction": round(
-                    adjusted_transitions.trough_to_contraction, 3
-                ),
+                "contraction_to_trough": round(adjusted_transitions.contraction_to_trough, 3),
+                "contraction_to_expansion": round(adjusted_transitions.contraction_to_expansion, 3),
+                "trough_to_expansion": round(adjusted_transitions.trough_to_expansion, 3),
+                "trough_to_contraction": round(adjusted_transitions.trough_to_contraction, 3),
             },
             "multi_period_transition_probabilities": multi_period_transitions,
             "transition_timing_analysis": transition_timing,
@@ -322,9 +282,7 @@ class AdvancedBusinessCycleEngine:
             "markov_model_confidence": self._calculate_markov_confidence(indicators),
         }
 
-    def _adjust_transition_probabilities(
-        self, indicators: Dict[str, Any]
-    ) -> MarkovTransitionMatrix:
+    def _adjust_transition_probabilities(self, indicators: dict[str, Any]) -> MarkovTransitionMatrix:
         """Adjust base transition probabilities based on current economic conditions"""
 
         # Base transitions
@@ -341,15 +299,11 @@ class AdvancedBusinessCycleEngine:
 
         # Adjustment factors based on economic conditions
         recession_factor = indicators["recession_probability"]
-        yield_factor = (
-            1.0 + min(max(indicators["yield_spread"], -1.0), 1.0) * 0.5
-        )  # Inverted curve increases risk
+        yield_factor = 1.0 + min(max(indicators["yield_spread"], -1.0), 1.0) * 0.5  # Inverted curve increases risk
         duration_factor = min(
             indicators["phase_duration_months"] / 24.0, 2.0
         )  # Longer phases more likely to transition
-        growth_factor = (
-            1.0 - (indicators["gdp_growth"] - 2.0) * 0.1
-        )  # Weaker growth increases recession risk
+        growth_factor = 1.0 - (indicators["gdp_growth"] - 2.0) * 0.1  # Weaker growth increases recession risk
 
         # Apply adjustments for expansion phase
         if indicators["current_phase"] == "expansion":
@@ -376,29 +330,21 @@ class AdvancedBusinessCycleEngine:
             if indicators["gdp_growth"] > 1.0:
                 adjusted.contraction_to_expansion *= 1.5
             # Policy support increases recovery probability
-            adjusted.contraction_to_trough *= (
-                1.0 + (5.0 - indicators["unemployment_rate"]) * 0.1
-            )
+            adjusted.contraction_to_trough *= 1.0 + (5.0 - indicators["unemployment_rate"]) * 0.1
 
         # Apply adjustments for trough phase
         elif indicators["current_phase"] == "trough":
             # Strong leading indicators increase expansion probability
-            adjusted.trough_to_expansion *= (
-                1.0 + max(0, indicators["gdp_growth"] - 1.0) * 0.5
-            )
+            adjusted.trough_to_expansion *= 1.0 + max(0, indicators["gdp_growth"] - 1.0) * 0.5
             # High unemployment reduces double-dip risk
-            adjusted.trough_to_contraction *= max(
-                0.5, 1.0 - (indicators["unemployment_rate"] - 5.0) * 0.1
-            )
+            adjusted.trough_to_contraction *= max(0.5, 1.0 - (indicators["unemployment_rate"] - 5.0) * 0.1)
 
         # Normalize probabilities to ensure they sum correctly
         adjusted = self._normalize_transitions(adjusted, indicators["current_phase"])
 
         return adjusted
 
-    def _normalize_transitions(
-        self, transitions: MarkovTransitionMatrix, current_phase: str
-    ) -> MarkovTransitionMatrix:
+    def _normalize_transitions(self, transitions: MarkovTransitionMatrix, current_phase: str) -> MarkovTransitionMatrix:
         """Normalize transition probabilities to ensure they sum to 1.0 for each phase"""
 
         if current_phase == "expansion":
@@ -417,9 +363,7 @@ class AdvancedBusinessCycleEngine:
                 transitions.peak_to_expansion *= scale_factor
 
         elif current_phase == "contraction":
-            total = (
-                transitions.contraction_to_trough + transitions.contraction_to_expansion
-            )
+            total = transitions.contraction_to_trough + transitions.contraction_to_expansion
             if total > 0.9:
                 scale_factor = 0.9 / total
                 transitions.contraction_to_trough *= scale_factor
@@ -436,7 +380,7 @@ class AdvancedBusinessCycleEngine:
 
     def _calculate_multi_period_transitions(
         self, current_phase: str, transitions: MarkovTransitionMatrix
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate transition probabilities over multiple periods"""
 
         # Get transition matrix
@@ -464,16 +408,14 @@ class AdvancedBusinessCycleEngine:
                 "peak_probability": round(matrix[current_index, 1], 3),
                 "contraction_probability": round(matrix[current_index, 2], 3),
                 "trough_probability": round(matrix[current_index, 3], 3),
-                "recession_probability": round(
-                    matrix[current_index, 2] + matrix[current_index, 3], 3
-                ),
+                "recession_probability": round(matrix[current_index, 2] + matrix[current_index, 3], 3),
             }
 
         return results
 
     def _analyze_transition_timing(
-        self, indicators: Dict[str, Any], transitions: MarkovTransitionMatrix
-    ) -> Dict[str, Any]:
+        self, indicators: dict[str, Any], transitions: MarkovTransitionMatrix
+    ) -> dict[str, Any]:
         """Analyze expected timing of business cycle transitions"""
 
         current_phase = indicators["current_phase"]
@@ -485,53 +427,33 @@ class AdvancedBusinessCycleEngine:
             recession_prob = transitions.expansion_to_contraction
 
             # Expected time to peak (geometric distribution)
-            expected_quarters_to_peak = (
-                1.0 / peak_prob if peak_prob > 0 else float("inf")
-            )
+            expected_quarters_to_peak = 1.0 / peak_prob if peak_prob > 0 else float("inf")
             expected_quarters_to_recession = (
-                1.0 / (peak_prob + recession_prob)
-                if (peak_prob + recession_prob) > 0
-                else float("inf")
+                1.0 / (peak_prob + recession_prob) if (peak_prob + recession_prob) > 0 else float("inf")
             )
 
             return {
-                "current_phase_expected_remaining_quarters": round(
-                    expected_quarters_to_peak, 1
-                ),
+                "current_phase_expected_remaining_quarters": round(expected_quarters_to_peak, 1),
                 "expected_quarters_to_peak": round(expected_quarters_to_peak, 1),
-                "expected_quarters_to_recession": round(
-                    expected_quarters_to_recession, 1
-                ),
+                "expected_quarters_to_recession": round(expected_quarters_to_recession, 1),
                 "phase_maturity_assessment": (
-                    "early"
-                    if phase_duration < 12
-                    else "mid"
-                    if phase_duration < 36
-                    else "late"
+                    "early" if phase_duration < 12 else "mid" if phase_duration < 36 else "late"
                 ),
                 "transition_urgency": (
-                    "low"
-                    if expected_quarters_to_peak > 8
-                    else "moderate"
-                    if expected_quarters_to_peak > 4
-                    else "high"
+                    "low" if expected_quarters_to_peak > 8 else "moderate" if expected_quarters_to_peak > 4 else "high"
                 ),
             }
 
-        elif current_phase == "peak":
+        if current_phase == "peak":
             contraction_prob = transitions.peak_to_contraction
             expansion_prob = transitions.peak_to_expansion
 
             expected_quarters_to_resolution = (
-                1.0 / (contraction_prob + expansion_prob)
-                if (contraction_prob + expansion_prob) > 0
-                else 2.0
+                1.0 / (contraction_prob + expansion_prob) if (contraction_prob + expansion_prob) > 0 else 2.0
             )
 
             return {
-                "current_phase_expected_remaining_quarters": round(
-                    expected_quarters_to_resolution, 1
-                ),
+                "current_phase_expected_remaining_quarters": round(expected_quarters_to_resolution, 1),
                 "soft_landing_probability": (
                     round(expansion_prob / (contraction_prob + expansion_prob), 3)
                     if (contraction_prob + expansion_prob) > 0
@@ -546,25 +468,19 @@ class AdvancedBusinessCycleEngine:
                 "transition_urgency": "high",
             }
 
-        elif current_phase == "contraction":
+        if current_phase == "contraction":
             trough_prob = transitions.contraction_to_trough
             recovery_prob = transitions.contraction_to_expansion
 
             expected_quarters_to_trough = 1.0 / trough_prob if trough_prob > 0 else 4.0
             expected_quarters_to_recovery = (
-                1.0 / (trough_prob + recovery_prob)
-                if (trough_prob + recovery_prob) > 0
-                else 6.0
+                1.0 / (trough_prob + recovery_prob) if (trough_prob + recovery_prob) > 0 else 6.0
             )
 
             return {
-                "current_phase_expected_remaining_quarters": round(
-                    expected_quarters_to_trough, 1
-                ),
+                "current_phase_expected_remaining_quarters": round(expected_quarters_to_trough, 1),
                 "expected_quarters_to_trough": round(expected_quarters_to_trough, 1),
-                "expected_quarters_to_recovery": round(
-                    expected_quarters_to_recovery, 1
-                ),
+                "expected_quarters_to_recovery": round(expected_quarters_to_recovery, 1),
                 "v_shaped_recovery_probability": (
                     round(recovery_prob / (trough_prob + recovery_prob), 3)
                     if (trough_prob + recovery_prob) > 0
@@ -574,32 +490,22 @@ class AdvancedBusinessCycleEngine:
                 "transition_urgency": "moderate",
             }
 
-        else:  # trough
-            expansion_prob = transitions.trough_to_expansion
-            double_dip_prob = transitions.trough_to_contraction
+        # trough
+        expansion_prob = transitions.trough_to_expansion
+        double_dip_prob = transitions.trough_to_contraction
 
-            expected_quarters_to_expansion = (
-                1.0 / expansion_prob if expansion_prob > 0 else 2.0
-            )
+        expected_quarters_to_expansion = 1.0 / expansion_prob if expansion_prob > 0 else 2.0
 
-            return {
-                "current_phase_expected_remaining_quarters": round(
-                    expected_quarters_to_expansion, 1
-                ),
-                "expected_quarters_to_expansion": round(
-                    expected_quarters_to_expansion, 1
-                ),
-                "double_dip_probability": round(double_dip_prob, 3),
-                "recovery_strength_assessment": (
-                    "strong" if expansion_prob > 0.6 else "moderate"
-                ),
-                "phase_maturity_assessment": "recovery_positioning",
-                "transition_urgency": "moderate",
-            }
+        return {
+            "current_phase_expected_remaining_quarters": round(expected_quarters_to_expansion, 1),
+            "expected_quarters_to_expansion": round(expected_quarters_to_expansion, 1),
+            "double_dip_probability": round(double_dip_prob, 3),
+            "recovery_strength_assessment": ("strong" if expansion_prob > 0.6 else "moderate"),
+            "phase_maturity_assessment": "recovery_positioning",
+            "transition_urgency": "moderate",
+        }
 
-    def _identify_transition_risk_factors(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _identify_transition_risk_factors(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Identify key risk factors for business cycle transitions"""
 
         risk_factors = []
@@ -623,23 +529,17 @@ class AdvancedBusinessCycleEngine:
         # Employment risk
         if indicators["unemployment_rate"] > 5.0:
             risk_factors.append("elevated_unemployment")
-            risk_scores["employment_risk"] = (
-                indicators["unemployment_rate"] - 4.0
-            ) / 4.0
+            risk_scores["employment_risk"] = (indicators["unemployment_rate"] - 4.0) / 4.0
 
         # Volatility risk
         if indicators["vix_level"] > 25:
             risk_factors.append("elevated_market_volatility")
-            risk_scores["volatility_risk"] = min(
-                1.0, (indicators["vix_level"] - 15) / 20
-            )
+            risk_scores["volatility_risk"] = min(1.0, (indicators["vix_level"] - 15) / 20)
 
         # Duration risk (long expansions more vulnerable)
         if indicators["phase_duration_months"] > 60:
             risk_factors.append("prolonged_expansion_phase")
-            risk_scores["duration_risk"] = min(
-                1.0, (indicators["phase_duration_months"] - 36) / 60
-            )
+            risk_scores["duration_risk"] = min(1.0, (indicators["phase_duration_months"] - 36) / 60)
 
         # Calculate overall risk score
         overall_risk = np.mean(list(risk_scores.values())) if risk_scores else 0.1
@@ -648,13 +548,7 @@ class AdvancedBusinessCycleEngine:
             "primary_risk_factors": risk_factors,
             "risk_factor_scores": risk_scores,
             "overall_transition_risk_score": round(overall_risk, 3),
-            "risk_level": (
-                "low"
-                if overall_risk < 0.3
-                else "moderate"
-                if overall_risk < 0.6
-                else "high"
-            ),
+            "risk_level": ("low" if overall_risk < 0.3 else "moderate" if overall_risk < 0.6 else "high"),
             "key_monitoring_indicators": [
                 "yield_curve_slope",
                 "recession_probability",
@@ -663,7 +557,7 @@ class AdvancedBusinessCycleEngine:
             ],
         }
 
-    def _detect_regime_switches(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _detect_regime_switches(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Detect economic regime switches using multiple indicators"""
 
         gdp_growth = indicators["gdp_growth"]
@@ -671,14 +565,10 @@ class AdvancedBusinessCycleEngine:
         volatility = indicators["vix_level"]
 
         # Classify current regime
-        current_regime = self._classify_economic_regime(
-            gdp_growth, unemployment, volatility
-        )
+        current_regime = self._classify_economic_regime(gdp_growth, unemployment, volatility)
 
         # Calculate regime probabilities
-        regime_probabilities = self._calculate_regime_probabilities(
-            gdp_growth, unemployment, volatility
-        )
+        regime_probabilities = self._calculate_regime_probabilities(gdp_growth, unemployment, volatility)
 
         # Estimate regime duration
         regime_duration = self._estimate_regime_duration(current_regime, indicators)
@@ -696,31 +586,24 @@ class AdvancedBusinessCycleEngine:
             "regime_probabilities": regime_probabilities,
             "regime_duration_quarters": regime_duration,
             "regime_switching_probability": switching_probability,
-            "expected_regime_duration_quarters": self._get_expected_regime_duration(
-                current_regime
-            ),
+            "expected_regime_duration_quarters": self._get_expected_regime_duration(current_regime),
             "volatility_regime": volatility_regime,
-            "regime_characteristics": self._describe_regime_characteristics(
-                current_regime
-            ),
+            "regime_characteristics": self._describe_regime_characteristics(current_regime),
             "switching_signals": self._identify_regime_switching_signals(indicators),
         }
 
-    def _classify_economic_regime(
-        self, gdp_growth: float, unemployment: float, volatility: float
-    ) -> str:
+    def _classify_economic_regime(self, gdp_growth: float, unemployment: float, volatility: float) -> str:
         """Classify current economic regime"""
 
         if gdp_growth >= 2.0 and unemployment <= 5.0 and volatility <= 15:
             return "growth"
-        elif gdp_growth <= 0.5 or unemployment >= 5.5 or volatility >= 20:
+        if gdp_growth <= 0.5 or unemployment >= 5.5 or volatility >= 20:
             return "recession"
-        else:
-            return "stagnation"
+        return "stagnation"
 
     def _calculate_regime_probabilities(
         self, gdp_growth: float, unemployment: float, volatility: float
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Calculate probabilities for each economic regime"""
 
         # Simple logistic-style probability calculation
@@ -742,7 +625,7 @@ class AdvancedBusinessCycleEngine:
             "stagnation": round(stagnation_prob / total, 3),
         }
 
-    def _estimate_regime_duration(self, regime: str, indicators: Dict[str, Any]) -> int:
+    def _estimate_regime_duration(self, regime: str, indicators: dict[str, Any]) -> int:
         """Estimate how long current regime has been in place"""
 
         # Use phase duration as proxy (convert months to quarters)
@@ -751,16 +634,12 @@ class AdvancedBusinessCycleEngine:
         # Adjust based on regime type
         if regime == "recession":
             return min(phase_duration_quarters, 8)  # Recessions rarely last > 2 years
-        elif regime == "growth":
+        if regime == "growth":
             return phase_duration_quarters
-        else:  # stagnation
-            return min(
-                phase_duration_quarters, 12
-            )  # Stagnation periods moderate length
+        # stagnation
+        return min(phase_duration_quarters, 12)  # Stagnation periods moderate length
 
-    def _calculate_regime_switching_probability(
-        self, regime: str, duration: int, indicators: Dict[str, Any]
-    ) -> float:
+    def _calculate_regime_switching_probability(self, regime: str, duration: int, indicators: dict[str, Any]) -> float:
         """Calculate probability of regime switch in next quarter"""
 
         base_switching_probs = {
@@ -772,20 +651,14 @@ class AdvancedBusinessCycleEngine:
         base_prob = base_switching_probs.get(regime, 0.1)
 
         # Duration effect: longer regimes more likely to switch
-        duration_multiplier = (
-            1.0 + (duration - 4) * 0.05
-        )  # Increase 5% per quarter above 1 year
+        duration_multiplier = 1.0 + (duration - 4) * 0.05  # Increase 5% per quarter above 1 year
 
         # Economic momentum effect
         gdp_momentum = (indicators["gdp_growth"] - 2.0) * 0.1
         if regime == "recession" and gdp_momentum > 0:
-            duration_multiplier *= (
-                1.5  # Positive growth increases recession exit probability
-            )
+            duration_multiplier *= 1.5  # Positive growth increases recession exit probability
         elif regime == "growth" and gdp_momentum < 0:
-            duration_multiplier *= (
-                1.3  # Negative growth increases growth exit probability
-            )
+            duration_multiplier *= 1.3  # Negative growth increases growth exit probability
 
         switching_prob = min(0.8, base_prob * duration_multiplier)
 
@@ -796,10 +669,9 @@ class AdvancedBusinessCycleEngine:
 
         if volatility <= 15:
             return "low_volatility"
-        elif volatility <= 25:
+        if volatility <= 25:
             return "moderate_volatility"
-        else:
-            return "high_volatility"
+        return "high_volatility"
 
     def _get_expected_regime_duration(self, regime: str) -> int:
         """Get expected duration for regime type"""
@@ -812,7 +684,7 @@ class AdvancedBusinessCycleEngine:
 
         return expected_durations.get(regime, 8)
 
-    def _describe_regime_characteristics(self, regime: str) -> Dict[str, Any]:
+    def _describe_regime_characteristics(self, regime: str) -> dict[str, Any]:
         """Describe characteristics of current regime"""
 
         characteristics = {
@@ -845,9 +717,7 @@ class AdvancedBusinessCycleEngine:
 
         return characteristics.get(regime, {})
 
-    def _identify_regime_switching_signals(
-        self, indicators: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_regime_switching_signals(self, indicators: dict[str, Any]) -> list[str]:
         """Identify signals that suggest regime switching"""
 
         signals = []
@@ -875,26 +745,20 @@ class AdvancedBusinessCycleEngine:
 
         return signals
 
-    def _analyze_sector_rotation(
-        self, indicators: Dict[str, Any], markov_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_sector_rotation(self, indicators: dict[str, Any], markov_analysis: dict[str, Any]) -> dict[str, Any]:
         """Analyze sector rotation signals based on business cycle positioning"""
 
         current_phase = indicators["current_phase"]
         cycle_maturity = indicators.get("cycle_maturity", "mid")
 
         # Determine cycle stage for sector rotation
-        cycle_stage = self._determine_cycle_stage(
-            current_phase, cycle_maturity, indicators
-        )
+        cycle_stage = self._determine_cycle_stage(current_phase, cycle_maturity, indicators)
 
         # Get preferred sectors
         preferred_sectors = self.sector_rotation_map.get(cycle_stage, [])
 
         # Calculate rotation probability
-        rotation_probability = self._calculate_rotation_probability(
-            indicators, markov_analysis
-        )
+        rotation_probability = self._calculate_rotation_probability(indicators, markov_analysis)
 
         # Determine rotation timing
         rotation_timing = self._determine_rotation_timing(indicators, markov_analysis)
@@ -904,56 +768,40 @@ class AdvancedBusinessCycleEngine:
             "preferred_sectors": preferred_sectors,
             "rotation_probability_next_quarter": rotation_probability,
             "rotation_timing": rotation_timing,
-            "sector_rotation_confidence": self._calculate_rotation_confidence(
-                indicators
-            ),
-            "rotation_catalysts": self._identify_rotation_catalysts(
-                indicators, markov_analysis
-            ),
-            "contrarian_opportunities": self._identify_contrarian_opportunities(
-                cycle_stage
-            ),
+            "sector_rotation_confidence": self._calculate_rotation_confidence(indicators),
+            "rotation_catalysts": self._identify_rotation_catalysts(indicators, markov_analysis),
+            "contrarian_opportunities": self._identify_contrarian_opportunities(cycle_stage),
         }
 
-    def _determine_cycle_stage(
-        self, phase: str, maturity: str, indicators: Dict[str, Any]
-    ) -> str:
+    def _determine_cycle_stage(self, phase: str, maturity: str, indicators: dict[str, Any]) -> str:
         """Determine detailed cycle stage for sector rotation"""
 
         if phase == "expansion":
             if maturity == "early" or indicators["phase_duration_months"] < 12:
                 return "early_expansion"
-            elif maturity == "late" or indicators["phase_duration_months"] > 36:
+            if maturity == "late" or indicators["phase_duration_months"] > 36:
                 return "late_expansion"
-            else:
-                return "mid_expansion"
-        elif phase == "peak":
+            return "mid_expansion"
+        if phase == "peak":
             return "peak"
-        elif phase == "contraction":
+        if phase == "contraction":
             if indicators["phase_duration_months"] < 6:
                 return "early_contraction"
-            elif indicators["phase_duration_months"] > 12:
+            if indicators["phase_duration_months"] > 12:
                 return "late_contraction"
-            else:
-                return "mid_contraction"
-        else:  # trough
-            return "trough"
+            return "mid_contraction"
+        # trough
+        return "trough"
 
-    def _calculate_rotation_probability(
-        self, indicators: Dict[str, Any], markov_analysis: Dict[str, Any]
-    ) -> float:
+    def _calculate_rotation_probability(self, indicators: dict[str, Any], markov_analysis: dict[str, Any]) -> float:
         """Calculate sector rotation probability"""
 
         # Base rotation probability from transition analysis
-        transition_probs = markov_analysis.get(
-            "multi_period_transition_probabilities", {}
-        )
+        transition_probs = markov_analysis.get("multi_period_transition_probabilities", {})
         one_quarter = transition_probs.get("1_quarter", {})
 
         # Probability of phase change drives sector rotation
-        current_phase_prob = one_quarter.get(
-            f"{indicators['current_phase']}_probability", 0.7
-        )
+        current_phase_prob = one_quarter.get(f"{indicators['current_phase']}_probability", 0.7)
         rotation_base_prob = 1.0 - current_phase_prob
 
         # Adjust for market volatility (higher vol = more rotation)
@@ -966,9 +814,7 @@ class AdvancedBusinessCycleEngine:
 
         return round(min(0.8, rotation_prob), 3)
 
-    def _determine_rotation_timing(
-        self, indicators: Dict[str, Any], markov_analysis: Dict[str, Any]
-    ) -> str:
+    def _determine_rotation_timing(self, indicators: dict[str, Any], markov_analysis: dict[str, Any]) -> str:
         """Determine sector rotation timing"""
 
         transition_timing = markov_analysis.get("transition_timing_analysis", {})
@@ -976,12 +822,11 @@ class AdvancedBusinessCycleEngine:
 
         if transition_urgency == "high":
             return "immediate"
-        elif transition_urgency == "moderate":
+        if transition_urgency == "moderate":
             return "next_1_2_quarters"
-        else:
-            return "longer_term"
+        return "longer_term"
 
-    def _calculate_rotation_confidence(self, indicators: Dict[str, Any]) -> float:
+    def _calculate_rotation_confidence(self, indicators: dict[str, Any]) -> float:
         """Calculate confidence in sector rotation signals"""
 
         confidence_factors = []
@@ -1006,9 +851,7 @@ class AdvancedBusinessCycleEngine:
 
         return round(np.mean(confidence_factors), 3)
 
-    def _identify_rotation_catalysts(
-        self, indicators: Dict[str, Any], markov_analysis: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_rotation_catalysts(self, indicators: dict[str, Any], markov_analysis: dict[str, Any]) -> list[str]:
         """Identify catalysts for sector rotation"""
 
         catalysts = []
@@ -1036,7 +879,7 @@ class AdvancedBusinessCycleEngine:
 
         return catalysts
 
-    def _identify_contrarian_opportunities(self, cycle_stage: str) -> List[str]:
+    def _identify_contrarian_opportunities(self, cycle_stage: str) -> list[str]:
         """Identify contrarian sector opportunities"""
 
         contrarian_map = {
@@ -1058,7 +901,7 @@ class AdvancedBusinessCycleEngine:
 
         return contrarian_map.get(cycle_stage, [])
 
-    def _match_historical_patterns(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _match_historical_patterns(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Match current conditions to historical business cycle patterns"""
 
         # Simplified historical pattern matching
@@ -1068,9 +911,7 @@ class AdvancedBusinessCycleEngine:
         historical_matches = self._find_historical_analogies(indicators)
 
         # Pattern-based forecasts
-        pattern_forecasts = self._generate_pattern_forecasts(
-            current_pattern, indicators
-        )
+        pattern_forecasts = self._generate_pattern_forecasts(current_pattern, indicators)
 
         return {
             "current_pattern_classification": current_pattern,
@@ -1079,7 +920,7 @@ class AdvancedBusinessCycleEngine:
             "pattern_confidence": self._calculate_pattern_confidence(indicators),
         }
 
-    def _classify_current_pattern(self, indicators: Dict[str, Any]) -> str:
+    def _classify_current_pattern(self, indicators: dict[str, Any]) -> str:
         """Classify current economic pattern"""
 
         gdp_growth = indicators["gdp_growth"]
@@ -1088,18 +929,15 @@ class AdvancedBusinessCycleEngine:
 
         if gdp_growth > 2.5 and unemployment < 4.5 and phase_duration > 24:
             return "late_cycle_boom"
-        elif gdp_growth < 1.0 and unemployment > 5.0:
+        if gdp_growth < 1.0 and unemployment > 5.0:
             return "economic_slowdown"
-        elif 1.0 <= gdp_growth <= 2.5 and 4.0 <= unemployment <= 5.5:
+        if 1.0 <= gdp_growth <= 2.5 and 4.0 <= unemployment <= 5.5:
             return "moderate_growth"
-        elif phase_duration > 60:
+        if phase_duration > 60:
             return "extended_expansion"
-        else:
-            return "typical_mid_cycle"
+        return "typical_mid_cycle"
 
-    def _find_historical_analogies(
-        self, indicators: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def _find_historical_analogies(self, indicators: dict[str, Any]) -> list[dict[str, Any]]:
         """Find historical periods with similar economic conditions"""
 
         # Simplified historical analogies (would use actual historical data in production)
@@ -1143,9 +981,7 @@ class AdvancedBusinessCycleEngine:
 
         return analogies
 
-    def _generate_pattern_forecasts(
-        self, pattern: str, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_pattern_forecasts(self, pattern: str, indicators: dict[str, Any]) -> dict[str, Any]:
         """Generate forecasts based on historical pattern matching"""
 
         pattern_forecasts = {
@@ -1177,7 +1013,7 @@ class AdvancedBusinessCycleEngine:
 
         return pattern_forecasts.get(pattern, {})
 
-    def _calculate_pattern_confidence(self, indicators: Dict[str, Any]) -> float:
+    def _calculate_pattern_confidence(self, indicators: dict[str, Any]) -> float:
         """Calculate confidence in historical pattern matching"""
 
         # Simple confidence based on data quality and economic clarity
@@ -1204,9 +1040,7 @@ class AdvancedBusinessCycleEngine:
 
         return round(np.mean(confidence_factors), 3)
 
-    def _calculate_multi_horizon_recession_probability(
-        self, indicators: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_multi_horizon_recession_probability(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Calculate recession probability over multiple time horizons"""
 
         base_recession_prob = indicators["recession_probability"]
@@ -1241,7 +1075,7 @@ class AdvancedBusinessCycleEngine:
             "model_confidence": 0.85,
         }
 
-    def _analyze_volatility_regime(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_volatility_regime(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Analyze current volatility regime"""
 
         vix_level = indicators["vix_level"]
@@ -1271,12 +1105,8 @@ class AdvancedBusinessCycleEngine:
             "expected_regime_duration_months": expected_duration,
             "mean_reversion_signal": round(reversion_signal, 3),
             "volatility_clustering": vix_level > 25,  # High vol tends to cluster
-            "regime_switching_probability": self._calculate_volatility_regime_switching_prob(
-                vix_level
-            ),
-            "investment_implications": self._get_volatility_investment_implications(
-                regime
-            ),
+            "regime_switching_probability": self._calculate_volatility_regime_switching_prob(vix_level),
+            "investment_implications": self._get_volatility_investment_implications(regime),
         }
 
     def _get_expected_volatility_duration(self, regime: str) -> int:
@@ -1304,7 +1134,7 @@ class AdvancedBusinessCycleEngine:
 
         return round(base_switching_prob, 3)
 
-    def _get_volatility_investment_implications(self, regime: str) -> Dict[str, Any]:
+    def _get_volatility_investment_implications(self, regime: str) -> dict[str, Any]:
         """Get investment implications of volatility regime"""
 
         implications = {
@@ -1347,18 +1177,16 @@ class AdvancedBusinessCycleEngine:
 
     def _create_integrated_assessment(
         self,
-        markov_analysis: Dict[str, Any],
-        regime_analysis: Dict[str, Any],
-        rotation_analysis: Dict[str, Any],
-        historical_patterns: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        markov_analysis: dict[str, Any],
+        regime_analysis: dict[str, Any],
+        rotation_analysis: dict[str, Any],
+        historical_patterns: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create integrated business cycle assessment"""
 
         # Extract key insights
         current_phase = markov_analysis["current_phase"]
-        transition_urgency = markov_analysis["transition_timing_analysis"].get(
-            "transition_urgency", "moderate"
-        )
+        transition_urgency = markov_analysis["transition_timing_analysis"].get("transition_urgency", "moderate")
         current_regime = regime_analysis["current_regime"]
         rotation_timing = rotation_analysis["rotation_timing"]
 
@@ -1376,19 +1204,13 @@ class AdvancedBusinessCycleEngine:
         themes = []
 
         transition_risk_factors = markov_analysis.get("transition_risk_factors", {})
-        overall_risk_score = transition_risk_factors.get(
-            "overall_transition_risk_score", 0.3
-        )
+        overall_risk_score = transition_risk_factors.get("overall_transition_risk_score", 0.3)
 
         if overall_risk_score > 0.5:
-            themes.append(
-                "Elevated business cycle transition risk requires defensive positioning"
-            )
+            themes.append("Elevated business cycle transition risk requires defensive positioning")
 
         if regime_analysis["regime_switching_probability"] > 0.2:
-            themes.append(
-                "Economic regime switching signals suggest tactical allocation adjustments"
-            )
+            themes.append("Economic regime switching signals suggest tactical allocation adjustments")
 
         if rotation_analysis["rotation_probability_next_quarter"] > 0.4:
             themes.append("Sector rotation dynamics favor active portfolio management")
@@ -1405,9 +1227,7 @@ class AdvancedBusinessCycleEngine:
                 markov_analysis, regime_analysis, rotation_analysis, historical_patterns
             ),
             "investment_implications": investment_implications,
-            "risk_monitoring_priorities": self._identify_risk_monitoring_priorities(
-                markov_analysis, regime_analysis
-            ),
+            "risk_monitoring_priorities": self._identify_risk_monitoring_priorities(markov_analysis, regime_analysis),
             "tactical_positioning_recommendations": self._generate_tactical_recommendations(
                 rotation_analysis, regime_analysis
             ),
@@ -1415,11 +1235,11 @@ class AdvancedBusinessCycleEngine:
 
     def _generate_integrated_investment_implications(
         self,
-        markov_analysis: Dict[str, Any],
-        regime_analysis: Dict[str, Any],
-        rotation_analysis: Dict[str, Any],
+        markov_analysis: dict[str, Any],
+        regime_analysis: dict[str, Any],
+        rotation_analysis: dict[str, Any],
         overall_risk_score: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate integrated investment implications"""
 
         current_phase = markov_analysis["current_phase"]
@@ -1449,21 +1269,17 @@ class AdvancedBusinessCycleEngine:
             "sector_preferences": preferred_sectors,
             "duration_positioning": duration,
             "volatility_positioning": (
-                "hedge"
-                if regime_analysis["volatility_regime"] == "low_volatility"
-                else "opportunistic"
+                "hedge" if regime_analysis["volatility_regime"] == "low_volatility" else "opportunistic"
             ),
-            "rebalancing_urgency": markov_analysis["transition_timing_analysis"].get(
-                "transition_urgency", "moderate"
-            ),
+            "rebalancing_urgency": markov_analysis["transition_timing_analysis"].get("transition_urgency", "moderate"),
         }
 
     def _calculate_integrated_confidence(
         self,
-        markov_analysis: Dict[str, Any],
-        regime_analysis: Dict[str, Any],
-        rotation_analysis: Dict[str, Any],
-        historical_patterns: Dict[str, Any],
+        markov_analysis: dict[str, Any],
+        regime_analysis: dict[str, Any],
+        rotation_analysis: dict[str, Any],
+        historical_patterns: dict[str, Any],
     ) -> float:
         """Calculate overall confidence in business cycle analysis"""
 
@@ -1476,8 +1292,8 @@ class AdvancedBusinessCycleEngine:
         return round(np.mean(confidence_components), 3)
 
     def _identify_risk_monitoring_priorities(
-        self, markov_analysis: Dict[str, Any], regime_analysis: Dict[str, Any]
-    ) -> List[str]:
+        self, markov_analysis: dict[str, Any], regime_analysis: dict[str, Any]
+    ) -> list[str]:
         """Identify key risk monitoring priorities"""
 
         priorities = []
@@ -1490,46 +1306,36 @@ class AdvancedBusinessCycleEngine:
 
         # Regime switching priorities
         if regime_analysis.get("regime_switching_probability", 0) > 0.15:
-            priorities.extend(
-                ["gdp_momentum", "employment_trends", "financial_conditions"]
-            )
+            priorities.extend(["gdp_momentum", "employment_trends", "financial_conditions"])
 
         # Remove duplicates and return top priorities
         return list(set(priorities))[:6]
 
     def _generate_tactical_recommendations(
-        self, rotation_analysis: Dict[str, Any], regime_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, rotation_analysis: dict[str, Any], regime_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate tactical positioning recommendations"""
 
         return {
             "sector_rotation": {
                 "timing": rotation_analysis.get("rotation_timing", "next_1_2_quarters"),
                 "preferred_sectors": rotation_analysis.get("preferred_sectors", []),
-                "rotation_probability": rotation_analysis.get(
-                    "rotation_probability_next_quarter", 0.3
-                ),
+                "rotation_probability": rotation_analysis.get("rotation_probability_next_quarter", 0.3),
             },
             "regime_positioning": {
                 "current_regime": regime_analysis.get("current_regime", "stagnation"),
                 "regime_duration": regime_analysis.get("regime_duration_quarters", 4),
-                "switching_probability": regime_analysis.get(
-                    "regime_switching_probability", 0.1
-                ),
+                "switching_probability": regime_analysis.get("regime_switching_probability", 0.1),
             },
             "volatility_management": {
-                "volatility_regime": regime_analysis.get(
-                    "volatility_regime", "moderate_volatility"
-                ),
+                "volatility_regime": regime_analysis.get("volatility_regime", "moderate_volatility"),
                 "hedging_recommendations": (
-                    "moderate"
-                    if regime_analysis.get("volatility_regime") == "low_volatility"
-                    else "defensive"
+                    "moderate" if regime_analysis.get("volatility_regime") == "low_volatility" else "defensive"
                 ),
             },
         }
 
-    def _calculate_model_confidence(self, indicators: Dict[str, Any]) -> float:
+    def _calculate_model_confidence(self, indicators: dict[str, Any]) -> float:
         """Calculate overall model confidence"""
 
         confidence_factors = []
@@ -1556,7 +1362,7 @@ class AdvancedBusinessCycleEngine:
 
         return round(np.mean(confidence_factors), 3)
 
-    def _calculate_markov_confidence(self, indicators: Dict[str, Any]) -> float:
+    def _calculate_markov_confidence(self, indicators: dict[str, Any]) -> float:
         """Calculate confidence in Markov chain analysis"""
 
         # Similar to model confidence but specific to transition modeling
@@ -1603,14 +1409,10 @@ def validate_advanced_business_cycle_engine():
         "cli_comprehensive_analysis": {
             "central_bank_economic_data": {
                 "gdp_data": {"observations": [{"value": 2.2}]},
-                "employment_data": {
-                    "unemployment_data": {"observations": [{"value": 4.3}]}
-                },
+                "employment_data": {"unemployment_data": {"observations": [{"value": 4.3}]}},
             }
         },
-        "cli_market_intelligence": {
-            "volatility_analysis": {"vix_analysis": {"current_level": 21.5}}
-        },
+        "cli_market_intelligence": {"volatility_analysis": {"vix_analysis": {"current_level": 21.5}}},
     }
 
     sample_analysis = {"region": "US"}

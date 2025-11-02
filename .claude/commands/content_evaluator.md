@@ -793,7 +793,7 @@ quality_assurance:
 
 ---
 
-**Integration with Framework**: This command integrates with the broader Sensylate ecosystem through standardized script registry, template system, CLI service integration, and validation framework protocols.
+**Integration with Framework**: This command integrates with the broader Colemorton ecosystem through standardized script registry, template system, CLI service integration, and validation framework protocols.
 
 **Author**: Cole Morton
 **Framework**: Content Quality Assessment Framework

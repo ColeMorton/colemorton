@@ -11,15 +11,15 @@ Production-grade Mempool.space Bitcoin blockchain data integration with:
 """
 
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
     DataNotFoundError,
     ServiceConfig,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -46,8 +46,8 @@ class MempoolSpaceService(BaseFinancialService):
             self.config.base_url = "https://mempool.space/api"
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate Mempool.space response data"""
 
         if not data:
@@ -56,31 +56,31 @@ class MempoolSpaceService(BaseFinancialService):
         # Mempool.space returns clean data, minimal validation needed
         return data
 
-    def get_fee_estimates(self) -> Dict[str, Any]:
+    def get_fee_estimates(self) -> dict[str, Any]:
         """Get recommended Bitcoin transaction fees"""
         endpoint = "/v1/fees/recommended"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "fee estimates")
 
-    def get_mempool_info(self) -> Dict[str, Any]:
+    def get_mempool_info(self) -> dict[str, Any]:
         """Get current mempool statistics"""
         endpoint = "/mempool"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "mempool info")
 
-    def get_recent_blocks(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_recent_blocks(self, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent Bitcoin blocks"""
         if limit > 25:
             limit = 25
 
-        endpoint = f"/v1/blocks"
+        endpoint = "/v1/blocks"
         data = self._make_request_with_retry(endpoint)
 
         if isinstance(data, list):
             return data[:limit]
         return self._validate_response(data, "recent blocks")
 
-    def get_block_info(self, block_hash: str) -> Dict[str, Any]:
+    def get_block_info(self, block_hash: str) -> dict[str, Any]:
         """Get detailed information about a specific block"""
         # Handle both block hash and block height
         if block_hash.isdigit():
@@ -97,19 +97,19 @@ class MempoolSpaceService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"block {block_hash}")
 
-    def get_transaction_info(self, txid: str) -> Dict[str, Any]:
+    def get_transaction_info(self, txid: str) -> dict[str, Any]:
         """Get detailed information about a Bitcoin transaction"""
         endpoint = f"/tx/{txid}"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"transaction {txid}")
 
-    def get_difficulty_info(self) -> Dict[str, Any]:
+    def get_difficulty_info(self) -> dict[str, Any]:
         """Get Bitcoin mining difficulty information"""
         endpoint = "/v1/difficulty-adjustment"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "difficulty info")
 
-    def get_hashrate_info(self, timeframe: str = "1w") -> List[Dict[str, Any]]:
+    def get_hashrate_info(self, timeframe: str = "1w") -> list[dict[str, Any]]:
         """Get Bitcoin network hash rate statistics"""
         # Validate timeframe
         valid_timeframes = ["1d", "1w", "1m", "3m", "6m", "1y", "2y", "3y"]
@@ -120,25 +120,25 @@ class MempoolSpaceService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"hashrate {timeframe}")
 
-    def get_bitcoin_price(self) -> Dict[str, Any]:
+    def get_bitcoin_price(self) -> dict[str, Any]:
         """Get current Bitcoin price from Mempool.space"""
         endpoint = "/v1/prices"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "Bitcoin price")
 
-    def get_address_info(self, address: str) -> Dict[str, Any]:
+    def get_address_info(self, address: str) -> dict[str, Any]:
         """Get information about a Bitcoin address"""
         endpoint = f"/address/{address}"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, f"address {address}")
 
-    def get_lightning_stats(self) -> Dict[str, Any]:
+    def get_lightning_stats(self) -> dict[str, Any]:
         """Get Lightning Network statistics"""
         endpoint = "/v1/lightning/statistics/latest"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "Lightning Network stats")
 
-    def get_network_stats(self) -> Dict[str, Any]:
+    def get_network_stats(self) -> dict[str, Any]:
         """Get comprehensive Bitcoin network statistics"""
         # Combine multiple endpoints for comprehensive network health
         stats = {
@@ -177,7 +177,7 @@ def create_mempool_space_service(env: str = "dev") -> MempoolSpaceService:
 
         return MempoolSpaceService(service_config)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="mempool_space",

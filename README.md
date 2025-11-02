@@ -80,8 +80,8 @@ scripts/                           # Python Data Processing Engine
 
 1. **Clone and Install Dependencies**
    ```bash
-   git clone https://github.com/colemorton/sensylate-command-system-enhancements.git
-   cd sensylate-command-system-enhancements
+   git clone https://github.com/ColeMorton/colemorton.com.git
+   cd colemorton
 
    # Frontend setup
    cd frontend/
@@ -379,8 +379,8 @@ netlify deploy --prod      # Atomic deployment with rollback capability
 ### Python Services
 Backend processing can be containerized for scalable deployment:
 ```bash
-docker build -t cole-morton-analytics:latest .
-docker run --env-file .env.prod cole-morton-analytics:latest
+docker build -t colemorton-analytics:latest .
+docker run --env-file .env.prod colemorton-analytics:latest
 ```
 
 ---

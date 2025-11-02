@@ -13,7 +13,7 @@ import statistics
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -21,9 +21,9 @@ from .base_financial_service import (
     ServiceConfig,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 class BitcoinNetworkStatsService(BaseFinancialService):
@@ -37,9 +37,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
     - Multi-source validation for data reliability
     """
 
-    def __init__(
-        self, config: ServiceConfig, services: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, config: ServiceConfig, services: dict[str, Any] | None = None):
         super().__init__(config)
 
         # Initialize component services - use dependency injection for testability
@@ -85,18 +83,16 @@ class BitcoinNetworkStatsService(BaseFinancialService):
         return self.coinmetrics_service
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate response data"""
 
         if not data:
-            raise DataNotFoundError(
-                f"No data returned from Bitcoin Network Stats {endpoint}"
-            )
+            raise DataNotFoundError(f"No data returned from Bitcoin Network Stats {endpoint}")
 
         return data
 
-    def get_network_overview(self) -> Dict[str, Any]:
+    def get_network_overview(self) -> dict[str, Any]:
         """Get comprehensive Bitcoin network overview"""
         overview = {
             "timestamp": datetime.now().isoformat(),
@@ -126,9 +122,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
                 overview["mining_stats"]["difficulty"] = network_stats["difficulty"]
 
             if "hashrate_1w" in network_stats:
-                overview["mining_stats"]["hashrate_weekly"] = network_stats[
-                    "hashrate_1w"
-                ]
+                overview["mining_stats"]["hashrate_weekly"] = network_stats["hashrate_1w"]
 
             if "price" in network_stats:
                 overview["price_info"]["mempool_space"] = network_stats["price"]
@@ -145,24 +139,16 @@ class BitcoinNetworkStatsService(BaseFinancialService):
             overview["sources"].append("blockchain.com")
 
             if "network_stats" in blockchain_summary:
-                overview["network_health"]["blockchain_com"] = blockchain_summary[
-                    "network_stats"
-                ]
+                overview["network_health"]["blockchain_com"] = blockchain_summary["network_stats"]
 
             if "difficulty" in blockchain_summary:
-                overview["mining_stats"]["difficulty_blockchain"] = blockchain_summary[
-                    "difficulty"
-                ]
+                overview["mining_stats"]["difficulty_blockchain"] = blockchain_summary["difficulty"]
 
             if "hashrate" in blockchain_summary:
-                overview["mining_stats"]["hashrate_blockchain"] = blockchain_summary[
-                    "hashrate"
-                ]
+                overview["mining_stats"]["hashrate_blockchain"] = blockchain_summary["hashrate"]
 
             if "market_price" in blockchain_summary:
-                overview["price_info"]["blockchain_com"] = blockchain_summary[
-                    "market_price"
-                ]
+                overview["price_info"]["blockchain_com"] = blockchain_summary["market_price"]
 
         except Exception as e:
             overview["errors"].append(f"Blockchain.com error: {str(e)}")
@@ -197,7 +183,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
         return overview
 
-    def get_mempool_analysis(self) -> Dict[str, Any]:
+    def get_mempool_analysis(self) -> dict[str, Any]:
         """Get detailed mempool analysis"""
         analysis = {
             "timestamp": datetime.now().isoformat(),
@@ -235,7 +221,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
         return analysis
 
-    def get_mining_statistics(self) -> Dict[str, Any]:
+    def get_mining_statistics(self) -> dict[str, Any]:
         """Get comprehensive mining and difficulty statistics"""
         mining_stats = {
             "timestamp": datetime.now().isoformat(),
@@ -283,9 +269,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
 
-            mining_data = coinmetrics_service.get_mining_data(
-                asset="btc", start_date=start_date, end_date=end_date
-            )
+            mining_data = coinmetrics_service.get_mining_data(asset="btc", start_date=start_date, end_date=end_date)
 
             if mining_data and len(mining_data) > 0:
                 latest = mining_data[-1]
@@ -303,7 +287,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
         return mining_stats
 
-    def get_network_health_metrics(self) -> Dict[str, Any]:
+    def get_network_health_metrics(self) -> dict[str, Any]:
         """Get network health and activity metrics"""
         health_metrics = {
             "timestamp": datetime.now().isoformat(),
@@ -336,52 +320,26 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
                 if recent_data and older_data:
                     # Calculate averages
-                    recent_tx_count = statistics.mean(
-                        [
-                            float(d.get("TxCnt", 0))
-                            for d in recent_data
-                            if d.get("TxCnt")
-                        ]
-                    )
-                    older_tx_count = statistics.mean(
-                        [float(d.get("TxCnt", 0)) for d in older_data if d.get("TxCnt")]
-                    )
+                    recent_tx_count = statistics.mean([float(d.get("TxCnt", 0)) for d in recent_data if d.get("TxCnt")])
+                    older_tx_count = statistics.mean([float(d.get("TxCnt", 0)) for d in older_data if d.get("TxCnt")])
 
                     recent_active_addr = statistics.mean(
-                        [
-                            float(d.get("AdrActCnt", 0))
-                            for d in recent_data
-                            if d.get("AdrActCnt")
-                        ]
+                        [float(d.get("AdrActCnt", 0)) for d in recent_data if d.get("AdrActCnt")]
                     )
                     older_active_addr = statistics.mean(
-                        [
-                            float(d.get("AdrActCnt", 0))
-                            for d in older_data
-                            if d.get("AdrActCnt")
-                        ]
+                        [float(d.get("AdrActCnt", 0)) for d in older_data if d.get("AdrActCnt")]
                     )
 
                     recent_transfer_value = statistics.mean(
-                        [
-                            float(d.get("TxTfrValUSD", 0))
-                            for d in recent_data
-                            if d.get("TxTfrValUSD")
-                        ]
+                        [float(d.get("TxTfrValUSD", 0)) for d in recent_data if d.get("TxTfrValUSD")]
                     )
                     older_transfer_value = statistics.mean(
-                        [
-                            float(d.get("TxTfrValUSD", 0))
-                            for d in older_data
-                            if d.get("TxTfrValUSD")
-                        ]
+                        [float(d.get("TxTfrValUSD", 0)) for d in older_data if d.get("TxTfrValUSD")]
                     )
 
                     health_metrics["activity_metrics"]["coinmetrics"] = {
                         "transaction_count_7d_avg": round(recent_tx_count, 2),
-                        "transaction_count_trend": "up"
-                        if recent_tx_count > older_tx_count
-                        else "down",
+                        "transaction_count_trend": "up" if recent_tx_count > older_tx_count else "down",
                         "transaction_count_change_percent": round(
                             ((recent_tx_count - older_tx_count) / older_tx_count * 100),
                             2,
@@ -389,29 +347,17 @@ class BitcoinNetworkStatsService(BaseFinancialService):
                         if older_tx_count > 0
                         else 0,
                         "active_addresses_7d_avg": round(recent_active_addr, 2),
-                        "active_addresses_trend": "up"
-                        if recent_active_addr > older_active_addr
-                        else "down",
+                        "active_addresses_trend": "up" if recent_active_addr > older_active_addr else "down",
                         "active_addresses_change_percent": round(
-                            (
-                                (recent_active_addr - older_active_addr)
-                                / older_active_addr
-                                * 100
-                            ),
+                            ((recent_active_addr - older_active_addr) / older_active_addr * 100),
                             2,
                         )
                         if older_active_addr > 0
                         else 0,
                         "transfer_value_usd_7d_avg": round(recent_transfer_value, 2),
-                        "transfer_value_trend": "up"
-                        if recent_transfer_value > older_transfer_value
-                        else "down",
+                        "transfer_value_trend": "up" if recent_transfer_value > older_transfer_value else "down",
                         "transfer_value_change_percent": round(
-                            (
-                                (recent_transfer_value - older_transfer_value)
-                                / older_transfer_value
-                                * 100
-                            ),
+                            ((recent_transfer_value - older_transfer_value) / older_transfer_value * 100),
                             2,
                         )
                         if older_transfer_value > 0
@@ -441,7 +387,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
         return health_metrics
 
-    def get_price_and_market_data(self) -> Dict[str, Any]:
+    def get_price_and_market_data(self) -> dict[str, Any]:
         """Get Bitcoin price and market data from multiple sources"""
         market_data = {
             "timestamp": datetime.now().isoformat(),
@@ -476,9 +422,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
 
-            market_data_cm = coinmetrics_service.get_market_data(
-                asset="btc", start_date=start_date, end_date=end_date
-            )
+            market_data_cm = coinmetrics_service.get_market_data(asset="btc", start_date=start_date, end_date=end_date)
 
             if market_data_cm and len(market_data_cm) > 0:
                 latest = market_data_cm[-1]
@@ -495,7 +439,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
         return market_data
 
-    def get_comprehensive_report(self) -> Dict[str, Any]:
+    def get_comprehensive_report(self) -> dict[str, Any]:
         """Get comprehensive Bitcoin network statistics report"""
         report = {
             "report_timestamp": datetime.now().isoformat(),
@@ -544,7 +488,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
             "report_sections": len(
                 [
                     k
-                    for k in report.keys()
+                    for k in report
                     if k
                     not in [
                         "report_timestamp",
@@ -563,7 +507,7 @@ class BitcoinNetworkStatsService(BaseFinancialService):
 
 
 def create_bitcoin_network_stats_service(
-    env: str = "dev", services: Optional[Dict[str, Any]] = None
+    env: str = "dev", services: dict[str, Any] | None = None
 ) -> BitcoinNetworkStatsService:
     """
     Factory function to create BitcoinNetworkStatsService with environment-specific configuration
@@ -587,7 +531,7 @@ def create_bitcoin_network_stats_service(
 
         return BitcoinNetworkStatsService(service_config, services)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="bitcoin_network_stats",

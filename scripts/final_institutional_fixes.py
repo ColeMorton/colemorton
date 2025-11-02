@@ -7,7 +7,6 @@ Address remaining issues to achieve ≥9.0/10.0 institutional quality
 import glob
 import os
 import re
-from typing import Dict
 
 import yaml
 
@@ -18,7 +17,7 @@ class FinalInstitutionalFixes:
     def __init__(self, blog_directory: str = "./frontend/src/content/blog/"):
         self.blog_directory = blog_directory
 
-    def apply_final_fixes(self) -> Dict:
+    def apply_final_fixes(self) -> dict:
         """Apply final fixes to achieve ≥9.0/10.0"""
         print("🔧 Applying Final Institutional Quality Fixes...")
 
@@ -38,7 +37,7 @@ class FinalInstitutionalFixes:
 
     def _fix_file(self, file_path: str) -> int:
         """Apply final fixes to a single file"""
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         if not content.startswith("---"):
@@ -73,9 +72,7 @@ class FinalInstitutionalFixes:
             confidence_pct = int(confidence * 100)
 
             # Replace excessive confidence percentages
-            description = re.sub(
-                r"\d{3,}% confidence", f"{confidence_pct}% confidence", description
-            )
+            description = re.sub(r"\d{3,}% confidence", f"{confidence_pct}% confidence", description)
             frontmatter["description"] = description
             fixes_applied += 1
             print("  ✓ Fixed confidence percentage in description")
@@ -92,7 +89,7 @@ class FinalInstitutionalFixes:
             recession_prob = macro_data.get("recession_probability", "15%")
 
             # Create precisely sized description (155 chars target)
-            optimized_desc = f"Comprehensive {region} macro economic analysis with business cycle positioning. Current phase: {economic_phase} with {int(confidence*100)}% confidence."
+            optimized_desc = f"Comprehensive {region} macro economic analysis with business cycle positioning. Current phase: {economic_phase} with {int(confidence * 100)}% confidence."
 
             # Ensure exactly 150-160 characters
             if len(optimized_desc) > 160:
@@ -153,9 +150,7 @@ class FinalInstitutionalFixes:
         # Fix 5: Ensure meta_title is exactly formatted and under 60 chars
         region = self._extract_region_from_filename(filename)
         month_year = self._extract_month_year()
-        optimal_meta_title = (
-            f"{region} Economic Analysis - Business Cycle | {month_year}"
-        )
+        optimal_meta_title = f"{region} Economic Analysis - Business Cycle | {month_year}"
 
         if len(optimal_meta_title) > 60:
             # Shorten for SEO compliance
@@ -168,9 +163,7 @@ class FinalInstitutionalFixes:
 
         # Save if fixes applied
         if fixes_applied > 0:
-            fixed_frontmatter = yaml.dump(
-                frontmatter, default_flow_style=False, sort_keys=False
-            )
+            fixed_frontmatter = yaml.dump(frontmatter, default_flow_style=False, sort_keys=False)
             fixed_content = f"---\n{fixed_frontmatter}---\n\n{body_content}"
 
             with open(file_path, "w", encoding="utf-8") as f:
@@ -185,16 +178,15 @@ class FinalInstitutionalFixes:
         filename_lower = filename.lower()
         if filename_lower.startswith("us-"):
             return "US"
-        elif filename_lower.startswith("americas-"):
+        if filename_lower.startswith("americas-"):
             return "Americas"
-        elif filename_lower.startswith("europe-"):
+        if filename_lower.startswith("europe-"):
             return "Europe"
-        elif filename_lower.startswith("asia-"):
+        if filename_lower.startswith("asia-"):
             return "Asia"
-        elif filename_lower.startswith("global-"):
+        if filename_lower.startswith("global-"):
             return "Global"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _extract_month_year(self) -> str:
         """Get current month year"""
@@ -209,11 +201,11 @@ def main():
     results = fixer.apply_final_fixes()
 
     print("\n✅ Final Fixes Complete!")
-    print(f'📊 Files Processed: {results["files_processed"]}')
-    print(f'🔧 Fixes Applied: {results["fixes_applied"]}')
+    print(f"📊 Files Processed: {results['files_processed']}")
+    print(f"🔧 Fixes Applied: {results['fixes_applied']}")
 
     if results["files_fixed"]:
-        print(f'📋 Files Modified: {", ".join(results["files_fixed"])}')
+        print(f"📋 Files Modified: {', '.join(results['files_fixed'])}")
 
     print("\n🎯 Ready for final institutional quality validation!")
 

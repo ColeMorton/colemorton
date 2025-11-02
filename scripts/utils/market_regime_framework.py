@@ -14,20 +14,13 @@ Advanced market regime identification and volatility environment classification 
 Provides institutional-grade market regime intelligence for macro-economic analysis.
 """
 
-import sys
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
-from scipy import stats
-from scipy.signal import find_peaks
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -40,11 +33,9 @@ class MarketRegime:
     regime_name: str  # 'risk_on', 'risk_off', 'transition', 'stressed', 'stable'
     regime_probability: float  # Confidence in regime identification (0-1)
     regime_persistence: float  # Expected regime duration
-    regime_characteristics: Dict[str, float]  # Key characteristics defining the regime
-    regime_drivers: List[str]  # Primary drivers of current regime
-    transition_probabilities: Dict[
-        str, float
-    ]  # Probabilities of transitioning to other regimes
+    regime_characteristics: dict[str, float]  # Key characteristics defining the regime
+    regime_drivers: list[str]  # Primary drivers of current regime
+    transition_probabilities: dict[str, float]  # Probabilities of transitioning to other regimes
 
 
 @dataclass
@@ -79,8 +70,8 @@ class RegimeTransition:
     most_likely_next_regime: str
     transition_probability: float
     expected_transition_time: float  # Expected time to transition (quarters)
-    transition_triggers: List[str]  # Key triggers for regime change
-    early_warning_signals: List[str]  # Early warning indicators
+    transition_triggers: list[str]  # Key triggers for regime change
+    early_warning_signals: list[str]  # Early warning indicators
 
 
 class MarketRegimeEngine:
@@ -204,8 +195,8 @@ class MarketRegimeEngine:
         }
 
     def analyze_market_regimes_and_volatility_environment(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Comprehensive market regime and volatility environment analysis
 
@@ -222,29 +213,19 @@ class MarketRegimeEngine:
             economic_context = self._extract_economic_context(discovery_data)
 
             # Identify current market regime
-            current_regime = self._identify_current_market_regime(
-                market_context, economic_context
-            )
+            current_regime = self._identify_current_market_regime(market_context, economic_context)
 
             # Classify volatility environment
-            volatility_analysis = self._classify_volatility_environment(
-                market_context, economic_context
-            )
+            volatility_analysis = self._classify_volatility_environment(market_context, economic_context)
 
             # Assess liquidity regime
-            liquidity_analysis = self._assess_liquidity_regime(
-                market_context, economic_context
-            )
+            liquidity_analysis = self._assess_liquidity_regime(market_context, economic_context)
 
             # Analyze cross-asset correlation regime
-            correlation_regime = self._analyze_correlation_regime(
-                market_context, economic_context
-            )
+            correlation_regime = self._analyze_correlation_regime(market_context, economic_context)
 
             # Model regime transitions and probabilities
-            transition_analysis = self._model_regime_transitions(
-                current_regime, market_context, economic_context
-            )
+            transition_analysis = self._model_regime_transitions(current_regime, market_context, economic_context)
 
             # Generate early warning signals
             early_warning_analysis = self._generate_regime_early_warnings(
@@ -252,9 +233,7 @@ class MarketRegimeEngine:
             )
 
             # Perform tail risk regime assessment
-            tail_risk_analysis = self._assess_tail_risk_regime(
-                current_regime, volatility_analysis, market_context
-            )
+            tail_risk_analysis = self._assess_tail_risk_regime(current_regime, volatility_analysis, market_context)
 
             # Generate regime-based investment implications
             investment_implications = self._generate_regime_investment_implications(
@@ -266,24 +245,16 @@ class MarketRegimeEngine:
 
             return {
                 "market_regime_analysis": {
-                    "current_market_regime": self._convert_regime_to_dict(
-                        current_regime
-                    ),
-                    "volatility_environment": self._convert_volatility_to_dict(
-                        volatility_analysis
-                    ),
-                    "liquidity_regime": self._convert_liquidity_to_dict(
-                        liquidity_analysis
-                    ),
+                    "current_market_regime": self._convert_regime_to_dict(current_regime),
+                    "volatility_environment": self._convert_volatility_to_dict(volatility_analysis),
+                    "liquidity_regime": self._convert_liquidity_to_dict(liquidity_analysis),
                     "correlation_regime": correlation_regime,
                     "regime_transition_analysis": transition_analysis,
                     "early_warning_signals": early_warning_analysis,
                     "tail_risk_assessment": tail_risk_analysis,
                     "investment_implications": investment_implications,
                 },
-                "regime_stability_score": self._calculate_regime_stability_score(
-                    current_regime, transition_analysis
-                ),
+                "regime_stability_score": self._calculate_regime_stability_score(current_regime, transition_analysis),
                 "market_stress_indicator": self._calculate_market_stress_indicator(
                     current_regime, volatility_analysis, liquidity_analysis
                 ),
@@ -302,15 +273,13 @@ class MarketRegimeEngine:
             }
 
     def _identify_current_market_regime(
-        self, market_context: Dict[str, Any], economic_context: Dict[str, Any]
+        self, market_context: dict[str, Any], economic_context: dict[str, Any]
     ) -> MarketRegime:
         """Identify current market regime using multi-factor analysis"""
 
         try:
             # Calculate regime indicators
-            regime_indicators = self._calculate_regime_indicators(
-                market_context, economic_context
-            )
+            regime_indicators = self._calculate_regime_indicators(market_context, economic_context)
 
             # Score each potential regime
             regime_scores = {}
@@ -321,9 +290,7 @@ class MarketRegimeEngine:
                 "stressed",
                 "stable",
             ]:
-                score = self._calculate_regime_score(
-                    regime_name, regime_indicators, market_context
-                )
+                score = self._calculate_regime_score(regime_name, regime_indicators, market_context)
                 regime_scores[regime_name] = score
 
             # Identify most likely regime
@@ -347,9 +314,7 @@ class MarketRegimeEngine:
             )
 
             # Estimate regime persistence
-            regime_persistence = self._estimate_regime_persistence(
-                regime_name, regime_characteristics, market_context
-            )
+            regime_persistence = self._estimate_regime_persistence(regime_name, regime_characteristics, market_context)
 
             return MarketRegime(
                 regime_name=regime_name,
@@ -360,7 +325,7 @@ class MarketRegimeEngine:
                 transition_probabilities=transition_probabilities,
             )
 
-        except Exception as e:
+        except Exception:
             # Return default regime on error
             return MarketRegime(
                 regime_name="transition",
@@ -376,7 +341,7 @@ class MarketRegimeEngine:
             )
 
     def _classify_volatility_environment(
-        self, market_context: Dict[str, Any], economic_context: Dict[str, Any]
+        self, market_context: dict[str, Any], economic_context: dict[str, Any]
     ) -> VolatilityRegime:
         """Classify current volatility environment with clustering analysis"""
 
@@ -384,29 +349,19 @@ class MarketRegimeEngine:
             # Extract volatility measures
             current_volatility = market_context.get("volatility_index", 20)
             realized_volatility = market_context.get("realized_volatility", 18)
-            implied_volatility = market_context.get(
-                "implied_volatility", current_volatility
-            )
+            implied_volatility = market_context.get("implied_volatility", current_volatility)
 
             # Calculate volatility percentile
-            volatility_percentile = self._calculate_volatility_percentile(
-                current_volatility, market_context
-            )
+            volatility_percentile = self._calculate_volatility_percentile(current_volatility, market_context)
 
             # Classify volatility level
-            volatility_level = self._classify_volatility_level(
-                current_volatility, volatility_percentile
-            )
+            volatility_level = self._classify_volatility_level(current_volatility, volatility_percentile)
 
             # Determine volatility trend
-            volatility_trend = self._determine_volatility_trend(
-                market_context, economic_context
-            )
+            volatility_trend = self._determine_volatility_trend(market_context, economic_context)
 
             # Calculate volatility clustering
-            volatility_clustering = self._calculate_volatility_clustering(
-                market_context
-            )
+            volatility_clustering = self._calculate_volatility_clustering(market_context)
 
             # Estimate persistence
             expected_persistence = self._estimate_volatility_persistence(
@@ -414,9 +369,7 @@ class MarketRegimeEngine:
             )
 
             # Calculate spillover index
-            spillover_index = self._calculate_volatility_spillover_index(
-                market_context, economic_context
-            )
+            spillover_index = self._calculate_volatility_spillover_index(market_context, economic_context)
 
             return VolatilityRegime(
                 volatility_level=volatility_level,
@@ -427,7 +380,7 @@ class MarketRegimeEngine:
                 volatility_spillover_index=float(spillover_index),
             )
 
-        except Exception as e:
+        except Exception:
             # Return default volatility regime
             return VolatilityRegime(
                 volatility_level="moderate",
@@ -439,20 +392,16 @@ class MarketRegimeEngine:
             )
 
     def _assess_liquidity_regime(
-        self, market_context: Dict[str, Any], economic_context: Dict[str, Any]
+        self, market_context: dict[str, Any], economic_context: dict[str, Any]
     ) -> LiquidityRegime:
         """Assess current liquidity regime with market microstructure analysis"""
 
         try:
             # Calculate liquidity indicators
-            liquidity_indicators = self._calculate_liquidity_indicators(
-                market_context, economic_context
-            )
+            liquidity_indicators = self._calculate_liquidity_indicators(market_context, economic_context)
 
             # Calculate composite liquidity score
-            liquidity_score = self._calculate_composite_liquidity_score(
-                liquidity_indicators, market_context
-            )
+            liquidity_score = self._calculate_composite_liquidity_score(liquidity_indicators, market_context)
 
             # Classify liquidity level
             liquidity_level = self._classify_liquidity_level(liquidity_score)
@@ -463,9 +412,7 @@ class MarketRegimeEngine:
             market_impact = liquidity_indicators.get("market_impact", 0.1)
 
             # Assess funding conditions
-            funding_conditions = self._assess_funding_conditions(
-                economic_context, liquidity_indicators
-            )
+            funding_conditions = self._assess_funding_conditions(economic_context, liquidity_indicators)
 
             return LiquidityRegime(
                 liquidity_level=liquidity_level,
@@ -476,7 +423,7 @@ class MarketRegimeEngine:
                 funding_conditions=funding_conditions,
             )
 
-        except Exception as e:
+        except Exception:
             # Return default liquidity regime
             return LiquidityRegime(
                 liquidity_level="adequate",
@@ -488,15 +435,13 @@ class MarketRegimeEngine:
             )
 
     def _analyze_correlation_regime(
-        self, market_context: Dict[str, Any], economic_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, market_context: dict[str, Any], economic_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze cross-asset correlation regime"""
 
         try:
             # Calculate cross-asset correlations
-            correlation_matrix = self._calculate_cross_asset_correlations(
-                market_context, economic_context
-            )
+            correlation_matrix = self._calculate_cross_asset_correlations(market_context, economic_context)
 
             # Calculate average correlation level
             avg_correlation = self._calculate_average_correlation(correlation_matrix)
@@ -505,9 +450,7 @@ class MarketRegimeEngine:
             correlation_regime = self._classify_correlation_regime(avg_correlation)
 
             # Analyze correlation stability
-            correlation_stability = self._analyze_correlation_stability(
-                correlation_matrix, market_context
-            )
+            correlation_stability = self._analyze_correlation_stability(correlation_matrix, market_context)
 
             # Identify correlation drivers
             correlation_drivers = self._identify_correlation_drivers(
@@ -520,9 +463,7 @@ class MarketRegimeEngine:
                 "correlation_matrix": correlation_matrix,
                 "correlation_stability": float(correlation_stability),
                 "correlation_drivers": correlation_drivers,
-                "regime_interpretation": self._interpret_correlation_regime(
-                    correlation_regime, avg_correlation
-                ),
+                "regime_interpretation": self._interpret_correlation_regime(correlation_regime, avg_correlation),
             }
 
         except Exception as e:
@@ -535,9 +476,9 @@ class MarketRegimeEngine:
     def _model_regime_transitions(
         self,
         current_regime: MarketRegime,
-        market_context: Dict[str, Any],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        market_context: dict[str, Any],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Model regime transition probabilities and timing"""
 
         try:
@@ -579,9 +520,7 @@ class MarketRegimeEngine:
                 },
                 "transition_triggers": transition_triggers,
                 "transition_scenarios": transition_scenarios,
-                "regime_momentum": self._calculate_regime_momentum(
-                    current_regime, market_context
-                ),
+                "regime_momentum": self._calculate_regime_momentum(current_regime, market_context),
             }
 
         except Exception as e:
@@ -597,55 +536,41 @@ class MarketRegimeEngine:
     def _generate_regime_early_warnings(
         self,
         current_regime: MarketRegime,
-        transition_analysis: Dict[str, Any],
-        market_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        transition_analysis: dict[str, Any],
+        market_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate early warning signals for regime changes"""
 
         try:
             # Identify early warning indicators
-            warning_indicators = self._identify_warning_indicators(
-                current_regime, transition_analysis, market_context
-            )
+            warning_indicators = self._identify_warning_indicators(current_regime, transition_analysis, market_context)
 
             # Calculate warning signal strength
             warning_signals = []
             for indicator, value in warning_indicators.items():
-                signal_strength = self._calculate_signal_strength(
-                    indicator, value, current_regime
-                )
+                signal_strength = self._calculate_signal_strength(indicator, value, current_regime)
                 if signal_strength > 0.3:  # Only include significant signals
                     warning_signals.append(
                         {
                             "indicator": indicator,
                             "current_value": float(value),
                             "signal_strength": float(signal_strength),
-                            "warning_level": self._classify_warning_level(
-                                signal_strength
-                            ),
+                            "warning_level": self._classify_warning_level(signal_strength),
                         }
                     )
 
             # Generate composite warning score
-            composite_warning_score = self._calculate_composite_warning_score(
-                warning_signals, current_regime
-            )
+            composite_warning_score = self._calculate_composite_warning_score(warning_signals, current_regime)
 
             # Generate regime stability assessment
-            stability_assessment = self._assess_regime_stability(
-                current_regime, warning_signals, market_context
-            )
+            stability_assessment = self._assess_regime_stability(current_regime, warning_signals, market_context)
 
             return {
                 "individual_warning_signals": warning_signals,
                 "composite_warning_score": float(composite_warning_score),
                 "stability_assessment": stability_assessment,
-                "key_risks": self._identify_key_regime_risks(
-                    current_regime, warning_signals, market_context
-                ),
-                "monitoring_priorities": self._identify_monitoring_priorities(
-                    warning_signals, transition_analysis
-                ),
+                "key_risks": self._identify_key_regime_risks(current_regime, warning_signals, market_context),
+                "monitoring_priorities": self._identify_monitoring_priorities(warning_signals, transition_analysis),
             }
 
         except Exception as e:
@@ -656,75 +581,45 @@ class MarketRegimeEngine:
             }
 
     # Helper methods for calculations and analysis
-    def _extract_market_context(self, discovery_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_market_context(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract market context from discovery data"""
 
         indicators = discovery_data.get("economic_indicators", {})
 
         return {
-            "volatility_index": self._safe_extract_value(
-                indicators, "volatility_index", 20
-            ),
-            "realized_volatility": self._safe_extract_value(
-                indicators, "realized_volatility", 18
-            ),
-            "implied_volatility": self._safe_extract_value(
-                indicators, "implied_volatility", 20
-            ),
-            "credit_spreads": self._safe_extract_value(
-                indicators, "credit_spreads", 150
-            ),
-            "yield_curve_spread": self._safe_extract_value(
-                indicators, "yield_curve_spread", 0.5
-            ),
-            "equity_risk_premium": self._safe_extract_value(
-                indicators, "equity_risk_premium", 6.0
-            ),
+            "volatility_index": self._safe_extract_value(indicators, "volatility_index", 20),
+            "realized_volatility": self._safe_extract_value(indicators, "realized_volatility", 18),
+            "implied_volatility": self._safe_extract_value(indicators, "implied_volatility", 20),
+            "credit_spreads": self._safe_extract_value(indicators, "credit_spreads", 150),
+            "yield_curve_spread": self._safe_extract_value(indicators, "yield_curve_spread", 0.5),
+            "equity_risk_premium": self._safe_extract_value(indicators, "equity_risk_premium", 6.0),
             "dollar_index": self._safe_extract_value(indicators, "dollar_index", 100),
-            "commodity_index": self._safe_extract_value(
-                indicators, "commodity_index", 100
-            ),
-            "market_cap_gdp": self._safe_extract_value(
-                indicators, "market_cap_gdp", 150
-            ),
-            "trading_volume": self._safe_extract_value(
-                indicators, "trading_volume", 1.0
-            ),
+            "commodity_index": self._safe_extract_value(indicators, "commodity_index", 100),
+            "market_cap_gdp": self._safe_extract_value(indicators, "market_cap_gdp", 150),
+            "trading_volume": self._safe_extract_value(indicators, "trading_volume", 1.0),
             "market_breadth": 0.6,  # Would be calculated from advance/decline data
             "risk_sentiment": 0.5,  # Would be derived from sentiment indicators
             "funding_costs": self._safe_extract_value(indicators, "funding_costs", 2.0),
             "liquidity_conditions": 0.7,  # Would be composite of liquidity measures
         }
 
-    def _extract_economic_context(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_economic_context(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract economic context from discovery data"""
 
         indicators = discovery_data.get("economic_indicators", {})
 
         return {
             "gdp_growth": self._safe_extract_value(indicators, "gdp_growth", 2.0),
-            "inflation_rate": self._safe_extract_value(
-                indicators, "inflation_rate", 3.0
-            ),
-            "unemployment_rate": self._safe_extract_value(
-                indicators, "unemployment_rate", 4.0
-            ),
+            "inflation_rate": self._safe_extract_value(indicators, "inflation_rate", 3.0),
+            "unemployment_rate": self._safe_extract_value(indicators, "unemployment_rate", 4.0),
             "policy_rate": self._safe_extract_value(indicators, "policy_rate", 5.0),
-            "consumer_confidence": self._safe_extract_value(
-                indicators, "consumer_confidence", 100
-            ),
-            "business_confidence": self._safe_extract_value(
-                indicators, "business_confidence", 100
-            ),
+            "consumer_confidence": self._safe_extract_value(indicators, "consumer_confidence", 100),
+            "business_confidence": self._safe_extract_value(indicators, "business_confidence", 100),
             "economic_uncertainty": 0.5,  # Would be from policy uncertainty indices
             "financial_stress": 0.3,  # Would be from financial stress indicators
         }
 
-    def _safe_extract_value(
-        self, data: Dict[str, Any], key: str, default: float
-    ) -> float:
+    def _safe_extract_value(self, data: dict[str, Any], key: str, default: float) -> float:
         """Safely extract numeric value from nested dictionary"""
         try:
             value = data.get(key, default)
@@ -735,12 +630,10 @@ class MarketRegimeEngine:
             return default
 
     # Additional placeholder methods for complex calculations
-    def _calculate_regime_indicators(self, market_ctx: Dict, econ_ctx: Dict) -> Dict:
+    def _calculate_regime_indicators(self, market_ctx: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _calculate_regime_score(
-        self, regime: str, indicators: Dict, market_ctx: Dict
-    ) -> float:
+    def _calculate_regime_score(self, regime: str, indicators: dict, market_ctx: dict) -> float:
         # Simple scoring based on regime type
         base_scores = {
             "risk_on": 0.7,
@@ -751,26 +644,16 @@ class MarketRegimeEngine:
         }
         return base_scores.get(regime, 0.5) + np.random.normal(0, 0.1)
 
-    def _calculate_regime_characteristics(
-        self, regime: str, indicators: Dict, market_ctx: Dict
-    ) -> Dict:
+    def _calculate_regime_characteristics(self, regime: str, indicators: dict, market_ctx: dict) -> dict:
         return {"volatility": 0.5, "correlation": 0.6, "liquidity": 0.7}
 
-    def _identify_regime_drivers(
-        self, regime: str, indicators: Dict, market_ctx: Dict, econ_ctx: Dict
-    ) -> List:
+    def _identify_regime_drivers(self, regime: str, indicators: dict, market_ctx: dict, econ_ctx: dict) -> list:
         return ["monetary_policy", "economic_growth", "geopolitical_events"]
 
-    def _calculate_regime_transition_probabilities(
-        self, regime: str, indicators: Dict, market_ctx: Dict
-    ) -> Dict:
-        return self.transition_matrix.get(
-            regime, {"risk_on": 0.33, "risk_off": 0.33, "transition": 0.34}
-        )
+    def _calculate_regime_transition_probabilities(self, regime: str, indicators: dict, market_ctx: dict) -> dict:
+        return self.transition_matrix.get(regime, {"risk_on": 0.33, "risk_off": 0.33, "transition": 0.34})
 
-    def _estimate_regime_persistence(
-        self, regime: str, characteristics: Dict, market_ctx: Dict
-    ) -> float:
+    def _estimate_regime_persistence(self, regime: str, characteristics: dict, market_ctx: dict) -> float:
         return {
             "risk_on": 3.0,
             "risk_off": 2.0,
@@ -779,82 +662,67 @@ class MarketRegimeEngine:
             "stable": 4.0,
         }.get(regime, 2.0)
 
-    def _calculate_volatility_percentile(self, vol: float, market_ctx: Dict) -> float:
+    def _calculate_volatility_percentile(self, vol: float, market_ctx: dict) -> float:
         return min(95, max(5, (vol / 50) * 100))
 
     def _classify_volatility_level(self, vol: float, percentile: float) -> str:
         if vol < 15:
             return "low"
-        elif vol < 25:
+        if vol < 25:
             return "moderate"
-        elif vol < 35:
+        if vol < 35:
             return "high"
-        else:
-            return "extreme"
+        return "extreme"
 
-    def _determine_volatility_trend(self, market_ctx: Dict, econ_ctx: Dict) -> str:
+    def _determine_volatility_trend(self, market_ctx: dict, econ_ctx: dict) -> str:
         return "stable"
 
-    def _calculate_volatility_clustering(self, market_ctx: Dict) -> float:
+    def _calculate_volatility_clustering(self, market_ctx: dict) -> float:
         return 0.6
 
-    def _estimate_volatility_persistence(
-        self, level: str, clustering: float, market_ctx: Dict
-    ) -> float:
-        return {"low": 2.0, "moderate": 1.5, "high": 1.0, "extreme": 0.5}.get(
-            level, 1.5
-        )
+    def _estimate_volatility_persistence(self, level: str, clustering: float, market_ctx: dict) -> float:
+        return {"low": 2.0, "moderate": 1.5, "high": 1.0, "extreme": 0.5}.get(level, 1.5)
 
-    def _calculate_volatility_spillover_index(
-        self, market_ctx: Dict, econ_ctx: Dict
-    ) -> float:
+    def _calculate_volatility_spillover_index(self, market_ctx: dict, econ_ctx: dict) -> float:
         return 0.5
 
-    def _calculate_liquidity_indicators(self, market_ctx: Dict, econ_ctx: Dict) -> Dict:
+    def _calculate_liquidity_indicators(self, market_ctx: dict, econ_ctx: dict) -> dict:
         return {"market_depth": 0.7, "bid_ask_spreads": 0.02, "market_impact": 0.1}
 
-    def _calculate_composite_liquidity_score(
-        self, indicators: Dict, market_ctx: Dict
-    ) -> float:
+    def _calculate_composite_liquidity_score(self, indicators: dict, market_ctx: dict) -> float:
         return 0.6
 
     def _classify_liquidity_level(self, score: float) -> str:
         if score > 0.8:
             return "abundant"
-        elif score > 0.6:
+        if score > 0.6:
             return "adequate"
-        elif score > 0.4:
+        if score > 0.4:
             return "tight"
-        else:
-            return "stressed"
+        return "stressed"
 
-    def _assess_funding_conditions(self, econ_ctx: Dict, indicators: Dict) -> str:
+    def _assess_funding_conditions(self, econ_ctx: dict, indicators: dict) -> str:
         return "normal"
 
-    def _calculate_cross_asset_correlations(
-        self, market_ctx: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _calculate_cross_asset_correlations(self, market_ctx: dict, econ_ctx: dict) -> dict:
         return {"equity_bond": 0.3, "equity_commodity": 0.5, "bond_commodity": 0.2}
 
-    def _calculate_average_correlation(self, matrix: Dict) -> float:
+    def _calculate_average_correlation(self, matrix: dict) -> float:
         return np.mean(list(matrix.values())) if matrix else 0.5
 
     def _classify_correlation_regime(self, avg_corr: float) -> str:
         if avg_corr < 0.3:
             return "low_correlation"
-        elif avg_corr < 0.6:
+        if avg_corr < 0.6:
             return "moderate_correlation"
-        elif avg_corr < 0.8:
+        if avg_corr < 0.8:
             return "high_correlation"
-        else:
-            return "extreme_correlation"
+        return "extreme_correlation"
 
-    def _analyze_correlation_stability(self, matrix: Dict, market_ctx: Dict) -> float:
+    def _analyze_correlation_stability(self, matrix: dict, market_ctx: dict) -> float:
         return 0.7
 
-    def _identify_correlation_drivers(
-        self, matrix: Dict, market_ctx: Dict, econ_ctx: Dict
-    ) -> List:
+    def _identify_correlation_drivers(self, matrix: dict, market_ctx: dict, econ_ctx: dict) -> list:
         return ["risk_sentiment", "monetary_policy", "economic_uncertainty"]
 
     def _interpret_correlation_regime(self, regime: str, avg_corr: float) -> str:
@@ -866,80 +734,56 @@ class MarketRegimeEngine:
         }
         return interpretations.get(regime, "moderate_conditions")
 
-    def _adjust_transition_probabilities(
-        self, regime: str, market_ctx: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _adjust_transition_probabilities(self, regime: str, market_ctx: dict, econ_ctx: dict) -> dict:
         base_probs = self.transition_matrix.get(regime, {})
         # Add small random adjustments based on conditions
-        return {
-            k: max(0.01, min(0.99, v + np.random.normal(0, 0.05)))
-            for k, v in base_probs.items()
-        }
+        return {k: max(0.01, min(0.99, v + np.random.normal(0, 0.05))) for k, v in base_probs.items()}
 
-    def _estimate_transition_timing(
-        self, regime: MarketRegime, probs: Dict, market_ctx: Dict
-    ) -> float:
+    def _estimate_transition_timing(self, regime: MarketRegime, probs: dict, market_ctx: dict) -> float:
         return 2.0  # Default 2 quarters
 
-    def _identify_transition_triggers(
-        self, current: str, next: str, market_ctx: Dict, econ_ctx: Dict
-    ) -> List:
+    def _identify_transition_triggers(self, current: str, next: str, market_ctx: dict, econ_ctx: dict) -> list:
         return ["policy_shift", "economic_data", "external_shock"]
 
-    def _generate_transition_scenarios(
-        self, regime: MarketRegime, probs: Dict, market_ctx: Dict
-    ) -> Dict:
+    def _generate_transition_scenarios(self, regime: MarketRegime, probs: dict, market_ctx: dict) -> dict:
         return {}
 
-    def _calculate_regime_momentum(
-        self, regime: MarketRegime, market_ctx: Dict
-    ) -> float:
+    def _calculate_regime_momentum(self, regime: MarketRegime, market_ctx: dict) -> float:
         return 0.6
 
-    def _identify_warning_indicators(
-        self, regime: MarketRegime, transition: Dict, market_ctx: Dict
-    ) -> Dict:
+    def _identify_warning_indicators(self, regime: MarketRegime, transition: dict, market_ctx: dict) -> dict:
         return {
             "volatility_spike": 0.3,
             "correlation_increase": 0.4,
             "liquidity_decline": 0.2,
         }
 
-    def _calculate_signal_strength(
-        self, indicator: str, value: float, regime: MarketRegime
-    ) -> float:
+    def _calculate_signal_strength(self, indicator: str, value: float, regime: MarketRegime) -> float:
         return min(1.0, abs(value - 0.5) * 2)
 
     def _classify_warning_level(self, strength: float) -> str:
         if strength < 0.3:
             return "low"
-        elif strength < 0.6:
+        if strength < 0.6:
             return "moderate"
-        elif strength < 0.8:
+        if strength < 0.8:
             return "high"
-        else:
-            return "extreme"
+        return "extreme"
 
-    def _calculate_composite_warning_score(
-        self, signals: List, regime: MarketRegime
-    ) -> float:
+    def _calculate_composite_warning_score(self, signals: list, regime: MarketRegime) -> float:
         return np.mean([s["signal_strength"] for s in signals]) if signals else 0.3
 
-    def _assess_regime_stability(
-        self, regime: MarketRegime, signals: List, market_ctx: Dict
-    ) -> str:
+    def _assess_regime_stability(self, regime: MarketRegime, signals: list, market_ctx: dict) -> str:
         return "moderate" if len(signals) < 3 else "low"
 
-    def _identify_key_regime_risks(
-        self, regime: MarketRegime, signals: List, market_ctx: Dict
-    ) -> List:
+    def _identify_key_regime_risks(self, regime: MarketRegime, signals: list, market_ctx: dict) -> list:
         return ["policy_uncertainty", "market_volatility", "liquidity_stress"]
 
-    def _identify_monitoring_priorities(self, signals: List, transition: Dict) -> List:
+    def _identify_monitoring_priorities(self, signals: list, transition: dict) -> list:
         return ["volatility_indicators", "correlation_measures", "liquidity_metrics"]
 
     # Conversion methods
-    def _convert_regime_to_dict(self, regime: MarketRegime) -> Dict:
+    def _convert_regime_to_dict(self, regime: MarketRegime) -> dict:
         return {
             "regime_name": regime.regime_name,
             "regime_probability": regime.regime_probability,
@@ -949,7 +793,7 @@ class MarketRegimeEngine:
             "transition_probabilities": regime.transition_probabilities,
         }
 
-    def _convert_volatility_to_dict(self, vol_regime: VolatilityRegime) -> Dict:
+    def _convert_volatility_to_dict(self, vol_regime: VolatilityRegime) -> dict:
         return {
             "volatility_level": vol_regime.volatility_level,
             "volatility_percentile": vol_regime.volatility_percentile,
@@ -959,7 +803,7 @@ class MarketRegimeEngine:
             "volatility_spillover_index": vol_regime.volatility_spillover_index,
         }
 
-    def _convert_liquidity_to_dict(self, liq_regime: LiquidityRegime) -> Dict:
+    def _convert_liquidity_to_dict(self, liq_regime: LiquidityRegime) -> dict:
         return {
             "liquidity_level": liq_regime.liquidity_level,
             "liquidity_score": liq_regime.liquidity_score,
@@ -970,9 +814,7 @@ class MarketRegimeEngine:
         }
 
     # Assessment methods
-    def _assess_tail_risk_regime(
-        self, regime: MarketRegime, vol_regime: VolatilityRegime, market_ctx: Dict
-    ) -> Dict:
+    def _assess_tail_risk_regime(self, regime: MarketRegime, vol_regime: VolatilityRegime, market_ctx: dict) -> dict:
         return {}
 
     def _generate_regime_investment_implications(
@@ -980,13 +822,11 @@ class MarketRegimeEngine:
         regime: MarketRegime,
         vol: VolatilityRegime,
         liq: LiquidityRegime,
-        econ_ctx: Dict,
-    ) -> Dict:
+        econ_ctx: dict,
+    ) -> dict:
         return {}
 
-    def _calculate_regime_stability_score(
-        self, regime: MarketRegime, transition: Dict
-    ) -> float:
+    def _calculate_regime_stability_score(self, regime: MarketRegime, transition: dict) -> float:
         return 0.7
 
     def _calculate_market_stress_indicator(
@@ -994,7 +834,5 @@ class MarketRegimeEngine:
     ) -> float:
         return 0.3
 
-    def _calculate_regime_diversification_score(
-        self, corr_regime: Dict, vol_regime: VolatilityRegime
-    ) -> float:
+    def _calculate_regime_diversification_score(self, corr_regime: dict, vol_regime: VolatilityRegime) -> float:
         return 0.8

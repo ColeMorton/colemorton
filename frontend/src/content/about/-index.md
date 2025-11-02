@@ -13,7 +13,7 @@ Recently relocated to Brisbane from Berlin, eager to contribute deep commercial 
 
 **Complete Employment History:**
 
-- **2024-Present**: Sensylate Platform - AI-orchestrated financial analysis system processing 20+ APIs
+- **2024-Present**: Cole Morton Platform - AI-orchestrated financial analysis system processing 20+ APIs
 - **2022-Present**: Quantitative Trading Systems - Advanced backtesting and portfolio management toolkit
 - **2018-2020**: Oetker Digital - Multi-stack development across React, Vue.js, GraphQL ecosystems
 - **2018**: Panorama Berlin - React Native app with robust QR scanning for fashion events

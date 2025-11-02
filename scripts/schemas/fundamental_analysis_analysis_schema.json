@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/fundamental_analysis_analysis.json",
+  "$id": "https://colemorton.com/schemas/fundamental_analysis_analysis.json",
   "title": "Fundamental Analysis Analysis Phase Schema",
   "description": "Comprehensive validation schema for fundamental analysis analysis JSON outputs from CLI-enhanced analyst framework",
   "type": "object",

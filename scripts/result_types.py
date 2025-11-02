@@ -12,7 +12,7 @@ Structured result types to replace Dict[str, Any] usage:
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from errors import TwitterSystemError
 
@@ -26,22 +26,22 @@ class ProcessingResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Content results
-    content: Optional[str] = None
-    output_path: Optional[Path] = None
+    content: str | None = None
+    output_path: Path | None = None
 
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     # Validation results
-    validation_score: Optional[float] = None
-    validation_issues: List[str] = field(default_factory=list)
+    validation_score: float | None = None
+    validation_issues: list[str] = field(default_factory=list)
 
     # Error information
-    error: Optional[str] = None
-    error_context: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    error_context: dict[str, Any] = field(default_factory=dict)
 
     # Performance metrics
-    processing_time: Optional[float] = None
+    processing_time: float | None = None
 
     def is_successful(self) -> bool:
         """Check if processing was successful"""
@@ -61,7 +61,7 @@ class ProcessingResult:
         self.error_context[key] = value
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "success": self.success,
@@ -88,9 +88,9 @@ class ValidationResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Validation breakdown
-    validation_scores: Dict[str, float] = field(default_factory=dict)
-    validation_issues: List[str] = field(default_factory=list)
-    validation_warnings: List[str] = field(default_factory=list)
+    validation_scores: dict[str, float] = field(default_factory=dict)
+    validation_issues: list[str] = field(default_factory=list)
+    validation_warnings: list[str] = field(default_factory=list)
 
     # Quality assessment
     quality_grade: str = "F"
@@ -98,12 +98,12 @@ class ValidationResult:
     ready_for_publication: bool = False
 
     # Recommendations
-    required_corrections: List[str] = field(default_factory=list)
-    optimization_opportunities: List[str] = field(default_factory=list)
+    required_corrections: list[str] = field(default_factory=list)
+    optimization_opportunities: list[str] = field(default_factory=list)
 
     # Validation metadata
     validation_framework: str = "unified_validation_v1.0"
-    validation_criteria: Dict[str, Any] = field(default_factory=dict)
+    validation_criteria: dict[str, Any] = field(default_factory=dict)
 
     def is_compliant(self) -> bool:
         """Check if content is compliant"""
@@ -113,7 +113,7 @@ class ValidationResult:
         """Check if there are critical issues"""
         return len(self.required_corrections) > 0
 
-    def get_score_summary(self) -> Dict[str, Any]:
+    def get_score_summary(self) -> dict[str, Any]:
         """Get summary of validation scores"""
         return {
             "overall_score": self.overall_score,
@@ -122,7 +122,7 @@ class ValidationResult:
             "compliance_status": self.compliance_status,
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "content_type": self.content_type,
@@ -153,27 +153,25 @@ class TemplateSelectionResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Selection details
-    all_scores: Dict[str, float] = field(default_factory=dict)
+    all_scores: dict[str, float] = field(default_factory=dict)
     selection_reason: str = "Template selected based on scoring algorithm"
     selection_confidence: float = 0.0
 
     # Template metadata
-    template_variant: Optional[str] = None
-    template_path: Optional[Path] = None
+    template_variant: str | None = None
+    template_path: Path | None = None
 
     # Data context
     data_completeness: float = 0.0
-    required_indicators: List[str] = field(default_factory=list)
-    available_indicators: List[str] = field(default_factory=list)
+    required_indicators: list[str] = field(default_factory=list)
+    available_indicators: list[str] = field(default_factory=list)
 
-    def get_second_best(self) -> Optional[str]:
+    def get_second_best(self) -> str | None:
         """Get second-best template option"""
         if len(self.all_scores) < 2:
             return None
 
-        sorted_scores = sorted(
-            self.all_scores.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_scores = sorted(self.all_scores.items(), key=lambda x: x[1], reverse=True)
         return sorted_scores[1][0] if len(sorted_scores) > 1 else None
 
     def get_selection_margin(self) -> float:
@@ -192,7 +190,7 @@ class TemplateSelectionResult:
         """Get confidence score for the selection"""
         return self.selection_confidence
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "content_type": self.content_type,
@@ -221,21 +219,19 @@ class ErrorResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Error context
-    error_context: Dict[str, Any] = field(default_factory=dict)
-    error_code: Optional[str] = None
+    error_context: dict[str, Any] = field(default_factory=dict)
+    error_code: str | None = None
 
     # Recovery information
     recoverable: bool = False
-    recovery_suggestions: List[str] = field(default_factory=list)
+    recovery_suggestions: list[str] = field(default_factory=list)
 
     # Source information
-    source_file: Optional[str] = None
-    source_line: Optional[int] = None
+    source_file: str | None = None
+    source_line: int | None = None
 
     @classmethod
-    def from_exception(
-        cls, error: Exception, operation: str, context: Optional[Dict[str, Any]] = None
-    ) -> "ErrorResult":
+    def from_exception(cls, error: Exception, operation: str, context: dict[str, Any] | None = None) -> "ErrorResult":
         """Create ErrorResult from exception"""
 
         error_context = context or {}
@@ -255,7 +251,7 @@ class ErrorResult:
             error_code=error_code,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "error_type": self.error_type,
@@ -281,31 +277,31 @@ class DataLoadResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Data information
-    data: Dict[str, Any] = field(default_factory=dict)
-    record_count: Optional[int] = None
-    data_size: Optional[int] = None
+    data: dict[str, Any] = field(default_factory=dict)
+    record_count: int | None = None
+    data_size: int | None = None
 
     # Validation information
     schema_valid: bool = True
-    missing_fields: List[str] = field(default_factory=list)
-    invalid_fields: List[str] = field(default_factory=list)
+    missing_fields: list[str] = field(default_factory=list)
+    invalid_fields: list[str] = field(default_factory=list)
 
     # Processing metrics
-    load_time: Optional[float] = None
+    load_time: float | None = None
 
     # Error information
-    error: Optional[str] = None
-    error_context: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    error_context: dict[str, Any] = field(default_factory=dict)
 
     def is_valid(self) -> bool:
         """Check if data is valid"""
         return self.success and self.schema_valid and len(self.missing_fields) == 0
 
-    def has_required_fields(self, required_fields: List[str]) -> bool:
+    def has_required_fields(self, required_fields: list[str]) -> bool:
         """Check if data has all required fields"""
         return all(field in self.data for field in required_fields)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "success": self.success,
@@ -327,9 +323,9 @@ class DataLoadResult:
 # Convenience functions for creating results
 def success_result(
     operation: str,
-    content: Optional[str] = None,
-    output_path: Optional[Path] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    content: str | None = None,
+    output_path: Path | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> ProcessingResult:
     """Create successful processing result"""
 
@@ -344,8 +340,8 @@ def success_result(
 
 def error_result(
     operation: str,
-    error: Union[str, Exception],
-    error_context: Optional[Dict[str, Any]] = None,
+    error: str | Exception,
+    error_context: dict[str, Any] | None = None,
 ) -> ProcessingResult:
     """Create error processing result"""
 
@@ -355,14 +351,10 @@ def error_result(
     if isinstance(error, Exception):
         context["error_type"] = type(error).__name__
 
-    return ProcessingResult(
-        success=False, operation=operation, error=error_message, error_context=context
-    )
+    return ProcessingResult(success=False, operation=operation, error=error_message, error_context=context)
 
 
-def validation_success(
-    content_type: str, identifier: str, score: float, quality_grade: str = "A"
-) -> ValidationResult:
+def validation_success(content_type: str, identifier: str, score: float, quality_grade: str = "A") -> ValidationResult:
     """Create successful validation result"""
 
     return ValidationResult(
@@ -379,8 +371,8 @@ def validation_failure(
     content_type: str,
     identifier: str,
     score: float,
-    issues: List[str],
-    corrections: List[str],
+    issues: list[str],
+    corrections: list[str],
 ) -> ValidationResult:
     """Create failed validation result"""
 

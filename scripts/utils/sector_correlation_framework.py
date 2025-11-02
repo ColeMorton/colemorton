@@ -13,18 +13,13 @@ Advanced sector-level economic analysis engine:
 Provides institutional-grade sector analysis intelligence for macro-economic analysis.
 """
 
-import sys
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
-from scipy import stats
-from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.preprocessing import StandardScaler
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -49,12 +44,12 @@ class SectorProfile:
 class SectorCorrelation:
     """Sector correlation analysis structure"""
 
-    sector_pair: Tuple[str, str]
+    sector_pair: tuple[str, str]
     correlation_coefficient: float
     correlation_stability: float  # Stability over time
     correlation_regime: str  # 'high', 'moderate', 'low', 'negative'
-    lead_lag_relationship: Optional[str]  # Which sector leads
-    correlation_drivers: List[str]  # Key drivers of correlation
+    lead_lag_relationship: str | None  # Which sector leads
+    correlation_drivers: list[str]  # Key drivers of correlation
 
 
 @dataclass
@@ -338,8 +333,8 @@ class SectorCorrelationEngine:
         }
 
     def analyze_sector_correlations_and_sensitivities(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Comprehensive sector correlation and sensitivity analysis
 
@@ -364,14 +359,10 @@ class SectorCorrelationEngine:
             )
 
             # Analyze sector sensitivities to macro factors
-            sensitivity_analysis = self._analyze_sector_sensitivities(
-                sector_profiles, economic_context
-            )
+            sensitivity_analysis = self._analyze_sector_sensitivities(sector_profiles, economic_context)
 
             # Analyze sector rotation patterns
-            rotation_analysis = self._analyze_sector_rotation_patterns(
-                sector_profiles, economic_context
-            )
+            rotation_analysis = self._analyze_sector_rotation_patterns(sector_profiles, economic_context)
 
             # Identify spillover effects and contagion risks
             spillover_analysis = self._analyze_sector_spillovers(
@@ -418,9 +409,7 @@ class SectorCorrelationEngine:
                 "analysis_timestamp": datetime.now().isoformat(),
             }
 
-    def _generate_sector_profiles(
-        self, economic_context: Dict[str, Any]
-    ) -> Dict[str, SectorProfile]:
+    def _generate_sector_profiles(self, economic_context: dict[str, Any]) -> dict[str, SectorProfile]:
         """Generate sector profiles with current economic adjustments"""
 
         sector_profiles = {}
@@ -449,33 +438,23 @@ class SectorCorrelationEngine:
 
     def _analyze_cross_sector_correlations(
         self,
-        sector_profiles: Dict[str, SectorProfile],
-        sector_data: Dict[str, Any],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sector_profiles: dict[str, SectorProfile],
+        sector_data: dict[str, Any],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze correlations between sectors with regime detection"""
 
         try:
-            correlation_matrix = self._calculate_correlation_matrix(
-                sector_profiles, economic_context
-            )
-            correlation_pairs = self._generate_correlation_pairs(
-                correlation_matrix, sector_profiles
-            )
-            correlation_regimes = self._detect_correlation_regimes(
-                correlation_pairs, economic_context
-            )
+            correlation_matrix = self._calculate_correlation_matrix(sector_profiles, economic_context)
+            correlation_pairs = self._generate_correlation_pairs(correlation_matrix, sector_profiles)
+            correlation_regimes = self._detect_correlation_regimes(correlation_pairs, economic_context)
 
             return {
                 "correlation_matrix": correlation_matrix,
                 "significant_correlations": correlation_pairs,
                 "correlation_regimes": correlation_regimes,
-                "correlation_stability": self._assess_correlation_stability(
-                    correlation_pairs
-                ),
-                "cluster_analysis": self._perform_sector_clustering(
-                    correlation_matrix, sector_profiles
-                ),
+                "correlation_stability": self._assess_correlation_stability(correlation_pairs),
+                "cluster_analysis": self._perform_sector_clustering(correlation_matrix, sector_profiles),
             }
 
         except Exception as e:
@@ -487,9 +466,9 @@ class SectorCorrelationEngine:
 
     def _analyze_sector_sensitivities(
         self,
-        sector_profiles: Dict[str, SectorProfile],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sector_profiles: dict[str, SectorProfile],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze sector sensitivities to macro economic factors"""
 
         try:
@@ -500,51 +479,29 @@ class SectorCorrelationEngine:
                 sensitivity = SectorSensitivity(
                     sector_name=sector_name,
                     gdp_beta=self._calculate_gdp_beta(profile, economic_context),
-                    interest_rate_beta=self._calculate_interest_rate_beta(
-                        profile, economic_context
-                    ),
-                    inflation_beta=self._calculate_inflation_beta(
-                        profile, economic_context
-                    ),
-                    exchange_rate_beta=self._calculate_exchange_rate_beta(
-                        profile, economic_context
-                    ),
-                    oil_price_beta=self._calculate_oil_price_beta(
-                        profile, economic_context
-                    ),
-                    policy_uncertainty_beta=self._calculate_policy_uncertainty_beta(
-                        profile, economic_context
-                    ),
+                    interest_rate_beta=self._calculate_interest_rate_beta(profile, economic_context),
+                    inflation_beta=self._calculate_inflation_beta(profile, economic_context),
+                    exchange_rate_beta=self._calculate_exchange_rate_beta(profile, economic_context),
+                    oil_price_beta=self._calculate_oil_price_beta(profile, economic_context),
+                    policy_uncertainty_beta=self._calculate_policy_uncertainty_beta(profile, economic_context),
                     overall_sensitivity_score=0.0,  # Will be calculated
                 )
 
                 # Calculate overall sensitivity score
-                sensitivity.overall_sensitivity_score = (
-                    self._calculate_overall_sensitivity_score(sensitivity)
-                )
+                sensitivity.overall_sensitivity_score = self._calculate_overall_sensitivity_score(sensitivity)
 
                 sector_sensitivities[sector_name] = sensitivity
 
             # Generate sensitivity rankings and insights
-            sensitivity_rankings = self._rank_sectors_by_sensitivity(
-                sector_sensitivities
-            )
-            sensitivity_regimes = self._identify_sensitivity_regimes(
-                sector_sensitivities, economic_context
-            )
+            sensitivity_rankings = self._rank_sectors_by_sensitivity(sector_sensitivities)
+            sensitivity_regimes = self._identify_sensitivity_regimes(sector_sensitivities, economic_context)
 
             return {
-                "individual_sector_sensitivities": self._convert_sensitivities_to_dict(
-                    sector_sensitivities
-                ),
+                "individual_sector_sensitivities": self._convert_sensitivities_to_dict(sector_sensitivities),
                 "sensitivity_rankings": sensitivity_rankings,
                 "sensitivity_regimes": sensitivity_regimes,
-                "macro_factor_loadings": self._calculate_factor_loadings(
-                    sector_sensitivities
-                ),
-                "sensitivity_outlook": self._generate_sensitivity_outlook(
-                    sector_sensitivities, economic_context
-                ),
+                "macro_factor_loadings": self._calculate_factor_loadings(sector_sensitivities),
+                "sensitivity_outlook": self._generate_sensitivity_outlook(sector_sensitivities, economic_context),
             }
 
         except Exception as e:
@@ -556,9 +513,9 @@ class SectorCorrelationEngine:
 
     def _analyze_sector_rotation_patterns(
         self,
-        sector_profiles: Dict[str, SectorProfile],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sector_profiles: dict[str, SectorProfile],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze sector rotation based on business cycle positioning"""
 
         try:
@@ -579,9 +536,7 @@ class SectorCorrelationEngine:
             )
 
             # Generate rotation timing analysis
-            rotation_timing = self._analyze_rotation_timing(
-                current_cycle_phase, economic_context
-            )
+            rotation_timing = self._analyze_rotation_timing(current_cycle_phase, economic_context)
 
             return {
                 "current_cycle_phase": current_cycle_phase,
@@ -589,9 +544,7 @@ class SectorCorrelationEngine:
                 "rotation_probabilities": rotation_probabilities,
                 "rotation_signals": rotation_signals,
                 "rotation_timing_analysis": rotation_timing,
-                "historical_rotation_patterns": self._analyze_historical_patterns(
-                    economic_context
-                ),
+                "historical_rotation_patterns": self._analyze_historical_patterns(economic_context),
             }
 
         except Exception as e:
@@ -603,17 +556,15 @@ class SectorCorrelationEngine:
 
     def _analyze_sector_spillovers(
         self,
-        correlation_analysis: Dict[str, Any],
-        sensitivity_analysis: Dict[str, Any],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        correlation_analysis: dict[str, Any],
+        sensitivity_analysis: dict[str, Any],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze spillover effects and contagion risks between sectors"""
 
         try:
             # Identify spillover channels
-            spillover_channels = self._identify_spillover_channels(
-                correlation_analysis, sensitivity_analysis
-            )
+            spillover_channels = self._identify_spillover_channels(correlation_analysis, sensitivity_analysis)
 
             # Calculate contagion risk scores
             contagion_risks = self._calculate_contagion_risks(
@@ -626,9 +577,7 @@ class SectorCorrelationEngine:
             )
 
             # Generate spillover early warning indicators
-            spillover_warnings = self._generate_spillover_warnings(
-                stress_pathways, economic_context
-            )
+            spillover_warnings = self._generate_spillover_warnings(stress_pathways, economic_context)
 
             return {
                 "spillover_channels": spillover_channels,
@@ -649,10 +598,10 @@ class SectorCorrelationEngine:
 
     def _perform_factor_decomposition(
         self,
-        sector_profiles: Dict[str, SectorProfile],
-        correlation_analysis: Dict[str, Any],
-        sensitivity_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sector_profiles: dict[str, SectorProfile],
+        correlation_analysis: dict[str, Any],
+        sensitivity_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Perform factor decomposition to identify systematic risk factors"""
 
         try:
@@ -666,14 +615,10 @@ class SectorCorrelationEngine:
             factor_results = self._perform_factor_analysis(sensitivity_matrix)
 
             # Identify systematic vs idiosyncratic risk
-            risk_decomposition = self._decompose_risk_factors(
-                pca_results, factor_results, sector_profiles
-            )
+            risk_decomposition = self._decompose_risk_factors(pca_results, factor_results, sector_profiles)
 
             # Generate factor interpretation
-            factor_interpretation = self._interpret_factors(
-                pca_results, factor_results, self.macro_factors
-            )
+            factor_interpretation = self._interpret_factors(pca_results, factor_results, self.macro_factors)
 
             return {
                 "pca_analysis": pca_results,
@@ -694,10 +639,10 @@ class SectorCorrelationEngine:
 
     def _generate_sector_early_warnings(
         self,
-        sector_profiles: Dict[str, SectorProfile],
-        sensitivity_analysis: Dict[str, Any],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        sector_profiles: dict[str, SectorProfile],
+        sensitivity_analysis: dict[str, Any],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate early warning signals for sector stress"""
 
         try:
@@ -710,14 +655,10 @@ class SectorCorrelationEngine:
                 )
 
                 # Generate warning signals
-                warning_signals = self._generate_warning_signals(
-                    stress_indicators, economic_context
-                )
+                warning_signals = self._generate_warning_signals(stress_indicators, economic_context)
 
                 # Assess warning confidence
-                warning_confidence = self._assess_warning_confidence(
-                    warning_signals, stress_indicators
-                )
+                warning_confidence = self._assess_warning_confidence(warning_signals, stress_indicators)
 
                 early_warnings[sector_name] = {
                     "stress_indicators": stress_indicators,
@@ -730,9 +671,7 @@ class SectorCorrelationEngine:
 
             return {
                 "individual_sector_warnings": early_warnings,
-                "system_wide_warnings": self._generate_system_wide_warnings(
-                    early_warnings
-                ),
+                "system_wide_warnings": self._generate_system_wide_warnings(early_warnings),
                 "warning_dashboard": self._create_warning_dashboard(early_warnings),
             }
 
@@ -744,51 +683,33 @@ class SectorCorrelationEngine:
             }
 
     # Helper methods for calculations and analysis
-    def _extract_economic_context(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_economic_context(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant economic context from discovery data"""
 
         indicators = discovery_data.get("economic_indicators", {})
 
         return {
             "gdp_growth": self._safe_extract_value(indicators, "gdp_growth", 2.0),
-            "inflation_rate": self._safe_extract_value(
-                indicators, "inflation_rate", 3.0
-            ),
-            "unemployment_rate": self._safe_extract_value(
-                indicators, "unemployment_rate", 4.0
-            ),
+            "inflation_rate": self._safe_extract_value(indicators, "inflation_rate", 3.0),
+            "unemployment_rate": self._safe_extract_value(indicators, "unemployment_rate", 4.0),
             "policy_rate": self._safe_extract_value(indicators, "policy_rate", 5.0),
-            "yield_curve_spread": self._safe_extract_value(
-                indicators, "yield_curve_spread", 0.5
-            ),
-            "credit_spreads": self._safe_extract_value(
-                indicators, "credit_spreads", 150
-            ),
-            "volatility_index": self._safe_extract_value(
-                indicators, "volatility_index", 20
-            ),
+            "yield_curve_spread": self._safe_extract_value(indicators, "yield_curve_spread", 0.5),
+            "credit_spreads": self._safe_extract_value(indicators, "credit_spreads", 150),
+            "volatility_index": self._safe_extract_value(indicators, "volatility_index", 20),
             "oil_price": self._safe_extract_value(indicators, "oil_price", 75),
             "exchange_rate": self._safe_extract_value(indicators, "exchange_rate", 1.0),
-            "consumer_confidence": self._safe_extract_value(
-                indicators, "consumer_confidence", 100
-            ),
-            "business_cycle_phase": discovery_data.get("business_cycle_data", {}).get(
-                "current_phase", "expansion"
-            ),
+            "consumer_confidence": self._safe_extract_value(indicators, "consumer_confidence", 100),
+            "business_cycle_phase": discovery_data.get("business_cycle_data", {}).get("current_phase", "expansion"),
         }
 
-    def _extract_sector_data(self, discovery_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_sector_data(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract sector-specific data from discovery data"""
 
         # In a real implementation, this would extract sector performance data
         # For now, return empty dict as placeholder
         return discovery_data.get("sector_data", {})
 
-    def _safe_extract_value(
-        self, data: Dict[str, Any], key: str, default: float
-    ) -> float:
+    def _safe_extract_value(self, data: dict[str, Any], key: str, default: float) -> float:
         """Safely extract numeric value from nested dictionary"""
         try:
             value = data.get(key, default)
@@ -799,57 +720,43 @@ class SectorCorrelationEngine:
             return default
 
     # Additional placeholder methods for complex calculations
-    def _adjust_profile_for_conditions(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> SectorProfile:
+    def _adjust_profile_for_conditions(self, profile: SectorProfile, econ_ctx: dict) -> SectorProfile:
         return profile
 
-    def _calculate_correlation_matrix(self, profiles: Dict, econ_ctx: Dict) -> Dict:
+    def _calculate_correlation_matrix(self, profiles: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _generate_correlation_pairs(self, matrix: Dict, profiles: Dict) -> List:
+    def _generate_correlation_pairs(self, matrix: dict, profiles: dict) -> list:
         return []
 
-    def _detect_correlation_regimes(self, pairs: List, econ_ctx: Dict) -> Dict:
+    def _detect_correlation_regimes(self, pairs: list, econ_ctx: dict) -> dict:
         return {}
 
-    def _assess_correlation_stability(self, pairs: List) -> float:
+    def _assess_correlation_stability(self, pairs: list) -> float:
         return 0.7
 
-    def _perform_sector_clustering(self, matrix: Dict, profiles: Dict) -> Dict:
+    def _perform_sector_clustering(self, matrix: dict, profiles: dict) -> dict:
         return {}
 
-    def _calculate_gdp_beta(self, profile: SectorProfile, econ_ctx: Dict) -> float:
+    def _calculate_gdp_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return profile.cyclical_sensitivity * 1.2
 
-    def _calculate_interest_rate_beta(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> float:
+    def _calculate_interest_rate_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return profile.interest_rate_sensitivity
 
-    def _calculate_inflation_beta(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> float:
+    def _calculate_inflation_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return profile.inflation_sensitivity
 
-    def _calculate_exchange_rate_beta(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> float:
+    def _calculate_exchange_rate_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return profile.export_orientation * 0.8
 
-    def _calculate_oil_price_beta(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> float:
+    def _calculate_oil_price_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return 1.2 if profile.sector_name == "energy" else 0.3
 
-    def _calculate_policy_uncertainty_beta(
-        self, profile: SectorProfile, econ_ctx: Dict
-    ) -> float:
+    def _calculate_policy_uncertainty_beta(self, profile: SectorProfile, econ_ctx: dict) -> float:
         return profile.cyclical_sensitivity * 0.6
 
-    def _calculate_overall_sensitivity_score(
-        self, sensitivity: SectorSensitivity
-    ) -> float:
+    def _calculate_overall_sensitivity_score(self, sensitivity: SectorSensitivity) -> float:
         return (
             abs(sensitivity.gdp_beta)
             + abs(sensitivity.interest_rate_beta)
@@ -859,7 +766,7 @@ class SectorCorrelationEngine:
             + abs(sensitivity.policy_uncertainty_beta)
         ) / 6
 
-    def _convert_profiles_to_dict(self, profiles: Dict[str, SectorProfile]) -> Dict:
+    def _convert_profiles_to_dict(self, profiles: dict[str, SectorProfile]) -> dict:
         return {
             name: {
                 "sector_name": p.sector_name,
@@ -875,9 +782,7 @@ class SectorCorrelationEngine:
             for name, p in profiles.items()
         }
 
-    def _convert_sensitivities_to_dict(
-        self, sensitivities: Dict[str, SectorSensitivity]
-    ) -> Dict:
+    def _convert_sensitivities_to_dict(self, sensitivities: dict[str, SectorSensitivity]) -> dict:
         return {
             name: {
                 "sector_name": s.sector_name,
@@ -892,115 +797,89 @@ class SectorCorrelationEngine:
             for name, s in sensitivities.items()
         }
 
-    def _rank_sectors_by_sensitivity(self, sensitivities: Dict) -> Dict:
+    def _rank_sectors_by_sensitivity(self, sensitivities: dict) -> dict:
         return {}
 
-    def _identify_sensitivity_regimes(
-        self, sensitivities: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _identify_sensitivity_regimes(self, sensitivities: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _calculate_factor_loadings(self, sensitivities: Dict) -> Dict:
+    def _calculate_factor_loadings(self, sensitivities: dict) -> dict:
         return {}
 
-    def _generate_sensitivity_outlook(
-        self, sensitivities: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _generate_sensitivity_outlook(self, sensitivities: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _determine_business_cycle_phase(self, econ_ctx: Dict) -> str:
+    def _determine_business_cycle_phase(self, econ_ctx: dict) -> str:
         return econ_ctx.get("business_cycle_phase", "expansion")
 
-    def _calculate_rotation_probabilities(
-        self, profiles: Dict, phase: str, econ_ctx: Dict
-    ) -> Dict:
+    def _calculate_rotation_probabilities(self, profiles: dict, phase: str, econ_ctx: dict) -> dict:
         return {}
 
-    def _identify_rotation_signals(
-        self, profiles: Dict, probs: Dict, econ_ctx: Dict
-    ) -> List:
+    def _identify_rotation_signals(self, profiles: dict, probs: dict, econ_ctx: dict) -> list:
         return []
 
-    def _analyze_rotation_timing(self, phase: str, econ_ctx: Dict) -> Dict:
+    def _analyze_rotation_timing(self, phase: str, econ_ctx: dict) -> dict:
         return {}
 
-    def _analyze_historical_patterns(self, econ_ctx: Dict) -> Dict:
+    def _analyze_historical_patterns(self, econ_ctx: dict) -> dict:
         return {}
 
-    def _identify_spillover_channels(
-        self, corr_analysis: Dict, sens_analysis: Dict
-    ) -> List:
+    def _identify_spillover_channels(self, corr_analysis: dict, sens_analysis: dict) -> list:
         return []
 
-    def _calculate_contagion_risks(
-        self, corr_analysis: Dict, sens_analysis: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _calculate_contagion_risks(self, corr_analysis: dict, sens_analysis: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _model_stress_transmission_pathways(
-        self, channels: List, risks: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _model_stress_transmission_pathways(self, channels: list, risks: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _generate_spillover_warnings(self, pathways: Dict, econ_ctx: Dict) -> List:
+    def _generate_spillover_warnings(self, pathways: dict, econ_ctx: dict) -> list:
         return []
 
-    def _calculate_interconnectedness_score(self, channels: List, risks: Dict) -> float:
+    def _calculate_interconnectedness_score(self, channels: list, risks: dict) -> float:
         return 0.6
 
-    def _build_sensitivity_matrix(self, sens_analysis: Dict) -> np.ndarray:
+    def _build_sensitivity_matrix(self, sens_analysis: dict) -> np.ndarray:
         return np.random.random((10, 6))
 
-    def _perform_pca_analysis(self, matrix: np.ndarray) -> Dict:
+    def _perform_pca_analysis(self, matrix: np.ndarray) -> dict:
         return {"explained_variance": [0.4, 0.3, 0.2]}
 
-    def _perform_factor_analysis(self, matrix: np.ndarray) -> Dict:
+    def _perform_factor_analysis(self, matrix: np.ndarray) -> dict:
         return {"factor_loadings": {}}
 
-    def _decompose_risk_factors(self, pca: Dict, factors: Dict, profiles: Dict) -> Dict:
+    def _decompose_risk_factors(self, pca: dict, factors: dict, profiles: dict) -> dict:
         return {}
 
-    def _interpret_factors(self, pca: Dict, factors: Dict, macro_factors: List) -> Dict:
+    def _interpret_factors(self, pca: dict, factors: dict, macro_factors: list) -> dict:
         return {}
 
-    def _calculate_systematic_risk_contribution(
-        self, decomp: Dict, profiles: Dict
-    ) -> float:
+    def _calculate_systematic_risk_contribution(self, decomp: dict, profiles: dict) -> float:
         return 0.7
 
-    def _calculate_sector_stress_indicators(
-        self, profile: SectorProfile, sens: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _calculate_sector_stress_indicators(self, profile: SectorProfile, sens: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _generate_warning_signals(self, indicators: Dict, econ_ctx: Dict) -> List:
+    def _generate_warning_signals(self, indicators: dict, econ_ctx: dict) -> list:
         return []
 
-    def _assess_warning_confidence(self, signals: List, indicators: Dict) -> float:
+    def _assess_warning_confidence(self, signals: list, indicators: dict) -> float:
         return 0.7
 
-    def _generate_sector_recommendations(
-        self, signals: List, profile: SectorProfile, econ_ctx: Dict
-    ) -> List:
+    def _generate_sector_recommendations(self, signals: list, profile: SectorProfile, econ_ctx: dict) -> list:
         return []
 
-    def _generate_system_wide_warnings(self, warnings: Dict) -> List:
+    def _generate_system_wide_warnings(self, warnings: dict) -> list:
         return []
 
-    def _create_warning_dashboard(self, warnings: Dict) -> Dict:
+    def _create_warning_dashboard(self, warnings: dict) -> dict:
         return {}
 
-    def _generate_sector_outlook_summary(
-        self, rotation: Dict, sensitivity: Dict, econ_ctx: Dict
-    ) -> Dict:
+    def _generate_sector_outlook_summary(self, rotation: dict, sensitivity: dict, econ_ctx: dict) -> dict:
         return {}
 
-    def _identify_high_risk_sectors(
-        self, sensitivity: Dict, spillover: Dict, econ_ctx: Dict
-    ) -> List:
+    def _identify_high_risk_sectors(self, sensitivity: dict, spillover: dict, econ_ctx: dict) -> list:
         return []
 
-    def _calculate_diversification_score(
-        self, correlation: Dict, profiles: Dict
-    ) -> float:
+    def _calculate_diversification_score(self, correlation: dict, profiles: dict) -> float:
         return 0.8

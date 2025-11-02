@@ -12,7 +12,7 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 class TestRunner:
@@ -28,7 +28,7 @@ class TestRunner:
         print("Started: {self.start_time}")
         print("Working directory: {self.script_dir}")
 
-    def run_unittest_suite(self, test_module: str, description: str) -> Dict[str, Any]:
+    def run_unittest_suite(self, test_module: str, description: str) -> dict[str, Any]:
         """Run a unittest-based test suite"""
         result = {
             "test_type": "unittest",
@@ -85,9 +85,7 @@ class TestRunner:
             for test, traceback in test_results.errors:
                 result["details"].append(f"ERROR - {test}: {traceback[:100]}...")
 
-            print(
-                f"   ✅ {result['tests_run']} tests, {result['failures']} failures, {result['errors']} errors"
-            )
+            print(f"   ✅ {result['tests_run']} tests, {result['failures']} failures, {result['errors']} errors")
             print("   ⏱️  Execution time: {result['execution_time']:.2f}s")
 
         except Exception as e:
@@ -98,9 +96,7 @@ class TestRunner:
         self.results.append(result)
         return result
 
-    def run_script_test(
-        self, script_name: str, description: str, timeout: int = 60
-    ) -> Dict[str, Any]:
+    def run_script_test(self, script_name: str, description: str, timeout: int = 60) -> dict[str, Any]:
         """Run a standalone test script"""
         result = {
             "test_type": "script",
@@ -155,7 +151,7 @@ class TestRunner:
         self.results.append(result)
         return result
 
-    def analyze_file_system_state(self) -> Dict[str, Any]:
+    def analyze_file_system_state(self) -> dict[str, Any]:
         """Analyze current file system state"""
         print("\n📁 File System State Analysis")
         print("-" * 50)
@@ -179,9 +175,7 @@ class TestRunner:
             # Count files by type
             csv_files = list(data_dir.rglob("*.csv"))
             meta_files = list(data_dir.rglob("*.meta.json"))
-            json_files = [
-                f for f in data_dir.rglob("*.json") if not f.name.endswith(".meta.json")
-            ]
+            json_files = [f for f in data_dir.rglob("*.json") if not f.name.endswith(".meta.json")]
 
             analysis["csv_files"] = len(csv_files)
             analysis["meta_files"] = len(meta_files)
@@ -191,9 +185,7 @@ class TestRunner:
             # Find symbols
             stocks_dir = data_dir / "stocks"
             if stocks_dir.exists():
-                analysis["symbols_found"] = [
-                    d.name for d in stocks_dir.iterdir() if d.is_dir()
-                ]
+                analysis["symbols_found"] = [d.name for d in stocks_dir.iterdir() if d.is_dir()]
 
             # Find timeframes from filenames
             for csv_file in csv_files:
@@ -213,9 +205,7 @@ class TestRunner:
             }
 
         # Report findings
-        print(
-            f"   📂 Data directory exists: {'✅' if analysis['data_directory_exists'] else '❌'}"
-        )
+        print(f"   📂 Data directory exists: {'✅' if analysis['data_directory_exists'] else '❌'}")
         print("   📄 CSV files: {analysis['csv_files']}")
         print("   📋 Metadata files: {analysis['meta_files']}")
         print("   📋 JSON files: {analysis['json_files']}")
@@ -232,9 +222,7 @@ class TestRunner:
         if analysis.get("file_sizes", {}).get("grand_total", 0) > 0:
             sizes = analysis["file_sizes"]
             print("   💾 Storage: {sizes['grand_total']} bytes total")
-            print(
-                f"      CSV: {sizes['csv_total']} bytes, Meta: {sizes['meta_total']} bytes"
-            )
+            print(f"      CSV: {sizes['csv_total']} bytes, Meta: {sizes['meta_total']} bytes")
 
         return analysis
 
@@ -269,7 +257,7 @@ class TestRunner:
         # Generate comprehensive report
         self.generate_comprehensive_report(file_analysis)
 
-    def generate_comprehensive_report(self, file_analysis: Dict[str, Any]):
+    def generate_comprehensive_report(self, file_analysis: dict[str, Any]):
         """Generate comprehensive test execution report"""
         total_duration = datetime.now() - self.start_time
 
@@ -291,18 +279,12 @@ class TestRunner:
         total_failures = sum(r["failures"] for r in unittest_results)
         total_errors = sum(r["errors"] for r in unittest_results)
 
-        print(
-            f"   Test Suites: {len(successful_unittests)}/{len(unittest_results)} passed"
-        )
-        print(
-            f"   Individual Tests: {total_tests} run, {total_failures} failures, {total_errors} errors"
-        )
+        print(f"   Test Suites: {len(successful_unittests)}/{len(unittest_results)} passed")
+        print(f"   Individual Tests: {total_tests} run, {total_failures} failures, {total_errors} errors")
 
         for result in unittest_results:
             status = "✅" if result["success"] else "❌"
-            print(
-                f"   {status} {result['description']} ({result['tests_run']} tests, {result['execution_time']:.2f}s)"
-            )
+            print(f"   {status} {result['description']} ({result['tests_run']} tests, {result['execution_time']:.2f}s)")
 
         # Script test summary
         print("\n🖥️  Script Test Results:")
@@ -310,21 +292,17 @@ class TestRunner:
 
         for result in script_results:
             status = "✅" if result["success"] else "❌"
-            print(
-                f"   {status} {result['description']} ({result['execution_time']:.2f}s)"
-            )
+            print(f"   {status} {result['description']} ({result['execution_time']:.2f}s)")
 
         # Performance metrics
         total_execution_time = sum(r["execution_time"] for r in self.results)
-        avg_execution_time = (
-            total_execution_time / len(self.results) if self.results else 0
-        )
+        avg_execution_time = total_execution_time / len(self.results) if self.results else 0
 
         print("\n⚡ Performance Metrics:")
         print("   Total Test Execution Time: {total_execution_time:.2f}s")
         print("   Average Test Suite Time: {avg_execution_time:.2f}s")
         print(
-            f"   Tests per Second: {total_tests/total_execution_time:.1f}"
+            f"   Tests per Second: {total_tests / total_execution_time:.1f}"
             if total_execution_time > 0
             else "   Tests per Second: N/A"
         )
@@ -333,27 +311,19 @@ class TestRunner:
         if file_analysis["total_files"] > 0:
             print("\n💾 Storage Efficiency:")
             print("   Files Created: {file_analysis['total_files']}")
-            print(
-                f"   Consolidated Format: {file_analysis['csv_files']} CSV + {file_analysis['meta_files']} metadata"
-            )
-            print(
-                f"   Storage Used: {file_analysis['file_sizes']['grand_total']} bytes"
-            )
+            print(f"   Consolidated Format: {file_analysis['csv_files']} CSV + {file_analysis['meta_files']} metadata")
+            print(f"   Storage Used: {file_analysis['file_sizes']['grand_total']} bytes")
 
             # Estimate old format file count
             symbols = len(file_analysis["symbols_found"])
             timeframes = len(file_analysis["timeframes_found"])
             if symbols > 0 and timeframes > 0:
                 # Assume average 20 periods per timeframe (conservative estimate)
-                estimated_old_files = (
-                    symbols * timeframes * 20 * 2
-                )  # 2 files per period
+                estimated_old_files = symbols * timeframes * 20 * 2  # 2 files per period
                 actual_files = file_analysis["csv_files"] + file_analysis["meta_files"]
                 if estimated_old_files > actual_files:
                     efficiency = (1 - actual_files / estimated_old_files) * 100
-                    print(
-                        f"   Estimated Efficiency Gain: {efficiency:.1f}% fewer files"
-                    )
+                    print(f"   Estimated Efficiency Gain: {efficiency:.1f}% fewer files")
 
         # Error summary
         failed_results = [r for r in self.results if not r["success"]]
@@ -365,16 +335,10 @@ class TestRunner:
                     print("      {detail}")
 
         # Overall assessment
-        unittest_success_rate = (
-            len(successful_unittests) / len(unittest_results) if unittest_results else 1
-        )
-        script_success_rate = (
-            len(successful_scripts) / len(script_results) if script_results else 1
-        )
+        unittest_success_rate = len(successful_unittests) / len(unittest_results) if unittest_results else 1
+        script_success_rate = len(successful_scripts) / len(script_results) if script_results else 1
         overall_success_rate = (
-            (len(successful_unittests) + len(successful_scripts)) / len(self.results)
-            if self.results
-            else 0
+            (len(successful_unittests) + len(successful_scripts)) / len(self.results) if self.results else 0
         )
 
         print("\n🎯 OVERALL ASSESSMENT:")
@@ -390,11 +354,10 @@ class TestRunner:
             print("   ✅ Data integrity validated")
             print("   ✅ CLI integration working")
             return True
-        else:
-            print("\n⚠️  CONSOLIDATED STORAGE SYSTEM: ISSUES DETECTED")
-            print("   - Success rate: {overall_success_rate:.0%}")
-            print("   - Check individual test results above")
-            return False
+        print("\n⚠️  CONSOLIDATED STORAGE SYSTEM: ISSUES DETECTED")
+        print("   - Success rate: {overall_success_rate:.0%}")
+        print("   - Check individual test results above")
+        return False
 
 
 def main():

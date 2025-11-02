@@ -12,9 +12,10 @@ Command-line interface for SEC EDGAR filing data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -27,9 +28,7 @@ class SECEDGARCLl(BaseFinancialCLI):
     """CLI for SEC EDGAR service"""
 
     def __init__(self):
-        super().__init__(
-            service_name="sec_edgar", description="SEC EDGAR filing data service CLI"
-        )
+        super().__init__(service_name="sec_edgar", description="SEC EDGAR filing data service CLI")
         self.service = None
         self._add_service_commands()
 
@@ -55,9 +54,7 @@ class SECEDGARCLl(BaseFinancialCLI):
 
                 result = service.search_company_by_ticker(ticker)
                 if result:
-                    self._output_result(
-                        result, output_format, f"Company Search: {ticker}"
-                    )
+                    self._output_result(result, output_format, f"Company Search: {ticker}")
                 else:
                     self._output_result(
                         {
@@ -74,9 +71,7 @@ class SECEDGARCLl(BaseFinancialCLI):
         @self.app.command("filings")
         def get_company_filings(
             ticker: str = typer.Argument(..., help="Stock ticker symbol"),
-            filing_type: str = typer.Option(
-                "10-K", help="Filing type (10-K, 10-Q, 8-K, etc.)"
-            ),
+            filing_type: str = typer.Option("10-K", help="Filing type (10-K, 10-Q, 8-K, etc.)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -86,9 +81,7 @@ class SECEDGARCLl(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_company_filings(ticker, filing_type)
-                self._output_result(
-                    result, output_format, f"Company Filings: {ticker} ({filing_type})"
-                )
+                self._output_result(result, output_format, f"Company Filings: {ticker} ({filing_type})")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get filings for {ticker}")
@@ -96,9 +89,7 @@ class SECEDGARCLl(BaseFinancialCLI):
         @self.app.command("financials")
         def get_financial_statements(
             ticker: str = typer.Argument(..., help="Stock ticker symbol"),
-            period: str = typer.Option(
-                "annual", help="Period type (annual, quarterly)"
-            ),
+            period: str = typer.Option("annual", help="Period type (annual, quarterly)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -108,14 +99,10 @@ class SECEDGARCLl(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_financial_statements(ticker, period)
-                self._output_result(
-                    result, output_format, f"Financial Statements: {ticker} ({period})"
-                )
+                self._output_result(result, output_format, f"Financial Statements: {ticker} ({period})")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to get financial statements for {ticker}"
-                )
+                self._handle_error(e, f"Failed to get financial statements for {ticker}")
 
         @self.app.command("metrics")
         def get_sec_metrics(
@@ -184,9 +171,7 @@ class SECEDGARCLl(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_submissions(cik)
-                self._output_result(
-                    result, output_format, f"Company Submissions: CIK {cik}"
-                )
+                self._output_result(result, output_format, f"Company Submissions: CIK {cik}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get submissions for CIK {cik}")
@@ -209,9 +194,7 @@ class SECEDGARCLl(BaseFinancialCLI):
         @self.app.command("filing-search")
         def search_filings(
             query: str = typer.Argument(..., help="Search query"),
-            date_range: str = typer.Option(
-                "last_year", help="Date range (last_year, ytd, custom)"
-            ),
+            date_range: str = typer.Option("last_year", help="Date range (last_year, ytd, custom)"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -235,9 +218,7 @@ class SECEDGARCLl(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_supported_filings()
-                self._output_result(
-                    result, output_format, "Supported Filings & Metrics"
-                )
+                self._output_result(result, output_format, "Supported Filings & Metrics")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get supported filings")
@@ -246,9 +227,7 @@ class SECEDGARCLl(BaseFinancialCLI):
         def comprehensive_analysis(
             ticker: str = typer.Argument(..., help="Stock ticker symbol"),
             include_filings: bool = typer.Option(True, help="Include recent filings"),
-            filing_types: str = typer.Option(
-                "10-K,10-Q", help="Comma-separated filing types"
-            ),
+            filing_types: str = typer.Option("10-K,10-Q", help="Comma-separated filing types"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -276,20 +255,14 @@ class SECEDGARCLl(BaseFinancialCLI):
                     for filing_type in filing_types.split(","):
                         filing_type = filing_type.strip()
                         try:
-                            analysis["filings"][
-                                filing_type
-                            ] = service.get_company_filings(ticker, filing_type)
+                            analysis["filings"][filing_type] = service.get_company_filings(ticker, filing_type)
                         except Exception as e:
                             analysis["filings"][filing_type] = {"error": str(e)}
 
-                self._output_result(
-                    analysis, output_format, f"Comprehensive SEC Analysis: {ticker}"
-                )
+                self._output_result(analysis, output_format, f"Comprehensive SEC Analysis: {ticker}")
 
             except Exception as e:
-                self._handle_error(
-                    e, f"Failed to perform comprehensive analysis for {ticker}"
-                )
+                self._handle_error(e, f"Failed to perform comprehensive analysis for {ticker}")
 
         @self.app.command("batch")
         def batch_metrics(
@@ -306,9 +279,7 @@ class SECEDGARCLl(BaseFinancialCLI):
                 for ticker in ticker_list:
                     try:
                         metrics = service.get_sec_metrics(ticker)
-                        profitability = metrics.get("metrics", {}).get(
-                            "profitability", {}
-                        )
+                        profitability = metrics.get("metrics", {}).get("profitability", {})
 
                         row = {
                             "ticker": ticker,
@@ -339,33 +310,32 @@ class SECEDGARCLl(BaseFinancialCLI):
             except Exception as e:
                 self._handle_error(e, "Batch metrics operation failed")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform SEC EDGAR service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

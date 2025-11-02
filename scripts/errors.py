@@ -9,7 +9,7 @@ Hierarchical error types with fail-fast approach and contextual information:
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class TwitterSystemError(Exception):
@@ -18,8 +18,8 @@ class TwitterSystemError(Exception):
     def __init__(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None,
-        error_code: Optional[str] = None,
+        context: dict[str, Any] | None = None,
+        error_code: str | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -31,7 +31,7 @@ class TwitterSystemError(Exception):
         self.context[key] = value
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert error to dictionary for structured logging"""
         return {
             "error_type": self.__class__.__name__,
@@ -47,17 +47,17 @@ class ValidationError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        content_type: Optional[str] = None,
-        validation_score: Optional[float] = None,
-        failed_criteria: Optional[List[str]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        content_type: str | None = None,
+        validation_score: float | None = None,
+        failed_criteria: list[str] | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.content_type = content_type
         self.validation_score = validation_score
         self.failed_criteria = failed_criteria or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert validation error to dictionary"""
         result = super().to_dict()
         result.update(
@@ -76,26 +76,24 @@ class TemplateError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        template_name: Optional[str] = None,
-        template_variant: Optional[str] = None,
-        data_context: Optional[Dict[str, Any]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        template_name: str | None = None,
+        template_variant: str | None = None,
+        data_context: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.template_name = template_name
         self.template_variant = template_variant
         self.data_context = data_context or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert template error to dictionary"""
         result = super().to_dict()
         result.update(
             {
                 "template_name": self.template_name,
                 "template_variant": self.template_variant,
-                "data_context_keys": (
-                    list(self.data_context.keys()) if self.data_context else []
-                ),
+                "data_context_keys": (list(self.data_context.keys()) if self.data_context else []),
             }
         )
         return result
@@ -107,17 +105,17 @@ class DataError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        source_path: Optional[Union[str, Path]] = None,
-        operation: Optional[str] = None,
-        data_type: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        source_path: str | Path | None = None,
+        operation: str | None = None,
+        data_type: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.source_path = str(source_path) if source_path else None
         self.operation = operation
         self.data_type = data_type
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert data error to dictionary"""
         result = super().to_dict()
         result.update(
@@ -136,15 +134,15 @@ class ConfigurationError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        config_key: Optional[str] = None,
-        config_file: Optional[Union[str, Path]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        config_key: str | None = None,
+        config_file: str | Path | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.config_key = config_key
         self.config_file = str(config_file) if config_file else None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration error to dictionary"""
         result = super().to_dict()
         result.update({"config_key": self.config_key, "config_file": self.config_file})
@@ -157,23 +155,21 @@ class ProcessingError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        pipeline_stage: Optional[str] = None,
-        input_data: Optional[Dict[str, Any]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        pipeline_stage: str | None = None,
+        input_data: dict[str, Any] | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.pipeline_stage = pipeline_stage
         self.input_data = input_data or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert processing error to dictionary"""
         result = super().to_dict()
         result.update(
             {
                 "pipeline_stage": self.pipeline_stage,
-                "input_data_keys": (
-                    list(self.input_data.keys()) if self.input_data else []
-                ),
+                "input_data_keys": (list(self.input_data.keys()) if self.input_data else []),
             }
         )
         return result
@@ -185,17 +181,17 @@ class TypeValidationError(TwitterSystemError):
     def __init__(
         self,
         message: str,
-        expected_type: Optional[str] = None,
-        actual_type: Optional[str] = None,
-        field_name: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        expected_type: str | None = None,
+        actual_type: str | None = None,
+        field_name: str | None = None,
+        context: dict[str, Any] | None = None,
     ):
         super().__init__(message, context)
         self.expected_type = expected_type
         self.actual_type = actual_type
         self.field_name = field_name
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert type validation error to dictionary"""
         result = super().to_dict()
         result.update(
@@ -209,9 +205,7 @@ class TypeValidationError(TwitterSystemError):
 
 
 # Convenience functions for creating specific errors
-def validation_failed(
-    message: str, content_type: str, score: float, criteria: List[str]
-) -> ValidationError:
+def validation_failed(message: str, content_type: str, score: float, criteria: list[str]) -> ValidationError:
     """Create validation error with fail-fast context"""
     return ValidationError(
         message=f"Validation failed for {content_type}: {message}",
@@ -240,9 +234,7 @@ def data_file_not_found(file_path: Path, operation: str) -> DataError:
     )
 
 
-def invalid_data_format(
-    file_path: Path, expected_format: str, actual_format: str
-) -> DataError:
+def invalid_data_format(file_path: Path, expected_format: str, actual_format: str) -> DataError:
     """Create invalid data format error"""
     return DataError(
         message=f"Invalid data format in {file_path}: expected {expected_format}, got {actual_format}",

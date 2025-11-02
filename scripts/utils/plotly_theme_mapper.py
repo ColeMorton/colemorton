@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Plotly theme mapper for Sensylate design system integration.
+Plotly theme mapper for Cole Morton design system integration.
 
-This module maps Sensylate theme configurations to Plotly templates
+This module maps Cole Morton theme configurations to Plotly templates
 and layout specifications for consistent styling across chart engines.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import plotly.graph_objects as go
 import plotly.io as pio
 
 
 class PlotlyThemeMapper:
-    """Maps Sensylate themes to Plotly configurations."""
+    """Maps Cole Morton themes to Plotly configurations."""
 
     def __init__(self, theme_manager):
         """
         Initialize Plotly theme mapper.
 
         Args:
-            theme_manager: Sensylate theme manager instance
+            theme_manager: Cole Morton theme manager instance
         """
         self.theme_manager = theme_manager
         self._create_sensylate_templates()
@@ -29,25 +29,25 @@ class PlotlyThemeMapper:
         """Create comprehensive Plotly templates for light and dark modes."""
         # Create light mode template
         light_template = self._create_template("light")
-        pio.templates["sensylate_light"] = light_template
+        pio.templates["colemorton_light"] = light_template
 
         # Create dark mode template
         dark_template = self._create_template("dark")
-        pio.templates["sensylate_dark"] = dark_template
+        pio.templates["colemorton_dark"] = dark_template
 
         # Create high-DPI optimized templates
         light_hd_template = self._create_high_dpi_template("light")
-        pio.templates["sensylate_light_hd"] = light_hd_template
+        pio.templates["colemorton_light_hd"] = light_hd_template
 
         dark_hd_template = self._create_high_dpi_template("dark")
-        pio.templates["sensylate_dark_hd"] = dark_hd_template
+        pio.templates["colemorton_dark_hd"] = dark_hd_template
 
         # Create dashboard-specific template
         dashboard_template = self._create_dashboard_template("light")
         pio.templates["sensylate_dashboard"] = dashboard_template
 
         # Set default template
-        pio.templates.default = "sensylate_light"
+        pio.templates.default = "colemorton_light"
 
     def _create_template(self, mode: str) -> go.layout.Template:
         """
@@ -117,9 +117,7 @@ class PlotlyThemeMapper:
         )
 
         # Bar chart styling
-        template.data.bar = [
-            go.Bar(marker=dict(line=dict(color=theme.borders, width=1)), opacity=0.8)
-        ]
+        template.data.bar = [go.Bar(marker=dict(line=dict(color=theme.borders, width=1)), opacity=0.8)]
 
         # Pie/Donut chart styling
         template.data.pie = [
@@ -130,9 +128,7 @@ class PlotlyThemeMapper:
         ]
 
         # Scatter plot styling
-        template.data.scatter = [
-            go.Scatter(marker=dict(line=dict(color=theme.borders, width=0.8)))
-        ]
+        template.data.scatter = [go.Scatter(marker=dict(line=dict(color=theme.borders, width=0.8)))]
 
         return template
 
@@ -202,9 +198,7 @@ class PlotlyThemeMapper:
 
         return template
 
-    def get_template_name(
-        self, mode: str = "light", high_dpi: bool = False, dashboard: bool = False
-    ) -> str:
+    def get_template_name(self, mode: str = "light", high_dpi: bool = False, dashboard: bool = False) -> str:
         """
         Get appropriate template name based on requirements.
 
@@ -218,10 +212,9 @@ class PlotlyThemeMapper:
         """
         if dashboard:
             return "sensylate_dashboard"
-        elif high_dpi:
+        if high_dpi:
             return f"sensylate_{mode}_hd"
-        else:
-            return f"sensylate_{mode}"
+        return f"sensylate_{mode}"
 
     def apply_template(
         self,
@@ -231,7 +224,7 @@ class PlotlyThemeMapper:
         dashboard: bool = False,
     ) -> go.Figure:
         """
-        Apply appropriate Sensylate template to figure.
+        Apply appropriate Cole Morton template to figure.
 
         Args:
             fig: Plotly figure
@@ -246,7 +239,7 @@ class PlotlyThemeMapper:
         fig.update_layout(template=template_name)
         return fig
 
-    def get_layout_config(self, mode: str = "light", title: str = "") -> Dict[str, Any]:
+    def get_layout_config(self, mode: str = "light", title: str = "") -> dict[str, Any]:
         """
         Get Plotly layout configuration for specified mode.
 
@@ -276,23 +269,21 @@ class PlotlyThemeMapper:
             "paper_bgcolor": theme.background,
         }
 
-    def get_quality_colors_mapping(self) -> Dict[str, str]:
+    def get_quality_colors_mapping(self) -> dict[str, str]:
         """Get Plotly-compatible quality color mapping."""
         return self.theme_manager.get_quality_colors()
 
-    def get_performance_colors_mapping(self) -> Dict[str, str]:
+    def get_performance_colors_mapping(self) -> dict[str, str]:
         """Get Plotly-compatible performance color mapping."""
         return self.theme_manager.get_performance_colors()
 
-    def get_monthly_colors_list(self) -> List[str]:
+    def get_monthly_colors_list(self) -> list[str]:
         """Get Plotly-compatible monthly color list."""
         return self.theme_manager.get_monthly_colors()
 
-    def apply_theme_to_figure(
-        self, fig: go.Figure, mode: str = "light", title: str = ""
-    ):
+    def apply_theme_to_figure(self, fig: go.Figure, mode: str = "light", title: str = ""):
         """
-        Apply Sensylate theme to a Plotly figure.
+        Apply Cole Morton theme to a Plotly figure.
 
         Args:
             fig: Plotly figure object
@@ -302,9 +293,7 @@ class PlotlyThemeMapper:
         layout_config = self.get_layout_config(mode, title)
         fig.update_layout(**layout_config)
 
-    def create_export_config(
-        self, width: int = 1600, height: int = 1200, scale: float = 2.0
-    ) -> Dict[str, Any]:
+    def create_export_config(self, width: int = 1600, height: int = 1200, scale: float = 2.0) -> dict[str, Any]:
         """
         Create export configuration for high-quality static images.
 
@@ -318,9 +307,7 @@ class PlotlyThemeMapper:
         """
         return {"width": width, "height": height, "scale": scale, "format": "png"}
 
-    def get_advanced_styling_config(
-        self, chart_type: str, mode: str = "light"
-    ) -> Dict[str, Any]:
+    def get_advanced_styling_config(self, chart_type: str, mode: str = "light") -> dict[str, Any]:
         """
         Get advanced styling configuration for complex chart types.
 
@@ -370,7 +357,7 @@ class PlotlyThemeMapper:
                 },
             }
 
-        elif chart_type == "scatter":
+        if chart_type == "scatter":
             return {
                 "markers": {
                     "base_size": 15,
@@ -417,7 +404,7 @@ class PlotlyThemeMapper:
                 },
             }
 
-        elif chart_type == "clustering":
+        if chart_type == "clustering":
             return {
                 "centroids": {
                     "base_size": 25,
@@ -445,7 +432,7 @@ class PlotlyThemeMapper:
                 },
             }
 
-        elif chart_type == "performance_bands":
+        if chart_type == "performance_bands":
             return {
                 "bars": {
                     "opacity": 0.8,
@@ -470,9 +457,7 @@ class PlotlyThemeMapper:
 
         return {}
 
-    def get_scalability_styling(
-        self, volume_category: str, mode: str = "light"
-    ) -> Dict[str, Any]:
+    def get_scalability_styling(self, volume_category: str, mode: str = "light") -> dict[str, Any]:
         """
         Get styling configuration based on data volume for scalability optimization.
 
@@ -516,9 +501,7 @@ class PlotlyThemeMapper:
 
         return base_config.get(volume_category, base_config["medium"])
 
-    def apply_advanced_styling(
-        self, fig: go.Figure, chart_type: str, mode: str = "light", **kwargs
-    ):
+    def apply_advanced_styling(self, fig: go.Figure, chart_type: str, mode: str = "light", **kwargs):
         """
         Apply advanced styling to a Plotly figure based on chart type.
 
@@ -537,21 +520,15 @@ class PlotlyThemeMapper:
         # Update figure based on styling configuration
         if chart_type == "scatter":
             # Apply scatter-specific styling optimizations
-            fig.update_traces(
-                marker=dict(
-                    opacity=styling_config.get("markers", {}).get("base_alpha", 0.8)
-                )
-            )
+            fig.update_traces(marker=dict(opacity=styling_config.get("markers", {}).get("base_alpha", 0.8)))
         elif chart_type == "waterfall":
             # Apply waterfall-specific styling optimizations
-            fig.update_traces(
-                opacity=styling_config.get("bars", {}).get("opacity", 0.8)
-            )
+            fig.update_traces(opacity=styling_config.get("bars", {}).get("opacity", 0.8))
 
         # Apply responsive layout adjustments
         fig.update_layout(autosize=True)
 
-    def get_font_configuration(self, mode: str = "light") -> Dict[str, Any]:
+    def get_font_configuration(self, mode: str = "light") -> dict[str, Any]:
         """
         Get comprehensive font configuration for Plotly with Heebo integration.
 
@@ -562,11 +539,7 @@ class PlotlyThemeMapper:
             Font configuration dictionary
         """
         # Get font list from theme manager
-        fonts = (
-            self.theme_manager._get_font_list()
-            if self.theme_manager
-            else ["sans-serif"]
-        )
+        fonts = self.theme_manager._get_font_list() if self.theme_manager else ["sans-serif"]
 
         # Heebo font stack with fallbacks
         heebo_stack = [
@@ -592,9 +565,7 @@ class PlotlyThemeMapper:
             if font not in combined_fonts:
                 combined_fonts.append(font)
 
-        theme = (
-            self.theme_manager.get_theme_colors(mode) if self.theme_manager else None
-        )
+        theme = self.theme_manager.get_theme_colors(mode) if self.theme_manager else None
 
         return {
             "family": ", ".join(combined_fonts),
@@ -615,9 +586,7 @@ class PlotlyThemeMapper:
             "weights": {"normal": "normal", "medium": "500", "bold": "bold"},
         }
 
-    def apply_font_configuration(
-        self, fig: go.Figure, mode: str = "light"
-    ) -> go.Figure:
+    def apply_font_configuration(self, fig: go.Figure, mode: str = "light") -> go.Figure:
         """
         Apply comprehensive font configuration to Plotly figure.
 
@@ -691,10 +660,10 @@ class MultiFormatExporter:
         self,
         fig: go.Figure,
         filepath: str,
-        formats: List[str] = None,
+        formats: list[str] = None,
         high_dpi: bool = True,
         mode: str = "light",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Export chart in multiple formats with optimized settings.
 
@@ -740,7 +709,7 @@ class MultiFormatExporter:
                 exported_files[format_type] = output_path
 
             except Exception as e:
-                print("Warning: Failed to export {format_type}: {e}")
+                print(f"Warning: Failed to export {format_type}: {e}")
 
         return exported_files
 
@@ -790,12 +759,12 @@ class MultiFormatExporter:
 
     def create_export_batch(
         self,
-        figures: Dict[str, go.Figure],
+        figures: dict[str, go.Figure],
         output_dir: str,
-        formats: List[str] = None,
+        formats: list[str] = None,
         high_dpi: bool = True,
         mode: str = "light",
-    ) -> Dict[str, Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         """
         Export multiple figures in batch with consistent settings.
 

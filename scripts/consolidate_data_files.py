@@ -15,7 +15,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -62,10 +62,7 @@ class DataConsolidator:
                     symbols.append(symbol_dir.name)
 
         if not symbols:
-            print(
-                "❌ No symbols found"
-                + (f" for {target_symbol}" if target_symbol else "")
-            )
+            print("❌ No symbols found" + (f" for {target_symbol}" if target_symbol else ""))
             return
 
         print("🚀 Starting consolidation for {len(symbols)} symbols")
@@ -77,7 +74,7 @@ class DataConsolidator:
             try:
                 self._consolidate_symbol(symbol)
                 self.stats["symbols_processed"] += 1
-            except Exception as e:
+            except Exception:
                 print("❌ Error consolidating {symbol}: {e}")
                 self.stats["errors"] += 1
 
@@ -99,7 +96,7 @@ class DataConsolidator:
         for data_type, timeframe, frag_dir in fragmented_dirs:
             self._consolidate_timeframe_data(symbol, data_type, timeframe, frag_dir)
 
-    def _find_fragmented_directories(self, symbol_path: Path) -> List[tuple]:
+    def _find_fragmented_directories(self, symbol_path: Path) -> list[tuple]:
         """Find directories with fragmented period-based files"""
         fragmented = []
 
@@ -161,17 +158,13 @@ class DataConsolidator:
 
         return fragmented
 
-    def _consolidate_timeframe_data(
-        self, symbol: str, data_type: DataType, timeframe: Timeframe, frag_dir: Path
-    ):
+    def _consolidate_timeframe_data(self, symbol: str, data_type: DataType, timeframe: Timeframe, frag_dir: Path):
         """Consolidate fragmented files for a specific timeframe"""
         print("   🔄 Consolidating {symbol} {timeframe.value} {data_type.value}...")
 
         # Collect all fragmented files
         csv_files = list(frag_dir.rglob("*.csv"))
-        json_files = [
-            f for f in frag_dir.rglob("*.json") if not f.name.endswith(".meta.json")
-        ]
+        json_files = [f for f in frag_dir.rglob("*.json") if not f.name.endswith(".meta.json")]
         meta_files = list(frag_dir.rglob("*.meta.json"))
 
         all_files = csv_files + json_files + meta_files
@@ -180,9 +173,7 @@ class DataConsolidator:
             print("      ⚠️  No files to consolidate")
             return
 
-        print(
-            f"      📄 Found {len(csv_files)} CSV, {len(json_files)} JSON, {len(meta_files)} metadata files"
-        )
+        print(f"      📄 Found {len(csv_files)} CSV, {len(json_files)} JSON, {len(meta_files)} metadata files")
 
         # Backup if requested
         if self.backup and not self.dry_run:
@@ -190,13 +181,9 @@ class DataConsolidator:
 
         # Consolidate based on data type
         if data_type == DataType.STOCK_DAILY_PRICES and csv_files:
-            consolidated_count = self._consolidate_csv_files(
-                symbol, data_type, timeframe, csv_files, meta_files
-            )
+            consolidated_count = self._consolidate_csv_files(symbol, data_type, timeframe, csv_files, meta_files)
         else:
-            consolidated_count = self._consolidate_json_files(
-                symbol, data_type, timeframe, json_files, meta_files
-            )
+            consolidated_count = self._consolidate_json_files(symbol, data_type, timeframe, json_files, meta_files)
 
         if consolidated_count > 0:
             # Calculate space savings
@@ -211,9 +198,7 @@ class DataConsolidator:
             self.stats["files_removed"] += len(all_files)
             self.stats["space_saved"] += original_size
 
-            print(
-                f"      ✅ Consolidated {len(all_files)} files → 2 files ({original_size:,} bytes)"
-            )
+            print(f"      ✅ Consolidated {len(all_files)} files → 2 files ({original_size:,} bytes)")
         else:
             print("      ❌ Consolidation failed")
 
@@ -222,8 +207,8 @@ class DataConsolidator:
         symbol: str,
         data_type: DataType,
         timeframe: Timeframe,
-        csv_files: List[Path],
-        meta_files: List[Path],
+        csv_files: list[Path],
+        meta_files: list[Path],
     ) -> int:
         """Consolidate CSV files into single consolidated file"""
         all_records = []
@@ -238,19 +223,17 @@ class DataConsolidator:
                 # Find corresponding metadata
                 meta_file = None
                 for mf in meta_files:
-                    if mf.parent == csv_file.parent and mf.stem.startswith(
-                        csv_file.stem
-                    ):
+                    if mf.parent == csv_file.parent and mf.stem.startswith(csv_file.stem):
                         meta_file = mf
                         break
 
                 if meta_file and meta_file.exists():
-                    with open(meta_file, "r") as f:
+                    with open(meta_file) as f:
                         meta = json.load(f)
                         if meta.get("source"):
                             sources.add(meta["source"])
 
-            except Exception as e:
+            except Exception:
                 print("         ⚠️  Failed to read {csv_file}: {e}")
                 continue
 
@@ -290,8 +273,8 @@ class DataConsolidator:
         symbol: str,
         data_type: DataType,
         timeframe: Timeframe,
-        json_files: List[Path],
-        meta_files: List[Path],
+        json_files: list[Path],
+        meta_files: list[Path],
     ) -> int:
         """Consolidate JSON files (for non-time-series data)"""
         if not json_files:
@@ -301,13 +284,11 @@ class DataConsolidator:
         latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
 
         try:
-            with open(latest_file, "r") as f:
+            with open(latest_file) as f:
                 data = json.load(f)
 
             if self.dry_run:
-                print(
-                    f"         📊 Would consolidate latest JSON data from {latest_file.name}"
-                )
+                print(f"         📊 Would consolidate latest JSON data from {latest_file.name}")
                 return len(json_files)
 
             # Store consolidated data
@@ -321,7 +302,7 @@ class DataConsolidator:
 
             return len(json_files) if success else 0
 
-        except Exception as e:
+        except Exception:
             print("         ❌ Failed to consolidate JSON files: {e}")
             return 0
 
@@ -333,15 +314,15 @@ class DataConsolidator:
         try:
             shutil.copytree(directory, backup_dir)
             print("      💾 Backup created: {backup_dir}")
-        except Exception as e:
+        except Exception:
             print("      ⚠️  Backup failed: {e}")
 
-    def _remove_fragmented_files(self, files: List[Path]):
+    def _remove_fragmented_files(self, files: list[Path]):
         """Remove fragmented files after successful consolidation"""
         for file_path in files:
             try:
                 file_path.unlink()
-            except Exception as e:
+            except Exception:
                 print("      ⚠️  Failed to remove {file_path}: {e}")
 
     def _remove_empty_directories(self, directory: Path):
@@ -356,7 +337,7 @@ class DataConsolidator:
             if directory.exists() and not any(directory.iterdir()):
                 directory.rmdir()
                 print("      🗑️  Removed empty directory: {directory}")
-        except Exception as e:
+        except Exception:
             print("      ⚠️  Failed to clean directories: {e}")
 
     def _print_summary(self):
@@ -372,30 +353,22 @@ class DataConsolidator:
 
         if self.stats["symbols_processed"] > 0 and self.stats["files_removed"] > 0:
             efficiency = (
-                (self.stats["files_removed"] - self.stats["files_consolidated"] * 2)
-                / self.stats["files_removed"]
-                * 100
+                (self.stats["files_removed"] - self.stats["files_consolidated"] * 2) / self.stats["files_removed"] * 100
             )
             print("   File reduction: {efficiency:.1f}%")
 
-        print(
-            f"\n🎉 Consolidation {'simulation' if self.dry_run else 'completed'} successfully!"
-        )
+        print(f"\n🎉 Consolidation {'simulation' if self.dry_run else 'completed'} successfully!")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Consolidate fragmented historical data files"
-    )
+    parser = argparse.ArgumentParser(description="Consolidate fragmented historical data files")
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show what would be done without making changes",
     )
     parser.add_argument("--symbol", help="Consolidate specific symbol only")
-    parser.add_argument(
-        "--no-backup", action="store_true", help="Skip creating backups"
-    )
+    parser.add_argument("--no-backup", action="store_true", help="Skip creating backups")
 
     args = parser.parse_args()
 

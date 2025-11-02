@@ -1,7 +1,6 @@
 import React from "react";
 import FundamentalChart from "../charts/FundamentalCharts";
 import type { FundamentalAnalysisData } from "@/types/ChartTypes";
-import { DashboardLoader } from "@/lib/dashboardLoader";
 
 interface FundamentalAnalysisDashboardProps {
   data: FundamentalAnalysisData;
@@ -18,7 +17,6 @@ const FundamentalAnalysisDashboard: React.FC<
     data: !!data,
     exportMode,
   });
-  const dashboardClasses = DashboardLoader.getLayoutClasses("fundamental_3x3");
 
   return (
     <div className={`fundamental-dashboard ${className}`} data-ticker={ticker}>

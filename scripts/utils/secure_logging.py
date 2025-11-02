@@ -8,7 +8,7 @@ Prevents accidental exposure of sensitive information in log files.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class SecureFormatter(logging.Formatter):
@@ -23,9 +23,7 @@ class SecureFormatter(logging.Formatter):
         self.sensitive_patterns = [
             # API key patterns
             (
-                re.compile(
-                    r'(api_?key["\']?\s*[:=]\s*["\']?)([a-zA-Z0-9]{8,})', re.IGNORECASE
-                ),
+                re.compile(r'(api_?key["\']?\s*[:=]\s*["\']?)([a-zA-Z0-9]{8,})', re.IGNORECASE),
                 r"\1****\2****",
             ),
             (
@@ -47,9 +45,7 @@ class SecureFormatter(logging.Formatter):
             (re.compile(r"(bearer\s+)([a-zA-Z0-9._-]{20,})", re.IGNORECASE), r"\1****"),
             # Basic auth
             (
-                re.compile(
-                    r"(authorization:\s*basic\s+)([a-zA-Z0-9+/=]{20,})", re.IGNORECASE
-                ),
+                re.compile(r"(authorization:\s*basic\s+)([a-zA-Z0-9+/=]{20,})", re.IGNORECASE),
                 r"\1****",
             ),
             # URLs with embedded credentials
@@ -102,18 +98,13 @@ class SecureLogger:
         self.logger.setLevel(level)
 
         # Add secure formatter if not already present
-        if not any(
-            isinstance(handler.formatter, SecureFormatter)
-            for handler in self.logger.handlers
-        ):
+        if not any(isinstance(handler.formatter, SecureFormatter) for handler in self.logger.handlers):
             self._setup_secure_handlers()
 
     def _setup_secure_handlers(self):
         """Set up secure logging handlers with obfuscation"""
         # Create secure formatter
-        secure_formatter = SecureFormatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        secure_formatter = SecureFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Update existing handlers
         for handler in self.logger.handlers:
@@ -125,7 +116,7 @@ class SecureLogger:
             console_handler.setFormatter(secure_formatter)
             self.logger.addHandler(console_handler)
 
-    def log_api_status(self, service_name: str, status: Dict[str, Any]):
+    def log_api_status(self, service_name: str, status: dict[str, Any]):
         """Safely log API service status with automatic obfuscation"""
         safe_status = status.copy()
 
@@ -138,9 +129,7 @@ class SecureLogger:
         # Log the safe status
         self.logger.info(f"API Service Status - {service_name}: {safe_status}")
 
-    def log_config_validation(
-        self, config_name: str, is_valid: bool, details: Optional[Dict] = None
-    ):
+    def log_config_validation(self, config_name: str, is_valid: bool, details: dict | None = None):
         """Log configuration validation results safely"""
         status = "VALID" if is_valid else "INVALID"
         message = f"Configuration validation - {config_name}: {status}"
@@ -150,10 +139,7 @@ class SecureLogger:
             safe_details = {
                 k: v
                 for k, v in details.items()
-                if not any(
-                    sensitive in k.lower()
-                    for sensitive in ["key", "secret", "password", "token"]
-                )
+                if not any(sensitive in k.lower() for sensitive in ["key", "secret", "password", "token"])
             }
             if safe_details:
                 message += f" - Details: {safe_details}"
@@ -212,9 +198,7 @@ def obfuscate_api_keys_in_text(text: str) -> str:
     return text
 
 
-def setup_secure_logging_for_module(
-    module_name: str, level: int = logging.INFO
-) -> SecureLogger:
+def setup_secure_logging_for_module(module_name: str, level: int = logging.INFO) -> SecureLogger:
     """
     Set up secure logging for a module with proper obfuscation
 
@@ -241,9 +225,7 @@ if __name__ == "__main__":
     # These should be obfuscated in the output
     test_logger.info("API_KEY=Q4206ZINHPUCHHKM should be obfuscated")
     test_logger.info("Bearer token abc123def456ghi789 should be hidden")
-    test_logger.info(
-        '{"api_key": "adf9715a6970ae8a72cb83119284516557c2ea0820c92e33b13689ef0cfa1926"}'
-    )
+    test_logger.info('{"api_key": "adf9715a6970ae8a72cb83119284516557c2ea0820c92e33b13689ef0cfa1926"}')
     test_logger.info("FRED_API_KEY: 8e5ae1273bd7a0307a0323ff1ed6ce73")
 
     # Test API status logging

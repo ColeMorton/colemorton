@@ -14,9 +14,10 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, Template, TemplateNotFound
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -27,7 +28,7 @@ from utils.cli_base import ServiceError, ValidationError
 class TwitterTemplateRenderer:
     """Unified Twitter template rendering system"""
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         """Initialize the template renderer"""
         self.templates_dir = templates_dir or Path(__file__).parent / "templates"
         self.twitter_templates_dir = self.templates_dir / "twitter"
@@ -57,19 +58,17 @@ class TwitterTemplateRenderer:
                 "comparison": "twitter/sector/cross_sector_comparison.j2",
                 "rotation": "twitter/sector/rotation_analysis.j2",
             },
-            "trade_history": {
-                "performance": "twitter/trade_history/performance_update.j2"
-            },
+            "trade_history": {"performance": "twitter/trade_history/performance_update.j2"},
         }
 
     def render_content(
         self,
         content_type: str,
         ticker: str,
-        data: Dict[str, Any],
-        template_variant: Optional[str] = None,
-        timestamp: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data: dict[str, Any],
+        template_variant: str | None = None,
+        timestamp: str | None = None,
+    ) -> dict[str, Any]:
         """
         Render Twitter content using the unified template system
 
@@ -102,9 +101,7 @@ class TwitterTemplateRenderer:
             rendered_content = template.render(**context)
 
             # Post-render validation
-            content_validation = self._validate_rendered_content(
-                rendered_content, content_type, template_variant
-            )
+            content_validation = self._validate_rendered_content(rendered_content, content_type, template_variant)
 
             return {
                 "content": rendered_content.strip(),
@@ -117,9 +114,7 @@ class TwitterTemplateRenderer:
                     "timestamp": timestamp,
                     "data_validation": validation_result,
                     "content_validation": content_validation,
-                    "institutional_compliant": content_validation.get(
-                        "compliant", False
-                    ),
+                    "institutional_compliant": content_validation.get("compliant", False),
                 },
             }
 
@@ -129,8 +124,8 @@ class TwitterTemplateRenderer:
     def _select_template(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        template_variant: Optional[str] = None,
+        data: dict[str, Any],
+        template_variant: str | None = None,
     ) -> str:
         """Select optimal template based on content type and data characteristics"""
 
@@ -139,23 +134,20 @@ class TwitterTemplateRenderer:
             if content_type in self.template_mappings:
                 if template_variant in self.template_mappings[content_type]:
                     return self.template_mappings[content_type][template_variant]
-            raise ValidationError(
-                f"Template variant '{template_variant}' not found for content type '{content_type}'"
-            )
+            raise ValidationError(f"Template variant '{template_variant}' not found for content type '{content_type}'")
 
         # Intelligent template selection based on data content
         if content_type == "fundamental":
             return self._select_fundamental_template(data)
-        elif content_type == "strategy":
+        if content_type == "strategy":
             return self.template_mappings["strategy"]["default"]
-        elif content_type == "sector":
+        if content_type == "sector":
             return self._select_sector_template(data)
-        elif content_type == "trade_history":
+        if content_type == "trade_history":
             return self.template_mappings["trade_history"]["performance"]
-        else:
-            raise ValidationError(f"Unknown content type: {content_type}")
+        raise ValidationError(f"Unknown content type: {content_type}")
 
-    def _select_fundamental_template(self, data: Dict[str, Any]) -> str:
+    def _select_fundamental_template(self, data: dict[str, Any]) -> str:
         """Select fundamental analysis template based on data characteristics"""
 
         # Template A: Valuation Disconnect
@@ -177,7 +169,7 @@ class TwitterTemplateRenderer:
         # Template E: Financial Health (default)
         return self.template_mappings["fundamental"]["E_financial"]
 
-    def _select_sector_template(self, data: Dict[str, Any]) -> str:
+    def _select_sector_template(self, data: dict[str, Any]) -> str:
         """Select sector analysis template based on data characteristics"""
 
         # Check for rotation signals
@@ -187,7 +179,7 @@ class TwitterTemplateRenderer:
         # Default to comparison template
         return self.template_mappings["sector"]["comparison"]
 
-    def _has_valuation_data(self, data: Dict[str, Any]) -> bool:
+    def _has_valuation_data(self, data: dict[str, Any]) -> bool:
         """Check if data contains valuation-focused content"""
         valuation_indicators = [
             "fair_value",
@@ -200,7 +192,7 @@ class TwitterTemplateRenderer:
         ]
         return any(data.get(indicator) for indicator in valuation_indicators)
 
-    def _has_catalyst_data(self, data: Dict[str, Any]) -> bool:
+    def _has_catalyst_data(self, data: dict[str, Any]) -> bool:
         """Check if data contains catalyst-focused content"""
         catalyst_indicators = [
             "catalysts",
@@ -212,7 +204,7 @@ class TwitterTemplateRenderer:
         ]
         return any(data.get(indicator) for indicator in catalyst_indicators)
 
-    def _has_moat_data(self, data: Dict[str, Any]) -> bool:
+    def _has_moat_data(self, data: dict[str, Any]) -> bool:
         """Check if data contains moat/competitive advantage content"""
         moat_indicators = [
             "moat_advantages",
@@ -224,7 +216,7 @@ class TwitterTemplateRenderer:
         ]
         return any(data.get(indicator) for indicator in moat_indicators)
 
-    def _has_contrarian_data(self, data: Dict[str, Any]) -> bool:
+    def _has_contrarian_data(self, data: dict[str, Any]) -> bool:
         """Check if data contains contrarian analysis content"""
         contrarian_indicators = [
             "contrarian_insight",
@@ -235,9 +227,7 @@ class TwitterTemplateRenderer:
         ]
         return any(data.get(indicator) for indicator in contrarian_indicators)
 
-    def _prepare_context(
-        self, content_type: str, ticker: str, data: Dict[str, Any], timestamp: str
-    ) -> Dict[str, Any]:
+    def _prepare_context(self, content_type: str, ticker: str, data: dict[str, Any], timestamp: str) -> dict[str, Any]:
         """Prepare the rendering context for templates"""
 
         context = {
@@ -273,9 +263,7 @@ class TwitterTemplateRenderer:
         }
         return mapping.get(content_type, "default")
 
-    def _get_additional_hashtags(
-        self, content_type: str, data: Dict[str, Any]
-    ) -> List[str]:
+    def _get_additional_hashtags(self, content_type: str, data: dict[str, Any]) -> list[str]:
         """Get additional hashtags based on content type and data"""
         hashtags = []
 
@@ -298,9 +286,7 @@ class TwitterTemplateRenderer:
 
         return hashtags
 
-    def _validate_data_completeness(
-        self, content_type: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_data_completeness(self, content_type: str, data: dict[str, Any]) -> dict[str, Any]:
         """Validate data completeness for content type"""
 
         required_fields = {
@@ -326,19 +312,13 @@ class TwitterTemplateRenderer:
             "data_quality": (
                 "excellent"
                 if completeness_score >= 0.9
-                else (
-                    "good"
-                    if completeness_score >= 0.7
-                    else "fair"
-                    if completeness_score >= 0.5
-                    else "poor"
-                )
+                else ("good" if completeness_score >= 0.7 else "fair" if completeness_score >= 0.5 else "poor")
             ),
         }
 
     def _validate_rendered_content(
-        self, content: str, content_type: str, template_variant: Optional[str]
-    ) -> Dict[str, Any]:
+        self, content: str, content_type: str, template_variant: str | None
+    ) -> dict[str, Any]:
         """Validate rendered content meets quality standards"""
 
         issues = []
@@ -373,9 +353,7 @@ class TwitterTemplateRenderer:
 
         # NO BOLD FORMATTING validation
         if "**" in content:
-            issues.append(
-                "Content contains bold formatting (violates institutional standards)"
-            )
+            issues.append("Content contains bold formatting (violates institutional standards)")
             compliant = False
 
         # Template-specific validation
@@ -403,42 +381,37 @@ class TwitterTemplateRenderer:
             raise ServiceError(f"Failed to load template {template_path}: {e}")
 
     def render_fundamental_analysis(
-        self, ticker: str, data: Dict[str, Any], template_variant: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, ticker: str, data: dict[str, Any], template_variant: str | None = None
+    ) -> dict[str, Any]:
         """Render fundamental analysis Twitter content"""
         return self.render_content("fundamental", ticker, data, template_variant)
 
     def render_strategy_post(
-        self, ticker: str, data: Dict[str, Any], template_variant: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, ticker: str, data: dict[str, Any], template_variant: str | None = None
+    ) -> dict[str, Any]:
         """Render strategy Twitter content"""
         return self.render_content("strategy", ticker, data, template_variant)
 
     def render_sector_analysis(
-        self, sector: str, data: Dict[str, Any], template_variant: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, sector: str, data: dict[str, Any], template_variant: str | None = None
+    ) -> dict[str, Any]:
         """Render sector analysis Twitter content"""
         return self.render_content("sector", sector, data, template_variant)
 
     def render_trade_history(
         self,
         identifier: str,
-        data: Dict[str, Any],
-        template_variant: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data: dict[str, Any],
+        template_variant: str | None = None,
+    ) -> dict[str, Any]:
         """Render trade history Twitter content"""
         return self.render_content("trade_history", identifier, data, template_variant)
 
-    def get_available_templates(self) -> Dict[str, List[str]]:
+    def get_available_templates(self) -> dict[str, list[str]]:
         """Get list of available templates by content type"""
-        return {
-            content_type: list(templates.keys())
-            for content_type, templates in self.template_mappings.items()
-        }
+        return {content_type: list(templates.keys()) for content_type, templates in self.template_mappings.items()}
 
-    def validate_template_exists(
-        self, content_type: str, template_variant: str
-    ) -> bool:
+    def validate_template_exists(self, content_type: str, template_variant: str) -> bool:
         """Validate that a template exists"""
         if content_type not in self.template_mappings:
             return False

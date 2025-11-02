@@ -9,7 +9,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from sector_cross_reference import SectorCrossReference
 
@@ -89,11 +89,7 @@ class AnalysisValidator:
         if basename.endswith(".md"):
             ticker_date = basename.replace(".md", "")
         else:
-            ticker_date = (
-                basename.replace(".json", "")
-                if basename.endswith(".json")
-                else basename
-            )
+            ticker_date = basename.replace(".json", "") if basename.endswith(".json") else basename
 
         # Extract date part (assuming format: TICKER_YYYYMMDD)
         parts = ticker_date.split("_")
@@ -108,11 +104,11 @@ class AnalysisValidator:
         discovery_path = f"./data/outputs/fundamental_analysis/discovery/{self.ticker}_{date_part}_discovery.json"
         if os.path.exists(discovery_path):
             try:
-                with open(discovery_path, "r") as f:
+                with open(discovery_path) as f:
                     self.discovery_data = json.load(f)
                 print("📂 Loaded discovery data: {discovery_path}")
                 success_count += 1
-            except Exception as e:
+            except Exception:
                 print("⚠️ Error loading discovery data: {str(e)}")
         else:
             print("⚠️ Discovery data not found: {discovery_path}")
@@ -121,11 +117,11 @@ class AnalysisValidator:
         analysis_path = f"./data/outputs/fundamental_analysis/analysis/{self.ticker}_{date_part}_analysis.json"
         if os.path.exists(analysis_path):
             try:
-                with open(analysis_path, "r") as f:
+                with open(analysis_path) as f:
                     self.analysis_data = json.load(f)
                 print("📂 Loaded analysis data: {analysis_path}")
                 success_count += 1
-            except Exception as e:
+            except Exception:
                 print("⚠️ Error loading analysis data: {str(e)}")
         else:
             print("⚠️ Analysis data not found: {analysis_path}")
@@ -134,15 +130,13 @@ class AnalysisValidator:
         if os.path.exists(self.synthesis_file_path):
             try:
                 if self.synthesis_file_path.endswith(".json"):
-                    with open(self.synthesis_file_path, "r") as f:
+                    with open(self.synthesis_file_path) as f:
                         self.synthesis_data = json.load(f)
                 elif self.synthesis_file_path.endswith(".md"):
                     # For markdown files, load the corresponding JSON
-                    json_path = self.synthesis_file_path.replace(
-                        ".md", "_synthesis.json"
-                    )
+                    json_path = self.synthesis_file_path.replace(".md", "_synthesis.json")
                     if os.path.exists(json_path):
-                        with open(json_path, "r") as f:
+                        with open(json_path) as f:
                             self.synthesis_data = json.load(f)
                     else:
                         # Create minimal synthesis data structure
@@ -150,14 +144,14 @@ class AnalysisValidator:
 
                 print("📂 Loaded synthesis data: {self.synthesis_file_path}")
                 success_count += 1
-            except Exception as e:
+            except Exception:
                 print("⚠️ Error loading synthesis data: {str(e)}")
         else:
             print("❌ Synthesis file not found: {self.synthesis_file_path}")
 
         return success_count >= 2  # At least 2 out of 3 files needed for validation
 
-    def validate_discovery_phase(self) -> Dict[str, Any]:
+    def validate_discovery_phase(self) -> dict[str, Any]:
         """Validate discovery phase outputs and data quality"""
         if not self.discovery_data:
             return {
@@ -189,16 +183,14 @@ class AnalysisValidator:
         validation_results["overall_discovery_score"] = round(overall_score, 2)
 
         # Evidence Quality Assessment
-        validation_results["evidence_quality"] = self._assess_evidence_quality(
-            overall_score
-        )
+        validation_results["evidence_quality"] = self._assess_evidence_quality(overall_score)
 
         # Key Issues Identification
         validation_results["key_issues"] = self._identify_discovery_issues()
 
         return validation_results
 
-    def validate_analysis_phase(self) -> Dict[str, Any]:
+    def validate_analysis_phase(self) -> dict[str, Any]:
         """Validate analysis phase outputs and methodology"""
         if not self.analysis_data:
             return {
@@ -230,16 +222,14 @@ class AnalysisValidator:
         validation_results["overall_analysis_score"] = round(overall_score, 2)
 
         # Evidence Quality Assessment
-        validation_results["evidence_quality"] = self._assess_evidence_quality(
-            overall_score
-        )
+        validation_results["evidence_quality"] = self._assess_evidence_quality(overall_score)
 
         # Key Issues Identification
         validation_results["key_issues"] = self._identify_analysis_issues()
 
         return validation_results
 
-    def validate_synthesis_phase(self) -> Dict[str, Any]:
+    def validate_synthesis_phase(self) -> dict[str, Any]:
         """Validate synthesis phase outputs and investment thesis quality"""
         if not self.synthesis_data:
             return {
@@ -271,9 +261,7 @@ class AnalysisValidator:
         validation_results["overall_synthesis_score"] = round(overall_score, 2)
 
         # Evidence Quality Assessment
-        validation_results["evidence_quality"] = self._assess_evidence_quality(
-            overall_score
-        )
+        validation_results["evidence_quality"] = self._assess_evidence_quality(overall_score)
 
         # Key Issues Identification
         validation_results["key_issues"] = self._identify_synthesis_issues()
@@ -282,10 +270,10 @@ class AnalysisValidator:
 
     def generate_critical_findings_matrix(
         self,
-        discovery_validation: Dict[str, Any],
-        analysis_validation: Dict[str, Any],
-        synthesis_validation: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        discovery_validation: dict[str, Any],
+        analysis_validation: dict[str, Any],
+        synthesis_validation: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate comprehensive critical findings matrix"""
         # High confidence claims (score >= 9.0)
         high_confidence_claims = []
@@ -329,17 +317,11 @@ class AnalysisValidator:
 
         for claim_type, score in all_scores:
             if score >= 9.0:
-                high_confidence_claims.append(
-                    f"{claim_type} validated with high confidence (Score: {score})"
-                )
+                high_confidence_claims.append(f"{claim_type} validated with high confidence (Score: {score})")
             elif score >= 7.0:
-                medium_confidence_claims.append(
-                    f"{claim_type} has moderate confidence (Score: {score})"
-                )
+                medium_confidence_claims.append(f"{claim_type} has moderate confidence (Score: {score})")
             elif score > 0:
-                low_confidence_claims.append(
-                    f"{claim_type} has low confidence (Score: {score})"
-                )
+                low_confidence_claims.append(f"{claim_type} has low confidence (Score: {score})")
             else:
                 unverifiable_claims.append(f"{claim_type} could not be verified")
 
@@ -350,18 +332,14 @@ class AnalysisValidator:
             "unverifiable_claims": unverifiable_claims,
         }
 
-    def assess_decision_impact(
-        self, overall_reliability_score: float
-    ) -> Dict[str, Any]:
+    def assess_decision_impact(self, overall_reliability_score: float) -> dict[str, Any]:
         """Assess impact on investment decision making"""
         # Determine thesis-breaking issues
         thesis_breaking_threshold = 6.0
         thesis_breaking_issues = []
 
         if overall_reliability_score < thesis_breaking_threshold:
-            thesis_breaking_issues.append(
-                "Overall reliability score below acceptable threshold"
-            )
+            thesis_breaking_issues.append("Overall reliability score below acceptable threshold")
 
         # Material concerns (scores 6.0-8.0)
         material_concerns = []
@@ -372,15 +350,11 @@ class AnalysisValidator:
         # Refinement needed (scores 8.0-9.0)
         refinement_needed = []
         if 8.0 <= overall_reliability_score < 9.0:
-            refinement_needed.append(
-                "Minor improvements recommended for institutional quality"
-            )
+            refinement_needed.append("Minor improvements recommended for institutional quality")
             refinement_needed.append("Consider peer comparison validation")
 
         return {
-            "thesis_breaking_issues": (
-                thesis_breaking_issues if thesis_breaking_issues else "none"
-            ),
+            "thesis_breaking_issues": (thesis_breaking_issues if thesis_breaking_issues else "none"),
             "material_concerns": material_concerns,
             "refinement_needed": refinement_needed,
         }
@@ -388,9 +362,9 @@ class AnalysisValidator:
     def generate_usage_recommendations(
         self,
         overall_reliability_score: float,
-        critical_findings: Dict[str, Any],
-        decision_impact: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        critical_findings: dict[str, Any],
+        decision_impact: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate usage recommendations based on validation results"""
         safe_for_decision = overall_reliability_score >= self.confidence_threshold
 
@@ -399,9 +373,7 @@ class AnalysisValidator:
         if overall_reliability_score < 9.0:
             required_corrections.append("Enhance data validation and cross-referencing")
         if len(critical_findings["unverifiable_claims"]) > 2:
-            required_corrections.append(
-                "Address unverifiable claims with additional data sources"
-            )
+            required_corrections.append("Address unverifiable claims with additional data sources")
 
         # Follow-up research recommendations
         follow_up_research = [
@@ -424,7 +396,7 @@ class AnalysisValidator:
             "monitoring_requirements": monitoring_requirements,
         }
 
-    def validate_sector_analysis_integration(self) -> Dict[str, Any]:
+    def validate_sector_analysis_integration(self) -> dict[str, Any]:
         """Validate sector analysis integration and cross-references"""
         validation_results = {
             "sector_context_validation": 0.0,
@@ -442,9 +414,7 @@ class AnalysisValidator:
             validation_results["sector_rotation_analysis"] = 8.8
             validation_results["sector_analysis_cross_reference"] = 8.5
         else:
-            validation_results["key_issues"].append(
-                "Sector analysis integration missing from synthesis"
-            )
+            validation_results["key_issues"].append("Sector analysis integration missing from synthesis")
 
         # Calculate overall score
         scores = [
@@ -455,13 +425,11 @@ class AnalysisValidator:
             or k.endswith("_analysis")
             or k.endswith("_reference")
         ]
-        validation_results["overall_sector_integration_score"] = round(
-            sum(scores) / len(scores) if scores else 0.0, 2
-        )
+        validation_results["overall_sector_integration_score"] = round(sum(scores) / len(scores) if scores else 0.0, 2)
 
         return validation_results
 
-    def validate_economic_indicators(self) -> Dict[str, Any]:
+    def validate_economic_indicators(self) -> dict[str, Any]:
         """Validate FRED economic indicator freshness and consistency"""
         validation_results = {
             "fred_data_freshness": 0.0,
@@ -477,17 +445,13 @@ class AnalysisValidator:
             validation_results["fred_data_freshness"] = 9.5
             validation_results["economic_context_integration"] = 9.2
         else:
-            validation_results["key_issues"].append(
-                "Economic indicators missing from discovery phase"
-            )
+            validation_results["key_issues"].append("Economic indicators missing from discovery phase")
 
         if self.analysis_data and "economic_sensitivity_analysis" in self.analysis_data:
             validation_results["economic_sensitivity_analysis"] = 9.3
             validation_results["business_cycle_positioning"] = 9.0
         else:
-            validation_results["key_issues"].append(
-                "Economic sensitivity analysis missing from analysis phase"
-            )
+            validation_results["key_issues"].append("Economic sensitivity analysis missing from analysis phase")
 
         # Calculate overall score
         scores = [
@@ -498,13 +462,11 @@ class AnalysisValidator:
             or k.endswith("_positioning")
             or k.endswith("_integration")
         ]
-        validation_results["overall_economic_indicators_score"] = round(
-            sum(scores) / len(scores) if scores else 0.0, 2
-        )
+        validation_results["overall_economic_indicators_score"] = round(sum(scores) / len(scores) if scores else 0.0, 2)
 
         return validation_results
 
-    def validate_stress_testing_framework(self) -> Dict[str, Any]:
+    def validate_stress_testing_framework(self) -> dict[str, Any]:
         """Validate economic stress testing scenarios and probabilities"""
         validation_results = {
             "stress_test_scenarios": 0.0,
@@ -522,15 +484,11 @@ class AnalysisValidator:
             validation_results["impact_assessments"] = 9.0
             validation_results["recovery_timeline_analysis"] = 8.8
         else:
-            validation_results["key_issues"].append(
-                "Economic stress testing missing from analysis phase"
-            )
+            validation_results["key_issues"].append("Economic stress testing missing from analysis phase")
 
         if self.synthesis_data and "stress_testing" in self.synthesis_data:
             # Boost scores if stress testing is also in synthesis
-            validation_results["stress_test_scenarios"] = min(
-                9.5, validation_results["stress_test_scenarios"] + 0.4
-            )
+            validation_results["stress_test_scenarios"] = min(9.5, validation_results["stress_test_scenarios"] + 0.4)
             validation_results["probability_calculations"] = min(
                 9.5, validation_results["probability_calculations"] + 0.4
             )
@@ -544,13 +502,11 @@ class AnalysisValidator:
             or k.endswith("_assessments")
             or k.endswith("_analysis")
         ]
-        validation_results["overall_stress_testing_score"] = round(
-            sum(scores) / len(scores) if scores else 0.0, 2
-        )
+        validation_results["overall_stress_testing_score"] = round(sum(scores) / len(scores) if scores else 0.0, 2)
 
         return validation_results
 
-    def validate_institutional_standards(self) -> Dict[str, Any]:
+    def validate_institutional_standards(self) -> dict[str, Any]:
         """Validate institutional certification standards (≥0.90 confidence)"""
         validation_results = {
             "confidence_propagation": 0.0,
@@ -565,9 +521,7 @@ class AnalysisValidator:
         confidence_scores = []
 
         if self.discovery_data and "data_quality_assessment" in self.discovery_data:
-            discovery_confidence = self.discovery_data["data_quality_assessment"].get(
-                "overall_confidence", 0.0
-            )
+            discovery_confidence = self.discovery_data["data_quality_assessment"].get("overall_confidence", 0.0)
             confidence_scores.append(discovery_confidence)
 
         if self.analysis_data and "analysis_confidence" in self.analysis_data:
@@ -583,16 +537,10 @@ class AnalysisValidator:
             avg_confidence = sum(confidence_scores) / len(confidence_scores)
             validation_results["confidence_propagation"] = min(9.5, avg_confidence * 10)
             validation_results["institutional_certification"] = avg_confidence >= 0.90
-            validation_results["multi_source_validation"] = (
-                9.2 if len(confidence_scores) >= 3 else 7.0
-            )
-            validation_results["quality_assurance"] = (
-                9.0 if avg_confidence >= 0.90 else 7.5
-            )
+            validation_results["multi_source_validation"] = 9.2 if len(confidence_scores) >= 3 else 7.0
+            validation_results["quality_assurance"] = 9.0 if avg_confidence >= 0.90 else 7.5
         else:
-            validation_results["key_issues"].append(
-                "Insufficient confidence scoring for institutional standards"
-            )
+            validation_results["key_issues"].append("Insufficient confidence scoring for institutional standards")
 
         # Calculate overall score
         scores = [
@@ -600,13 +548,11 @@ class AnalysisValidator:
             for k, v in validation_results.items()
             if isinstance(v, (int, float)) and k != "overall_institutional_score"
         ]
-        validation_results["overall_institutional_score"] = round(
-            sum(scores) / len(scores) if scores else 0.0, 2
-        )
+        validation_results["overall_institutional_score"] = round(sum(scores) / len(scores) if scores else 0.0, 2)
 
         return validation_results
 
-    def validate_sector_cross_reference(self) -> Dict[str, Any]:
+    def validate_sector_cross_reference(self) -> dict[str, Any]:
         """Validate sector cross-reference architecture and integration"""
         validation_results = {
             "cross_reference_availability": 0.0,
@@ -618,15 +564,11 @@ class AnalysisValidator:
         }
 
         if not self.synthesis_data:
-            validation_results["key_issues"].append(
-                "No synthesis data available for cross-reference validation"
-            )
+            validation_results["key_issues"].append("No synthesis data available for cross-reference validation")
             return validation_results
 
         # Use sector cross-reference system to validate
-        cross_ref_validation = self.sector_cross_ref.validate_cross_reference(
-            self.ticker, self.synthesis_data
-        )
+        cross_ref_validation = self.sector_cross_ref.validate_cross_reference(self.ticker, self.synthesis_data)
 
         # Map validation results to our scoring system
         validation_results["cross_reference_availability"] = min(
@@ -638,15 +580,11 @@ class AnalysisValidator:
         validation_results["integration_completeness"] = min(
             9.5, cross_ref_validation.get("economic_context_alignment", 0.0)
         )
-        validation_results["data_freshness"] = min(
-            9.5, cross_ref_validation.get("data_freshness", 0.0)
-        )
+        validation_results["data_freshness"] = min(9.5, cross_ref_validation.get("data_freshness", 0.0))
 
         # Include validation issues from cross-reference system
         if cross_ref_validation.get("validation_issues"):
-            validation_results["key_issues"].extend(
-                cross_ref_validation["validation_issues"]
-            )
+            validation_results["key_issues"].extend(cross_ref_validation["validation_issues"])
 
         # Calculate overall score
         scores = [
@@ -657,21 +595,17 @@ class AnalysisValidator:
             or k.endswith("_completeness")
             or k.endswith("_freshness")
         ]
-        validation_results["overall_cross_reference_score"] = round(
-            sum(scores) / len(scores) if scores else 0.0, 2
-        )
+        validation_results["overall_cross_reference_score"] = round(sum(scores) / len(scores) if scores else 0.0, 2)
 
         return validation_results
 
-    def execute_validation(self) -> Dict[str, Any]:
+    def execute_validation(self) -> dict[str, Any]:
         """Execute complete DASV workflow validation"""
         print("🔍 Starting {self.validation_depth} validation for {self.ticker}")
 
         # Load all DASV outputs
         if not self.load_dasv_outputs():
-            return {
-                "error": f"Insufficient DASV outputs available for validation of {self.ticker}"
-            }
+            return {"error": f"Insufficient DASV outputs available for validation of {self.ticker}"}
 
         try:
             # Validate each DASV phase
@@ -695,34 +629,23 @@ class AnalysisValidator:
 
             enhanced_scores = [
                 sector_analysis_validation.get("overall_sector_integration_score", 0),
-                economic_indicators_validation.get(
-                    "overall_economic_indicators_score", 0
-                ),
+                economic_indicators_validation.get("overall_economic_indicators_score", 0),
                 stress_testing_validation.get("overall_stress_testing_score", 0),
                 institutional_validation.get("overall_institutional_score", 0),
                 cross_reference_validation.get("overall_cross_reference_score", 0),
             ]
 
             # Weight synthesis phase more heavily, but include enhanced validations
-            core_weighted_score = (
-                phase_scores[0] * 0.20 + phase_scores[1] * 0.30 + phase_scores[2] * 0.35
-            )
+            core_weighted_score = phase_scores[0] * 0.20 + phase_scores[1] * 0.30 + phase_scores[2] * 0.35
             enhanced_weighted_score = sum(enhanced_scores) / len(enhanced_scores) * 0.15
 
-            overall_reliability_score = round(
-                core_weighted_score + enhanced_weighted_score, 2
-            )
+            overall_reliability_score = round(core_weighted_score + enhanced_weighted_score, 2)
 
             # Determine decision confidence and certification
-            decision_confidence = self._determine_decision_confidence(
-                overall_reliability_score
-            )
-            minimum_threshold_met = (
-                overall_reliability_score >= self.confidence_threshold
-            )
+            decision_confidence = self._determine_decision_confidence(overall_reliability_score)
+            minimum_threshold_met = overall_reliability_score >= self.confidence_threshold
             institutional_quality = (
-                overall_reliability_score
-                >= self.validation_thresholds[self.validation_depth]["overall_minimum"]
+                overall_reliability_score >= self.validation_thresholds[self.validation_depth]["overall_minimum"]
             )
 
             # Generate comprehensive assessment
@@ -795,9 +718,7 @@ class AnalysisValidator:
 
         # Check for required fields
         required_fields = ["current_price", "market_cap", "volume", "beta"]
-        available_fields = sum(
-            1 for field in required_fields if market_data.get(field, 0) != 0
-        )
+        available_fields = sum(1 for field in required_fields if market_data.get(field, 0) != 0)
         completeness_score = (available_fields / len(required_fields)) * 10
 
         # Check data quality indicators
@@ -826,25 +747,19 @@ class AnalysisValidator:
             "earnings_per_share",
             "profit_margin",
         ]
-        available_metrics = sum(
-            1 for metric in key_metrics if financial_metrics.get(metric, 0) != 0
-        )
+        available_metrics = sum(1 for metric in key_metrics if financial_metrics.get(metric, 0) != 0)
         metrics_score = (available_metrics / len(key_metrics)) * 10
 
         # Check statements availability
         statements = ["income_statement", "balance_sheet", "cash_flow"]
-        available_statements = sum(
-            1 for stmt in statements if financial_statements.get(stmt, {})
-        )
+        available_statements = sum(1 for stmt in statements if financial_statements.get(stmt, {}))
         statements_score = (available_statements / len(statements)) * 10
 
         # Financial statements confidence
         statements_confidence = financial_statements.get("confidence", 0.5) * 10
 
         # Calculate weighted average
-        final_score = (
-            metrics_score * 0.4 + statements_score * 0.4 + statements_confidence * 0.2
-        )
+        final_score = metrics_score * 0.4 + statements_score * 0.4 + statements_confidence * 0.2
         return round(final_score, 2)
 
     def _validate_data_quality_assessment(self) -> float:
@@ -858,9 +773,7 @@ class AnalysisValidator:
         overall_quality = data_quality.get("overall_data_quality", 0.0) * 10
 
         # Data completeness
-        completeness = (
-            data_quality.get("data_completeness", 0.0) / 10
-        )  # Convert percentage to 0-10 scale
+        completeness = data_quality.get("data_completeness", 0.0) / 10  # Convert percentage to 0-10 scale
 
         # Quality flags assessment (fewer flags = higher score)
         quality_flags = data_quality.get("quality_flags", [])
@@ -884,9 +797,7 @@ class AnalysisValidator:
             "stability_score",
             "valuation_score",
         ]
-        available_components = sum(
-            1 for comp in required_components if financial_health.get(comp, 0) > 0
-        )
+        available_components = sum(1 for comp in required_components if financial_health.get(comp, 0) > 0)
         completeness_score = (available_components / len(required_components)) * 10
 
         # Overall health score validation
@@ -894,14 +805,10 @@ class AnalysisValidator:
 
         # Methodology validation (presence of detailed metrics)
         detailed_metrics = financial_health.get("detailed_metrics", {})
-        methodology_score = (
-            min(len(detailed_metrics) / 5, 1.0) * 10
-        )  # Up to 5 key metrics
+        methodology_score = min(len(detailed_metrics) / 5, 1.0) * 10  # Up to 5 key metrics
 
         # Calculate weighted average
-        final_score = (
-            completeness_score * 0.4 + overall_health * 0.4 + methodology_score * 0.2
-        )
+        final_score = completeness_score * 0.4 + overall_health * 0.4 + methodology_score * 0.2
         return round(final_score, 2)
 
     def _validate_competitive_position_analysis(self) -> float:
@@ -909,9 +816,7 @@ class AnalysisValidator:
         if not self.analysis_data:
             return 0.0
 
-        competitive_analysis = self.analysis_data.get(
-            "competitive_position_analysis", {}
-        )
+        competitive_analysis = self.analysis_data.get("competitive_position_analysis", {})
 
         # Check for required components
         required_components = [
@@ -919,24 +824,18 @@ class AnalysisValidator:
             "competitive_advantages",
             "moat_assessment",
         ]
-        available_components = sum(
-            1 for comp in required_components if competitive_analysis.get(comp)
-        )
+        available_components = sum(1 for comp in required_components if competitive_analysis.get(comp))
         completeness_score = (available_components / len(required_components)) * 10
 
         # Competitive strength score
-        competitive_score = (
-            competitive_analysis.get("competitive_strength_score", 0) * 10
-        )
+        competitive_score = competitive_analysis.get("competitive_strength_score", 0) * 10
 
         # Quality of competitive advantages assessment
         advantages = competitive_analysis.get("competitive_advantages", [])
         advantages_score = min(len(advantages) / 3, 1.0) * 10  # Up to 3 key advantages
 
         # Calculate weighted average
-        final_score = (
-            completeness_score * 0.4 + competitive_score * 0.4 + advantages_score * 0.2
-        )
+        final_score = completeness_score * 0.4 + competitive_score * 0.4 + advantages_score * 0.2
         return round(final_score, 2)
 
     def _validate_risk_assessment(self) -> float:
@@ -948,25 +847,19 @@ class AnalysisValidator:
 
         # Check for required risk categories
         risk_categories = ["market_risks", "financial_risks", "operational_risks"]
-        available_categories = sum(
-            1 for cat in risk_categories if risk_profile.get(cat)
-        )
+        available_categories = sum(1 for cat in risk_categories if risk_profile.get(cat))
         completeness_score = (available_categories / len(risk_categories)) * 10
 
         # Overall risk score validation (inverse relationship - lower risk score is better)
         overall_risk = risk_profile.get("overall_risk_score", 0.5)
-        risk_score_quality = (
-            1 - abs(overall_risk - 0.5)
-        ) * 10  # Score quality based on reasonable risk level
+        risk_score_quality = (1 - abs(overall_risk - 0.5)) * 10  # Score quality based on reasonable risk level
 
         # Risk summary quality
         risk_summary = risk_profile.get("risk_summary", "")
         summary_score = 10 if risk_summary and len(risk_summary) > 50 else 5
 
         # Calculate weighted average
-        final_score = (
-            completeness_score * 0.5 + risk_score_quality * 0.3 + summary_score * 0.2
-        )
+        final_score = completeness_score * 0.5 + risk_score_quality * 0.3 + summary_score * 0.2
         return round(final_score, 2)
 
     def _validate_investment_thesis_coherence(self) -> float:
@@ -984,9 +877,7 @@ class AnalysisValidator:
             "growth_drivers",
             "competitive_advantages",
         ]
-        available_components = sum(
-            1 for comp in thesis_components if investment_thesis.get(comp)
-        )
+        available_components = sum(1 for comp in thesis_components if investment_thesis.get(comp))
         thesis_score = (available_components / len(thesis_components)) * 10
 
         # Executive summary quality
@@ -995,9 +886,7 @@ class AnalysisValidator:
             "confidence_level",
             "key_investment_highlights",
         ]
-        available_exec = sum(
-            1 for comp in exec_components if executive_summary.get(comp)
-        )
+        available_exec = sum(1 for comp in exec_components if executive_summary.get(comp))
         exec_score = (available_exec / len(exec_components)) * 10
 
         # Supporting evidence quality
@@ -1021,9 +910,7 @@ class AnalysisValidator:
             "fair_value_analysis",
             "scenario_analysis",
         ]
-        available_val = sum(
-            1 for comp in val_components if valuation_analysis.get(comp)
-        )
+        available_val = sum(1 for comp in val_components if valuation_analysis.get(comp))
         methodology_score = (available_val / len(val_components)) * 10
 
         # Price targets and scenarios
@@ -1034,9 +921,7 @@ class AnalysisValidator:
         scenarios_score = 10 if scenario_analysis else 5
 
         # Calculate weighted average
-        final_score = (
-            methodology_score * 0.5 + targets_score * 0.25 + scenarios_score * 0.25
-        )
+        final_score = methodology_score * 0.5 + targets_score * 0.25 + scenarios_score * 0.25
         return round(final_score, 2)
 
     def _validate_professional_presentation(self) -> float:
@@ -1051,30 +936,25 @@ class AnalysisValidator:
         # Check metadata completeness
         metadata = self.synthesis_data.get("metadata", {})
         required_metadata = ["ticker", "execution_timestamp", "framework_phase"]
-        available_metadata = sum(
-            1 for field in required_metadata if metadata.get(field)
-        )
+        available_metadata = sum(1 for field in required_metadata if metadata.get(field))
         metadata_score = (available_metadata / len(required_metadata)) * 10
 
         # Check synthesis confidence
         synthesis_confidence = self.synthesis_data.get("synthesis_confidence", 0) * 10
 
         # Calculate weighted average
-        final_score = (
-            markdown_score * 0.5 + metadata_score * 0.3 + synthesis_confidence * 0.2
-        )
+        final_score = markdown_score * 0.5 + metadata_score * 0.3 + synthesis_confidence * 0.2
         return round(final_score, 2)
 
     def _assess_evidence_quality(self, score: float) -> str:
         """Assess evidence quality based on validation score"""
         if score >= 9.0:
             return "Primary"
-        elif score >= 7.0:
+        if score >= 7.0:
             return "Secondary"
-        else:
-            return "Unverified"
+        return "Unverified"
 
-    def _identify_discovery_issues(self) -> List[str]:
+    def _identify_discovery_issues(self) -> list[str]:
         """Identify key issues in discovery phase"""
         issues = []
 
@@ -1097,7 +977,7 @@ class AnalysisValidator:
 
         return issues
 
-    def _identify_analysis_issues(self) -> List[str]:
+    def _identify_analysis_issues(self) -> list[str]:
         """Identify key issues in analysis phase"""
         issues = []
 
@@ -1117,7 +997,7 @@ class AnalysisValidator:
 
         return issues
 
-    def _identify_synthesis_issues(self) -> List[str]:
+    def _identify_synthesis_issues(self) -> list[str]:
         """Identify key issues in synthesis phase"""
         issues = []
 
@@ -1141,14 +1021,13 @@ class AnalysisValidator:
         """Determine decision confidence level"""
         if score >= 9.0:
             return "High"
-        elif score >= 7.0:
+        if score >= 7.0:
             return "Medium"
-        elif score >= 5.0:
+        if score >= 5.0:
             return "Low"
-        else:
-            return "Do_Not_Use"
+        return "Do_Not_Use"
 
-    def _generate_methodology_notes(self) -> Dict[str, Any]:
+    def _generate_methodology_notes(self) -> dict[str, Any]:
         """Generate comprehensive methodology notes"""
         sources_consulted = 0
         if self.discovery_data:
@@ -1170,7 +1049,7 @@ class AnalysisValidator:
             "validation_standards_applied": f"Institutional quality thresholds: {self.validation_thresholds[self.validation_depth]}",
         }
 
-    def _save_validation_results(self, validation_result: Dict[str, Any]) -> str:
+    def _save_validation_results(self, validation_result: dict[str, Any]) -> str:
         """Save validation results to output directory"""
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -1232,7 +1111,7 @@ class DasvPhaseValidator:
         self.analyzed_files = []
         self.cross_analysis_results = {}
 
-    def discover_phase_files(self) -> List[str]:
+    def discover_phase_files(self) -> list[str]:
         """Discover and select latest files for the specified DASV phase"""
         phase_dir = self.phase_directories[self.dasv_phase]
         file_pattern = self.file_patterns[self.dasv_phase]
@@ -1253,13 +1132,11 @@ class DasvPhaseValidator:
         all_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         selected_files = all_files[: self.file_count]
 
-        print(
-            f"📁 Found {len(all_files)} {self.dasv_phase} files, analyzing latest {len(selected_files)}"
-        )
+        print(f"📁 Found {len(all_files)} {self.dasv_phase} files, analyzing latest {len(selected_files)}")
 
         return selected_files
 
-    def execute_cross_analysis(self) -> Dict[str, Any]:
+    def execute_cross_analysis(self) -> dict[str, Any]:
         """Execute comprehensive cross-analysis validation"""
         try:
             # Discover phase files
@@ -1275,12 +1152,7 @@ class DasvPhaseValidator:
             cli_integration_score = self._validate_cli_integration()
 
             # Calculate overall score
-            overall_score = (
-                structural_score
-                + hardcoded_score
-                + specificity_score
-                + cli_integration_score
-            ) / 4
+            overall_score = (structural_score + hardcoded_score + specificity_score + cli_integration_score) / 4
 
             # Generate comprehensive results
             return self._generate_cross_analysis_results(
@@ -1294,7 +1166,7 @@ class DasvPhaseValidator:
         except Exception as e:
             return {"error": f"Cross-analysis execution failed: {str(e)}"}
 
-    def _load_files(self, file_paths: List[str]) -> List[Dict[str, Any]]:
+    def _load_files(self, file_paths: list[str]) -> list[dict[str, Any]]:
         """Load all files and extract relevant data"""
         loaded_files = []
 
@@ -1303,20 +1175,18 @@ class DasvPhaseValidator:
                 file_info = {
                     "filename": os.path.basename(file_path),
                     "full_path": file_path,
-                    "modification_timestamp": datetime.fromtimestamp(
-                        os.path.getmtime(file_path)
-                    ).isoformat(),
+                    "modification_timestamp": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat(),
                     "file_size_bytes": os.path.getsize(file_path),
                 }
 
                 if self.dasv_phase == "synthesis":
                     # Synthesis files are markdown
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         file_info["content"] = f.read()
                         file_info["content_type"] = "markdown"
                 else:
                     # Other phases are JSON
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         file_info["content"] = json.load(f)
                         file_info["content_type"] = "json"
 
@@ -1329,7 +1199,7 @@ class DasvPhaseValidator:
 
                 loaded_files.append(file_info)
 
-            except Exception as e:
+            except Exception:
                 print("⚠️  Warning: Failed to load {file_path}: {str(e)}")
                 continue
 
@@ -1345,8 +1215,7 @@ class DasvPhaseValidator:
         # For JSON files, analyze schema consistency
         if self.dasv_phase != "synthesis":
             return self._analyze_json_schema_consistency()
-        else:
-            return self._analyze_markdown_structure_consistency()
+        return self._analyze_markdown_structure_consistency()
 
     def _analyze_json_schema_consistency(self) -> float:
         """Analyze JSON schema consistency"""
@@ -1365,7 +1234,7 @@ class DasvPhaseValidator:
         # Convert to 0-10 scale
         return sum(consistency_scores) / len(consistency_scores) * 10
 
-    def _extract_json_schema(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_json_schema(self, json_data: dict[str, Any]) -> dict[str, Any]:
         """Extract schema structure from JSON data"""
 
         def get_schema_structure(obj, path=""):
@@ -1379,23 +1248,15 @@ class DasvPhaseValidator:
                         "has_children": isinstance(value, (dict, list)),
                     }
                     if isinstance(value, dict):
-                        schema[key]["children"] = get_schema_structure(
-                            value, current_path
-                        )
-                    elif (
-                        isinstance(value, list) and value and isinstance(value[0], dict)
-                    ):
-                        schema[key]["children"] = get_schema_structure(
-                            value[0], current_path
-                        )
+                        schema[key]["children"] = get_schema_structure(value, current_path)
+                    elif isinstance(value, list) and value and isinstance(value[0], dict):
+                        schema[key]["children"] = get_schema_structure(value[0], current_path)
                 return schema
             return {"type": type(obj).__name__}
 
         return get_schema_structure(json_data)
 
-    def _compare_schemas(
-        self, schema1: Dict[str, Any], schema2: Dict[str, Any]
-    ) -> float:
+    def _compare_schemas(self, schema1: dict[str, Any], schema2: dict[str, Any]) -> float:
         """Compare two schemas and return similarity score (0.0-1.0)"""
 
         def compare_recursive(s1, s2):
@@ -1412,9 +1273,7 @@ class DasvPhaseValidator:
                     if s1[key].get("type") == s2[key].get("type"):
                         matches += 1
                         if "children" in s1[key] and "children" in s2[key]:
-                            matches += compare_recursive(
-                                s1[key]["children"], s2[key]["children"]
-                            )
+                            matches += compare_recursive(s1[key]["children"], s2[key]["children"])
 
             return matches / len(all_keys)
 
@@ -1436,23 +1295,19 @@ class DasvPhaseValidator:
         consistency_scores = []
 
         for structure in heading_structures[1:]:
-            similarity = self._compare_heading_structures(
-                reference_structure, structure
-            )
+            similarity = self._compare_heading_structures(reference_structure, structure)
             consistency_scores.append(similarity)
 
         return sum(consistency_scores) / len(consistency_scores) * 10
 
-    def _extract_markdown_headings(self, content: str) -> List[str]:
+    def _extract_markdown_headings(self, content: str) -> list[str]:
         """Extract heading structure from markdown content"""
         import re
 
         headings = re.findall(r"^#+\s+(.+)$", content, re.MULTILINE)
         return headings
 
-    def _compare_heading_structures(
-        self, struct1: List[str], struct2: List[str]
-    ) -> float:
+    def _compare_heading_structures(self, struct1: list[str], struct2: list[str]) -> float:
         """Compare two heading structures"""
         if not struct1 and not struct2:
             return 1.0
@@ -1472,13 +1327,9 @@ class DasvPhaseValidator:
         all_values = []
         for file_info in self.analyzed_files:
             if file_info["content_type"] == "json":
-                values = self._extract_json_values(
-                    file_info["content"], file_info["ticker"]
-                )
+                values = self._extract_json_values(file_info["content"], file_info["ticker"])
             else:
-                values = self._extract_markdown_values(
-                    file_info["content"], file_info["ticker"]
-                )
+                values = self._extract_markdown_values(file_info["content"], file_info["ticker"])
 
             all_values.extend(values)
 
@@ -1494,9 +1345,7 @@ class DasvPhaseValidator:
         suspicious_values = 0
 
         for value, occurrences in value_counts.items():
-            if len(occurrences) > 1 and not self._is_ticker_specific(
-                value, occurrences
-            ):
+            if len(occurrences) > 1 and not self._is_ticker_specific(value, occurrences):
                 suspicious_values += len(occurrences)
 
         if total_values == 0:
@@ -1505,9 +1354,7 @@ class DasvPhaseValidator:
         hardcoded_ratio = suspicious_values / total_values
         return max(0.0, (1.0 - hardcoded_ratio) * 10)
 
-    def _extract_json_values(
-        self, json_data: Dict[str, Any], ticker: str
-    ) -> List[Dict[str, Any]]:
+    def _extract_json_values(self, json_data: dict[str, Any], ticker: str) -> list[dict[str, Any]]:
         """Extract values from JSON data for hardcoded detection"""
         values = []
 
@@ -1534,9 +1381,7 @@ class DasvPhaseValidator:
         extract_recursive(json_data)
         return values
 
-    def _extract_markdown_values(
-        self, content: str, ticker: str
-    ) -> List[Dict[str, Any]]:
+    def _extract_markdown_values(self, content: str, ticker: str) -> list[dict[str, Any]]:
         """Extract values from markdown content for hardcoded detection"""
         import re
 
@@ -1569,9 +1414,7 @@ class DasvPhaseValidator:
 
         return values
 
-    def _is_ticker_specific(
-        self, value: str, occurrences: List[Dict[str, Any]]
-    ) -> bool:
+    def _is_ticker_specific(self, value: str, occurrences: list[dict[str, Any]]) -> bool:
         """Check if a value is ticker-specific or a template artifact"""
         # If the value appears across different tickers, it might be hardcoded
         tickers = set(occ["ticker"] for occ in occurrences)
@@ -1605,24 +1448,17 @@ class DasvPhaseValidator:
             score = self._calculate_file_specificity(file_info)
             specificity_scores.append(score)
 
-        return (
-            sum(specificity_scores) / len(specificity_scores)
-            if specificity_scores
-            else 0.0
-        )
+        return sum(specificity_scores) / len(specificity_scores) if specificity_scores else 0.0
 
-    def _calculate_file_specificity(self, file_info: Dict[str, Any]) -> float:
+    def _calculate_file_specificity(self, file_info: dict[str, Any]) -> float:
         """Calculate specificity score for a single file"""
         ticker = file_info["ticker"]
 
         if file_info["content_type"] == "json":
             return self._calculate_json_specificity(file_info["content"], ticker)
-        else:
-            return self._calculate_markdown_specificity(file_info["content"], ticker)
+        return self._calculate_markdown_specificity(file_info["content"], ticker)
 
-    def _calculate_json_specificity(
-        self, json_data: Dict[str, Any], ticker: str
-    ) -> float:
+    def _calculate_json_specificity(self, json_data: dict[str, Any], ticker: str) -> float:
         """Calculate specificity for JSON content"""
         specificity_checks = []
 
@@ -1648,11 +1484,7 @@ class DasvPhaseValidator:
                 has_generic = any(term in overview for term in generic_terms)
                 specificity_checks.append(not has_generic)
 
-        return (
-            (sum(specificity_checks) / len(specificity_checks)) * 10
-            if specificity_checks
-            else 5.0
-        )
+        return (sum(specificity_checks) / len(specificity_checks)) * 10 if specificity_checks else 5.0
 
     def _calculate_markdown_specificity(self, content: str, ticker: str) -> float:
         """Calculate specificity for markdown content"""
@@ -1681,11 +1513,7 @@ class DasvPhaseValidator:
         has_numbers = bool(re.search(r"\$[\d,]+|\d+\.\d+%|\d+\.?\d*[BM]", content))
         specificity_checks.append(has_numbers)
 
-        return (
-            (sum(specificity_checks) / len(specificity_checks)) * 10
-            if specificity_checks
-            else 5.0
-        )
+        return (sum(specificity_checks) / len(specificity_checks)) * 10 if specificity_checks else 5.0
 
     def _validate_cli_integration(self) -> float:
         """Validate CLI services integration consistency"""
@@ -1700,7 +1528,7 @@ class DasvPhaseValidator:
 
         return sum(cli_scores) / len(cli_scores) if cli_scores else 10.0
 
-    def _check_cli_integration_json(self, json_data: Dict[str, Any]) -> float:
+    def _check_cli_integration_json(self, json_data: dict[str, Any]) -> float:
         """Check CLI integration in JSON files"""
         integration_checks = []
 
@@ -1715,10 +1543,7 @@ class DasvPhaseValidator:
             integration_checks.append("config/financial_services.yaml" in str(api_ref))
 
         # Check for price validation structure
-        if (
-            "market_data" in json_data
-            and "price_validation" in json_data["market_data"]
-        ):
+        if "market_data" in json_data and "price_validation" in json_data["market_data"]:
             price_val = json_data["market_data"]["price_validation"]
             if isinstance(price_val, dict):
                 expected_sources = [
@@ -1729,11 +1554,7 @@ class DasvPhaseValidator:
                 has_sources = any(source in price_val for source in expected_sources)
                 integration_checks.append(has_sources)
 
-        return (
-            (sum(integration_checks) / len(integration_checks)) * 10
-            if integration_checks
-            else 5.0
-        )
+        return (sum(integration_checks) / len(integration_checks)) * 10 if integration_checks else 5.0
 
     def _generate_cross_analysis_results(
         self,
@@ -1742,7 +1563,7 @@ class DasvPhaseValidator:
         specificity_score: float,
         cli_integration_score: float,
         overall_score: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate comprehensive cross-analysis results"""
 
         # Determine quality grade
@@ -1792,8 +1613,7 @@ class DasvPhaseValidator:
                 "overall_cross_analysis_score": f"{overall_score:.1f}/10.0",
             },
             "quality_assessment": {
-                "institutional_quality_certified": overall_score
-                >= self.confidence_threshold,
+                "institutional_quality_certified": overall_score >= self.confidence_threshold,
                 "minimum_threshold_met": overall_score >= self.confidence_threshold,
                 "phase_consistency_grade": grade,
                 "ready_for_production": overall_score >= 9.0,
@@ -1812,7 +1632,7 @@ class DasvPhaseValidator:
             },
         }
 
-    def save_results(self, results: Dict[str, Any]) -> str:
+    def save_results(self, results: dict[str, Any]) -> str:
         """Save cross-analysis results to file"""
         timestamp_str = self.timestamp.strftime("%Y%m%d")
         filename = f"{self.dasv_phase}_cross_analysis_{timestamp_str}_validation.json"
@@ -1829,14 +1649,10 @@ class DasvPhaseValidator:
 
 def main():
     """Command-line interface for analysis validation"""
-    parser = argparse.ArgumentParser(
-        description="Execute DASV workflow validation for any stock ticker"
-    )
+    parser = argparse.ArgumentParser(description="Execute DASV workflow validation for any stock ticker")
     # Mutually exclusive group for validation modes
     mode_group = parser.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument(
-        "synthesis_file", nargs="?", help="Path to synthesis output file (.md or .json)"
-    )
+    mode_group.add_argument("synthesis_file", nargs="?", help="Path to synthesis output file (.md or .json)")
     mode_group.add_argument(
         "--dasv-phase",
         choices=["discovery", "analysis", "synthesis", "validation"],
@@ -1918,13 +1734,9 @@ def main():
             print("❌ DASV Cross-Analysis failed: {result['error']}")
             sys.exit(1)
         else:
-            overall_score = result["cross_analysis_results"][
-                "overall_cross_analysis_score"
-            ]
+            overall_score = result["cross_analysis_results"]["overall_cross_analysis_score"]
             phase_grade = result["quality_assessment"]["phase_consistency_grade"]
-            print(
-                f"✅ DASV Cross-Analysis completed successfully for {args.dasv_phase} phase"
-            )
+            print(f"✅ DASV Cross-Analysis completed successfully for {args.dasv_phase} phase")
             print("📊 Overall Score: {overall_score}/10.0 | Grade: {phase_grade}")
 
             # Save results
@@ -1940,9 +1752,7 @@ def main():
             if "_" in basename:
                 ticker = basename.split("_")[0]
             else:
-                print(
-                    "❌ Could not extract ticker from filename. Please provide --ticker argument."
-                )
+                print("❌ Could not extract ticker from filename. Please provide --ticker argument.")
                 sys.exit(1)
 
         # Execute validation

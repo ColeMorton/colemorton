@@ -1,8 +1,11 @@
 # Dashboard Generation Guide
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Product Team | **Audience**: Developers
+
 ## Overview
 
-The Dashboard Generation system provides automated creation of high-quality performance overview visualizations for historical trading reports. The system generates professional dual-mode (light/dark) dashboard images that integrate seamlessly with Sensylate's design system.
+The Dashboard Generation system provides automated creation of high-quality performance overview visualizations for historical trading reports. The system generates professional dual-mode (light/dark) dashboard images that integrate seamlessly with Colemorton's design system.
 
 ## Features
 
@@ -11,7 +14,7 @@ The Dashboard Generation system provides automated creation of high-quality perf
 - **Multi-Format Export**: PNG, PDF, SVG, and HTML export options
 - **JSON Schema Integration**: Frontend-ready chart configurations for React components
 - **Scalability**: Intelligent handling of datasets from 15 to 200+ trades with performance optimization
-- **Brand Compliance**: Full integration with Sensylate design system and 5 Plotly templates
+- **Brand Compliance**: Full integration with Colemorton design system and 5 Plotly templates
 - **Production Optimized**: Template caching, data sampling, and batch processing
 - **High Quality Output**: 300+ DPI exports with professional print quality
 
@@ -86,8 +89,8 @@ python scripts/dashboard_generator.py \\
 ```bash
 # Use specific Plotly template
 python scripts/dashboard_generator.py \\
-    --template sensylate_light_hd \\  # High-DPI optimized
-    --template sensylate_dashboard   # Dashboard optimized
+    --template colemorton_light_hd \\  # High-DPI optimized
+    --template colemorton_dashboard   # Dashboard optimized
 
 # Enable production optimizations
 python scripts/dashboard_generator.py \\
@@ -152,9 +155,9 @@ The dashboard system uses `configs/dashboard_generation.yaml` for configuration:
 # Design System Configuration
 design_system:
   colors:
-    primary_data: "#26c6da"      # Sensylate primary chart color
-    secondary_data: "#7e57c2"    # Sensylate secondary chart color
-    tertiary_data: "#3179f5"     # Sensylate tertiary chart color
+    primary_data: "#26c6da"      # Colemorton primary chart color
+    secondary_data: "#7e57c2"    # Colemorton secondary chart color
+    tertiary_data: "#3179f5"     # Colemorton tertiary chart color
 
 # Output Configuration
 output:

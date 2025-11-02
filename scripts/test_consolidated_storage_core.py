@@ -12,9 +12,7 @@ Key features tested:
 - Direct pandas compatibility for financial analysis
 """
 
-import csv
 import json
-import os
 import shutil
 import sys
 import tempfile
@@ -22,7 +20,7 @@ import time
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+
 
 # Add utils directory to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -31,7 +29,6 @@ from historical_data_manager import (
     DataType,
     HistoricalDataManager,
     Timeframe,
-    create_historical_data_manager,
 )
 
 
@@ -111,9 +108,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         expected_csv_path = self.test_dir / "stocks" / "AAPL" / "daily.csv"
         expected_meta_path = self.test_dir / "stocks" / "AAPL" / "daily.meta.json"
 
-        self.assertTrue(
-            expected_csv_path.exists(), f"CSV file not found: {expected_csv_path}"
-        )
+        self.assertTrue(expected_csv_path.exists(), f"CSV file not found: {expected_csv_path}")
         self.assertTrue(
             expected_meta_path.exists(),
             f"Metadata file not found: {expected_meta_path}",
@@ -171,7 +166,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
         # Read metadata
         meta_path = self.test_dir / "stocks" / "AAPL" / "daily.meta.json"
-        with open(meta_path, "r") as f:
+        with open(meta_path) as f:
             metadata = json.load(f)
 
         # Verify required fields for consolidated format
@@ -243,9 +238,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
                 # Verify consolidated structure (no timeframe subdirectories)
                 expected_path = self.test_dir / "stocks" / "AAPL" / expected_filename
-                self.assertTrue(
-                    expected_path.exists(), f"File not found: {expected_path}"
-                )
+                self.assertTrue(expected_path.exists(), f"File not found: {expected_path}")
 
     def test_non_price_data_storage(self):
         """Test storage of non-price data (still uses JSON)"""
@@ -271,12 +264,8 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         fundamentals_json = base_path / "fundamentals.json"
         fundamentals_meta = base_path / "fundamentals.meta.json"
 
-        self.assertTrue(
-            fundamentals_json.exists(), "Fundamentals JSON file should exist"
-        )
-        self.assertTrue(
-            fundamentals_meta.exists(), "Fundamentals metadata file should exist"
-        )
+        self.assertTrue(fundamentals_json.exists(), "Fundamentals JSON file should exist")
+        self.assertTrue(fundamentals_meta.exists(), "Fundamentals metadata file should exist")
 
     # Performance Tests
     def test_file_size_reduction(self):
@@ -341,17 +330,11 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
         print("\nFile Size Comparison:")
         print("Old JSON format: {old_format_size} bytes")
-        print(
-            f"New hybrid format: {total_hybrid_size} bytes (CSV: {csv_size}, Meta: {meta_size})"
-        )
+        print(f"New hybrid format: {total_hybrid_size} bytes (CSV: {csv_size}, Meta: {meta_size})")
         print("Reduction: {reduction_percentage:.1f}%")
 
-        self.assertLess(
-            total_hybrid_size, old_format_size, "Hybrid format should be smaller"
-        )
-        self.assertGreater(
-            reduction_percentage, 20, "Should achieve at least 20% size reduction"
-        )
+        self.assertLess(total_hybrid_size, old_format_size, "Hybrid format should be smaller")
+        self.assertGreater(reduction_percentage, 20, "Should achieve at least 20% size reduction")
 
     def test_read_performance(self):
         """Test read performance improvements"""
@@ -412,7 +395,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
         start_time = time.time()
         for _ in range(100):  # Read 100 times
-            with open(json_path, "r") as f:
+            with open(json_path) as f:
                 json_data = json.load(f)
         json_read_time = time.time() - start_time
 
@@ -559,18 +542,15 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
         # Test metadata updated correctly
         meta_path = self.test_dir / "stocks" / "AAPL" / "daily.meta.json"
-        with open(meta_path, "r") as f:
+        with open(meta_path) as f:
             metadata = json.load(f)
 
         self.assertEqual(metadata["records"], 3)
 
-        print(
-            "✅ Consolidated append behavior: deduplication and chronological sorting verified"
-        )
+        print("✅ Consolidated append behavior: deduplication and chronological sorting verified")
 
     def test_concurrent_access_safety(self):
         """Test that concurrent reads/writes work safely"""
-        import random
         import threading
 
         results = []
@@ -707,9 +687,7 @@ if __name__ == "__main__":
     test_suite = unittest.TestSuite()
 
     # Add test classes
-    test_suite.addTests(
-        test_loader.loadTestsFromTestCase(TestConsolidatedStorageSystem)
-    )
+    test_suite.addTests(test_loader.loadTestsFromTestCase(TestConsolidatedStorageSystem))
 
     # Run tests with detailed output
     runner = unittest.TextTestRunner(verbosity=2)
@@ -724,7 +702,7 @@ if __name__ == "__main__":
     print("Failures: {len(test_results.failures)}")
     print("Errors: {len(test_results.errors)}")
     print(
-        f"Success rate: {(test_results.testsRun - len(test_results.failures) - len(test_results.errors))/test_results.testsRun*100:.1f}%"
+        f"Success rate: {(test_results.testsRun - len(test_results.failures) - len(test_results.errors)) / test_results.testsRun * 100:.1f}%"
     )
 
     if test_results.failures:

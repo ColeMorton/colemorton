@@ -1,5 +1,8 @@
 # Standardized Command Reference System - Implementation Summary
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Active
+**Authority**: Platform Architecture | **Audience**: Command Developers
+
 ## Overview
 
 This document summarizes the comprehensive standardization effort to optimize Claude commands for clearly defined script, template, and file referencing. The standardization ensures consistency across all commands while making them more discoverable, executable, and maintainable.
@@ -245,10 +248,10 @@ primary_output:
 ### Configurable Base Paths
 
 ```yaml
-{SCRIPTS_BASE}: "./scripts" (configurable via SENSYLATE_SCRIPTS_BASE)
-{DATA_OUTPUTS}: "./data/outputs" (configurable via SENSYLATE_DATA_OUTPUTS)
-{TEMPLATES_BASE}: "./scripts/templates" (configurable via SENSYLATE_TEMPLATES_BASE)
-{DATA_IMAGES}: "./data/images" (configurable via SENSYLATE_DATA_IMAGES)
+{SCRIPTS_BASE}: "./scripts" (configurable via COLEMORTON_SCRIPTS_BASE)
+{DATA_OUTPUTS}: "./data/outputs" (configurable via COLEMORTON_DATA_OUTPUTS)
+{TEMPLATES_BASE}: "./scripts/templates" (configurable via COLEMORTON_TEMPLATES_BASE)
+{DATA_IMAGES}: "./data/images" (configurable via COLEMORTON_DATA_IMAGES)
 ```
 
 ### Benefits of Path Variables

@@ -242,24 +242,19 @@ def test_trade_quality_classification():
         mfe_mae_ratio = trade["mfe"] / abs(trade["mae"]) if trade["mae"] < 0 else 0
 
         # Excellent: High return, high efficiency, good MFE/MAE ratio
-        if (
-            trade["return"] > return_threshold
-            and trade["exit_efficiency"] > 0.80
-            and mfe_mae_ratio > 5.0
-        ):
+        if trade["return"] > return_threshold and trade["exit_efficiency"] > 0.80 and mfe_mae_ratio > 5.0:
             return "excellent"
 
         # Good: Positive return with decent efficiency
-        elif trade["return"] > 0 and trade["exit_efficiency"] > efficiency_threshold:
+        if trade["return"] > 0 and trade["exit_efficiency"] > efficiency_threshold:
             return "good"
 
         # Poor: Negative return but not catastrophic
-        elif trade["return"] > -0.05 and trade["exit_efficiency"] > -1.0:
+        if trade["return"] > -0.05 and trade["exit_efficiency"] > -1.0:
             return "poor"
 
         # Failed: Large losses or very poor execution
-        else:
-            return "failed"
+        return "failed"
 
     # Classify all trades
     quality_distribution = {"excellent": 0, "good": 0, "poor": 0, "failed": 0}
@@ -267,9 +262,7 @@ def test_trade_quality_classification():
     for trade in trades:
         quality = classify_trade_quality(trade)
         quality_distribution[quality] += 1
-        print(
-            f"Trade: {trade['return']:+.1%} return, {trade['exit_efficiency']:.2f} efficiency → {quality.upper()}"
-        )
+        print(f"Trade: {trade['return']:+.1%} return, {trade['exit_efficiency']:.2f} efficiency → {quality.upper()}")
 
     print("\nQuality Distribution:")
     total_trades = len(trades)
@@ -316,14 +309,8 @@ def test_optimization_opportunity_identification():
         )
 
     # Hold period optimization
-    if (
-        analysis_results["avg_hold_period"]
-        > analysis_results["optimal_hold_period"] * 1.2
-    ):
-        excess_days = (
-            analysis_results["avg_hold_period"]
-            - analysis_results["optimal_hold_period"]
-        )
+    if analysis_results["avg_hold_period"] > analysis_results["optimal_hold_period"] * 1.2:
+        excess_days = analysis_results["avg_hold_period"] - analysis_results["optimal_hold_period"]
         opportunities.append(
             {
                 "area": "duration_management",
@@ -368,12 +355,14 @@ def validate_analysis_schema():
     Validate that the analysis JSON schema is properly structured.
     """
 
-    schema_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/analyze/trading_analysis_schema_v1.json"
+    schema_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/analyze/trading_analysis_schema_v1.json"
+    )
 
     print("=== Analysis Schema Validation ===\n")
 
     try:
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = json.load(f)
 
         # Check required top-level properties
@@ -401,10 +390,7 @@ def validate_analysis_schema():
         signal_eff = schema["properties"].get("signal_effectiveness", {})
         signal_props = signal_eff.get("properties", {})
 
-        if (
-            "entry_signal_analysis" in signal_props
-            and "exit_signal_analysis" in signal_props
-        ):
+        if "entry_signal_analysis" in signal_props and "exit_signal_analysis" in signal_props:
             print("✅ Signal effectiveness structure valid")
         else:
             print("❌ Signal effectiveness structure incomplete")
@@ -413,10 +399,7 @@ def validate_analysis_schema():
         perf_measure = schema["properties"].get("performance_measurement", {})
         perf_props = perf_measure.get("properties", {})
 
-        if (
-            "statistical_analysis" in perf_props
-            and "trade_quality_classification" in perf_props
-        ):
+        if "statistical_analysis" in perf_props and "trade_quality_classification" in perf_props:
             print("✅ Performance measurement structure valid")
         else:
             print("❌ Performance measurement structure incomplete")
@@ -426,9 +409,9 @@ def validate_analysis_schema():
 
     except FileNotFoundError:
         print("❌ Schema file not found")
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         print("❌ Invalid JSON in schema: {e}")
-    except Exception as e:
+    except Exception:
         print("❌ Schema validation error: {e}")
 
 

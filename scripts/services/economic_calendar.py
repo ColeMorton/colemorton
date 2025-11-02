@@ -15,7 +15,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -26,9 +26,9 @@ from .base_financial_service import (
     ValidationError,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 @dataclass
@@ -39,12 +39,12 @@ class EconomicEvent:
     event_date: datetime
     event_type: str  # 'monetary_policy', 'employment', 'inflation', 'gdp', 'sentiment'
     importance: str  # 'high', 'medium', 'low'
-    actual: Optional[float] = None
-    forecast: Optional[float] = None
-    previous: Optional[float] = None
-    impact_score: Optional[float] = None
-    volatility_impact: Optional[float] = None
-    sector_implications: Optional[Dict[str, str]] = None
+    actual: float | None = None
+    forecast: float | None = None
+    previous: float | None = None
+    impact_score: float | None = None
+    volatility_impact: float | None = None
+    sector_implications: dict[str, str] | None = None
 
 
 @dataclass
@@ -53,12 +53,10 @@ class PolicyDecisionProbability:
 
     meeting_date: datetime
     current_rate: float
-    rate_change_probabilities: Dict[
-        str, float
-    ]  # {'+25bps': 0.65, 'hold': 0.30, '-25bps': 0.05}
+    rate_change_probabilities: dict[str, float]  # {'+25bps': 0.65, 'hold': 0.30, '-25bps': 0.05}
     market_implied_rate: float
     policy_surprise_potential: float
-    market_reaction_scenarios: Dict[str, Dict[str, float]]
+    market_reaction_scenarios: dict[str, dict[str, float]]
 
 
 @dataclass
@@ -91,7 +89,7 @@ class EconomicCalendarService(BaseFinancialService):
         # Policy decision parameters
         self.policy_parameters = self._initialize_policy_parameters()
 
-    def _initialize_impact_matrix(self) -> Dict[str, MarketImpactScore]:
+    def _initialize_impact_matrix(self) -> dict[str, MarketImpactScore]:
         """Initialize historical market impact scoring matrix"""
         return {
             "fomc_decision": MarketImpactScore(
@@ -144,7 +142,7 @@ class EconomicCalendarService(BaseFinancialService):
             ),
         }
 
-    def _initialize_policy_parameters(self) -> Dict[str, Any]:
+    def _initialize_policy_parameters(self) -> dict[str, Any]:
         """Initialize policy decision modeling parameters"""
         return {
             "fed_meetings_2024": ["2024-09-18", "2024-11-07", "2024-12-18"],
@@ -170,7 +168,7 @@ class EconomicCalendarService(BaseFinancialService):
             },
         }
 
-    def get_upcoming_economic_events(self, days_ahead: int = 30) -> List[EconomicEvent]:
+    def get_upcoming_economic_events(self, days_ahead: int = 30) -> list[EconomicEvent]:
         """Get upcoming economic events with market impact analysis"""
         try:
             current_date = datetime.now()
@@ -188,11 +186,9 @@ class EconomicCalendarService(BaseFinancialService):
             return sorted(events, key=lambda x: x.event_date)
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to fetch economic calendar: {e}")
+            raise DataNotFoundError(f"Failed to fetch economic calendar: {e}") from e
 
-    def _generate_upcoming_events(
-        self, start_date: datetime, end_date: datetime
-    ) -> List[EconomicEvent]:
+    def _generate_upcoming_events(self, start_date: datetime, end_date: datetime) -> list[EconomicEvent]:
         """Generate upcoming economic events (production would use real API data)"""
         events = []
 
@@ -267,7 +263,7 @@ class EconomicCalendarService(BaseFinancialService):
 
         # Get impact matrix data
         impact_data = None
-        for key, data in self.impact_matrix.items():
+        for _key, data in self.impact_matrix.items():
             if event.event_type == data.event_type:
                 impact_data = data
                 break
@@ -280,17 +276,11 @@ class EconomicCalendarService(BaseFinancialService):
         if event.actual is not None and event.forecast is not None:
             deviation = abs(event.actual - event.forecast)
             if event.event_type == "employment":
-                deviation_impact = (
-                    deviation / 50000
-                ) * impact_data.consensus_deviation_sensitivity
+                deviation_impact = (deviation / 50000) * impact_data.consensus_deviation_sensitivity
             elif event.event_type == "inflation":
-                deviation_impact = (
-                    deviation / 0.1
-                ) * impact_data.consensus_deviation_sensitivity
+                deviation_impact = (deviation / 0.1) * impact_data.consensus_deviation_sensitivity
             elif event.event_type == "monetary_policy":
-                deviation_impact = (
-                    deviation / 0.25
-                ) * impact_data.consensus_deviation_sensitivity
+                deviation_impact = (deviation / 0.25) * impact_data.consensus_deviation_sensitivity
 
         # Combine base impact with deviation impact
         total_impact = impact_data.historical_volatility_impact + deviation_impact
@@ -300,64 +290,43 @@ class EconomicCalendarService(BaseFinancialService):
 
     def _estimate_volatility_impact(self, event: EconomicEvent) -> float:
         """Estimate VIX volatility impact from economic event"""
-        impact_data = self.impact_matrix.get(
-            f"{event.event_type}_release", self.impact_matrix.get("fomc_decision")
-        )
+        impact_data = self.impact_matrix.get(f"{event.event_type}_release", self.impact_matrix.get("fomc_decision"))
 
         base_volatility = impact_data.historical_volatility_impact
 
         # Adjust for importance
-        importance_multiplier = {"high": 1.0, "medium": 0.7, "low": 0.4}.get(
-            event.importance, 0.7
-        )
+        importance_multiplier = {"high": 1.0, "medium": 0.7, "low": 0.4}.get(event.importance, 0.7)
 
         return base_volatility * importance_multiplier
 
-    def _analyze_sector_implications(self, event: EconomicEvent) -> Dict[str, str]:
+    def _analyze_sector_implications(self, event: EconomicEvent) -> dict[str, str]:
         """Analyze sector rotation implications from economic event"""
         if event.event_type == "monetary_policy":
             return {
-                "financials": (
-                    "positive"
-                    if event.forecast and event.forecast > (event.previous or 0)
-                    else "neutral"
-                ),
-                "utilities": (
-                    "negative"
-                    if event.forecast and event.forecast > (event.previous or 0)
-                    else "positive"
-                ),
-                "technology": (
-                    "negative"
-                    if event.forecast and event.forecast > (event.previous or 0)
-                    else "neutral"
-                ),
+                "financials": ("positive" if event.forecast and event.forecast > (event.previous or 0) else "neutral"),
+                "utilities": ("negative" if event.forecast and event.forecast > (event.previous or 0) else "positive"),
+                "technology": ("negative" if event.forecast and event.forecast > (event.previous or 0) else "neutral"),
                 "real_estate": (
-                    "negative"
-                    if event.forecast and event.forecast > (event.previous or 0)
-                    else "positive"
+                    "negative" if event.forecast and event.forecast > (event.previous or 0) else "positive"
                 ),
             }
-        elif event.event_type == "employment":
+        if event.event_type == "employment":
             return {
                 "consumer_discretionary": "positive",
                 "financials": "positive",
                 "industrials": "positive",
                 "utilities": "neutral",
             }
-        elif event.event_type == "inflation":
+        if event.event_type == "inflation":
             return {
                 "energy": "positive",
                 "materials": "positive",
                 "consumer_staples": "neutral",
                 "technology": "negative",
             }
-        else:
-            return {"broad_market": "neutral"}
+        return {"broad_market": "neutral"}
 
-    def get_fomc_decision_probabilities(
-        self, meeting_date: Optional[datetime] = None
-    ) -> PolicyDecisionProbability:
+    def get_fomc_decision_probabilities(self, meeting_date: datetime | None = None) -> PolicyDecisionProbability:
         """Get Fed policy decision probabilities with market impact scenarios"""
         try:
             if not meeting_date:
@@ -373,14 +342,10 @@ class EconomicCalendarService(BaseFinancialService):
             market_implied = self._get_market_implied_rate(meeting_date)
 
             # Policy surprise potential
-            surprise_potential = self._calculate_policy_surprise_potential(
-                rate_probabilities, market_implied
-            )
+            surprise_potential = self._calculate_policy_surprise_potential(rate_probabilities, market_implied)
 
             # Market reaction scenarios
-            reaction_scenarios = self._generate_market_reaction_scenarios(
-                current_rate, rate_probabilities
-            )
+            reaction_scenarios = self._generate_market_reaction_scenarios(current_rate, rate_probabilities)
 
             return PolicyDecisionProbability(
                 meeting_date=meeting_date,
@@ -392,17 +357,14 @@ class EconomicCalendarService(BaseFinancialService):
             )
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to calculate policy probabilities: {e}")
+            raise DataNotFoundError(f"Failed to calculate policy probabilities: {e}") from e
 
     def _get_next_fomc_meeting(self) -> datetime:
         """Get next FOMC meeting date"""
         current_date = datetime.now()
 
         # Combine 2024 and 2025 meetings
-        all_meetings = (
-            self.policy_parameters["fed_meetings_2024"]
-            + self.policy_parameters["fed_meetings_2025"]
-        )
+        all_meetings = self.policy_parameters["fed_meetings_2024"] + self.policy_parameters["fed_meetings_2025"]
 
         for meeting_str in all_meetings:
             meeting_date = datetime.strptime(meeting_str, "%Y-%m-%d")
@@ -412,7 +374,7 @@ class EconomicCalendarService(BaseFinancialService):
         # If no meetings found, return a default future date
         return current_date + timedelta(days=60)
 
-    def _calculate_rate_probabilities(self, current_rate: float) -> Dict[str, float]:
+    def _calculate_rate_probabilities(self, current_rate: float) -> dict[str, float]:
         """Calculate rate change probabilities based on economic conditions"""
         # Simplified model - in production would use Taylor rule and economic indicators
 
@@ -427,11 +389,6 @@ class EconomicCalendarService(BaseFinancialService):
 
         # Adjust based on current economic conditions
         # (In production, would integrate real-time economic data)
-        unemployment_adjustment = (
-            0.0  # Would be based on current unemployment vs threshold
-        )
-        inflation_adjustment = 0.0  # Would be based on current inflation vs target
-
         # Apply adjustments (simplified)
         adjusted_probabilities = base_probabilities.copy()
 
@@ -445,9 +402,7 @@ class EconomicCalendarService(BaseFinancialService):
         # For now, return a reasonable estimate
         return 4.85  # Slightly below current rate, implying easing expectations
 
-    def _calculate_policy_surprise_potential(
-        self, probabilities: Dict[str, float], market_implied: float
-    ) -> float:
+    def _calculate_policy_surprise_potential(self, probabilities: dict[str, float], market_implied: float) -> float:
         """Calculate potential for policy surprise"""
         # Calculate expected rate change
         rate_changes = {
@@ -457,22 +412,19 @@ class EconomicCalendarService(BaseFinancialService):
             "-25bps": -0.25,
             "-50bps": -0.50,
         }
-        expected_change = sum(
-            probabilities[action] * change for action, change in rate_changes.items()
-        )
+        expected_change = sum(probabilities[action] * change for action, change in rate_changes.items())
 
         # Market surprise is deviation from market expectations
         # Higher variance in probabilities = higher surprise potential
         variance = sum(
-            probabilities[action] * (change - expected_change) ** 2
-            for action, change in rate_changes.items()
+            probabilities[action] * (change - expected_change) ** 2 for action, change in rate_changes.items()
         )
 
         return min(variance * 2, 1.0)  # Scale to 0-1
 
     def _generate_market_reaction_scenarios(
-        self, current_rate: float, probabilities: Dict[str, float]
-    ) -> Dict[str, Dict[str, float]]:
+        self, current_rate: float, probabilities: dict[str, float]
+    ) -> dict[str, dict[str, float]]:
         """Generate market reaction scenarios for different policy outcomes"""
         return {
             "+25bps": {
@@ -498,7 +450,7 @@ class EconomicCalendarService(BaseFinancialService):
             },
         }
 
-    def get_economic_surprise_index(self, lookback_days: int = 90) -> Dict[str, Any]:
+    def get_economic_surprise_index(self, lookback_days: int = 90) -> dict[str, Any]:
         """Calculate economic surprise index and sector allocation signals"""
         try:
             # Generate recent economic surprises (production would use real data)
@@ -523,9 +475,9 @@ class EconomicCalendarService(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(f"Failed to calculate surprise index: {e}")
+            raise DataNotFoundError(f"Failed to calculate surprise index: {e}") from e
 
-    def _generate_recent_surprises(self, lookback_days: int) -> List[Dict[str, Any]]:
+    def _generate_recent_surprises(self, lookback_days: int) -> list[dict[str, Any]]:
         """Generate recent economic surprises data"""
         surprises = []
         current_date = datetime.now()
@@ -541,16 +493,14 @@ class EconomicCalendarService(BaseFinancialService):
                 {
                     "date": surprise_date,
                     "surprise_value": surprise_value,
-                    "event_type": np.random.choice(
-                        ["employment", "inflation", "gdp", "sentiment"]
-                    ),
+                    "event_type": np.random.choice(["employment", "inflation", "gdp", "sentiment"]),
                     "market_impact": surprise_value * 0.8,  # Correlated market impact
                 }
             )
 
         return sorted(surprises, key=lambda x: x["date"])
 
-    def _calculate_surprise_index(self, surprises: List[Dict[str, Any]]) -> float:
+    def _calculate_surprise_index(self, surprises: list[dict[str, Any]]) -> float:
         """Calculate composite economic surprise index"""
         if not surprises:
             return 0.0
@@ -560,7 +510,7 @@ class EconomicCalendarService(BaseFinancialService):
         weights.reverse()  # Most recent gets highest weight
 
         # Calculate weighted average
-        weighted_sum = sum(s["surprise_value"] * w for s, w in zip(surprises, weights))
+        weighted_sum = sum(s["surprise_value"] * w for s, w in zip(surprises, weights, strict=False))
         weight_sum = sum(weights)
 
         return weighted_sum / weight_sum if weight_sum > 0 else 0.0
@@ -568,16 +518,11 @@ class EconomicCalendarService(BaseFinancialService):
     def _calculate_surprise_percentile(self, current_index: float) -> float:
         """Calculate current surprise index percentile vs historical"""
         # Generate historical distribution (production would use real data)
-        historical_indices = np.random.normal(
-            0, 0.6, 1000
-        )  # 1000 historical observations
+        historical_indices = np.random.normal(0, 0.6, 1000)  # 1000 historical observations
 
-        percentile = (
-            np.sum(historical_indices <= current_index) / len(historical_indices)
-        ) * 100
-        return percentile
+        return (np.sum(historical_indices <= current_index) / len(historical_indices)) * 100
 
-    def _generate_sector_signals(self, surprise_index: float) -> Dict[str, str]:
+    def _generate_sector_signals(self, surprise_index: float) -> dict[str, str]:
         """Generate sector allocation signals based on surprise index"""
         if surprise_index > 0.5:  # Positive surprises
             return {
@@ -588,7 +533,7 @@ class EconomicCalendarService(BaseFinancialService):
                 "consumer_staples": "underweight",
                 "signal_strength": "strong",
             }
-        elif surprise_index < -0.5:  # Negative surprises
+        if surprise_index < -0.5:  # Negative surprises
             return {
                 "utilities": "overweight",
                 "consumer_staples": "overweight",
@@ -597,12 +542,10 @@ class EconomicCalendarService(BaseFinancialService):
                 "consumer_discretionary": "underweight",
                 "signal_strength": "strong",
             }
-        else:  # Neutral surprises
-            return {"broad_market": "neutral", "signal_strength": "weak"}
+        # Neutral surprises
+        return {"broad_market": "neutral", "signal_strength": "weak"}
 
-    def _analyze_surprise_trend(
-        self, surprises: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _analyze_surprise_trend(self, surprises: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze trend and momentum in economic surprises"""
         if len(surprises) < 10:
             return {"trend": "insufficient_data", "momentum": 0.0}
@@ -630,7 +573,7 @@ class EconomicCalendarService(BaseFinancialService):
             "confidence": 0.80,
         }
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """
         Validate and transform API response data
 
@@ -645,23 +588,17 @@ class EconomicCalendarService(BaseFinancialService):
             ValidationError: If response data is invalid
         """
         if not isinstance(data, dict):
-            raise ValidationError(
-                f"Invalid response format from {endpoint}: expected dict, got {type(data)}"
-            )
+            raise ValidationError(f"Invalid response format from {endpoint}: expected dict, got {type(data)}")
 
         # For economic calendar data, validate basic structure
         if "events" in data and not isinstance(data["events"], list):
-            raise ValidationError(
-                f"Invalid events format from {endpoint}: expected list"
-            )
+            raise ValidationError(f"Invalid events format from {endpoint}: expected list")
 
         # Validate event data structure if present
         if "events" in data:
             for event in data["events"]:
                 if not isinstance(event, dict):
-                    raise ValidationError(
-                        f"Invalid event format from {endpoint}: expected dict"
-                    )
+                    raise ValidationError(f"Invalid event format from {endpoint}: expected dict")
 
                 required_fields = [
                     "event_name",
@@ -671,13 +608,11 @@ class EconomicCalendarService(BaseFinancialService):
                 ]
                 for field in required_fields:
                     if field not in event:
-                        raise ValidationError(
-                            f"Missing required field '{field}' in event data from {endpoint}"
-                        )
+                        raise ValidationError(f"Missing required field '{field}' in event data from {endpoint}")
 
         return data
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on economic calendar service"""
         health_status = super().health_check()
 
@@ -688,9 +623,7 @@ class EconomicCalendarService(BaseFinancialService):
 
             # Test policy probability calculation
             policy_probs = self.get_fomc_decision_probabilities()
-            health_status["policy_modeling"] = (
-                policy_probs.policy_surprise_potential is not None
-            )
+            health_status["policy_modeling"] = policy_probs.policy_surprise_potential is not None
 
             # Test surprise index calculation
             surprise_data = self.get_economic_surprise_index(30)
@@ -758,5 +691,5 @@ def create_economic_calendar_service(env: str = "prod") -> EconomicCalendarServi
         return EconomicCalendarService(config)
 
     except Exception as e:
-        print("❌ Failed to create economic calendar service: {e}")
+        print(f"❌ Failed to create economic calendar service: {e}")
         return None

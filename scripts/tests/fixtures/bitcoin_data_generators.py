@@ -6,13 +6,10 @@ Property-based testing data generators that create realistic Bitcoin data
 for comprehensive schema validation and edge case testing.
 """
 
-import hashlib
-import json
 import random
-import uuid
 from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 
 try:
     from hypothesis import strategies as st
@@ -29,13 +26,12 @@ try:
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
     # Fallback implementations without hypothesis
-    pass
 
 
 class BitcoinDataGenerator:
     """Base class for Bitcoin-related data generators"""
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: int | None = None):
         self.random = random.Random(seed)
         self.current_block_height = 850000  # Approximate current block height
         self.current_difficulty = 88104191118077.4
@@ -46,14 +42,13 @@ class BitcoinDataGenerator:
         if address_type == "p2pkh":
             # Legacy address starting with '1'
             return "1" + self._generate_base58_string(33)
-        elif address_type == "p2sh":
+        if address_type == "p2sh":
             # Script hash address starting with '3'
             return "3" + self._generate_base58_string(33)
-        elif address_type == "bech32":
+        if address_type == "bech32":
             # Bech32 address starting with 'bc1'
             return "bc1q" + self._generate_hex_string(58)
-        else:
-            return self.generate_bitcoin_address("p2pkh")
+        return self.generate_bitcoin_address("p2pkh")
 
     def generate_transaction_id(self) -> str:
         """Generate a realistic transaction ID (64-character hex)"""
@@ -61,9 +56,7 @@ class BitcoinDataGenerator:
 
     def generate_block_hash(self) -> str:
         """Generate a realistic block hash (64-character hex with leading zeros)"""
-        leading_zeros = self.random.randint(
-            10, 19
-        )  # Bitcoin blocks have many leading zeros
+        leading_zeros = self.random.randint(10, 19)  # Bitcoin blocks have many leading zeros
         hash_part = self._generate_hex_string(64 - leading_zeros)
         return "0" * leading_zeros + hash_part
 
@@ -109,7 +102,7 @@ class BitcoinDataGenerator:
 class MempoolSpaceDataGenerator(BitcoinDataGenerator):
     """Generator for Mempool.space API responses"""
 
-    def generate_fee_estimates(self) -> Dict[str, Any]:
+    def generate_fee_estimates(self) -> dict[str, Any]:
         """Generate realistic fee estimates"""
         fastest = self.generate_realistic_fee("urgent")
         half_hour = self.generate_realistic_fee("high")
@@ -125,7 +118,7 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
             "minimumFee": minimum,
         }
 
-    def generate_mempool_info(self) -> Dict[str, Any]:
+    def generate_mempool_info(self) -> dict[str, Any]:
         """Generate realistic mempool information"""
         return {
             "count": self.random.randint(20000, 80000),
@@ -146,7 +139,7 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
             ],
         }
 
-    def generate_recent_blocks(self, count: int = 10) -> List[Dict[str, Any]]:
+    def generate_recent_blocks(self, count: int = 10) -> list[dict[str, Any]]:
         """Generate list of recent blocks"""
         blocks = []
         current_height = self.generate_block_height()
@@ -161,9 +154,7 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
                 "size": self.random.randint(800000, 1400000),
                 "weight": self.random.randint(3000000, 4000000),
                 "merkle_root": self._generate_hex_string(64),
-                "previousblockhash": self.generate_block_hash()
-                if i < count - 1
-                else None,
+                "previousblockhash": self.generate_block_hash() if i < count - 1 else None,
                 "mediantime": self.generate_timestamp(hours_ago=i * 1 + 1),
                 "nonce": self.random.randint(1000000000, 4000000000),
                 "bits": 386089497,
@@ -175,7 +166,7 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
 
         return blocks
 
-    def generate_transaction(self) -> Dict[str, Any]:
+    def generate_transaction(self) -> dict[str, Any]:
         """Generate realistic Bitcoin transaction"""
         return {
             "txid": self.generate_transaction_id(),
@@ -186,15 +177,9 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
             "fee": self.random.randint(1000, 50000),  # satoshis
             "status": {
                 "confirmed": self.random.choice([True, False]),
-                "block_height": self.generate_block_height()
-                if self.random.choice([True, False])
-                else None,
-                "block_hash": self.generate_block_hash()
-                if self.random.choice([True, False])
-                else None,
-                "block_time": self.generate_timestamp()
-                if self.random.choice([True, False])
-                else None,
+                "block_height": self.generate_block_height() if self.random.choice([True, False]) else None,
+                "block_hash": self.generate_block_hash() if self.random.choice([True, False]) else None,
+                "block_time": self.generate_timestamp() if self.random.choice([True, False]) else None,
             },
             "vin": [
                 {
@@ -224,7 +209,7 @@ class MempoolSpaceDataGenerator(BitcoinDataGenerator):
 class BlockchainComDataGenerator(BitcoinDataGenerator):
     """Generator for Blockchain.com API responses"""
 
-    def generate_latest_block(self) -> Dict[str, Any]:
+    def generate_latest_block(self) -> dict[str, Any]:
         """Generate realistic latest block data"""
         return {
             "hash": self.generate_block_hash(),
@@ -243,7 +228,7 @@ class BlockchainComDataGenerator(BitcoinDataGenerator):
             "weight": self.random.randint(3500000, 4000000),
         }
 
-    def generate_network_stats(self) -> Dict[str, Any]:
+    def generate_network_stats(self) -> dict[str, Any]:
         """Generate realistic network statistics"""
         return {
             "market_price_usd": self.generate_realistic_bitcoin_price(),
@@ -255,13 +240,10 @@ class BlockchainComDataGenerator(BitcoinDataGenerator):
             "minutes_between_blocks": round(self.random.uniform(8, 12), 2),
             "totalbc": 19500000 * 100000000,  # Total bitcoins in satoshis
             "n_blocks_total": self.generate_block_height(),
-            "estimated_transaction_volume_usd": self.random.randint(
-                1000000000, 5000000000
-            ),
+            "estimated_transaction_volume_usd": self.random.randint(1000000000, 5000000000),
             "blocks_size": self.random.randint(1000000000, 2000000000),
             "miners_revenue_usd": self.random.randint(10000000, 30000000),
-            "nextretarget": self.generate_block_height()
-            + self.random.randint(1000, 2000),
+            "nextretarget": self.generate_block_height() + self.random.randint(1000, 2000),
             "difficulty": self.current_difficulty,
             "estimated_btc_sent": self.random.randint(500000, 2000000),
             "miners_revenue_btc": self.random.randint(800, 1200),
@@ -274,7 +256,7 @@ class BlockchainComDataGenerator(BitcoinDataGenerator):
 class AlternativeMeDataGenerator(BitcoinDataGenerator):
     """Generator for Alternative.me Fear & Greed API responses"""
 
-    def generate_fear_greed_data(self, historical: bool = False) -> Dict[str, Any]:
+    def generate_fear_greed_data(self, historical: bool = False) -> dict[str, Any]:
         """Generate Fear & Greed index data"""
         if historical:
             data_points = []
@@ -297,39 +279,37 @@ class AlternativeMeDataGenerator(BitcoinDataGenerator):
                 "data": data_points,
                 "metadata": {"error": None},
             }
-        else:
-            value = self.random.randint(0, 100)
-            return {
-                "name": "Fear and Greed Index",
-                "data": [
-                    {
-                        "value": str(value),
-                        "value_classification": self._classify_fear_greed(value),
-                        "timestamp": str(int(datetime.now().timestamp())),
-                        "time_until_update": str(self.random.randint(3600, 86400)),
-                    }
-                ],
-                "metadata": {"error": None},
-            }
+        value = self.random.randint(0, 100)
+        return {
+            "name": "Fear and Greed Index",
+            "data": [
+                {
+                    "value": str(value),
+                    "value_classification": self._classify_fear_greed(value),
+                    "timestamp": str(int(datetime.now().timestamp())),
+                    "time_until_update": str(self.random.randint(3600, 86400)),
+                }
+            ],
+            "metadata": {"error": None},
+        }
 
     def _classify_fear_greed(self, value: int) -> str:
         """Classify fear & greed value"""
         if value <= 25:
             return "Extreme Fear"
-        elif value <= 45:
+        if value <= 45:
             return "Fear"
-        elif value <= 55:
+        if value <= 55:
             return "Neutral"
-        elif value <= 75:
+        if value <= 75:
             return "Greed"
-        else:
-            return "Extreme Greed"
+        return "Extreme Greed"
 
 
 class BinanceAPIDataGenerator(BitcoinDataGenerator):
     """Generator for Binance API responses"""
 
-    def generate_24hr_ticker(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def generate_24hr_ticker(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Generate 24hr ticker statistics"""
         base_price = self.generate_realistic_bitcoin_price()
         price_change = base_price * self.random.uniform(-0.05, 0.05)  # ±5% daily change
@@ -337,7 +317,7 @@ class BinanceAPIDataGenerator(BitcoinDataGenerator):
         return {
             "symbol": symbol,
             "priceChange": f"{price_change:.2f}",
-            "priceChangePercent": f"{(price_change/base_price)*100:.2f}",
+            "priceChangePercent": f"{(price_change / base_price) * 100:.2f}",
             "weightedAvgPrice": f"{base_price + self.random.uniform(-1000, 1000):.2f}",
             "prevClosePrice": f"{base_price - price_change:.2f}",
             "lastPrice": f"{base_price:.2f}",
@@ -356,11 +336,11 @@ class BinanceAPIDataGenerator(BitcoinDataGenerator):
             "count": self.random.randint(500000, 2000000),
         }
 
-    def generate_server_time(self) -> Dict[str, Any]:
+    def generate_server_time(self) -> dict[str, Any]:
         """Generate server time response"""
         return {"serverTime": int(datetime.now().timestamp() * 1000)}
 
-    def generate_price_ticker(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def generate_price_ticker(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Generate simple price ticker"""
         return {
             "symbol": symbol,
@@ -371,9 +351,7 @@ class BinanceAPIDataGenerator(BitcoinDataGenerator):
 class CoinMetricsDataGenerator(BitcoinDataGenerator):
     """Generator for CoinMetrics API responses"""
 
-    def generate_asset_metrics(
-        self, asset: str = "btc", metrics: List[str] = None
-    ) -> Dict[str, Any]:
+    def generate_asset_metrics(self, asset: str = "btc", metrics: list[str] = None) -> dict[str, Any]:
         """Generate asset metrics data"""
         if metrics is None:
             metrics = ["PriceUSD", "CapMrktCurUSD", "TxCnt", "AdrActCnt"]
@@ -387,9 +365,7 @@ class CoinMetricsDataGenerator(BitcoinDataGenerator):
                 if metric == "PriceUSD":
                     data_point[metric] = str(self.generate_realistic_bitcoin_price())
                 elif metric == "CapMrktCurUSD":
-                    market_cap = (
-                        self.generate_realistic_bitcoin_price() * 19500000
-                    )  # Approximate BTC supply
+                    market_cap = self.generate_realistic_bitcoin_price() * 19500000  # Approximate BTC supply
                     data_point[metric] = str(int(market_cap))
                 elif metric == "TxCnt":
                     data_point[metric] = str(self.random.randint(250000, 400000))
@@ -402,7 +378,7 @@ class CoinMetricsDataGenerator(BitcoinDataGenerator):
 
         return {"data": data_points}
 
-    def generate_supported_assets(self) -> List[Dict[str, Any]]:
+    def generate_supported_assets(self) -> list[dict[str, Any]]:
         """Generate supported assets list"""
         return [
             {"asset": "btc", "full_name": "Bitcoin"},
@@ -416,16 +392,14 @@ class CoinMetricsDataGenerator(BitcoinDataGenerator):
 class BitcoinSchemaTestDataGenerator:
     """High-level generator for Bitcoin schema validation testing"""
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: int | None = None):
         self.mempool_generator = MempoolSpaceDataGenerator(seed)
         self.blockchain_generator = BlockchainComDataGenerator(seed)
         self.alternative_generator = AlternativeMeDataGenerator(seed)
         self.binance_generator = BinanceAPIDataGenerator(seed)
         self.coinmetrics_generator = CoinMetricsDataGenerator(seed)
 
-    def generate_discovery_schema_data(
-        self, service_names: List[str]
-    ) -> Dict[str, Any]:
+    def generate_discovery_schema_data(self, service_names: list[str]) -> dict[str, Any]:
         """Generate data for discovery schema validation"""
         analysis_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -454,9 +428,7 @@ class BitcoinSchemaTestDataGenerator:
             elif service_name == "alternative_me_cli":
                 data["data_sources"][service_name] = {
                     "fear_greed": self.alternative_generator.generate_fear_greed_data(),
-                    "historical": self.alternative_generator.generate_fear_greed_data(
-                        historical=True
-                    ),
+                    "historical": self.alternative_generator.generate_fear_greed_data(historical=True),
                 }
             elif service_name == "binance_api_cli":
                 data["data_sources"][service_name] = {
@@ -471,7 +443,7 @@ class BitcoinSchemaTestDataGenerator:
 
         return data
 
-    def generate_edge_case_data(self) -> Dict[str, Any]:
+    def generate_edge_case_data(self) -> dict[str, Any]:
         """Generate edge case data for robust testing"""
         return {
             "empty_responses": {},
@@ -499,9 +471,7 @@ class BitcoinSchemaTestDataGenerator:
 
 
 # Convenience functions for quick data generation
-def generate_bitcoin_discovery_data(
-    services: List[str] = None, seed: int = None
-) -> Dict[str, Any]:
+def generate_bitcoin_discovery_data(services: list[str] = None, seed: int = None) -> dict[str, Any]:
     """Quick function to generate Bitcoin discovery schema data"""
     if services is None:
         services = [
@@ -516,7 +486,7 @@ def generate_bitcoin_discovery_data(
     return generator.generate_discovery_schema_data(services)
 
 
-def generate_bitcoin_edge_cases(seed: int = None) -> Dict[str, Any]:
+def generate_bitcoin_edge_cases(seed: int = None) -> dict[str, Any]:
     """Quick function to generate edge case data"""
     generator = BitcoinSchemaTestDataGenerator(seed)
     return generator.generate_edge_case_data()

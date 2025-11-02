@@ -11,15 +11,13 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # Import the MCP integration utility
 from mcp_integration import MCPDataAccess
 
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -31,9 +29,7 @@ class EnhancedFundamentalAnalyzer:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def analyze_ticker(
-        self, ticker: str, include_economic_context: bool = True
-    ) -> dict:
+    def analyze_ticker(self, ticker: str, include_economic_context: bool = True) -> dict:
         """Perform comprehensive fundamental analysis for a ticker"""
 
         logger.info(f"Starting enhanced analysis for {ticker}")
@@ -65,19 +61,13 @@ class EnhancedFundamentalAnalyzer:
                 "fundamentals": fundamentals,
                 "market_data": market_data,
                 "financial_statements": financial_statements,
-                "data_quality": (
-                    "high"
-                    if all([fundamentals, market_data, financial_statements])
-                    else "partial"
-                ),
+                "data_quality": ("high" if all([fundamentals, market_data, financial_statements]) else "partial"),
             }
             analysis["data_sources"].append("yahoo_finance")
 
             # Extract key metrics for valuation
             if fundamentals and not fundamentals.get("error"):
-                analysis["valuation_metrics"] = self._extract_valuation_metrics(
-                    fundamentals
-                )
+                analysis["valuation_metrics"] = self._extract_valuation_metrics(fundamentals)
 
         except Exception as e:
             logger.error(f"Failed to get Yahoo Finance data: {e}")
@@ -96,9 +86,7 @@ class EnhancedFundamentalAnalyzer:
                 "recent_filings": filings,
                 "financial_statements": sec_financial,
                 "metrics": sec_metrics,
-                "compliance_status": (
-                    "current" if filings and not filings.get("error") else "unknown"
-                ),
+                "compliance_status": ("current" if filings and not filings.get("error") else "unknown"),
             }
             analysis["data_sources"].append("sec_edgar")
 
@@ -116,21 +104,15 @@ class EnhancedFundamentalAnalyzer:
                 interest_rates = self.mcp.get_interest_rates("all", "1y")
 
                 # Get sector-specific indicators
-                sector = self._determine_sector(
-                    analysis.get("financial_data", {}).get("fundamentals", {})
-                )
-                sector_indicators = (
-                    self.mcp.get_sector_indicators(sector) if sector else {}
-                )
+                sector = self._determine_sector(analysis.get("financial_data", {}).get("fundamentals", {}))
+                sector_indicators = self.mcp.get_sector_indicators(sector) if sector else {}
 
                 analysis["economic_context"] = {
                     "inflation_data": inflation,
                     "interest_rates": interest_rates,
                     "sector_indicators": sector_indicators,
                     "sector": sector,
-                    "economic_summary": self._summarize_economic_context(
-                        inflation, interest_rates
-                    ),
+                    "economic_summary": self._summarize_economic_context(inflation, interest_rates),
                 }
                 analysis["data_sources"].append("fred_economic")
 
@@ -147,9 +129,7 @@ class EnhancedFundamentalAnalyzer:
         # 6. Content Generation
         try:
             content_data = self._prepare_content_data(analysis)
-            blog_content = self.mcp.generate_blog_post(
-                "fundamental_analysis", content_data
-            )
+            blog_content = self.mcp.generate_blog_post("fundamental_analysis", content_data)
             social_content = self.mcp.create_social_content(
                 ticker,
                 "fundamental_analysis",
@@ -159,9 +139,7 @@ class EnhancedFundamentalAnalyzer:
             analysis["content_generation"] = {
                 "blog_post": blog_content,
                 "social_content": social_content,
-                "content_ready": not bool(
-                    blog_content.get("error") or social_content.get("error")
-                ),
+                "content_ready": not bool(blog_content.get("error") or social_content.get("error")),
             }
             analysis["data_sources"].append("content_automation")
 
@@ -178,9 +156,7 @@ class EnhancedFundamentalAnalyzer:
             "content_generated": "content_automation" in analysis["data_sources"],
         }
 
-        logger.info(
-            f"Enhanced analysis complete for {ticker}: {len(analysis['data_sources'])} data sources"
-        )
+        logger.info(f"Enhanced analysis complete for {ticker}: {len(analysis['data_sources'])} data sources")
         return analysis
 
     def _extract_valuation_metrics(self, fundamentals: dict) -> dict:
@@ -263,9 +239,7 @@ class EnhancedFundamentalAnalyzer:
 
         return "technology"  # Default sector
 
-    def _summarize_economic_context(
-        self, inflation: dict, interest_rates: dict
-    ) -> dict:
+    def _summarize_economic_context(self, inflation: dict, interest_rates: dict) -> dict:
         """Summarize economic context for analysis"""
 
         summary = {
@@ -285,14 +259,10 @@ class EnhancedFundamentalAnalyzer:
 
                     if latest_value < 2:
                         summary["inflation_trend"] = "low"
-                        summary["investment_implications"].append(
-                            "Low inflation supports growth stocks"
-                        )
+                        summary["investment_implications"].append("Low inflation supports growth stocks")
                     elif latest_value > 4:
                         summary["inflation_trend"] = "high"
-                        summary["investment_implications"].append(
-                            "High inflation pressures margins"
-                        )
+                        summary["investment_implications"].append("High inflation pressures margins")
                     else:
                         summary["inflation_trend"] = "moderate"
 
@@ -304,14 +274,10 @@ class EnhancedFundamentalAnalyzer:
 
                     if fed_rate < 2:
                         summary["interest_rate_environment"] = "low"
-                        summary["investment_implications"].append(
-                            "Low rates support equity valuations"
-                        )
+                        summary["investment_implications"].append("Low rates support equity valuations")
                     elif fed_rate > 5:
                         summary["interest_rate_environment"] = "high"
-                        summary["investment_implications"].append(
-                            "High rates pressure valuations"
-                        )
+                        summary["investment_implications"].append("High rates pressure valuations")
                     else:
                         summary["interest_rate_environment"] = "moderate"
 
@@ -334,39 +300,26 @@ class EnhancedFundamentalAnalyzer:
             # Financial risks
             valuation = analysis.get("valuation_metrics", {})
             if valuation.get("pe_ratio") and valuation["pe_ratio"] > 30:
-                risks["financial_risks"].append(
-                    "High P/E ratio indicates valuation risk"
-                )
+                risks["financial_risks"].append("High P/E ratio indicates valuation risk")
 
             if valuation.get("debt_to_equity") and valuation["debt_to_equity"] > 1:
-                risks["financial_risks"].append(
-                    "High debt levels increase financial risk"
-                )
+                risks["financial_risks"].append("High debt levels increase financial risk")
 
             # Regulatory risks
             sec_filings = analysis.get("sec_filings", {})
             if sec_filings.get("compliance_status") != "current":
-                risks["regulatory_risks"].append(
-                    "Potential SEC filing compliance issues"
-                )
+                risks["regulatory_risks"].append("Potential SEC filing compliance issues")
 
             # Economic risks
             economic = analysis.get("economic_context", {})
             if economic.get("economic_summary", {}).get("inflation_trend") == "high":
                 risks["economic_risks"].append("High inflation environment")
 
-            if (
-                economic.get("economic_summary", {}).get("interest_rate_environment")
-                == "high"
-            ):
+            if economic.get("economic_summary", {}).get("interest_rate_environment") == "high":
                 risks["economic_risks"].append("Rising interest rate environment")
 
             # Overall risk level
-            total_risks = (
-                len(risks["financial_risks"])
-                + len(risks["regulatory_risks"])
-                + len(risks["economic_risks"])
-            )
+            total_risks = len(risks["financial_risks"]) + len(risks["regulatory_risks"]) + len(risks["economic_risks"])
             if total_risks >= 4:
                 risks["overall_risk_level"] = "high"
             elif total_risks >= 2:
@@ -396,10 +349,7 @@ class EnhancedFundamentalAnalyzer:
             # Analyze strengths
             valuation = analysis.get("valuation_metrics", {})
 
-            if (
-                valuation.get("return_on_equity")
-                and valuation["return_on_equity"] > 0.15
-            ):
+            if valuation.get("return_on_equity") and valuation["return_on_equity"] > 0.15:
                 thesis["strengths"].append("Strong return on equity")
 
             if valuation.get("pe_ratio") and valuation["pe_ratio"] < 20:
@@ -458,15 +408,9 @@ class EnhancedFundamentalAnalyzer:
             "executive_summary": f"Comprehensive analysis of {ticker} using multiple data sources",
             "financial_metrics": self._format_financial_metrics(analysis),
             "valuation_analysis": self._format_valuation_analysis(analysis),
-            "strengths_opportunities": "\n".join(
-                analysis.get("investment_thesis", {}).get("strengths", [])
-            ),
-            "risks_concerns": "\n".join(
-                analysis.get("risk_assessment", {}).get("financial_risks", [])
-            ),
-            "investment_recommendation": analysis.get("investment_thesis", {})
-            .get("recommendation", "hold")
-            .upper(),
+            "strengths_opportunities": "\n".join(analysis.get("investment_thesis", {}).get("strengths", [])),
+            "risks_concerns": "\n".join(analysis.get("risk_assessment", {}).get("financial_risks", [])),
+            "investment_recommendation": analysis.get("investment_thesis", {}).get("recommendation", "hold").upper(),
         }
 
         return content_data
@@ -492,10 +436,10 @@ class EnhancedFundamentalAnalyzer:
         thesis = analysis.get("investment_thesis", {})
 
         return f"""
-Recommendation: {thesis.get('recommendation', 'hold').upper()}
-Confidence: {thesis.get('confidence_level', 'medium')}
-Risk Level: {analysis.get('risk_assessment', {}).get('overall_risk_level', 'medium')}
-Time Horizon: {thesis.get('time_horizon', '12_months').replace('_', ' ')}
+Recommendation: {thesis.get("recommendation", "hold").upper()}
+Confidence: {thesis.get("confidence_level", "medium")}
+Risk Level: {analysis.get("risk_assessment", {}).get("overall_risk_level", "medium")}
+Time Horizon: {thesis.get("time_horizon", "12_months").replace("_", " ")}
 """
 
     def save_analysis(self, analysis: dict, ticker: str) -> str:
@@ -519,31 +463,31 @@ Time Horizon: {thesis.get('time_horizon', '12_months').replace('_', ' ')}
         report = f"""
 # Enhanced Fundamental Analysis Report: {ticker}
 
-**Analysis Date:** {analysis.get('analysis_timestamp', 'Unknown')}
-**Data Sources:** {', '.join(analysis.get('data_sources', []))}
+**Analysis Date:** {analysis.get("analysis_timestamp", "Unknown")}
+**Data Sources:** {", ".join(analysis.get("data_sources", []))}
 
 ## Executive Summary
-- **Recommendation:** {analysis.get('investment_thesis', {}).get('recommendation', 'hold').upper()}
-- **Risk Level:** {analysis.get('risk_assessment', {}).get('overall_risk_level', 'medium').upper()}
-- **Confidence:** {analysis.get('investment_thesis', {}).get('confidence_level', 'medium').upper()}
+- **Recommendation:** {analysis.get("investment_thesis", {}).get("recommendation", "hold").upper()}
+- **Risk Level:** {analysis.get("risk_assessment", {}).get("overall_risk_level", "medium").upper()}
+- **Confidence:** {analysis.get("investment_thesis", {}).get("confidence_level", "medium").upper()}
 
 ## Financial Metrics
 {self._format_financial_metrics(analysis)}
 
 ## Investment Thesis
 **Strengths:**
-{chr(10).join('- ' + s for s in analysis.get('investment_thesis', {}).get('strengths', []))}
+{chr(10).join("- " + s for s in analysis.get("investment_thesis", {}).get("strengths", []))}
 
 **Concerns:**
-{chr(10).join('- ' + w for w in analysis.get('risk_assessment', {}).get('financial_risks', []))}
+{chr(10).join("- " + w for w in analysis.get("risk_assessment", {}).get("financial_risks", []))}
 
 ## Economic Context
-{analysis.get('economic_context', {}).get('economic_summary', {}).get('economic_outlook', 'Neutral economic environment')}
+{analysis.get("economic_context", {}).get("economic_summary", {}).get("economic_outlook", "Neutral economic environment")}
 
 ## Data Quality
-- **Sources Used:** {len(analysis.get('data_sources', []))}
-- **Analysis Complete:** {'Yes' if analysis.get('analysis_summary', {}).get('analysis_complete') else 'Partial'}
-- **Content Generated:** {'Yes' if analysis.get('content_generation', {}).get('content_ready') else 'No'}
+- **Sources Used:** {len(analysis.get("data_sources", []))}
+- **Analysis Complete:** {"Yes" if analysis.get("analysis_summary", {}).get("analysis_complete") else "Partial"}
+- **Content Generated:** {"Yes" if analysis.get("content_generation", {}).get("content_ready") else "No"}
 
 ---
 *Generated by Enhanced Fundamental Analyzer using MCP integration*
@@ -555,21 +499,15 @@ Time Horizon: {thesis.get('time_horizon', '12_months').replace('_', ' ')}
 def main():
     """Main function for command-line usage"""
 
-    parser = argparse.ArgumentParser(
-        description="Enhanced Fundamental Analysis using MCP"
-    )
+    parser = argparse.ArgumentParser(description="Enhanced Fundamental Analysis using MCP")
     parser.add_argument("ticker", help="Stock ticker symbol to analyze")
-    parser.add_argument(
-        "--no-economic", action="store_true", help="Skip economic context analysis"
-    )
+    parser.add_argument("--no-economic", action="store_true", help="Skip economic context analysis")
     parser.add_argument(
         "--output-dir",
         default="data/outputs/enhanced_analysis",
         help="Output directory",
     )
-    parser.add_argument(
-        "--save-report", action="store_true", help="Save human-readable report"
-    )
+    parser.add_argument("--save-report", action="store_true", help="Save human-readable report")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
@@ -583,9 +521,7 @@ def main():
 
         # Perform analysis
         print("Starting enhanced fundamental analysis for {args.ticker}...")
-        analysis = analyzer.analyze_ticker(
-            args.ticker, include_economic_context=not args.no_economic
-        )
+        analysis = analyzer.analyze_ticker(args.ticker, include_economic_context=not args.no_economic)
 
         # Save analysis
         json_file = analyzer.save_analysis(analysis, args.ticker)
@@ -616,9 +552,7 @@ def main():
         print("\nInvestment Recommendation:")
         print("- Action: {thesis.get('recommendation', 'hold').upper()}")
         print("- Confidence: {thesis.get('confidence_level', 'medium').upper()}")
-        print(
-            f"- Risk Level: {analysis.get('risk_assessment', {}).get('overall_risk_level', 'medium').upper()}"
-        )
+        print(f"- Risk Level: {analysis.get('risk_assessment', {}).get('overall_risk_level', 'medium').upper()}")
 
     except Exception as e:
         logger.error(f"Analysis failed: {e}")

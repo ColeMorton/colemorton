@@ -15,7 +15,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent
@@ -30,9 +31,7 @@ class CLIIntegrationTestBase(unittest.TestCase):
         self.project_root = Path(__file__).parent.parent.parent
         self.scripts_dir = self.project_root / "scripts"
 
-    def run_cli_command(
-        self, cli_script: str, args: List[str], env: str = "test"
-    ) -> Dict[str, Any]:
+    def run_cli_command(self, cli_script: str, args: list[str], env: str = "test") -> dict[str, Any]:
         """Run CLI command and return parsed result"""
         cmd = ["python", str(self.scripts_dir / cli_script)] + args
 
@@ -40,9 +39,7 @@ class CLIIntegrationTestBase(unittest.TestCase):
         if "--env" not in " ".join(args):
             cmd.extend(["--env", env])
 
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=str(self.project_root)
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(self.project_root))
 
         return {
             "returncode": result.returncode,
@@ -51,12 +48,10 @@ class CLIIntegrationTestBase(unittest.TestCase):
             "command": " ".join(cmd),
         }
 
-    def parse_json_output(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def parse_json_output(self, result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON output from CLI command"""
         if result["returncode"] != 0:
-            self.fail(
-                f"Command failed: {result['command']}\nStderr: {result['stderr']}"
-            )
+            self.fail(f"Command failed: {result['command']}\nStderr: {result['stderr']}")
 
         # Handle table format output (default for health checks)
         if "Service Data" in result["stdout"] or "┏━━" in result["stdout"]:
@@ -65,7 +60,7 @@ class CLIIntegrationTestBase(unittest.TestCase):
 
         try:
             return json.loads(result["stdout"])
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             # If not JSON, just return success indicator for table format
             return {
                 "status": "success",
@@ -79,9 +74,7 @@ class TestAlphaVantageCLI(CLIIntegrationTestBase):
 
     def test_health_check(self):
         """Test health check command"""
-        result = self.run_cli_command(
-            "alpha_vantage_cli.py", ["health", "--env", "test"]
-        )
+        result = self.run_cli_command("alpha_vantage_cli.py", ["health", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -92,9 +85,7 @@ class TestAlphaVantageCLI(CLIIntegrationTestBase):
 
     def test_config_validation(self):
         """Test configuration validation"""
-        result = self.run_cli_command(
-            "alpha_vantage_cli.py", ["config", "--env", "test"]
-        )
+        result = self.run_cli_command("alpha_vantage_cli.py", ["config", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -103,9 +94,7 @@ class TestAlphaVantageCLI(CLIIntegrationTestBase):
 
     def test_invalid_ticker_validation(self):
         """Test ticker validation with invalid input"""
-        result = self.run_cli_command(
-            "alpha_vantage_cli.py", ["quote", "INVALID_TICKER_SYMBOL_TOO_LONG"]
-        )
+        result = self.run_cli_command("alpha_vantage_cli.py", ["quote", "INVALID_TICKER_SYMBOL_TOO_LONG"])
 
         # Should fail due to ticker validation
         self.assertNotEqual(result["returncode"], 0)
@@ -128,9 +117,7 @@ class TestYahooFinanceCLI(CLIIntegrationTestBase):
 
     def test_health_check(self):
         """Test health check command"""
-        result = self.run_cli_command(
-            "yahoo_finance_cli.py", ["health", "--env", "test"]
-        )
+        result = self.run_cli_command("yahoo_finance_cli.py", ["health", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -166,9 +153,7 @@ class TestDashboardGeneratorCLI(CLIIntegrationTestBase):
 
     def test_health_check(self):
         """Test health check command"""
-        result = self.run_cli_command(
-            "dashboard_generator_cli.py", ["health", "--env", "test"]
-        )
+        result = self.run_cli_command("dashboard_generator_cli.py", ["health", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -179,9 +164,7 @@ class TestDashboardGeneratorCLI(CLIIntegrationTestBase):
 
     def test_list_themes(self):
         """Test theme listing functionality"""
-        result = self.run_cli_command(
-            "dashboard_generator_cli.py", ["list-themes", "--env", "test"]
-        )
+        result = self.run_cli_command("dashboard_generator_cli.py", ["list-themes", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -236,9 +219,7 @@ class TestTradeHistoryCLI(CLIIntegrationTestBase):
 
     def test_health_check(self):
         """Test health check command"""
-        result = self.run_cli_command(
-            "trade_history_cli.py", ["health", "--env", "test"]
-        )
+        result = self.run_cli_command("trade_history_cli.py", ["health", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -248,9 +229,7 @@ class TestTradeHistoryCLI(CLIIntegrationTestBase):
 
     def test_list_report_types(self):
         """Test report type listing"""
-        result = self.run_cli_command(
-            "trade_history_cli.py", ["list-types", "--env", "test"]
-        )
+        result = self.run_cli_command("trade_history_cli.py", ["list-types", "--env", "test"])
 
         self.assertEqual(result["returncode"], 0)
         data = self.parse_json_output(result)
@@ -262,17 +241,13 @@ class TestTradeHistoryCLI(CLIIntegrationTestBase):
     def test_date_validation(self):
         """Test date format validation"""
         # Test invalid date format
-        result = self.run_cli_command(
-            "trade_history_cli.py", ["validate", "invalid_date"]
-        )
+        result = self.run_cli_command("trade_history_cli.py", ["validate", "invalid_date"])
 
         self.assertNotEqual(result["returncode"], 0)
         self.assertIn("Invalid date format", result["stderr"])
 
         # Test valid date format but invalid date
-        result = self.run_cli_command(
-            "trade_history_cli.py", ["validate", "20250230"]
-        )  # Feb 30th doesn't exist
+        result = self.run_cli_command("trade_history_cli.py", ["validate", "20250230"])  # Feb 30th doesn't exist
 
         self.assertNotEqual(result["returncode"], 0)
         self.assertIn("Invalid date", result["stderr"])
@@ -315,9 +290,7 @@ class TestCLIArchitecturalCompliance(CLIIntegrationTestBase):
                 self.assertIn("health", help_output, f"{script} missing health command")
 
                 # Check for proper CLI structure
-                self.assertIn(
-                    "Commands:", help_output, f"{script} missing proper CLI structure"
-                )
+                self.assertIn("Commands:", help_output, f"{script} missing proper CLI structure")
 
     def test_environment_parameter_support(self):
         """Test that all CLI scripts support environment parameters"""
@@ -332,15 +305,11 @@ class TestCLIArchitecturalCompliance(CLIIntegrationTestBase):
             if script_path.exists():
                 # Test dev environment
                 result = self.run_cli_command(script, ["health", "--env", "dev"])
-                self.assertEqual(
-                    result["returncode"], 0, f"{script} failed with dev environment"
-                )
+                self.assertEqual(result["returncode"], 0, f"{script} failed with dev environment")
 
                 # Test test environment
                 result = self.run_cli_command(script, ["health", "--env", "test"])
-                self.assertEqual(
-                    result["returncode"], 0, f"{script} failed with test environment"
-                )
+                self.assertEqual(result["returncode"], 0, f"{script} failed with test environment")
 
     def test_output_format_consistency(self):
         """Test output format consistency across CLI scripts"""
@@ -354,13 +323,9 @@ class TestCLIArchitecturalCompliance(CLIIntegrationTestBase):
             script_path = self.scripts_dir / script
             if script_path.exists():
                 # Test JSON output format
-                result = self.run_cli_command(
-                    script, ["health", "--output-format", "json"]
-                )
+                result = self.run_cli_command(script, ["health", "--output-format", "json"])
 
-                self.assertEqual(
-                    result["returncode"], 0, f"{script} failed with JSON format"
-                )
+                self.assertEqual(result["returncode"], 0, f"{script} failed with JSON format")
 
                 # Verify it's valid JSON
                 try:
@@ -388,9 +353,7 @@ class TestCLIArchitecturalCompliance(CLIIntegrationTestBase):
                     0,
                     f"{script} should fail with invalid command",
                 )
-                self.assertTrue(
-                    len(result["stderr"]) > 0, f"{script} should provide error message"
-                )
+                self.assertTrue(len(result["stderr"]) > 0, f"{script} should provide error message")
 
 
 class TestCLIPerformance(CLIIntegrationTestBase):

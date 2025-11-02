@@ -11,9 +11,9 @@ Production-grade Alternative.me Crypto Fear & Greed Index integration with:
 
 import statistics
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -21,9 +21,9 @@ from .base_financial_service import (
     ServiceConfig,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 class AlternativeMeService(BaseFinancialService):
@@ -45,8 +45,8 @@ class AlternativeMeService(BaseFinancialService):
             self.config.base_url = "https://api.alternative.me"
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate Alternative.me response data"""
 
         if not data:
@@ -65,16 +65,15 @@ class AlternativeMeService(BaseFinancialService):
         """Classify Fear & Greed value into sentiment category"""
         if value <= 20:
             return "Extreme Fear"
-        elif value <= 40:
+        if value <= 40:
             return "Fear"
-        elif value <= 60:
+        if value <= 60:
             return "Neutral"
-        elif value <= 80:
+        if value <= 80:
             return "Greed"
-        else:
-            return "Extreme Greed"
+        return "Extreme Greed"
 
-    def get_current_fear_greed(self) -> Dict[str, Any]:
+    def get_current_fear_greed(self) -> dict[str, Any]:
         """Get current Fear & Greed Index value"""
         endpoint = "/fng/"
         data = self._make_request_with_retry(endpoint)
@@ -84,17 +83,15 @@ class AlternativeMeService(BaseFinancialService):
         # Enhance data with sentiment classification
         if isinstance(validated_data, list) and len(validated_data) > 0:
             current = validated_data[0]
-            current["sentiment_classification"] = self._classify_sentiment(
-                int(current["value"])
+            current["sentiment_classification"] = self._classify_sentiment(int(current["value"]))
+            current["timestamp_formatted"] = datetime.fromtimestamp(int(current["timestamp"])).strftime(
+                "%Y-%m-%d %H:%M:%S"
             )
-            current["timestamp_formatted"] = datetime.fromtimestamp(
-                int(current["timestamp"])
-            ).strftime("%Y-%m-%d %H:%M:%S")
             return current
 
         return validated_data
 
-    def get_historical_fear_greed(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_historical_fear_greed(self, limit: int = 10) -> list[dict[str, Any]]:
         """Get historical Fear & Greed Index values"""
         if limit > 1000:
             limit = 1000
@@ -109,16 +106,12 @@ class AlternativeMeService(BaseFinancialService):
         # Enhance data with sentiment classification
         if isinstance(validated_data, list):
             for item in validated_data:
-                item["sentiment_classification"] = self._classify_sentiment(
-                    int(item["value"])
-                )
-                item["timestamp_formatted"] = datetime.fromtimestamp(
-                    int(item["timestamp"])
-                ).strftime("%Y-%m-%d")
+                item["sentiment_classification"] = self._classify_sentiment(int(item["value"]))
+                item["timestamp_formatted"] = datetime.fromtimestamp(int(item["timestamp"])).strftime("%Y-%m-%d")
 
         return validated_data
 
-    def get_fear_greed_by_date(self, date_str: str) -> Dict[str, Any]:
+    def get_fear_greed_by_date(self, date_str: str) -> dict[str, Any]:
         """Get Fear & Greed Index for a specific date"""
         # Parse date - handle both DD-MM-YYYY and YYYY-MM-DD formats
         try:
@@ -142,19 +135,13 @@ class AlternativeMeService(BaseFinancialService):
 
         if isinstance(validated_data, list) and len(validated_data) > 0:
             item = validated_data[0]
-            item["sentiment_classification"] = self._classify_sentiment(
-                int(item["value"])
-            )
-            item["timestamp_formatted"] = datetime.fromtimestamp(
-                int(item["timestamp"])
-            ).strftime("%Y-%m-%d")
+            item["sentiment_classification"] = self._classify_sentiment(int(item["value"]))
+            item["timestamp_formatted"] = datetime.fromtimestamp(int(item["timestamp"])).strftime("%Y-%m-%d")
             return item
 
         return {}
 
-    def get_fear_greed_range(
-        self, start_date: str, end_date: str
-    ) -> List[Dict[str, Any]]:
+    def get_fear_greed_range(self, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """Get Fear & Greed Index for a date range"""
         try:
             # Parse dates
@@ -185,7 +172,7 @@ class AlternativeMeService(BaseFinancialService):
 
         return filtered_data
 
-    def get_sentiment_analysis(self, days: int = 30) -> Dict[str, Any]:
+    def get_sentiment_analysis(self, days: int = 30) -> dict[str, Any]:
         """Get sentiment analysis with statistics over specified period"""
         historical_data = self.get_historical_fear_greed(days)
 
@@ -203,12 +190,8 @@ class AlternativeMeService(BaseFinancialService):
             "median": statistics.median(values),
             "min_value": min(values),
             "max_value": max(values),
-            "standard_deviation": round(statistics.stdev(values), 2)
-            if len(values) > 1
-            else 0,
-            "volatility": round(
-                statistics.stdev(values) / statistics.mean(values) * 100, 2
-            )
+            "standard_deviation": round(statistics.stdev(values), 2) if len(values) > 1 else 0,
+            "volatility": round(statistics.stdev(values) / statistics.mean(values) * 100, 2)
             if len(values) > 1 and statistics.mean(values) > 0
             else 0,
         }
@@ -223,13 +206,11 @@ class AlternativeMeService(BaseFinancialService):
         }
 
         analysis["zone_distribution"] = zones
-        analysis["current_sentiment"] = self._classify_sentiment(
-            values[0] if values else 50
-        )
+        analysis["current_sentiment"] = self._classify_sentiment(values[0] if values else 50)
 
         return analysis
 
-    def get_extreme_values(self, days: int = 365) -> Dict[str, Any]:
+    def get_extreme_values(self, days: int = 365) -> dict[str, Any]:
         """Get extreme fear and greed values over specified period"""
         historical_data = self.get_historical_fear_greed(days)
 
@@ -256,7 +237,7 @@ class AlternativeMeService(BaseFinancialService):
             },
         }
 
-    def get_bitcoin_correlation(self, days: int = 90) -> Dict[str, Any]:
+    def get_bitcoin_correlation(self, days: int = 90) -> dict[str, Any]:
         """Analyze correlation between Fear & Greed and Bitcoin price movements"""
         # Note: This is a simplified correlation analysis
         # In production, you'd want to integrate with price data from another service
@@ -278,18 +259,14 @@ class AlternativeMeService(BaseFinancialService):
         analysis = {
             "period_days": days,
             "sentiment_trend": "Improving" if sum(changes) > 0 else "Declining",
-            "average_daily_change": round(statistics.mean(changes), 2)
-            if changes
-            else 0,
-            "volatility": round(statistics.stdev(changes), 2)
-            if len(changes) > 1
-            else 0,
+            "average_daily_change": round(statistics.mean(changes), 2) if changes else 0,
+            "volatility": round(statistics.stdev(changes), 2) if len(changes) > 1 else 0,
             "note": "Full correlation analysis requires price data integration",
         }
 
         return analysis
 
-    def get_zone_distribution(self, days: int = 365) -> Dict[str, Any]:
+    def get_zone_distribution(self, days: int = 365) -> dict[str, Any]:
         """Get distribution of time spent in different Fear & Greed zones"""
         historical_data = self.get_historical_fear_greed(days)
 
@@ -308,9 +285,7 @@ class AlternativeMeService(BaseFinancialService):
         }
 
         # Calculate percentages
-        zone_percentages = {
-            zone: round((count / total_days) * 100, 1) for zone, count in zones.items()
-        }
+        zone_percentages = {zone: round((count / total_days) * 100, 1) for zone, count in zones.items()}
 
         return {
             "period_days": days,
@@ -320,7 +295,7 @@ class AlternativeMeService(BaseFinancialService):
             "dominant_sentiment": max(zone_percentages, key=zone_percentages.get),
         }
 
-    def get_market_summary(self) -> Dict[str, Any]:
+    def get_market_summary(self) -> dict[str, Any]:
         """Get comprehensive market sentiment summary"""
         current = self.get_current_fear_greed()
         analysis_30d = self.get_sentiment_analysis(30)
@@ -356,7 +331,7 @@ def create_alternative_me_service(env: str = "dev") -> AlternativeMeService:
 
         return AlternativeMeService(service_config)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="alternative_me",

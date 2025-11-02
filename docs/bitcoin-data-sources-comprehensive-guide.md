@@ -1,5 +1,8 @@
 # Bitcoin Data Sources: Comprehensive API Guide
 
+**Version**: 2.1 | **Last Updated**: 2024-08-29 | **Status**: Active
+**Authority**: Research Team | **Audience**: Data Analysts & Developers
+
 *A complete reference for Bitcoin data infrastructure across all aspects of the ecosystem*
 
 ## Executive Summary

@@ -8,10 +8,11 @@ rollout of Plotly features, A/B testing, and safe deployment practices.
 
 import json
 import time
-from dataclasses import asdict, dataclass
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 
 class FeatureState(Enum):
@@ -31,11 +32,11 @@ class FeatureFlag:
     state: FeatureState
     description: str
     rollout_percentage: float = 0.0
-    user_groups: Optional[List[str]] = None
-    conditions: Optional[Dict[str, Any]] = None
+    user_groups: list[str] | None = None
+    conditions: dict[str, Any] | None = None
     created_at: str = ""
     updated_at: str = ""
-    expires_at: Optional[str] = None
+    expires_at: str | None = None
 
     def __post_init__(self):
         if self.user_groups is None:
@@ -51,7 +52,7 @@ class FeatureFlag:
 class FeatureFlagManager:
     """Manages feature flags for Plotly migration."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """
         Initialize feature flag manager.
 
@@ -59,8 +60,8 @@ class FeatureFlagManager:
             config_path: Optional path to feature flag configuration file
         """
         self.config_path = config_path or "configs/feature_flags.json"
-        self.flags: Dict[str, FeatureFlag] = {}
-        self.evaluation_cache: Dict[str, tuple[bool, float]] = {}
+        self.flags: dict[str, FeatureFlag] = {}
+        self.evaluation_cache: dict[str, tuple[bool, float]] = {}
         self.cache_ttl = 300  # 5 minutes
 
         # Load default flags
@@ -202,7 +203,7 @@ class FeatureFlagManager:
         try:
             config_path = Path(self.config_path)
             if config_path.exists():
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     data = json.load(f)
 
                 # Update flags from file
@@ -210,15 +211,9 @@ class FeatureFlagManager:
                     if flag_name in self.flags:
                         # Update existing flag
                         flag = self.flags[flag_name]
-                        flag.state = FeatureState(
-                            flag_data.get("state", flag.state.value)
-                        )
-                        flag.rollout_percentage = flag_data.get(
-                            "rollout_percentage", flag.rollout_percentage
-                        )
-                        flag.user_groups = flag_data.get(
-                            "user_groups", flag.user_groups
-                        )
+                        flag.state = FeatureState(flag_data.get("state", flag.state.value))
+                        flag.rollout_percentage = flag_data.get("rollout_percentage", flag.rollout_percentage)
+                        flag.user_groups = flag_data.get("user_groups", flag.user_groups)
                         flag.conditions = flag_data.get("conditions", flag.conditions)
                         flag.expires_at = flag_data.get("expires_at", flag.expires_at)
                         flag.updated_at = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -233,7 +228,7 @@ class FeatureFlagManager:
                             conditions=flag_data.get("conditions", {}),
                             expires_at=flag_data.get("expires_at"),
                         )
-        except Exception as e:
+        except Exception:
             print("Warning: Could not load feature flags from {self.config_path}: {e}")
 
     def save_to_file(self):
@@ -258,12 +253,10 @@ class FeatureFlagManager:
             with open(config_path, "w") as f:
                 json.dump(data, f, indent=2)
 
-        except Exception as e:
+        except Exception:
             print("Warning: Could not save feature flags to {self.config_path}: {e}")
 
-    def is_enabled(
-        self, flag_name: str, context: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def is_enabled(self, flag_name: str, context: dict[str, Any] | None = None) -> bool:
         """
         Check if a feature flag is enabled.
 
@@ -289,7 +282,7 @@ class FeatureFlagManager:
 
         return result
 
-    def _evaluate_flag(self, flag_name: str, context: Dict[str, Any]) -> bool:
+    def _evaluate_flag(self, flag_name: str, context: dict[str, Any]) -> bool:
         """
         Evaluate a feature flag based on its configuration and context.
 
@@ -346,9 +339,7 @@ class FeatureFlagManager:
         # If all checks pass, feature is enabled
         return True
 
-    def _evaluate_conditions(
-        self, conditions: Dict[str, Any], context: Dict[str, Any]
-    ) -> bool:
+    def _evaluate_conditions(self, conditions: dict[str, Any], context: dict[str, Any]) -> bool:
         """
         Evaluate feature flag conditions.
 
@@ -368,15 +359,9 @@ class FeatureFlagManager:
                     return False
                 if "max" in condition_value and context_value > condition_value["max"]:
                     return False
-                if (
-                    "in" in condition_value
-                    and context_value not in condition_value["in"]
-                ):
+                if "in" in condition_value and context_value not in condition_value["in"]:
                     return False
-                if (
-                    "not_in" in condition_value
-                    and context_value in condition_value["not_in"]
-                ):
+                if "not_in" in condition_value and context_value in condition_value["not_in"]:
                     return False
             else:
                 # Simple condition (exact match)
@@ -385,7 +370,7 @@ class FeatureFlagManager:
 
         return True
 
-    def get_flag(self, flag_name: str) -> Optional[FeatureFlag]:
+    def get_flag(self, flag_name: str) -> FeatureFlag | None:
         """
         Get feature flag configuration.
 
@@ -403,9 +388,9 @@ class FeatureFlagManager:
         state: FeatureState,
         rollout_percentage: float = 100.0,
         description: str = "",
-        user_groups: Optional[List[str]] = None,
-        conditions: Optional[Dict[str, Any]] = None,
-        expires_at: Optional[str] = None,
+        user_groups: list[str] | None = None,
+        conditions: dict[str, Any] | None = None,
+        expires_at: str | None = None,
     ):
         """
         Set or update a feature flag.
@@ -448,17 +433,11 @@ class FeatureFlagManager:
 
     def _clear_flag_cache(self, flag_name: str):
         """Clear cache entries for a specific flag."""
-        keys_to_remove = [
-            key
-            for key in self.evaluation_cache.keys()
-            if key.startswith(f"{flag_name}_")
-        ]
+        keys_to_remove = [key for key in self.evaluation_cache.keys() if key.startswith(f"{flag_name}_")]
         for key in keys_to_remove:
             del self.evaluation_cache[key]
 
-    def list_flags(
-        self, state_filter: Optional[FeatureState] = None
-    ) -> List[FeatureFlag]:
+    def list_flags(self, state_filter: FeatureState | None = None) -> list[FeatureFlag]:
         """
         List all feature flags.
 
@@ -475,9 +454,7 @@ class FeatureFlagManager:
 
         return sorted(flags, key=lambda f: f.name)
 
-    def get_enabled_features(
-        self, context: Optional[Dict[str, Any]] = None
-    ) -> List[str]:
+    def get_enabled_features(self, context: dict[str, Any] | None = None) -> list[str]:
         """
         Get list of currently enabled features.
 
@@ -515,8 +492,7 @@ def feature_flag(flag_name: str, default: bool = False):
         def wrapper(*args, **kwargs):
             if _global_flag_manager.is_enabled(flag_name):
                 return func(*args, **kwargs)
-            else:
-                return default
+            return default
 
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
@@ -539,10 +515,9 @@ def conditional_import(flag_name: str, module_name: str, fallback_module: str = 
     """
     if _global_flag_manager.is_enabled(flag_name):
         return __import__(module_name)
-    elif fallback_module:
+    if fallback_module:
         return __import__(fallback_module)
-    else:
-        raise ImportError(f"Feature '{flag_name}' is disabled and no fallback provided")
+    raise ImportError(f"Feature '{flag_name}' is disabled and no fallback provided")
 
 
 # Global feature flag manager instance
@@ -554,9 +529,7 @@ def get_feature_flag_manager() -> FeatureFlagManager:
     return _global_flag_manager
 
 
-def is_feature_enabled(
-    flag_name: str, context: Optional[Dict[str, Any]] = None
-) -> bool:
+def is_feature_enabled(flag_name: str, context: dict[str, Any] | None = None) -> bool:
     """
     Check if a feature is enabled using the global manager.
 

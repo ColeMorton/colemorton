@@ -11,9 +11,9 @@ This module replaces the contract discovery system with runtime active chart sca
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Set
 
 from chart_data_dependency_manager import ChartDataDependencyManager, ChartStatus
+
 
 # Global module-level cache to prevent repeated discovery operations
 _GLOBAL_DISCOVERY_CACHE = None
@@ -29,18 +29,18 @@ class ActiveChartRequirement:
     file_path: str
     category: str
     chart_file: str
-    required_services: List[str]
+    required_services: list[str]
 
 
 @dataclass
 class ActiveRequirementsResult:
     """Result of active chart requirements detection"""
 
-    requirements: List[ActiveChartRequirement]
+    requirements: list[ActiveChartRequirement]
     total_active_charts: int
     total_frozen_charts: int
-    categories_needed: Set[str]
-    services_needed: Set[str]
+    categories_needed: set[str]
+    services_needed: set[str]
     discovery_time_seconds: float
 
 
@@ -49,13 +49,11 @@ class ActiveChartRequirementsDetector:
 
     def __init__(
         self,
-        frontend_src_path: Optional[Path] = None,
-        frontend_data_path: Optional[Path] = None,
+        frontend_src_path: Path | None = None,
+        frontend_data_path: Path | None = None,
     ):
         self.frontend_src_path = frontend_src_path or Path.cwd() / "frontend" / "src"
-        self.frontend_data_path = (
-            frontend_data_path or Path.cwd() / "frontend" / "public" / "data"
-        )
+        self.frontend_data_path = frontend_data_path or Path.cwd() / "frontend" / "public" / "data"
         self.logger = logging.getLogger(__name__)
 
         # Initialize chart data dependency manager
@@ -150,31 +148,23 @@ class ActiveChartRequirementsDetector:
         chart_statuses = self.chart_status_manager.get_chart_statuses()
 
         # Separate active and frozen charts
-        active_charts = [
-            chart for chart in chart_statuses if chart.status != ChartStatus.FROZEN
-        ]
-        frozen_charts = [
-            chart for chart in chart_statuses if chart.status == ChartStatus.FROZEN
-        ]
+        active_charts = [chart for chart in chart_statuses if chart.status != ChartStatus.FROZEN]
+        frozen_charts = [chart for chart in chart_statuses if chart.status == ChartStatus.FROZEN]
 
         # Only log chart counts if this is the first discovery globally
         if _GLOBAL_DISCOVERY_LOGGED:  # Only log if we logged discovery start
-            self.logger.info(
-                f"Found {len(active_charts)} active charts, {len(frozen_charts)} frozen charts"
-            )
+            self.logger.info(f"Found {len(active_charts)} active charts, {len(frozen_charts)} frozen charts")
 
             # Log frozen charts being skipped (only once globally)
             if frozen_charts:
                 frozen_types = [chart.chart_type for chart in frozen_charts]
-                self.logger.info(
-                    f"Skipping data requirements for frozen charts: {sorted(set(frozen_types))}"
-                )
+                self.logger.info(f"Skipping data requirements for frozen charts: {sorted(set(frozen_types))}")
         # All subsequent calls are silent to eliminate noise
 
         # Build requirements from active charts only
         requirements = []
-        categories_needed: Set[str] = set()
-        services_needed: Set[str] = set()
+        categories_needed: set[str] = set()
+        services_needed: set[str] = set()
 
         for chart in active_charts:
             chart_type = chart.chart_type
@@ -185,9 +175,7 @@ class ActiveChartRequirementsDetector:
                 requirement = ActiveChartRequirement(
                     chart_type=chart_type,
                     data_source=str(mapping["data_source"]),
-                    file_path=str(
-                        self.frontend_data_path / str(mapping["data_source"])
-                    ),
+                    file_path=str(self.frontend_data_path / str(mapping["data_source"])),
                     category=str(mapping["category"]),
                     chart_file=str(chart.file_path),
                     required_services=list(mapping["services"]),
@@ -197,13 +185,9 @@ class ActiveChartRequirementsDetector:
                 categories_needed.add(str(mapping["category"]))
                 services_needed.update(list(mapping["services"]))
 
-                self.logger.debug(
-                    f"Active chart '{chart_type}' requires: {mapping['data_source']}"
-                )
+                self.logger.debug(f"Active chart '{chart_type}' requires: {mapping['data_source']}")
             else:
-                self.logger.warning(
-                    f"No data mapping found for active chart type: {chart_type}"
-                )
+                self.logger.warning(f"No data mapping found for active chart type: {chart_type}")
 
         discovery_time = time.time() - start_time
 
@@ -236,16 +220,12 @@ class ActiveChartRequirementsDetector:
 
         return result
 
-    def get_requirements_by_category(
-        self, category: str
-    ) -> List[ActiveChartRequirement]:
+    def get_requirements_by_category(self, category: str) -> list[ActiveChartRequirement]:
         """Get active chart requirements for a specific category"""
         all_requirements = self.discover_active_requirements()
-        return [
-            req for req in all_requirements.requirements if req.category == category
-        ]
+        return [req for req in all_requirements.requirements if req.category == category]
 
-    def get_required_services_for_category(self, category: str) -> Set[str]:
+    def get_required_services_for_category(self, category: str) -> set[str]:
         """Get services required for a specific category based on active charts"""
         category_requirements = self.get_requirements_by_category(category)
         services = set()
@@ -259,7 +239,7 @@ class ActiveChartRequirementsDetector:
 
 
 def create_active_chart_detector(
-    frontend_src_path: Optional[str] = None, frontend_data_path: Optional[str] = None
+    frontend_src_path: str | None = None, frontend_data_path: str | None = None
 ) -> ActiveChartRequirementsDetector:
     """Factory function to create active chart requirements detector"""
     src_path = Path(frontend_src_path) if frontend_src_path else None

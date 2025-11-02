@@ -2,20 +2,20 @@
 """
 Environment Setup and Validation Script
 
-Helps users set up and validate their API key configuration for the Sensylate system.
+Helps users set up and validate their API key configuration for the Cole Morton system.
 Provides detailed status reporting and setup guidance.
 """
 
-import os
 import sys
 from pathlib import Path
-from typing import Dict, List
+
 
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Load environment variables from .env file
 from load_env import ensure_env_loaded
+
 
 ensure_env_loaded()
 
@@ -38,7 +38,7 @@ def print_status(status: str, message: str) -> None:
     print("{indicators.get(status, '•')} {message}")
 
 
-def check_environment_file() -> Dict[str, str]:
+def check_environment_file() -> dict[str, str]:
     """Check for .env file and load environment variables"""
     env_path = Path(".env")
     env_vars = {}
@@ -47,7 +47,7 @@ def check_environment_file() -> Dict[str, str]:
         print_status("SUCCESS", f"Found .env file: {env_path.absolute()}")
 
         # Load environment variables from .env file
-        with open(env_path, "r") as f:
+        with open(env_path) as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
@@ -63,7 +63,7 @@ def check_environment_file() -> Dict[str, str]:
     return env_vars
 
 
-def validate_api_keys(config_manager: ConfigManager) -> Dict[str, Dict]:
+def validate_api_keys(config_manager: ConfigManager) -> dict[str, dict]:
     """Validate all API keys and return status report"""
     api_keys_to_check = [
         "ALPHA_VANTAGE_API_KEY",
@@ -82,7 +82,7 @@ def validate_api_keys(config_manager: ConfigManager) -> Dict[str, Dict]:
     return results
 
 
-def print_api_key_report(results: Dict[str, Dict]) -> None:
+def print_api_key_report(results: dict[str, dict]) -> None:
     """Print detailed API key status report"""
     print_header("API Key Status Report")
 
@@ -105,9 +105,7 @@ def print_api_key_report(results: Dict[str, Dict]) -> None:
                 f"{key_name}: {status['obfuscated_value']} ({status['source']})",
             )
         elif status["found"] and not status["valid_format"]:
-            print_status(
-                "WARNING", f"{key_name}: Invalid format ({status['length']} chars)"
-            )
+            print_status("WARNING", f"{key_name}: Invalid format ({status['length']} chars)")
             error_keys.append(key_name)
         else:
             print_status("ERROR", f"{key_name}: NOT FOUND")
@@ -131,7 +129,7 @@ def print_api_key_report(results: Dict[str, Dict]) -> None:
     return error_keys
 
 
-def provide_setup_guidance(error_keys: List[str]) -> None:
+def provide_setup_guidance(error_keys: list[str]) -> None:
     """Provide guidance for fixing configuration issues"""
     if not error_keys:
         print_status("SUCCESS", "All required API keys are properly configured!")
@@ -186,9 +184,7 @@ def check_financial_services_config() -> bool:
         try:
             # Test loading the configuration
             config_manager = ConfigManager()
-            print_status(
-                "SUCCESS", "Financial services configuration loaded successfully"
-            )
+            print_status("SUCCESS", "Financial services configuration loaded successfully")
             return True
         except Exception as e:
             print_status("ERROR", f"Invalid financial services configuration: {e}")
@@ -200,7 +196,7 @@ def check_financial_services_config() -> bool:
 
 def main():
     """Main setup and validation routine"""
-    print_header("Sensylate Environment Setup & Validation")
+    print_header("Cole Morton Environment Setup & Validation")
 
     # Check current directory
     if not Path("scripts").exists() or not Path("config").exists():
@@ -233,9 +229,7 @@ def main():
             print("You can now run financial analysis scripts.")
         else:
             print_header("⚠️  SETUP INCOMPLETE")
-            print(
-                f"Please configure {len(error_keys)} missing API key(s) and run again."
-            )
+            print(f"Please configure {len(error_keys)} missing API key(s) and run again.")
             sys.exit(1)
 
     except ConfigurationError as e:

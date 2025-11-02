@@ -18,9 +18,8 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
-import numpy as np
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -38,7 +37,7 @@ class MacroEconomicFrameworkDemo:
         self.business_cycle_engine = BusinessCycleEngine()
         self.vix_analyzer = VIXVolatilityAnalyzer()
 
-    def demonstrate_comprehensive_analysis(self) -> Dict[str, Any]:
+    def demonstrate_comprehensive_analysis(self) -> dict[str, Any]:
         """
         Demonstrate the complete macro-economic analysis framework
         """
@@ -101,7 +100,7 @@ class MacroEconomicFrameworkDemo:
 
         return comprehensive_result
 
-    def _demo_business_cycle_analysis(self) -> Dict[str, Any]:
+    def _demo_business_cycle_analysis(self) -> dict[str, Any]:
         """Demonstrate business cycle analysis capabilities"""
 
         # Create realistic mock indicators
@@ -214,22 +213,16 @@ class MacroEconomicFrameworkDemo:
         composite = result.get("composite_index", {})
         recession = result.get("recession_analysis")
 
-        print(
-            f"📈 Current Phase: {phase.phase_name.title()} (Confidence: {phase.phase_probability:.1%})"
-        )
+        print(f"📈 Current Phase: {phase.phase_name.title()} (Confidence: {phase.phase_probability:.1%})")
         print(
             f"🎯 Composite Index: {composite.get('overall_composite', 0):.2f} ({composite.get('interpretation', 'N/A')})"
         )
-        print(
-            f"⚠️  Recession Risk: {recession.recession_probability:.1%} ({recession.signal_strength})"
-        )
-        print(
-            f"⏱️  Phase Duration: {phase.duration_months} months (Expected: {phase.expected_duration or 'Unknown'})"
-        )
+        print(f"⚠️  Recession Risk: {recession.recession_probability:.1%} ({recession.signal_strength})")
+        print(f"⏱️  Phase Duration: {phase.duration_months} months (Expected: {phase.expected_duration or 'Unknown'})")
 
         return result
 
-    def _demo_vix_analysis(self) -> Dict[str, Any]:
+    def _demo_vix_analysis(self) -> dict[str, Any]:
         """Demonstrate VIX volatility analysis"""
 
         # Create VIX time series showing elevated volatility
@@ -254,12 +247,8 @@ class MacroEconomicFrameworkDemo:
         signals = result.get("trading_signals", [])
 
         print("📊 Current VIX: {current_vix}")
-        print(
-            f"🎭 Volatility Regime: {regime.regime_type.title()} (Confidence: {regime.regime_probability:.1%})"
-        )
-        print(
-            f"📈 Mean Reversion: {mean_reversion.get('reversion_strength', 'Unknown')} strength"
-        )
+        print(f"🎭 Volatility Regime: {regime.regime_type.title()} (Confidence: {regime.regime_probability:.1%})")
+        print(f"📈 Mean Reversion: {mean_reversion.get('reversion_strength', 'Unknown')} strength")
         print("🎯 Trading Signals: {len(signals)} generated")
 
         if signals:
@@ -270,7 +259,7 @@ class MacroEconomicFrameworkDemo:
 
         return result
 
-    def _demo_recession_probability(self) -> Dict[str, Any]:
+    def _demo_recession_probability(self) -> dict[str, Any]:
         """Demonstrate recession probability calculation"""
 
         # Create mock recession indicator scores
@@ -309,9 +298,7 @@ class MacroEconomicFrameworkDemo:
             leading_scores, coincident_scores
         )
 
-        print(
-            f"⚠️  Recession Probability: {recession_signal.recession_probability:.1%}"
-        )
+        print(f"⚠️  Recession Probability: {recession_signal.recession_probability:.1%}")
         print("💪 Signal Strength: {recession_signal.signal_strength.title()}")
         print("⏰ Time Horizon: {recession_signal.time_horizon}")
         print(
@@ -327,7 +314,7 @@ class MacroEconomicFrameworkDemo:
             "key_drivers": recession_signal.key_drivers,
         }
 
-    def _demo_market_regime(self) -> Dict[str, Any]:
+    def _demo_market_regime(self) -> dict[str, Any]:
         """Demonstrate market regime classification"""
 
         # Mock market regime based on current conditions
@@ -357,34 +344,25 @@ class MacroEconomicFrameworkDemo:
         }
 
         print("🎭 Market Regime: {regime_data['regime_type'].title()}")
-        print(
-            f"🌪️  Volatility Environment: {regime_data['volatility_environment'].title()}"
-        )
+        print(f"🌪️  Volatility Environment: {regime_data['volatility_environment'].title()}")
         print("📊 Confidence: {regime_data['confidence_score']:.1%}")
         print("⏱️  Duration: {regime_data['regime_duration_days']} days")
 
         return regime_data
 
     def _demo_integrated_analysis(
-        self, business_cycle: Dict, vix: Dict, recession: Dict, regime: Dict
-    ) -> Dict[str, Any]:
+        self, business_cycle: dict, vix: dict, recession: dict, regime: dict
+    ) -> dict[str, Any]:
         """Demonstrate integrated cross-factor analysis"""
 
         # Calculate integrated assessment scores
         cycle_score = self._score_business_cycle(business_cycle)
         volatility_score = self._score_volatility_environment(vix)
-        recession_score = 1.0 - recession.get(
-            "recession_probability", 0.2
-        )  # Invert for consistency
+        recession_score = 1.0 - recession.get("recession_probability", 0.2)  # Invert for consistency
         regime_score = regime.get("confidence_score", 0.7)
 
         # Weighted composite score
-        composite_score = (
-            0.3 * cycle_score
-            + 0.25 * volatility_score
-            + 0.25 * recession_score
-            + 0.2 * regime_score
-        )
+        composite_score = 0.3 * cycle_score + 0.25 * volatility_score + 0.25 * recession_score + 0.2 * regime_score
 
         # Overall assessment
         if composite_score > 0.7:
@@ -421,13 +399,11 @@ class MacroEconomicFrameworkDemo:
         print("🎯 Composite Score: {composite_score:.2f}")
         print("📊 Overall Assessment: {overall_assessment.title()}")
         print("⚠️  Risk Level: {risk_level.title()}")
-        print(
-            f"🔗 Factor Coherence: {integrated_result['cross_factor_analysis']['overall_coherence'].title()}"
-        )
+        print(f"🔗 Factor Coherence: {integrated_result['cross_factor_analysis']['overall_coherence'].title()}")
 
         return integrated_result
 
-    def _demo_strategy_implications(self, integrated_analysis: Dict) -> Dict[str, Any]:
+    def _demo_strategy_implications(self, integrated_analysis: dict) -> dict[str, Any]:
         """Demonstrate trading strategy implications"""
 
         assessment = integrated_analysis.get("overall_assessment", "neutral")
@@ -508,13 +484,11 @@ class MacroEconomicFrameworkDemo:
         print("🔄 Sector Strategy: {sector_rotation.replace('_', ' ').title()}")
         print("🛡️  Hedging: {hedging_approach.title()}")
         print("📊 Risk Budget: {strategy_implications['risk_budget_adjustment']}")
-        print(
-            f"🎯 Strategy Confidence: {strategy_implications['strategy_confidence']:.1%}"
-        )
+        print(f"🎯 Strategy Confidence: {strategy_implications['strategy_confidence']:.1%}")
 
         return strategy_implications
 
-    def _score_business_cycle(self, business_cycle: Dict) -> float:
+    def _score_business_cycle(self, business_cycle: dict) -> float:
         """Score business cycle health (0-1)"""
         phase = business_cycle.get("business_cycle_phase")
         composite = business_cycle.get("composite_index", {})
@@ -535,7 +509,7 @@ class MacroEconomicFrameworkDemo:
 
         return max(0.0, min(1.0, base_score + composite_adjustment))
 
-    def _score_volatility_environment(self, vix: Dict) -> float:
+    def _score_volatility_environment(self, vix: dict) -> float:
         """Score volatility environment favorability (0-1)"""
         regime = vix.get("volatility_regime")
         current_vix = vix.get("current_vix_level", 20)
@@ -568,9 +542,7 @@ def main():
     results = demo.demonstrate_comprehensive_analysis()
 
     # Save results for reference
-    output_path = (
-        Path(__file__).parent / "data" / "outputs" / "macro_analysis_demo.json"
-    )
+    output_path = Path(__file__).parent / "data" / "outputs" / "macro_analysis_demo.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:

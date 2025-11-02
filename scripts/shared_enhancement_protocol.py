@@ -13,7 +13,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from twitter_template_renderer import TwitterTemplateRenderer
 from twitter_template_selector import TwitterTemplateSelector
@@ -22,7 +22,7 @@ from twitter_template_selector import TwitterTemplateSelector
 class SharedEnhancementProtocol:
     """Unified enhancement protocol for all Twitter content types"""
 
-    def __init__(self, base_path: Optional[Path] = None):
+    def __init__(self, base_path: Path | None = None):
         """Initialize the enhancement protocol"""
         self.base_path = base_path or Path(__file__).parent.parent
         self.data_outputs_path = self.base_path / "data" / "outputs"
@@ -53,9 +53,7 @@ class SharedEnhancementProtocol:
             },
         }
 
-    def detect_enhancement_request(
-        self, input_param: str
-    ) -> Tuple[bool, Dict[str, Any]]:
+    def detect_enhancement_request(self, input_param: str) -> tuple[bool, dict[str, Any]]:
         """
         Detect if input is a validation file path for enhancement
 
@@ -73,16 +71,12 @@ class SharedEnhancementProtocol:
             r".*twitter.*validation.*",
         ]
 
-        is_validation_path = any(
-            re.match(pattern, input_param) for pattern in validation_patterns
-        )
+        is_validation_path = any(re.match(pattern, input_param) for pattern in validation_patterns)
 
         if is_validation_path:
             try:
                 # Parse validation file path
-                content_type, identifier, date = self._parse_validation_path(
-                    input_param
-                )
+                content_type, identifier, date = self._parse_validation_path(input_param)
 
                 return True, {
                     "validation_file_path": input_param,
@@ -96,9 +90,7 @@ class SharedEnhancementProtocol:
 
         return False, {}
 
-    def execute_enhancement(
-        self, enhancement_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def execute_enhancement(self, enhancement_context: dict[str, Any]) -> dict[str, Any]:
         """
         Execute validation-driven enhancement
 
@@ -111,9 +103,7 @@ class SharedEnhancementProtocol:
 
         try:
             # Load validation data
-            validation_data = self._load_validation_data(
-                enhancement_context["validation_file_path"]
-            )
+            validation_data = self._load_validation_data(enhancement_context["validation_file_path"])
 
             # Load original content
             original_content = self._load_original_content(
@@ -137,9 +127,7 @@ class SharedEnhancementProtocol:
             )
 
             # Apply validation-driven fixes
-            enhancement_plan = self._create_enhancement_plan(
-                validation_data, enhancement_context["content_type"]
-            )
+            enhancement_plan = self._create_enhancement_plan(validation_data, enhancement_context["content_type"])
 
             # Re-render content with enhanced data
             enhanced_result = self._re_render_with_enhancements(
@@ -150,28 +138,18 @@ class SharedEnhancementProtocol:
             )
 
             # Apply post-render improvements
-            final_result = self._apply_post_render_improvements(
-                enhanced_result, enhancement_plan, validation_data
-            )
+            final_result = self._apply_post_render_improvements(enhanced_result, enhancement_plan, validation_data)
 
             return {
                 "success": True,
                 "enhanced_content": final_result["content"],
                 "enhancement_metadata": {
                     "original_issues": len(
-                        validation_data.get("critical_findings_matrix", {}).get(
-                            "inaccurate_statements", []
-                        )
+                        validation_data.get("critical_findings_matrix", {}).get("inaccurate_statements", [])
                     ),
-                    "enhancements_applied": len(
-                        enhancement_plan.get("improvements", [])
-                    ),
-                    "data_authority_resolved": enhancement_plan.get(
-                        "data_authority_applied", False
-                    ),
-                    "validation_issues_fixed": enhancement_plan.get(
-                        "validation_fixes_applied", 0
-                    ),
+                    "enhancements_applied": len(enhancement_plan.get("improvements", [])),
+                    "data_authority_resolved": enhancement_plan.get("data_authority_applied", False),
+                    "validation_issues_fixed": enhancement_plan.get("validation_fixes_applied", 0),
                     "enhancement_timestamp": datetime.now().isoformat(),
                 },
                 "validation_data": validation_data,
@@ -184,7 +162,7 @@ class SharedEnhancementProtocol:
                 "enhancement_context": enhancement_context,
             }
 
-    def _parse_validation_path(self, validation_file_path: str) -> Tuple[str, str, str]:
+    def _parse_validation_path(self, validation_file_path: str) -> tuple[str, str, str]:
         """Parse validation file path to extract content type, identifier, and date"""
 
         path = Path(validation_file_path)
@@ -204,9 +182,7 @@ class SharedEnhancementProtocol:
                 break
 
         if not content_type:
-            raise ValueError(
-                f"Cannot determine content type from path: {validation_file_path}"
-            )
+            raise ValueError(f"Cannot determine content type from path: {validation_file_path}")
 
         # Extract identifier and date from filename
         filename = path.stem
@@ -242,21 +218,17 @@ class SharedEnhancementProtocol:
 
         return content_type, identifier, date
 
-    def _load_validation_data(self, validation_file_path: str) -> Dict[str, Any]:
+    def _load_validation_data(self, validation_file_path: str) -> dict[str, Any]:
         """Load validation data from JSON file"""
 
         path = Path(validation_file_path)
         if not path.exists():
-            raise FileNotFoundError(
-                f"Validation file not found: {validation_file_path}"
-            )
+            raise FileNotFoundError(f"Validation file not found: {validation_file_path}")
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    def _load_original_content(
-        self, content_type: str, identifier: str, date: str
-    ) -> Dict[str, Any]:
+    def _load_original_content(self, content_type: str, identifier: str, date: str) -> dict[str, Any]:
         """Load original Twitter content"""
 
         # Map content type to directory
@@ -268,9 +240,7 @@ class SharedEnhancementProtocol:
         }
 
         content_dir = dir_mapping.get(content_type, content_type)
-        content_path = (
-            self.data_outputs_path / "twitter" / content_dir / f"{identifier}_{date}.md"
-        )
+        content_path = self.data_outputs_path / "twitter" / content_dir / f"{identifier}_{date}.md"
 
         if not content_path.exists():
             raise FileNotFoundError(f"Original content not found: {content_path}")
@@ -281,7 +251,7 @@ class SharedEnhancementProtocol:
         metadata_path = content_path.with_suffix("").with_suffix("_metadata.json")
         metadata = {}
         if metadata_path.exists():
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
         return {
@@ -290,9 +260,7 @@ class SharedEnhancementProtocol:
             "file_path": str(content_path),
         }
 
-    def _load_original_source_data(
-        self, content_type: str, identifier: str, date: str
-    ) -> Dict[str, Any]:
+    def _load_original_source_data(self, content_type: str, identifier: str, date: str) -> dict[str, Any]:
         """Load original source data that was used to generate the content"""
 
         # Map content type to source directory
@@ -307,18 +275,10 @@ class SharedEnhancementProtocol:
 
         if content_type == "strategy":
             # Strategy uses CSV files
-            source_path = (
-                self.base_path
-                / "data"
-                / "raw"
-                / source_dir
-                / f"{identifier}_{date}.csv"
-            )
+            source_path = self.base_path / "data" / "raw" / source_dir / f"{identifier}_{date}.csv"
         else:
             # Others use markdown files
-            source_path = (
-                self.data_outputs_path / source_dir / f"{identifier}_{date}.md"
-            )
+            source_path = self.data_outputs_path / source_dir / f"{identifier}_{date}.md"
 
         if not source_path.exists():
             # Return minimal data structure
@@ -338,21 +298,20 @@ class SharedEnhancementProtocol:
                 "source_available": True,
                 "csv_path": str(source_path),
             }
-        else:
-            # Parse markdown with frontmatter
-            content = source_path.read_text(encoding="utf-8")
-            data = self._parse_markdown_with_frontmatter(content)
-            data.update(
-                {
-                    "identifier": identifier,
-                    "date": date,
-                    "content_type": content_type,
-                    "source_available": True,
-                }
-            )
-            return data
+        # Parse markdown with frontmatter
+        content = source_path.read_text(encoding="utf-8")
+        data = self._parse_markdown_with_frontmatter(content)
+        data.update(
+            {
+                "identifier": identifier,
+                "date": date,
+                "content_type": content_type,
+                "source_available": True,
+            }
+        )
+        return data
 
-    def _parse_markdown_with_frontmatter(self, content: str) -> Dict[str, Any]:
+    def _parse_markdown_with_frontmatter(self, content: str) -> dict[str, Any]:
         """Parse markdown content with YAML frontmatter"""
 
         data = {}
@@ -378,32 +337,28 @@ class SharedEnhancementProtocol:
 
     def _apply_data_authority_resolution(
         self,
-        source_data: Dict[str, Any],
-        validation_data: Dict[str, Any],
+        source_data: dict[str, Any],
+        validation_data: dict[str, Any],
         content_type: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply data authority resolution based on content type"""
 
         if content_type in self.enhancement_patterns["data_authority_resolution"]:
-            resolver = self.enhancement_patterns["data_authority_resolution"][
-                content_type
-            ]
+            resolver = self.enhancement_patterns["data_authority_resolution"][content_type]
             return resolver(source_data, validation_data)
 
         return source_data
 
     def _resolve_fundamental_authority(
-        self, source_data: Dict[str, Any], validation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, source_data: dict[str, Any], validation_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Resolve fundamental analysis data authority conflicts"""
 
         # Apply fundamental analysis authority protocol
         enhanced_data = source_data.copy()
 
         # Check for data conflicts in validation
-        data_conflicts = validation_data.get("critical_findings_matrix", {}).get(
-            "questionable_assertions", []
-        )
+        data_conflicts = validation_data.get("critical_findings_matrix", {}).get("questionable_assertions", [])
 
         for conflict in data_conflicts:
             if "price" in conflict.lower() or "valuation" in conflict.lower():
@@ -417,16 +372,14 @@ class SharedEnhancementProtocol:
         return enhanced_data
 
     def _resolve_strategy_authority(
-        self, source_data: Dict[str, Any], validation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, source_data: dict[str, Any], validation_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Resolve strategy data authority conflicts"""
 
         enhanced_data = source_data.copy()
 
         # Apply TrendSpider authority protocol
-        data_conflicts = validation_data.get("critical_findings_matrix", {}).get(
-            "questionable_assertions", []
-        )
+        data_conflicts = validation_data.get("critical_findings_matrix", {}).get("questionable_assertions", [])
 
         for conflict in data_conflicts:
             if "performance" in conflict.lower() or "metrics" in conflict.lower():
@@ -435,17 +388,13 @@ class SharedEnhancementProtocol:
 
         return enhanced_data
 
-    def _resolve_sector_authority(
-        self, source_data: Dict[str, Any], validation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _resolve_sector_authority(self, source_data: dict[str, Any], validation_data: dict[str, Any]) -> dict[str, Any]:
         """Resolve sector analysis data authority conflicts"""
 
         enhanced_data = source_data.copy()
 
         # Apply sector analysis authority protocol
-        data_conflicts = validation_data.get("critical_findings_matrix", {}).get(
-            "questionable_assertions", []
-        )
+        data_conflicts = validation_data.get("critical_findings_matrix", {}).get("questionable_assertions", [])
 
         for conflict in data_conflicts:
             if "etf" in conflict.lower() or "pricing" in conflict.lower():
@@ -455,16 +404,14 @@ class SharedEnhancementProtocol:
         return enhanced_data
 
     def _resolve_trade_history_authority(
-        self, source_data: Dict[str, Any], validation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, source_data: dict[str, Any], validation_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Resolve trade history data authority conflicts"""
 
         enhanced_data = source_data.copy()
 
         # Apply trade history authority protocol
-        data_conflicts = validation_data.get("critical_findings_matrix", {}).get(
-            "questionable_assertions", []
-        )
+        data_conflicts = validation_data.get("critical_findings_matrix", {}).get("questionable_assertions", [])
 
         for conflict in data_conflicts:
             if "performance" in conflict.lower() or "return" in conflict.lower():
@@ -473,9 +420,7 @@ class SharedEnhancementProtocol:
 
         return enhanced_data
 
-    def _create_enhancement_plan(
-        self, validation_data: Dict[str, Any], content_type: str
-    ) -> Dict[str, Any]:
+    def _create_enhancement_plan(self, validation_data: dict[str, Any], content_type: str) -> dict[str, Any]:
         """Create enhancement plan based on validation data"""
 
         plan = {
@@ -506,9 +451,7 @@ class SharedEnhancementProtocol:
 
         # Check for data authority requirements
         critical_findings = validation_data.get("critical_findings_matrix", {})
-        if critical_findings.get("questionable_assertions") or critical_findings.get(
-            "inaccurate_statements"
-        ):
+        if critical_findings.get("questionable_assertions") or critical_findings.get("inaccurate_statements"):
             plan["data_authority_applied"] = True
 
         return plan
@@ -517,28 +460,20 @@ class SharedEnhancementProtocol:
         self,
         content_type: str,
         identifier: str,
-        enhanced_source_data: Dict[str, Any],
-        enhancement_plan: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        enhanced_source_data: dict[str, Any],
+        enhancement_plan: dict[str, Any],
+    ) -> dict[str, Any]:
         """Re-render content with enhanced data"""
 
         # Use template renderer to regenerate content
         if content_type == "fundamental":
-            result = self.template_renderer.render_fundamental_analysis(
-                identifier, enhanced_source_data
-            )
+            result = self.template_renderer.render_fundamental_analysis(identifier, enhanced_source_data)
         elif content_type == "strategy":
-            result = self.template_renderer.render_strategy_post(
-                identifier, enhanced_source_data
-            )
+            result = self.template_renderer.render_strategy_post(identifier, enhanced_source_data)
         elif content_type == "sector":
-            result = self.template_renderer.render_sector_analysis(
-                identifier, enhanced_source_data
-            )
+            result = self.template_renderer.render_sector_analysis(identifier, enhanced_source_data)
         elif content_type == "trade_history":
-            result = self.template_renderer.render_trade_history(
-                identifier, enhanced_source_data
-            )
+            result = self.template_renderer.render_trade_history(identifier, enhanced_source_data)
         else:
             raise ValueError(f"Unknown content type: {content_type}")
 
@@ -550,10 +485,10 @@ class SharedEnhancementProtocol:
 
     def _apply_post_render_improvements(
         self,
-        rendered_result: Dict[str, Any],
-        enhancement_plan: Dict[str, Any],
-        validation_data: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        rendered_result: dict[str, Any],
+        enhancement_plan: dict[str, Any],
+        validation_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Apply post-render improvements"""
 
         content = rendered_result["content"]
@@ -616,7 +551,7 @@ class SharedEnhancementProtocol:
 
         return content
 
-    def get_enhancement_statistics(self) -> Dict[str, Any]:
+    def get_enhancement_statistics(self) -> dict[str, Any]:
         """Get enhancement system statistics"""
 
         return {

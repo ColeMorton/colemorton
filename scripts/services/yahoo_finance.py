@@ -12,7 +12,8 @@ Production-grade Yahoo Finance data integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
 
 # Add scripts directory to path for importing existing service
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -20,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from yahoo_finance_service import DataNotFoundError as YFDataNotFoundError
 from yahoo_finance_service import ValidationError as YFValidationError
 from yahoo_finance_service import YahooFinanceError, YahooFinanceService
+
 
 # Add services directory to path for base service imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -31,6 +33,7 @@ from base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 from config_loader import ConfigLoader
@@ -53,7 +56,7 @@ class YahooFinanceAPIService(BaseFinancialService):
             rate_limit=config.rate_limit.requests_per_minute,
         )
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate Yahoo Finance response data"""
 
         if not isinstance(data, dict):
@@ -82,7 +85,7 @@ class YahooFinanceAPIService(BaseFinancialService):
 
         return data
 
-    def get_stock_info(self, ticker: str) -> Dict[str, Any]:
+    def get_stock_info(self, ticker: str) -> dict[str, Any]:
         """
         Get comprehensive stock information
 
@@ -99,23 +102,15 @@ class YahooFinanceAPIService(BaseFinancialService):
 
             # Store in historical data system
             try:
-                self.store_historical_data(
-                    validated_data, f"stock_info_{ticker}", {"symbol": ticker}
-                )
+                self.store_historical_data(validated_data, f"stock_info_{ticker}", {"symbol": ticker})
             except Exception as e:
-                self.logger.warning(
-                    f"Historical storage failed for stock_info_{ticker}: {e}"
-                )
+                self.logger.warning(f"Historical storage failed for stock_info_{ticker}: {e}")
 
             # Trigger comprehensive collection if needed
             try:
-                self._trigger_collection_if_needed(
-                    validated_data, f"stock_info_{ticker}", {"symbol": ticker}
-                )
+                self._trigger_collection_if_needed(validated_data, f"stock_info_{ticker}", {"symbol": ticker})
             except Exception as e:
-                self.logger.debug(
-                    f"Collection trigger check failed for stock_info_{ticker}: {e}"
-                )
+                self.logger.debug(f"Collection trigger check failed for stock_info_{ticker}: {e}")
 
             return validated_data
 
@@ -126,7 +121,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         except YahooFinanceError as e:
             raise FinancialServiceError(str(e))
 
-    def get_historical_data(self, ticker: str, period: str = "max") -> Dict[str, Any]:
+    def get_historical_data(self, ticker: str, period: str = "max") -> dict[str, Any]:
         """
         Get historical price data
 
@@ -139,9 +134,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         """
         try:
             result = self.yf_service.get_historical_data(ticker, period, interval="1d")
-            validated_data = self._validate_response(
-                result, f"historical_{ticker}_{period}"
-            )
+            validated_data = self._validate_response(result, f"historical_{ticker}_{period}")
 
             # Store in historical data system
             try:
@@ -151,9 +144,7 @@ class YahooFinanceAPIService(BaseFinancialService):
                     {"symbol": ticker, "period": period},
                 )
             except Exception as e:
-                self.logger.warning(
-                    f"Historical storage failed for historical_{ticker}_{period}: {e}"
-                )
+                self.logger.warning(f"Historical storage failed for historical_{ticker}_{period}: {e}")
 
             # Trigger comprehensive collection if needed
             try:
@@ -163,9 +154,7 @@ class YahooFinanceAPIService(BaseFinancialService):
                     {"symbol": ticker, "period": period},
                 )
             except Exception as e:
-                self.logger.debug(
-                    f"Collection trigger check failed for historical_{ticker}_{period}: {e}"
-                )
+                self.logger.debug(f"Collection trigger check failed for historical_{ticker}_{period}: {e}")
 
             return validated_data
 
@@ -176,9 +165,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         except YahooFinanceError as e:
             raise FinancialServiceError(str(e))
 
-    def get_historical_data_weekly(
-        self, ticker: str, period: str = "max"
-    ) -> Dict[str, Any]:
+    def get_historical_data_weekly(self, ticker: str, period: str = "max") -> dict[str, Any]:
         """
         Get historical weekly price data with proper timeframe storage
 
@@ -191,9 +178,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         """
         try:
             result = self.yf_service.get_historical_data(ticker, period, interval="1wk")
-            validated_data = self._validate_response(
-                result, f"historical_weekly_{ticker}_{period}"
-            )
+            validated_data = self._validate_response(result, f"historical_weekly_{ticker}_{period}")
 
             # Store in historical data system with WEEKLY timeframe
             try:
@@ -206,9 +191,7 @@ class YahooFinanceAPIService(BaseFinancialService):
                     timeframe=Timeframe.WEEKLY,
                 )
             except Exception as e:
-                self.logger.warning(
-                    f"Weekly historical storage failed for {ticker}_{period}: {e}"
-                )
+                self.logger.warning(f"Weekly historical storage failed for {ticker}_{period}: {e}")
 
             return validated_data
 
@@ -219,7 +202,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         except YahooFinanceError as e:
             raise FinancialServiceError(str(e))
 
-    def get_financial_statements(self, ticker: str) -> Dict[str, Any]:
+    def get_financial_statements(self, ticker: str) -> dict[str, Any]:
         """
         Get financial statements
 
@@ -240,9 +223,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         except YahooFinanceError as e:
             raise FinancialServiceError(str(e))
 
-    def get_market_data_summary(
-        self, ticker: str, period: str = "1y"
-    ) -> Dict[str, Any]:
+    def get_market_data_summary(self, ticker: str, period: str = "1y") -> dict[str, Any]:
         """
         Get summarized market data optimized for analysis workflows
 
@@ -276,12 +257,8 @@ class YahooFinanceAPIService(BaseFinancialService):
             avg_price = sum(prices) / len(prices)
 
             # Performance calculations
-            total_return = (
-                (end_price - start_price) / start_price if start_price != 0 else 0
-            )
-            price_volatility = (
-                (max(prices) - min(prices)) / avg_price if avg_price != 0 else 0
-            )
+            total_return = (end_price - start_price) / start_price if start_price != 0 else 0
+            price_volatility = (max(prices) - min(prices)) / avg_price if avg_price != 0 else 0
 
             # Volume statistics
             avg_volume = sum(volumes) / len(volumes) if volumes else 0
@@ -320,11 +297,7 @@ class YahooFinanceAPIService(BaseFinancialService):
                     "source": "yahoo_finance",
                     "timestamp": datetime.now().isoformat(),
                     "period_requested": period,
-                    "completeness": (
-                        len([d for d in data if d.get("Close")]) / len(data)
-                        if data
-                        else 0
-                    ),
+                    "completeness": (len([d for d in data if d.get("Close")]) / len(data) if data else 0),
                 },
             }
 
@@ -337,7 +310,7 @@ class YahooFinanceAPIService(BaseFinancialService):
         except YahooFinanceError as e:
             raise FinancialServiceError(str(e))
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Use the underlying service health check
@@ -442,20 +415,12 @@ def create_yahoo_finance_service(env: str = "dev") -> YahooFinanceAPIService:
             store_fundamentals=True,
             store_news_sentiment=False,
             auto_detect_data_type=True,
-            auto_collection_enabled=getattr(
-                service_config, "auto_collection_enabled", True
-            ),
+            auto_collection_enabled=getattr(service_config, "auto_collection_enabled", True),
             daily_days=getattr(service_config, "daily_days", 365),
             weekly_years=getattr(service_config, "weekly_years", 5),
-            trigger_on_price_calls=getattr(
-                service_config, "trigger_on_price_calls", True
-            ),
-            collection_interval_hours=getattr(
-                service_config, "collection_interval_hours", 24
-            ),
-            background_collection=getattr(
-                service_config, "background_collection", True
-            ),
+            trigger_on_price_calls=getattr(service_config, "trigger_on_price_calls", True),
+            collection_interval_hours=getattr(service_config, "collection_interval_hours", 24),
+            background_collection=getattr(service_config, "background_collection", True),
         ),
         headers=service_config.headers,
     )
@@ -469,19 +434,11 @@ def main():
     import json
 
     parser = argparse.ArgumentParser(description="Yahoo Finance CLI")
-    parser.add_argument(
-        "command", choices=["quote", "historical", "health"], help="Command to execute"
-    )
-    parser.add_argument(
-        "symbol", nargs="?", help="Stock symbol (required for quote/historical)"
-    )
+    parser.add_argument("command", choices=["quote", "historical", "health"], help="Command to execute")
+    parser.add_argument("symbol", nargs="?", help="Stock symbol (required for quote/historical)")
     parser.add_argument("--env", default="prod", help="Environment (dev/test/prod)")
-    parser.add_argument(
-        "--output-format", default="json", choices=["json"], help="Output format"
-    )
-    parser.add_argument(
-        "--period", default="1y", help="Time period for historical data"
-    )
+    parser.add_argument("--output-format", default="json", choices=["json"], help="Output format")
+    parser.add_argument("--period", default="1y", help="Time period for historical data")
 
     args = parser.parse_args()
 

@@ -8,12 +8,10 @@ Modular template selection system using:
 - TemplateCriteriaManager for criteria management
 """
 
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from error_handler import ErrorHandler
-from errors import ProcessingError, ValidationError
 from logging_config import TwitterSystemLogger
 from result_types import TemplateSelectionResult
 from template_criteria_manager import TemplateCriteriaManager
@@ -29,7 +27,7 @@ class TwitterTemplateSelector:
     while maintaining backward compatibility with the existing API.
     """
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         """Initialize the modular template selector"""
 
         self.templates_dir = templates_dir or Path(__file__).parent / "templates"
@@ -50,9 +48,9 @@ class TwitterTemplateSelector:
     def select_optimal_template(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[str, Dict[str, Any]]:
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> tuple[str, dict[str, Any]]:
         """
         Select the optimal template based on data characteristics and context
 
@@ -70,9 +68,7 @@ class TwitterTemplateSelector:
             selection_context = self._convert_context(context)
 
             # Use selection engine to select template
-            result = self.selection_engine.select_template(
-                content_type, data, selection_context
-            )
+            result = self.selection_engine.select_template(content_type, data, selection_context)
 
             # Track selection
             self._track_selection(result)
@@ -100,17 +96,15 @@ class TwitterTemplateSelector:
     def get_template_recommendations(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """Get ranked template recommendations"""
 
         try:
             selection_context = self._convert_context(context)
 
-            return self.selection_engine.get_template_recommendations(
-                content_type, data, selection_context
-            )
+            return self.selection_engine.get_template_recommendations(content_type, data, selection_context)
 
         except Exception as e:
             self.error_handler.handle_processing_error(
@@ -124,9 +118,9 @@ class TwitterTemplateSelector:
         self,
         content_type: str,
         template_variant: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Validate a template selection"""
 
         try:
@@ -144,9 +138,7 @@ class TwitterTemplateSelector:
             )
             raise
 
-    def update_template_performance(
-        self, template_variant: str, metrics: Dict[str, float]
-    ) -> None:
+    def update_template_performance(self, template_variant: str, metrics: dict[str, float]) -> None:
         """Update template performance metrics"""
 
         if template_variant not in self.template_performance:
@@ -162,7 +154,7 @@ class TwitterTemplateSelector:
         # Update average metrics
         history = self.template_performance[template_variant]["metrics_history"]
         averages = {}
-        for metric_name in metrics.keys():
+        for metric_name in metrics:
             values = [m.get(metric_name, 0) for m in history if metric_name in m]
             if values:
                 averages[metric_name] = sum(values) / len(values)
@@ -173,18 +165,16 @@ class TwitterTemplateSelector:
             f"Updated performance metrics for {template_variant}",
             {
                 "metrics": list(metrics.keys()),
-                "usage_count": self.template_performance[template_variant][
-                    "usage_count"
-                ],
+                "usage_count": self.template_performance[template_variant]["usage_count"],
             },
         )
 
-    def get_template_performance_analytics(self) -> Dict[str, Any]:
+    def get_template_performance_analytics(self) -> dict[str, Any]:
         """Get template performance analytics"""
 
         return self.template_performance.copy()
 
-    def _convert_context(self, context: Optional[Dict[str, Any]]) -> SelectionContext:
+    def _convert_context(self, context: dict[str, Any] | None) -> SelectionContext:
         """Convert legacy context to SelectionContext"""
 
         if not context:
@@ -214,9 +204,7 @@ class TwitterTemplateSelector:
         if len(self.selection_history) > 1000:
             self.selection_history = self.selection_history[-1000:]
 
-    def _evaluate_criterion(
-        self, data: Dict[str, Any], criterion_name: str, threshold: float
-    ) -> float:
+    def _evaluate_criterion(self, data: dict[str, Any], criterion_name: str, threshold: float) -> float:
         """
         Evaluate a criterion (backward compatibility method)
 
@@ -240,38 +228,34 @@ class TwitterTemplateSelector:
                     return min(1.0, gap / threshold)
                 return 0.0
 
-            elif criterion_name == "catalyst_count":
+            if criterion_name == "catalyst_count":
                 if isinstance(value, list):
                     return min(1.0, len(value) / threshold)
-                elif isinstance(value, int):
+                if isinstance(value, int):
                     return min(1.0, value / threshold)
                 return 0.0
 
-            elif criterion_name == "moat_strength":
+            if criterion_name == "moat_strength":
                 if isinstance(value, (int, float)):
                     return min(1.0, value / threshold)
                 return 0.0
 
-            else:
-                # Default evaluation
-                if isinstance(value, (int, float)):
-                    return min(1.0, value / threshold) if threshold > 0 else 1.0
-                elif isinstance(value, bool):
-                    return 1.0 if value else 0.0
-                elif isinstance(value, list):
-                    return min(1.0, len(value) / threshold) if threshold > 0 else 1.0
-                elif isinstance(value, str):
-                    return 1.0 if value.strip() else 0.0
-                else:
-                    return 0.5
+            # Default evaluation
+            if isinstance(value, (int, float)):
+                return min(1.0, value / threshold) if threshold > 0 else 1.0
+            if isinstance(value, bool):
+                return 1.0 if value else 0.0
+            if isinstance(value, list):
+                return min(1.0, len(value) / threshold) if threshold > 0 else 1.0
+            if isinstance(value, str):
+                return 1.0 if value.strip() else 0.0
+            return 0.5
 
         except Exception as e:
-            self.logger.log_error(
-                e, {"criterion_name": criterion_name, "threshold": threshold}
-            )
+            self.logger.log_error(e, {"criterion_name": criterion_name, "threshold": threshold})
             return 0.0
 
-    def get_selection_analytics(self) -> Dict[str, Any]:
+    def get_selection_analytics(self) -> dict[str, Any]:
         """Get selection analytics"""
 
         if not self.selection_history:
@@ -295,24 +279,15 @@ class TwitterTemplateSelector:
                 template_scores[template] = []
             template_scores[template].append(score)
 
-        average_scores = {
-            template: sum(scores) / len(scores)
-            for template, scores in template_scores.items()
-        }
+        average_scores = {template: sum(scores) / len(scores) for template, scores in template_scores.items()}
 
         return {
             "total_selections": total_selections,
             "template_usage": template_usage,
             "average_scores": average_scores,
-            "most_used_template": (
-                max(template_usage.items(), key=lambda x: x[1])[0]
-                if template_usage
-                else None
-            ),
+            "most_used_template": (max(template_usage.items(), key=lambda x: x[1])[0] if template_usage else None),
             "highest_scoring_template": (
-                max(average_scores.items(), key=lambda x: x[1])[0]
-                if average_scores
-                else None
+                max(average_scores.items(), key=lambda x: x[1])[0] if average_scores else None
             ),
         }
 
@@ -327,9 +302,7 @@ class TwitterTemplateSelector:
             )
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "configuration_export", {"output_path": str(output_path)}, e
-            )
+            self.error_handler.handle_processing_error("configuration_export", {"output_path": str(output_path)}, e)
 
     def import_configuration(self, config_path: Path) -> None:
         """Import template selector configuration"""
@@ -346,16 +319,14 @@ class TwitterTemplateSelector:
             )
 
         except Exception as e:
-            self.error_handler.handle_processing_error(
-                "configuration_import", {"config_path": str(config_path)}, e
-            )
+            self.error_handler.handle_processing_error("configuration_import", {"config_path": str(config_path)}, e)
 
-    def get_available_templates(self, content_type: str) -> List[str]:
+    def get_available_templates(self, content_type: str) -> list[str]:
         """Get available templates for content type"""
 
         return self.criteria_manager.get_available_templates(content_type)
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get system status and health metrics"""
 
         return {

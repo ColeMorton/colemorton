@@ -10,9 +10,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from historical_data_manager import DataType, HistoricalDataManager, Timeframe
 
@@ -22,10 +20,10 @@ class DataAvailability:
     """Information about data availability for a symbol"""
 
     symbol: str
-    data_types: List[str]
-    date_range: Dict[str, str]  # {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD"}
+    data_types: list[str]
+    date_range: dict[str, str]  # {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD"}
     total_records: int
-    timeframes: List[str]
+    timeframes: list[str]
     last_updated: str
 
 
@@ -48,7 +46,7 @@ class DataDiscoveryAPI:
     for historical financial data stored in the raw data repository.
     """
 
-    def __init__(self, historical_manager: Optional[HistoricalDataManager] = None):
+    def __init__(self, historical_manager: HistoricalDataManager | None = None):
         """
         Initialize Data Discovery API
 
@@ -63,9 +61,7 @@ class DataDiscoveryAPI:
         logger = logging.getLogger("data_discovery_api")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
@@ -73,11 +69,11 @@ class DataDiscoveryAPI:
 
     def search_symbols(
         self,
-        pattern: Optional[str] = None,
-        data_type: Optional[DataType] = None,
-        sector: Optional[str] = None,
+        pattern: str | None = None,
+        data_type: DataType | None = None,
+        sector: str | None = None,
         min_records: int = 0,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Search for symbols matching criteria
 
@@ -91,9 +87,7 @@ class DataDiscoveryAPI:
             List of matching symbols
         """
         try:
-            all_symbols = list(
-                self.historical_manager.metadata.get("symbols", {}).keys()
-            )
+            all_symbols = list(self.historical_manager.metadata.get("symbols", {}).keys())
 
             if not all_symbols:
                 return []
@@ -102,19 +96,13 @@ class DataDiscoveryAPI:
             if pattern:
                 import fnmatch
 
-                all_symbols = [
-                    s
-                    for s in all_symbols
-                    if fnmatch.fnmatch(s.upper(), pattern.upper())
-                ]
+                all_symbols = [s for s in all_symbols if fnmatch.fnmatch(s.upper(), pattern.upper())]
 
             # Apply data type filter
             if data_type:
                 filtered_symbols = []
                 for symbol in all_symbols:
-                    symbol_data = self.historical_manager.metadata["symbols"].get(
-                        symbol, {}
-                    )
+                    symbol_data = self.historical_manager.metadata["symbols"].get(symbol, {})
                     if data_type.value in symbol_data.get("data_types", []):
                         filtered_symbols.append(symbol)
                 all_symbols = filtered_symbols
@@ -130,7 +118,7 @@ class DataDiscoveryAPI:
             self.logger.error(f"Error searching symbols: {e}")
             return []
 
-    def get_symbol_availability(self, symbol: str) -> Optional[DataAvailability]:
+    def get_symbol_availability(self, symbol: str) -> DataAvailability | None:
         """
         Get data availability information for a symbol
 
@@ -142,9 +130,7 @@ class DataDiscoveryAPI:
         """
         try:
             symbol_upper = symbol.upper()
-            symbol_data = self.historical_manager.metadata.get("symbols", {}).get(
-                symbol_upper
-            )
+            symbol_data = self.historical_manager.metadata.get("symbols", {}).get(symbol_upper)
 
             if not symbol_data:
                 return None
@@ -188,7 +174,7 @@ class DataDiscoveryAPI:
             self.logger.warning(f"Error counting records for {symbol}: {e}")
             return 0
 
-    def _get_symbol_timeframes(self, symbol: str) -> List[str]:
+    def _get_symbol_timeframes(self, symbol: str) -> list[str]:
         """Get available timeframes for a symbol"""
         try:
             timeframes = set()
@@ -217,13 +203,13 @@ class DataDiscoveryAPI:
 
     def query_data(
         self,
-        symbols: Optional[List[str]] = None,
-        data_types: Optional[List[DataType]] = None,
-        date_start: Optional[Union[str, datetime]] = None,
-        date_end: Optional[Union[str, datetime]] = None,
+        symbols: list[str] | None = None,
+        data_types: list[DataType] | None = None,
+        date_start: str | datetime | None = None,
+        date_end: str | datetime | None = None,
         timeframe: Timeframe = Timeframe.DAILY,
-        limit: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Query historical data with flexible criteria
 
@@ -243,9 +229,7 @@ class DataDiscoveryAPI:
 
             # Default to all symbols if none specified
             if symbols is None:
-                symbols = list(
-                    self.historical_manager.metadata.get("symbols", {}).keys()
-                )
+                symbols = list(self.historical_manager.metadata.get("symbols", {}).keys())
 
             # Default to all data types if none specified
             if data_types is None:
@@ -275,9 +259,7 @@ class DataDiscoveryAPI:
                             return results[:limit]
 
                     except Exception as e:
-                        self.logger.debug(
-                            f"No data for {symbol} {data_type.value}: {e}"
-                        )
+                        self.logger.debug(f"No data for {symbol} {data_type.value}: {e}")
                         continue
 
             return results
@@ -290,9 +272,9 @@ class DataDiscoveryAPI:
         self,
         symbol: str,
         data_type: DataType,
-        date_start: Optional[Union[str, datetime]] = None,
-        date_end: Optional[Union[str, datetime]] = None,
-    ) -> Optional[DataQualityMetrics]:
+        date_start: str | datetime | None = None,
+        date_end: str | datetime | None = None,
+    ) -> DataQualityMetrics | None:
         """
         Calculate data quality metrics for a symbol and data type
 
@@ -326,9 +308,7 @@ class DataDiscoveryAPI:
             # Calculate completeness (simplified)
             expected_days = (date_end - date_start).days
             actual_records = len(data)
-            completeness = min(
-                1.0, actual_records / max(1, expected_days * 0.7)
-            )  # Assume ~70% trading days
+            completeness = min(1.0, actual_records / max(1, expected_days * 0.7))  # Assume ~70% trading days
 
             # Calculate consistency (check for data anomalies)
             consistency = self._calculate_consistency(data, data_type)
@@ -345,12 +325,7 @@ class DataDiscoveryAPI:
             accuracy = self._calculate_accuracy(data, data_type)
 
             # Overall score (weighted average)
-            overall_score = (
-                completeness * 0.3
-                + consistency * 0.25
-                + timeliness * 0.25
-                + accuracy * 0.2
-            )
+            overall_score = completeness * 0.3 + consistency * 0.25 + timeliness * 0.25 + accuracy * 0.2
 
             return DataQualityMetrics(
                 completeness=round(completeness, 3),
@@ -364,9 +339,7 @@ class DataDiscoveryAPI:
             self.logger.error(f"Error calculating quality metrics: {e}")
             return None
 
-    def _calculate_consistency(
-        self, data: List[Dict[str, Any]], data_type: DataType
-    ) -> float:
+    def _calculate_consistency(self, data: list[dict[str, Any]], data_type: DataType) -> float:
         """Calculate data consistency score"""
         try:
             if len(data) < 2:
@@ -399,9 +372,7 @@ class DataDiscoveryAPI:
         except Exception:
             return 0.5  # Default to moderate consistency if calculation fails
 
-    def _calculate_accuracy(
-        self, data: List[Dict[str, Any]], data_type: DataType
-    ) -> float:
+    def _calculate_accuracy(self, data: list[dict[str, Any]], data_type: DataType) -> float:
         """Calculate data accuracy score (simplified heuristic)"""
         try:
             if not data:
@@ -446,10 +417,10 @@ class DataDiscoveryAPI:
 
     def generate_discovery_report(
         self,
-        symbols: Optional[List[str]] = None,
+        symbols: list[str] | None = None,
         include_quality: bool = True,
         output_format: str = "dict",
-    ) -> Union[Dict[str, Any], str]:
+    ) -> dict[str, Any] | str:
         """
         Generate comprehensive discovery report
 
@@ -463,22 +434,14 @@ class DataDiscoveryAPI:
         """
         try:
             if symbols is None:
-                symbols = list(
-                    self.historical_manager.metadata.get("symbols", {}).keys()
-                )[
-                    :50
-                ]  # Limit for performance
+                symbols = list(self.historical_manager.metadata.get("symbols", {}).keys())[:50]  # Limit for performance
 
             report = {
                 "generated_at": datetime.now().isoformat(),
                 "summary": {
                     "total_symbols": len(symbols),
-                    "total_files": self.historical_manager.metadata.get(
-                        "total_files", 0
-                    ),
-                    "data_types": list(
-                        self.historical_manager.metadata.get("data_types", {}).keys()
-                    ),
+                    "total_files": self.historical_manager.metadata.get("total_files", 0),
+                    "data_types": list(self.historical_manager.metadata.get("data_types", {}).keys()),
                 },
                 "symbols": {},
             }
@@ -497,14 +460,10 @@ class DataDiscoveryAPI:
                     # Add quality metrics if requested
                     if include_quality and symbol_info.data_types:
                         symbol_report["quality_metrics"] = {}
-                        for data_type_str in symbol_info.data_types[
-                            :3
-                        ]:  # Limit for performance
+                        for data_type_str in symbol_info.data_types[:3]:  # Limit for performance
                             try:
                                 data_type = DataType(data_type_str)
-                                quality = self.get_data_quality_metrics(
-                                    symbol, data_type
-                                )
+                                quality = self.get_data_quality_metrics(symbol, data_type)
                                 if quality:
                                     symbol_report["quality_metrics"][data_type_str] = {
                                         "completeness": quality.completeness,
@@ -527,9 +486,7 @@ class DataDiscoveryAPI:
             self.logger.error(f"Error generating discovery report: {e}")
             return {} if output_format == "dict" else "{}"
 
-    def get_trending_symbols(
-        self, days: int = 30, min_activity: int = 5
-    ) -> List[Dict[str, Any]]:
+    def get_trending_symbols(self, days: int = 30, min_activity: int = 5) -> list[dict[str, Any]]:
         """
         Get symbols with high data activity in recent period
 
@@ -546,9 +503,7 @@ class DataDiscoveryAPI:
 
             for symbol in self.historical_manager.metadata.get("symbols", {}).keys():
                 symbol_data = self.historical_manager.metadata["symbols"][symbol]
-                last_date = datetime.fromisoformat(
-                    symbol_data.get("last_date", "1900-01-01")
-                )
+                last_date = datetime.fromisoformat(symbol_data.get("last_date", "1900-01-01"))
 
                 if last_date >= cutoff_date:
                     # Count recent activity (simplified)
@@ -574,7 +529,7 @@ class DataDiscoveryAPI:
 
 
 def create_data_discovery_api(
-    historical_manager: Optional[HistoricalDataManager] = None,
+    historical_manager: HistoricalDataManager | None = None,
 ) -> DataDiscoveryAPI:
     """Factory function to create data discovery API"""
     return DataDiscoveryAPI(historical_manager)

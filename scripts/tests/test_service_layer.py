@@ -10,10 +10,10 @@ Comprehensive testing of service layer abstractions including:
 """
 
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent
@@ -304,9 +304,7 @@ class TestCLIArchitecturalPatterns(unittest.TestCase):
         test_cli = TestCLIImplementation()
 
         # Mock service creation
-        with patch(
-            "scripts.tests.test_service_layer.create_test_service"
-        ) as mock_create:
+        with patch("scripts.tests.test_service_layer.create_test_service") as mock_create:
             mock_service = Mock()
             mock_create.return_value = mock_service
 
@@ -339,9 +337,7 @@ class TestCLIImplementation(BaseFinancialCLI):
     """Test implementation of BaseFinancialCLI for unit testing"""
 
     def __init__(self):
-        super().__init__(
-            service_name="test_service", description="Test service for unit testing"
-        )
+        super().__init__(service_name="test_service", description="Test service for unit testing")
 
     def perform_health_check(self, env: str):
         """Mock health check implementation"""

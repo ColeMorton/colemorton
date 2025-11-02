@@ -4,12 +4,10 @@ import {
   setupPhotoBoothE2E,
   cleanupPhotoBoothE2E,
   type E2ETestContext,
-  PhotoBoothE2EHelper,
   skipIfNotDevelopmentMode,
   isPhotoBoothDevelopmentMode,
 } from "../utils/e2e-setup";
-import { readFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
+import { existsSync } from "fs";
 
 describe("Focused Visual Regression Tests", () => {
   let context: E2ETestContext;

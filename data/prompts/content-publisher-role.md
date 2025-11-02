@@ -2,7 +2,7 @@
 
 ## Overview
 
-As the **Content Publisher** for Sensylate, your primary responsibility is managing the content lifecycle from analysis generation to frontend publication. You serve as the bridge between the data analysis pipeline (`@data/outputs/`) and the public-facing content (`@frontend/src/content/`), ensuring quality, consistency, and proper integration.
+As the **Content Publisher** for Cole Morton, your primary responsibility is managing the content lifecycle from analysis generation to frontend publication. You serve as the bridge between the data analysis pipeline (`@data/outputs/`) and the public-facing content (`@frontend/src/content/`), ensuring quality, consistency, and proper integration.
 
 ## Core Responsibilities
 
@@ -110,4 +110,4 @@ yarn build # Test production build
 yarn check # Type checking validation
 ```
 
-This role ensures Sensylate maintains high-quality, consistent content publication that properly leverages both analytical depth and visual presentation for maximum reader engagement and technical accuracy.
+This role ensures Cole Morton maintains high-quality, consistent content publication that properly leverages both analytical depth and visual presentation for maximum reader engagement and technical accuracy.

@@ -11,17 +11,16 @@ Property-based testing for validation logic:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from errors import ValidationError
-from result_types import ValidationResult, validation_failure, validation_success
+from result_types import validation_failure, validation_success
 from unified_validation_framework import UnifiedValidationFramework
 
 
@@ -63,9 +62,7 @@ class TestValidationFramework:
         # Run validation multiple times
         results = []
         for _ in range(5):
-            result = self.validation_framework.validate_content(
-                high_quality_content, "fundamental", source_data
-            )
+            result = self.validation_framework.validate_content(high_quality_content, "fundamental", source_data)
             results.append(result["overall_assessment"]["overall_reliability_score"])
 
         # All results should be identical
@@ -82,9 +79,7 @@ class TestValidationFramework:
         ]
 
         for criterion, test_content in content_structure_tests:
-            result = self.validation_framework._validate_character_limits(
-                test_content, "fundamental", {}
-            )
+            result = self.validation_framework._validate_character_limits(test_content, "fundamental", {})
             assert "score" in result
             assert "issues" in result
             assert isinstance(result["score"], float)
@@ -94,22 +89,14 @@ class TestValidationFramework:
         """Test that validation thresholds are properly enforced"""
 
         # Test institutional minimum threshold
-        assert (
-            self.validation_framework.quality_thresholds["institutional_minimum"] == 9.0
-        )
-        assert (
-            self.validation_framework.quality_thresholds["publication_minimum"] == 8.5
-        )
+        assert self.validation_framework.quality_thresholds["institutional_minimum"] == 9.0
+        assert self.validation_framework.quality_thresholds["publication_minimum"] == 8.5
 
         # Test threshold enforcement in scoring
         low_score_content = "Bad content"
-        result = self.validation_framework.validate_content(
-            low_score_content, "fundamental", {"ticker": "TEST"}
-        )
+        result = self.validation_framework.validate_content(low_score_content, "fundamental", {"ticker": "TEST"})
 
-        score = float(
-            result["overall_assessment"]["overall_reliability_score"].split("/")[0]
-        )
+        score = float(result["overall_assessment"]["overall_reliability_score"].split("/")[0])
         assert score < 9.0  # Should be below institutional threshold
 
     def test_content_type_specific_validation(self):
@@ -117,20 +104,14 @@ class TestValidationFramework:
 
         # Test fundamental-specific validation
         fundamental_content = "Analysis without valuation keywords"
-        result = self.validation_framework._validate_fundamental_specific(
-            fundamental_content, {}
-        )
+        result = self.validation_framework._validate_fundamental_specific(fundamental_content, {})
 
-        assert (
-            result["score"] < 1.0
-        )  # Should be penalized for missing valuation content
+        assert result["score"] < 1.0  # Should be penalized for missing valuation content
         assert "valuation" in str(result["issues"]).lower()
 
         # Test strategy-specific validation
         strategy_content = "Post without strategy metrics"
-        result = self.validation_framework._validate_strategy_specific(
-            strategy_content, {}
-        )
+        result = self.validation_framework._validate_strategy_specific(strategy_content, {})
 
         assert result["score"] < 1.0  # Should be penalized for missing strategy content
 
@@ -139,18 +120,14 @@ class TestValidationFramework:
 
         # Content without disclaimer
         content_without_disclaimer = "Investment advice without proper warnings"
-        result = self.validation_framework._validate_disclaimers(
-            content_without_disclaimer, "fundamental", {}
-        )
+        result = self.validation_framework._validate_disclaimers(content_without_disclaimer, "fundamental", {})
 
         assert result["score"] < 1.0
         assert not result["disclaimer_found"]
 
         # Content with disclaimer
         content_with_disclaimer = "Investment advice. ⚠️ Not financial advice."
-        result = self.validation_framework._validate_disclaimers(
-            content_with_disclaimer, "fundamental", {}
-        )
+        result = self.validation_framework._validate_disclaimers(content_with_disclaimer, "fundamental", {})
 
         assert result["score"] == 1.0
         assert result["disclaimer_found"]
@@ -160,18 +137,14 @@ class TestValidationFramework:
 
         # Test bold formatting detection
         content_with_bold = "Content with **bold** formatting"
-        result = self.validation_framework._validate_formatting_rules(
-            content_with_bold, "fundamental", {}
-        )
+        result = self.validation_framework._validate_formatting_rules(content_with_bold, "fundamental", {})
 
         assert result["score"] < 1.0
         assert "bold formatting" in str(result["issues"]).lower()
 
         # Test emoji counting
         content_with_emojis = "Content with 🚨 multiple 📊 emojis 🎯"
-        result = self.validation_framework._validate_formatting_rules(
-            content_with_emojis, "fundamental", {}
-        )
+        result = self.validation_framework._validate_formatting_rules(content_with_emojis, "fundamental", {})
 
         assert result["emoji_count"] == 3
 
@@ -180,18 +153,14 @@ class TestValidationFramework:
 
         # Test very long content
         very_long_content = "A" * 5000
-        result = self.validation_framework._validate_character_limits(
-            very_long_content, "fundamental", {}
-        )
+        result = self.validation_framework._validate_character_limits(very_long_content, "fundamental", {})
 
         assert result["score"] < 1.0
         assert "too long" in str(result["issues"]).lower()
 
         # Test very long hook
         long_hook_content = "A" * 300 + "\nRest of content"
-        result = self.validation_framework._validate_character_limits(
-            long_hook_content, "fundamental", {}
-        )
+        result = self.validation_framework._validate_character_limits(long_hook_content, "fundamental", {})
 
         assert result["score"] < 1.0
         assert "exceeds Twitter limit" in str(result["issues"]).lower()
@@ -201,20 +170,14 @@ class TestValidationFramework:
 
         # Content missing ticker
         content_without_ticker = "Analysis without ticker symbol"
-        result = self.validation_framework._validate_required_elements(
-            content_without_ticker, "fundamental", {}
-        )
+        result = self.validation_framework._validate_required_elements(content_without_ticker, "fundamental", {})
 
         assert result["score"] < 1.0
         assert "ticker" in str(result["issues"]).lower()
 
         # Content with all required elements
-        complete_content = (
-            "$AAPL analysis with https://www.colemorton.com/blog/ and #StockAnalysis"
-        )
-        result = self.validation_framework._validate_required_elements(
-            complete_content, "fundamental", {}
-        )
+        complete_content = "$AAPL analysis with https://www.colemorton.com/blog/ and #StockAnalysis"
+        result = self.validation_framework._validate_required_elements(complete_content, "fundamental", {})
 
         assert result["score"] == 1.0
         assert len(result["issues"]) == 0
@@ -228,9 +191,7 @@ class TestValidationFramework:
             "category2": {"criterion3": {"score": 0.95}},
         }
 
-        assessment = self.validation_framework._calculate_overall_assessment(
-            mock_results
-        )
+        assessment = self.validation_framework._calculate_overall_assessment(mock_results)
 
         assert "overall_reliability_score" in assessment
         assert "content_quality_grade" in assessment
@@ -246,14 +207,10 @@ class TestValidationFramework:
 
         # Test with invalid content type
         with pytest.raises(Exception):
-            self.validation_framework.validate_content(
-                "test content", "invalid_type", {}
-            )
+            self.validation_framework.validate_content("test content", "invalid_type", {})
 
         # Test with missing source data
-        result = self.validation_framework.validate_content(
-            "test content", "fundamental", {}
-        )
+        result = self.validation_framework.validate_content("test content", "fundamental", {})
 
         # Should complete without crashing
         assert "overall_assessment" in result
@@ -264,9 +221,7 @@ class TestValidationFramework:
 
         # Validation should never crash regardless of input
         try:
-            result = self.validation_framework.validate_content(
-                content, "fundamental", {"ticker": "TEST"}
-            )
+            result = self.validation_framework.validate_content(content, "fundamental", {"ticker": "TEST"})
 
             # Result should always have required structure
             assert "overall_assessment" in result
@@ -274,9 +229,7 @@ class TestValidationFramework:
             assert "metadata" in result
 
         except Exception as e:
-            pytest.fail(
-                f"Validation should not crash with input: {content[:100]}... Error: {e}"
-            )
+            pytest.fail(f"Validation should not crash with input: {content[:100]}... Error: {e}")
 
     def test_validation_performance(self):
         """Test validation performance with realistic content"""
@@ -312,9 +265,7 @@ class TestValidationFramework:
 
         start_time = time.time()
 
-        result = self.validation_framework.validate_content(
-            realistic_content, "fundamental", source_data
-        )
+        result = self.validation_framework.validate_content(realistic_content, "fundamental", source_data)
 
         end_time = time.time()
         processing_time = end_time - start_time
@@ -323,9 +274,7 @@ class TestValidationFramework:
         assert processing_time < 1.0  # Should take less than 1 second
 
         # Result should be high quality
-        score = float(
-            result["overall_assessment"]["overall_reliability_score"].split("/")[0]
-        )
+        score = float(result["overall_assessment"]["overall_reliability_score"].split("/")[0])
         assert score > 7.0  # Should be reasonably high quality
 
 
@@ -424,9 +373,7 @@ class TestValidationIntegration:
         result = framework.validate_content(content, "fundamental", source_data)
 
         # Should be high quality
-        score = float(
-            result["overall_assessment"]["overall_reliability_score"].split("/")[0]
-        )
+        score = float(result["overall_assessment"]["overall_reliability_score"].split("/")[0])
         assert score >= 8.0
 
         # Should be compliant

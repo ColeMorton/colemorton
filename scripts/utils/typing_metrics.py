@@ -3,7 +3,7 @@
 Type Safety Metrics Collection - Team Adoption Monitoring
 
 This module provides comprehensive metrics collection for monitoring team adoption
-of type safety guidelines and MyPy compliance across the Sensylate platform.
+of type safety guidelines and MyPy compliance across the Cole Morton platform.
 """
 
 import ast
@@ -12,7 +12,8 @@ import logging
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,14 +23,14 @@ logger = logging.getLogger(__name__)
 class TypeSafetyMetricsCollector:
     """Collect and analyze type safety metrics for team adoption monitoring."""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         """Initialize metrics collector."""
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self.scripts_dir = self.project_root / "scripts"
         self.output_dir = self.project_root / "data" / "outputs" / "technical_health"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def collect_comprehensive_metrics(self) -> Dict[str, Any]:
+    def collect_comprehensive_metrics(self) -> dict[str, Any]:
         """Collect all type safety metrics for team monitoring."""
         logger.info("Collecting comprehensive type safety metrics...")
 
@@ -45,16 +46,14 @@ class TypeSafetyMetricsCollector:
         }
 
         # Save metrics to file
-        metrics_file = (
-            self.output_dir / f"typing_metrics_{datetime.now().strftime('%Y%m%d')}.json"
-        )
+        metrics_file = self.output_dir / f"typing_metrics_{datetime.now().strftime('%Y%m%d')}.json"
         with open(metrics_file, "w") as f:
             json.dump(metrics, f, indent=2)
 
         logger.info(f"Metrics saved to {metrics_file}")
         return metrics
 
-    def _calculate_annotation_coverage(self) -> Dict[str, Any]:
+    def _calculate_annotation_coverage(self) -> dict[str, Any]:
         """Calculate type annotation coverage across Python files."""
         logger.info("Calculating type annotation coverage...")
 
@@ -68,7 +67,7 @@ class TypeSafetyMetricsCollector:
                 continue
 
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -100,9 +99,7 @@ class TypeSafetyMetricsCollector:
                 logger.warning(f"Error analyzing {py_file}: {e}")
                 continue
 
-        overall_coverage = (
-            (annotated_functions / total_functions * 100) if total_functions > 0 else 0
-        )
+        overall_coverage = (annotated_functions / total_functions * 100) if total_functions > 0 else 0
 
         return {
             "overall_coverage_percent": round(overall_coverage, 1),
@@ -110,16 +107,8 @@ class TypeSafetyMetricsCollector:
             "annotated_functions": annotated_functions,
             "files_analyzed": files_analyzed,
             "coverage_by_file": coverage_by_file,
-            "high_coverage_files": [
-                f
-                for f, data in coverage_by_file.items()
-                if data["coverage_percent"] >= 80
-            ],
-            "low_coverage_files": [
-                f
-                for f, data in coverage_by_file.items()
-                if data["coverage_percent"] < 50
-            ],
+            "high_coverage_files": [f for f, data in coverage_by_file.items() if data["coverage_percent"] >= 80],
+            "low_coverage_files": [f for f, data in coverage_by_file.items() if data["coverage_percent"] < 50],
         }
 
     def _has_type_annotations(self, func_node: ast.FunctionDef) -> bool:
@@ -128,14 +117,12 @@ class TypeSafetyMetricsCollector:
         has_return_annotation = func_node.returns is not None
 
         # Check parameter annotations
-        has_param_annotations = any(
-            arg.annotation is not None for arg in func_node.args.args
-        )
+        has_param_annotations = any(arg.annotation is not None for arg in func_node.args.args)
 
         # Consider function annotated if it has return type or parameter types
         return has_return_annotation or has_param_annotations
 
-    def _analyze_mypy_compliance(self) -> Dict[str, Any]:
+    def _analyze_mypy_compliance(self) -> dict[str, Any]:
         """Analyze MyPy compliance and error trends."""
         logger.info("Analyzing MyPy compliance...")
 
@@ -173,7 +160,7 @@ class TypeSafetyMetricsCollector:
                 "compliance_status": "ERROR",
             }
 
-    def _count_strict_modules(self) -> Dict[str, Any]:
+    def _count_strict_modules(self) -> dict[str, Any]:
         """Count modules with strict MyPy checking enabled."""
         logger.info("Counting strict modules...")
 
@@ -182,7 +169,7 @@ class TypeSafetyMetricsCollector:
 
         if mypy_config.exists():
             try:
-                with open(mypy_config, "r") as f:
+                with open(mypy_config) as f:
                     content = f.read()
 
                 # Look for module-specific strict settings
@@ -205,7 +192,7 @@ class TypeSafetyMetricsCollector:
             "config_file_exists": mypy_config.exists(),
         }
 
-    def _categorize_mypy_errors(self) -> Dict[str, Any]:
+    def _categorize_mypy_errors(self) -> dict[str, Any]:
         """Categorize MyPy errors by type for trend analysis."""
         logger.info("Categorizing MyPy errors...")
 
@@ -247,7 +234,7 @@ class TypeSafetyMetricsCollector:
 
         return error_categories
 
-    def _analyze_file_statistics(self) -> Dict[str, Any]:
+    def _analyze_file_statistics(self) -> dict[str, Any]:
         """Analyze file-level statistics for type safety."""
         logger.info("Analyzing file statistics...")
 
@@ -260,7 +247,7 @@ class TypeSafetyMetricsCollector:
                 continue
 
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
                     lines = content.split("\n")
 
@@ -268,31 +255,24 @@ class TypeSafetyMetricsCollector:
                 total_lines += len(lines)
 
                 # Check for typing imports
-                if any(
-                    "from typing import" in line or "import typing" in line
-                    for line in lines
-                ):
+                if any("from typing import" in line or "import typing" in line for line in lines):
                     files_with_typing_imports += 1
 
             except Exception as e:
                 logger.warning(f"Error analyzing file statistics for {py_file}: {e}")
                 continue
 
-        typing_adoption_rate = (
-            (files_with_typing_imports / total_files * 100) if total_files > 0 else 0
-        )
+        typing_adoption_rate = (files_with_typing_imports / total_files * 100) if total_files > 0 else 0
 
         return {
             "total_python_files": total_files,
             "total_lines_of_code": total_lines,
             "files_with_typing_imports": files_with_typing_imports,
             "typing_adoption_rate_percent": round(typing_adoption_rate, 1),
-            "average_lines_per_file": (
-                round(total_lines / total_files, 1) if total_files > 0 else 0
-            ),
+            "average_lines_per_file": (round(total_lines / total_files, 1) if total_files > 0 else 0),
         }
 
-    def _calculate_team_adoption_metrics(self) -> Dict[str, Any]:
+    def _calculate_team_adoption_metrics(self) -> dict[str, Any]:
         """Calculate team-wide adoption metrics."""
         logger.info("Calculating team adoption metrics...")
 
@@ -320,44 +300,44 @@ class TypeSafetyMetricsCollector:
         file_str = str(file_path)
         return any(pattern in file_str for pattern in skip_patterns)
 
-    def generate_metrics_report(self, metrics: Optional[Dict[str, Any]] = None) -> str:
+    def generate_metrics_report(self, metrics: dict[str, Any] | None = None) -> str:
         """Generate a human-readable metrics report."""
         if metrics is None:
             metrics = self.collect_comprehensive_metrics()
 
         report = f"""
 # Type Safety Metrics Report
-**Generated:** {metrics['timestamp']}
+**Generated:** {metrics["timestamp"]}
 
 ## Overview
-- **Annotation Coverage:** {metrics['annotation_coverage']['overall_coverage_percent']}%
-- **MyPy Compliance:** {metrics['mypy_compliance']['compliance_status']}
-- **Strict Modules:** {metrics['strict_modules']['strict_module_count']} modules
-- **Typing Adoption:** {metrics['file_statistics']['typing_adoption_rate_percent']}%
+- **Annotation Coverage:** {metrics["annotation_coverage"]["overall_coverage_percent"]}%
+- **MyPy Compliance:** {metrics["mypy_compliance"]["compliance_status"]}
+- **Strict Modules:** {metrics["strict_modules"]["strict_module_count"]} modules
+- **Typing Adoption:** {metrics["file_statistics"]["typing_adoption_rate_percent"]}%
 
 ## Detailed Metrics
 
 ### Annotation Coverage
-- Total Functions: {metrics['annotation_coverage']['total_functions']}
-- Annotated Functions: {metrics['annotation_coverage']['annotated_functions']}
-- Files Analyzed: {metrics['annotation_coverage']['files_analyzed']}
+- Total Functions: {metrics["annotation_coverage"]["total_functions"]}
+- Annotated Functions: {metrics["annotation_coverage"]["annotated_functions"]}
+- Files Analyzed: {metrics["annotation_coverage"]["files_analyzed"]}
 
 ### High Coverage Files (≥80%)
-{chr(10).join('- ' + f for f in metrics['annotation_coverage']['high_coverage_files'])}
+{chr(10).join("- " + f for f in metrics["annotation_coverage"]["high_coverage_files"])}
 
 ### Low Coverage Files (<50%)
-{chr(10).join('- ' + f for f in metrics['annotation_coverage']['low_coverage_files'])}
+{chr(10).join("- " + f for f in metrics["annotation_coverage"]["low_coverage_files"])}
 
 ### MyPy Error Analysis
-- Total Errors: {metrics['mypy_compliance']['error_count']}
-- Type Annotations: {metrics['error_analysis']['type_annotations']}
-- Return Types: {metrics['error_analysis']['return_types']}
-- Argument Types: {metrics['error_analysis']['argument_types']}
+- Total Errors: {metrics["mypy_compliance"]["error_count"]}
+- Type Annotations: {metrics["error_analysis"]["type_annotations"]}
+- Return Types: {metrics["error_analysis"]["return_types"]}
+- Argument Types: {metrics["error_analysis"]["argument_types"]}
 
 ### File Statistics
-- Total Python Files: {metrics['file_statistics']['total_python_files']}
-- Files with Typing Imports: {metrics['file_statistics']['files_with_typing_imports']}
-- Average Lines per File: {metrics['file_statistics']['average_lines_per_file']}
+- Total Python Files: {metrics["file_statistics"]["total_python_files"]}
+- Files with Typing Imports: {metrics["file_statistics"]["files_with_typing_imports"]}
+- Average Lines per File: {metrics["file_statistics"]["average_lines_per_file"]}
 
 ## Recommendations
 1. Focus on low coverage files for annotation improvements
@@ -368,13 +348,10 @@ class TypeSafetyMetricsCollector:
 
         return report
 
-    def save_metrics_report(self, metrics: Optional[Dict[str, Any]] = None) -> Path:
+    def save_metrics_report(self, metrics: dict[str, Any] | None = None) -> Path:
         """Save metrics report to file."""
         report = self.generate_metrics_report(metrics)
-        report_file = (
-            self.output_dir
-            / f"typing_metrics_report_{datetime.now().strftime('%Y%m%d')}.md"
-        )
+        report_file = self.output_dir / f"typing_metrics_report_{datetime.now().strftime('%Y%m%d')}.md"
 
         with open(report_file, "w") as f:
             f.write(report)

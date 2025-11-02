@@ -6,7 +6,7 @@ This module provides a factory pattern implementation for creating chart
 generators with the appropriate rendering engine.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from scripts.utils.abstract_chart_generator import AbstractChartGenerator
 from scripts.utils.matplotlib_chart_generator import MatplotlibChartGenerator
@@ -43,16 +43,13 @@ class ChartGeneratorFactory:
             ValueError: If engine is not supported
         """
         if engine not in cls.ENGINES:
-            raise ValueError(
-                f"Unsupported chart engine: {engine}. "
-                f"Supported engines: {list(cls.ENGINES.keys())}"
-            )
+            raise ValueError(f"Unsupported chart engine: {engine}. Supported engines: {list(cls.ENGINES.keys())}")
 
         generator_class = cls.ENGINES[engine]
         return generator_class(theme_manager, scalability_manager)
 
     @classmethod
-    def get_default_engine(cls, config: Optional[Dict[str, Any]] = None) -> str:
+    def get_default_engine(cls, config: dict[str, Any] | None = None) -> str:
         """
         Get the default chart engine from configuration.
 

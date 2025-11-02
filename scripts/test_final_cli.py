@@ -5,10 +5,9 @@ Final CLI Test
 Test CLI services with fresh symbols to avoid cache and trigger storage.
 """
 
-import random
-import string
 import sys
 from pathlib import Path
+
 
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent / "services"))
@@ -72,9 +71,7 @@ def generate_test_data_directly():
             print("📈 Storing {item['symbol']} data...")
 
             # Directly call the historical storage method
-            success = service.store_historical_data(
-                data=item["data"], endpoint=item["endpoint"], params=item["params"]
-            )
+            success = service.store_historical_data(data=item["data"], endpoint=item["endpoint"], params=item["params"])
 
             if success:
                 stored_count += 1
@@ -84,7 +81,7 @@ def generate_test_data_directly():
 
         return stored_count
 
-    except Exception as e:
+    except Exception:
         print("❌ Direct storage test failed: {e}")
         import traceback
 
@@ -114,18 +111,15 @@ def test_fmp_with_validation_fix():
         }
 
         print("📈 Storing PYPL data with FMP format...")
-        success = service.store_historical_data(
-            data=fmp_data, endpoint="quote/PYPL", params={"symbol": "PYPL"}
-        )
+        success = service.store_historical_data(data=fmp_data, endpoint="quote/PYPL", params={"symbol": "PYPL"})
 
         if success:
             print("  ✅ PYPL stored successfully")
             return 1
-        else:
-            print("  ❌ PYPL storage failed")
-            return 0
+        print("  ❌ PYPL storage failed")
+        return 0
 
-    except Exception as e:
+    except Exception:
         print("❌ FMP test failed: {e}")
         return 0
 
@@ -166,16 +160,14 @@ def check_new_files():
 
             # Show content preview
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     import json
 
                     data = json.load(f)
                     symbol = data.get("symbol", "unknown")
                     data_type = data.get("data_type", "unknown")
                     source = data.get("source", "unknown")
-                    print(
-                        f"      Symbol: {symbol}, Type: {data_type}, Source: {source}"
-                    )
+                    print(f"      Symbol: {symbol}, Type: {data_type}, Source: {source}")
             except Exception:
                 pass
 
@@ -189,7 +181,7 @@ def show_metadata():
     metadata_path = Path("data/raw/metadata.json")
     if metadata_path.exists():
         try:
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 import json
 
                 metadata = json.load(f)
@@ -198,7 +190,7 @@ def show_metadata():
             print("📊 Data types: {metadata.get('data_types', {})}")
             print("🏢 Symbols: {list(metadata.get('symbols', {}).keys())}")
 
-        except Exception as e:
+        except Exception:
             print("❌ Could not read metadata: {e}")
     else:
         print("📝 No metadata file")
@@ -242,9 +234,8 @@ def main():
         print("   • Any fresh data retrieval from financial services")
         print("   • Historical data manager direct usage")
         return 0
-    else:
-        print("❌ ISSUE: Storage methods called but files not created as expected")
-        return 1
+    print("❌ ISSUE: Storage methods called but files not created as expected")
+    return 1
 
 
 if __name__ == "__main__":

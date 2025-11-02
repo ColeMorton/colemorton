@@ -14,16 +14,13 @@ Advanced multi-channel policy transmission modeling engine:
 Provides institutional-grade policy transmission intelligence for macro-economic analysis.
 """
 
-import sys
 import warnings
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
-from scipy import stats
-from scipy.optimize import minimize
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -38,10 +35,10 @@ class TransmissionChannel:
     current_effectiveness: float  # Current conditions adjusted
     transmission_lag_quarters: float  # Time to peak effect
     channel_strength: str  # 'strong', 'moderate', 'weak', 'impaired'
-    bottlenecks: List[str]  # Current transmission bottlenecks
-    amplification_factors: Dict[str, float]  # Factors that amplify/dampen transmission
+    bottlenecks: list[str]  # Current transmission bottlenecks
+    amplification_factors: dict[str, float]  # Factors that amplify/dampen transmission
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return asdict(self)
 
@@ -55,10 +52,10 @@ class ChannelImpact:
     short_term_impact: float  # 3-12 months
     medium_term_impact: float  # 1-3 years
     cumulative_impact: float  # Total expected impact
-    confidence_interval: Tuple[float, float]  # (lower, upper) bounds
-    key_variables: List[str]  # Variables most affected by this channel
+    confidence_interval: tuple[float, float]  # (lower, upper) bounds
+    key_variables: list[str]  # Variables most affected by this channel
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return asdict(self)
 
@@ -70,7 +67,7 @@ class PolicyShock:
     shock_type: str  # 'rate_hike', 'rate_cut', 'qe_expansion', 'qe_taper'
     shock_magnitude: float  # Size of policy change
     shock_timing: str  # When the shock occurs
-    expected_transmission: Dict[str, ChannelImpact]  # Impact by channel
+    expected_transmission: dict[str, ChannelImpact]  # Impact by channel
     aggregate_impact: float  # Total economy-wide impact
     uncertainty_score: float  # Uncertainty in transmission
 
@@ -256,8 +253,8 @@ class PolicyTransmissionEngine:
         ]
 
     def analyze_policy_transmission_channels(
-        self, discovery_data: Dict[str, Any], analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, discovery_data: dict[str, Any], analysis_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Comprehensive multi-channel policy transmission analysis
 
@@ -281,9 +278,7 @@ class PolicyTransmissionEngine:
                 )
 
             # Calculate cross-channel interactions
-            interaction_analysis = self._analyze_channel_interactions(
-                channel_analysis, economic_context
-            )
+            interaction_analysis = self._analyze_channel_interactions(channel_analysis, economic_context)
 
             # Generate policy shock scenarios
             shock_scenarios = self._generate_policy_shock_scenarios(
@@ -291,14 +286,10 @@ class PolicyTransmissionEngine:
             )
 
             # Identify transmission bottlenecks and repair mechanisms
-            bottleneck_analysis = self._identify_transmission_bottlenecks(
-                channel_analysis, financial_conditions
-            )
+            bottleneck_analysis = self._identify_transmission_bottlenecks(channel_analysis, financial_conditions)
 
             # Calculate aggregate transmission effectiveness
-            aggregate_effectiveness = self._calculate_aggregate_effectiveness(
-                channel_analysis, interaction_analysis
-            )
+            aggregate_effectiveness = self._calculate_aggregate_effectiveness(channel_analysis, interaction_analysis)
 
             # Generate transmission outlook and recommendations
             transmission_outlook = self._generate_transmission_outlook(
@@ -320,9 +311,7 @@ class PolicyTransmissionEngine:
                 "policy_effectiveness_rating": self._rate_policy_effectiveness(
                     aggregate_effectiveness, economic_context
                 ),
-                "key_transmission_risks": self._identify_key_transmission_risks(
-                    channel_analysis, bottleneck_analysis
-                ),
+                "key_transmission_risks": self._identify_key_transmission_risks(channel_analysis, bottleneck_analysis),
                 "analysis_timestamp": datetime.now().isoformat(),
                 "model_version": "1.0",
             }
@@ -337,34 +326,28 @@ class PolicyTransmissionEngine:
     def _analyze_individual_channel(
         self,
         channel_name: str,
-        channel_config: Dict[str, Any],
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
+        channel_config: dict[str, Any],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
     ) -> TransmissionChannel:
         """Analyze individual transmission channel effectiveness"""
 
         try:
             # Calculate current effectiveness based on conditions
             base_effectiveness = channel_config["base_effectiveness"]
-            regional_adjustment = self.regional_adjustments.get(self.region, {}).get(
-                channel_name, 1.0
-            )
+            regional_adjustment = self.regional_adjustments.get(self.region, {}).get(channel_name, 1.0)
 
             # Condition adjustments
             condition_adjustment = self._calculate_condition_adjustment(
                 channel_name, channel_config, economic_context, financial_conditions
             )
 
-            current_effectiveness = (
-                base_effectiveness * regional_adjustment * condition_adjustment
-            )
+            current_effectiveness = base_effectiveness * regional_adjustment * condition_adjustment
             current_effectiveness = float(np.clip(current_effectiveness, 0.1, 1.0))
 
             # Calculate transmission lag
             base_lag = channel_config["base_lag_quarters"]
-            lag_adjustment = self._calculate_lag_adjustment(
-                channel_name, economic_context, financial_conditions
-            )
+            lag_adjustment = self._calculate_lag_adjustment(channel_name, economic_context, financial_conditions)
             current_lag = base_lag * lag_adjustment
 
             # Assess channel strength
@@ -390,7 +373,7 @@ class PolicyTransmissionEngine:
                 amplification_factors=amplification_factors,
             )
 
-        except Exception as e:
+        except Exception:
             # Return default channel on error
             return TransmissionChannel(
                 channel_name=channel_name,
@@ -405,9 +388,9 @@ class PolicyTransmissionEngine:
     def _calculate_condition_adjustment(
         self,
         channel_name: str,
-        channel_config: Dict[str, Any],
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
+        channel_config: dict[str, Any],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
     ) -> float:
         """Calculate adjustment factor based on current economic and financial conditions"""
 
@@ -442,38 +425,30 @@ class PolicyTransmissionEngine:
 
             # Equity market size affects transmission
             market_cap_gdp = economic_context.get("market_cap_to_gdp", 150)
-            adjustment *= (
-                0.8 + market_cap_gdp / 300
-            )  # Larger markets = stronger transmission
+            adjustment *= 0.8 + market_cap_gdp / 300  # Larger markets = stronger transmission
 
         elif channel_name == "exchange_rate_channel":
             # Trade openness affects exchange rate transmission
             trade_openness = economic_context.get("trade_to_gdp", 30)
-            adjustment *= (
-                0.7 + trade_openness / 100
-            )  # More open = stronger transmission
+            adjustment *= 0.7 + trade_openness / 100  # More open = stronger transmission
 
         elif channel_name == "expectations_channel":
             # Central bank credibility affects expectations transmission
             cb_credibility = economic_context.get("central_bank_credibility", 0.8)
-            adjustment *= (
-                0.5 + cb_credibility * 0.6
-            )  # Higher credibility = stronger transmission
+            adjustment *= 0.5 + cb_credibility * 0.6  # Higher credibility = stronger transmission
 
         elif channel_name == "bank_lending_channel":
             # Bank capital adequacy affects lending channel
             capital_adequacy = financial_conditions.get("bank_capital_adequacy", 15)
-            adjustment *= min(
-                1.2, capital_adequacy / 12
-            )  # Higher capital = stronger transmission
+            adjustment *= min(1.2, capital_adequacy / 12)  # Higher capital = stronger transmission
 
         return float(np.clip(adjustment, 0.3, 1.5))
 
     def _calculate_lag_adjustment(
         self,
         channel_name: str,
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
     ) -> float:
         """Calculate adjustment to transmission lag based on current conditions"""
 
@@ -505,20 +480,19 @@ class PolicyTransmissionEngine:
 
         if effectiveness > 0.75:
             return "strong"
-        elif effectiveness > 0.55:
+        if effectiveness > 0.55:
             return "moderate"
-        elif effectiveness > 0.35:
+        if effectiveness > 0.35:
             return "weak"
-        else:
-            return "impaired"
+        return "impaired"
 
     def _identify_channel_bottlenecks(
         self,
         channel_name: str,
-        channel_config: Dict[str, Any],
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
-    ) -> List[str]:
+        channel_config: dict[str, Any],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
+    ) -> list[str]:
         """Identify specific bottlenecks in transmission channel"""
 
         bottlenecks = []
@@ -567,10 +541,10 @@ class PolicyTransmissionEngine:
     def _calculate_amplification_factors(
         self,
         channel_name: str,
-        channel_config: Dict[str, Any],
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
-    ) -> Dict[str, float]:
+        channel_config: dict[str, Any],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
+    ) -> dict[str, float]:
         """Calculate factors that amplify or dampen transmission"""
 
         amplification_factors = {}
@@ -610,9 +584,9 @@ class PolicyTransmissionEngine:
 
     def _analyze_channel_interactions(
         self,
-        channel_analysis: Dict[str, TransmissionChannel],
-        economic_context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        channel_analysis: dict[str, TransmissionChannel],
+        economic_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Analyze interactions and feedback loops between transmission channels"""
 
         try:
@@ -620,19 +594,13 @@ class PolicyTransmissionEngine:
             correlation_matrix = self._calculate_channel_correlations(channel_analysis)
 
             # Identify reinforcing feedback loops
-            reinforcing_loops = self._identify_reinforcing_loops(
-                channel_analysis, correlation_matrix
-            )
+            reinforcing_loops = self._identify_reinforcing_loops(channel_analysis, correlation_matrix)
 
             # Identify offsetting interactions
-            offsetting_interactions = self._identify_offsetting_interactions(
-                channel_analysis, correlation_matrix
-            )
+            offsetting_interactions = self._identify_offsetting_interactions(channel_analysis, correlation_matrix)
 
             # Calculate net interaction effects
-            net_interaction_effect = self._calculate_net_interaction_effect(
-                reinforcing_loops, offsetting_interactions
-            )
+            net_interaction_effect = self._calculate_net_interaction_effect(reinforcing_loops, offsetting_interactions)
 
             return {
                 "channel_correlations": correlation_matrix,
@@ -640,9 +608,7 @@ class PolicyTransmissionEngine:
                 "offsetting_interactions": offsetting_interactions,
                 "net_interaction_effect": float(net_interaction_effect),
                 "dominant_channels": self._identify_dominant_channels(channel_analysis),
-                "channel_complementarity": self._assess_channel_complementarity(
-                    channel_analysis, correlation_matrix
-                ),
+                "channel_complementarity": self._assess_channel_complementarity(channel_analysis, correlation_matrix),
             }
 
         except Exception as e:
@@ -654,10 +620,10 @@ class PolicyTransmissionEngine:
 
     def _generate_policy_shock_scenarios(
         self,
-        channel_analysis: Dict[str, TransmissionChannel],
-        economic_context: Dict[str, Any],
-        financial_conditions: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        channel_analysis: dict[str, TransmissionChannel],
+        economic_context: dict[str, Any],
+        financial_conditions: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate policy shock scenarios with transmission analysis"""
 
         try:
@@ -699,12 +665,8 @@ class PolicyTransmissionEngine:
             return {
                 "shock_scenarios": shock_scenarios,
                 "scenario_insights": scenario_insights,
-                "most_effective_channels": self._identify_most_effective_channels(
-                    shock_scenarios
-                ),
-                "transmission_uncertainty": self._calculate_transmission_uncertainty(
-                    shock_scenarios
-                ),
+                "most_effective_channels": self._identify_most_effective_channels(shock_scenarios),
+                "transmission_uncertainty": self._calculate_transmission_uncertainty(shock_scenarios),
             }
 
         except Exception as e:
@@ -715,9 +677,9 @@ class PolicyTransmissionEngine:
 
     def _identify_transmission_bottlenecks(
         self,
-        channel_analysis: Dict[str, TransmissionChannel],
-        financial_conditions: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        channel_analysis: dict[str, TransmissionChannel],
+        financial_conditions: dict[str, Any],
+    ) -> dict[str, Any]:
         """Identify system-wide transmission bottlenecks and repair mechanisms"""
 
         try:
@@ -729,14 +691,10 @@ class PolicyTransmissionEngine:
             # Count frequency of bottlenecks
             bottleneck_frequency = {}
             for bottleneck in all_bottlenecks:
-                bottleneck_frequency[bottleneck] = (
-                    bottleneck_frequency.get(bottleneck, 0) + 1
-                )
+                bottleneck_frequency[bottleneck] = bottleneck_frequency.get(bottleneck, 0) + 1
 
             # Identify systemic bottlenecks (affecting multiple channels)
-            systemic_bottlenecks = {
-                k: v for k, v in bottleneck_frequency.items() if v >= 2
-            }
+            systemic_bottlenecks = {k: v for k, v in bottleneck_frequency.items() if v >= 2}
 
             # Generate repair mechanisms
             repair_mechanisms = self._generate_repair_mechanisms(systemic_bottlenecks)
@@ -746,15 +704,12 @@ class PolicyTransmissionEngine:
 
             return {
                 "individual_channel_bottlenecks": {
-                    channel_name: channel.bottlenecks
-                    for channel_name, channel in channel_analysis.items()
+                    channel_name: channel.bottlenecks for channel_name, channel in channel_analysis.items()
                 },
                 "systemic_bottlenecks": systemic_bottlenecks,
                 "repair_mechanisms": repair_mechanisms,
                 "repair_feasibility": repair_assessment,
-                "bottleneck_severity": self._assess_bottleneck_severity(
-                    systemic_bottlenecks, channel_analysis
-                ),
+                "bottleneck_severity": self._assess_bottleneck_severity(systemic_bottlenecks, channel_analysis),
             }
 
         except Exception as e:
@@ -765,30 +720,20 @@ class PolicyTransmissionEngine:
             }
 
     # Helper methods for calculations and analysis
-    def _extract_economic_context(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_economic_context(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant economic context from discovery data"""
 
         indicators = discovery_data.get("economic_indicators", {})
 
         return {
             "gdp_growth": self._safe_extract_value(indicators, "gdp_growth", 2.0),
-            "inflation_rate": self._safe_extract_value(
-                indicators, "inflation_rate", 3.0
-            ),
-            "unemployment_rate": self._safe_extract_value(
-                indicators, "unemployment_rate", 4.0
-            ),
+            "inflation_rate": self._safe_extract_value(indicators, "inflation_rate", 3.0),
+            "unemployment_rate": self._safe_extract_value(indicators, "unemployment_rate", 4.0),
             "policy_rate": self._safe_extract_value(indicators, "policy_rate", 5.0),
-            "real_interest_rate": self._safe_extract_value(
-                indicators, "real_interest_rate", 2.0
-            ),
+            "real_interest_rate": self._safe_extract_value(indicators, "real_interest_rate", 2.0),
             "debt_to_gdp": self._safe_extract_value(indicators, "debt_to_gdp", 100),
             "trade_to_gdp": self._safe_extract_value(indicators, "trade_to_gdp", 30),
-            "market_cap_to_gdp": self._safe_extract_value(
-                indicators, "market_cap_to_gdp", 150
-            ),
+            "market_cap_to_gdp": self._safe_extract_value(indicators, "market_cap_to_gdp", 150),
             "central_bank_credibility": 0.8,  # Would be derived from surveys/market indicators
             "policy_uncertainty": 0.5,  # Would be derived from policy uncertainty indices
             "policy_transparency": 0.8,  # Would be derived from communication indices
@@ -797,9 +742,7 @@ class PolicyTransmissionEngine:
             "communication_clarity": 0.7,  # Would be derived from guidance analysis
         }
 
-    def _assess_financial_conditions(
-        self, discovery_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _assess_financial_conditions(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """Assess current financial conditions affecting transmission"""
 
         indicators = discovery_data.get("economic_indicators", {})
@@ -807,12 +750,8 @@ class PolicyTransmissionEngine:
         return {
             "financial_stress_index": 0.3,  # Would be calculated from multiple stress indicators
             "banking_stress_index": 0.2,  # Would be derived from bank-specific indicators
-            "credit_spreads": self._safe_extract_value(
-                indicators, "credit_spreads", 150
-            ),
-            "market_volatility": self._safe_extract_value(
-                indicators, "volatility_index", 20
-            ),
+            "credit_spreads": self._safe_extract_value(indicators, "credit_spreads", 150),
+            "market_volatility": self._safe_extract_value(indicators, "volatility_index", 20),
             "bank_capital_adequacy": 15.0,  # Would be from regulatory data
             "bank_health_index": 0.7,  # Would be composite of bank metrics
             "market_liquidity": 0.7,  # Would be from liquidity indicators
@@ -821,9 +760,7 @@ class PolicyTransmissionEngine:
             "credit_standards_index": 0.5,  # Would be from lending standards surveys
         }
 
-    def _safe_extract_value(
-        self, data: Dict[str, Any], key: str, default: float
-    ) -> float:
+    def _safe_extract_value(self, data: dict[str, Any], key: str, default: float) -> float:
         """Safely extract numeric value from nested dictionary"""
         try:
             value = data.get(key, default)
@@ -834,74 +771,56 @@ class PolicyTransmissionEngine:
             return default
 
     # Additional placeholder methods for complex calculations
-    def _calculate_channel_correlations(self, channel_analysis: Dict) -> Dict:
+    def _calculate_channel_correlations(self, channel_analysis: dict) -> dict:
         return {}
 
-    def _identify_reinforcing_loops(
-        self, channel_analysis: Dict, correlations: Dict
-    ) -> List:
+    def _identify_reinforcing_loops(self, channel_analysis: dict, correlations: dict) -> list:
         return []
 
-    def _identify_offsetting_interactions(
-        self, channel_analysis: Dict, correlations: Dict
-    ) -> List:
+    def _identify_offsetting_interactions(self, channel_analysis: dict, correlations: dict) -> list:
         return []
 
-    def _calculate_net_interaction_effect(
-        self, reinforcing: List, offsetting: List
-    ) -> float:
+    def _calculate_net_interaction_effect(self, reinforcing: list, offsetting: list) -> float:
         return 1.0
 
-    def _identify_dominant_channels(self, channel_analysis: Dict) -> List:
+    def _identify_dominant_channels(self, channel_analysis: dict) -> list:
         return []
 
-    def _assess_channel_complementarity(
-        self, channel_analysis: Dict, correlations: Dict
-    ) -> float:
+    def _assess_channel_complementarity(self, channel_analysis: dict, correlations: dict) -> float:
         return 0.7
 
-    def _analyze_policy_shock(
-        self, shock: Dict, channels: Dict, econ_ctx: Dict, fin_cond: Dict
-    ) -> Dict:
+    def _analyze_policy_shock(self, shock: dict, channels: dict, econ_ctx: dict, fin_cond: dict) -> dict:
         return {}
 
-    def _generate_scenario_insights(self, scenarios: Dict) -> Dict:
+    def _generate_scenario_insights(self, scenarios: dict) -> dict:
         return {}
 
-    def _identify_most_effective_channels(self, scenarios: Dict) -> List:
+    def _identify_most_effective_channels(self, scenarios: dict) -> list:
         return []
 
-    def _calculate_transmission_uncertainty(self, scenarios: Dict) -> float:
+    def _calculate_transmission_uncertainty(self, scenarios: dict) -> float:
         return 0.3
 
-    def _generate_repair_mechanisms(self, bottlenecks: Dict) -> Dict:
+    def _generate_repair_mechanisms(self, bottlenecks: dict) -> dict:
         return {}
 
-    def _assess_repair_feasibility(self, mechanisms: Dict) -> Dict:
+    def _assess_repair_feasibility(self, mechanisms: dict) -> dict:
         return {}
 
-    def _assess_bottleneck_severity(self, bottlenecks: Dict, channels: Dict) -> str:
+    def _assess_bottleneck_severity(self, bottlenecks: dict, channels: dict) -> str:
         return "moderate"
 
-    def _calculate_aggregate_effectiveness(
-        self, channels: Dict, interactions: Dict
-    ) -> float:
+    def _calculate_aggregate_effectiveness(self, channels: dict, interactions: dict) -> float:
         return 0.65
 
-    def _generate_transmission_outlook(
-        self, channels: Dict, econ_ctx: Dict, fin_cond: Dict
-    ) -> Dict:
+    def _generate_transmission_outlook(self, channels: dict, econ_ctx: dict, fin_cond: dict) -> dict:
         return {}
 
-    def _calculate_overall_transmission_score(
-        self, effectiveness: float, bottlenecks: Dict
-    ) -> float:
+    def _calculate_overall_transmission_score(self, effectiveness: float, bottlenecks: dict) -> float:
         return 0.7
 
-    def _rate_policy_effectiveness(self, effectiveness: float, econ_ctx: Dict) -> str:
+    def _rate_policy_effectiveness(self, effectiveness: float, econ_ctx: dict) -> str:
         return "moderate"
 
-    def _identify_key_transmission_risks(
-        self, channels: Dict, bottlenecks: Dict
-    ) -> List:
+    def _identify_key_transmission_risks(self, channels: dict, bottlenecks: dict) -> list:
         return []

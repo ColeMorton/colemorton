@@ -11,16 +11,15 @@ Comprehensive audit of financial service configurations to verify:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent / "services"))
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 
 
-def audit_service_config(
-    service_name: str, create_function_name: str
-) -> Dict[str, Any]:
+def audit_service_config(service_name: str, create_function_name: str) -> dict[str, Any]:
     """
     Audit a specific service configuration
 
@@ -76,8 +75,7 @@ def audit_service_config(
 
         # Check if historical manager is initialized
         results["historical_manager_initialized"] = (
-            hasattr(service, "historical_manager")
-            and service.historical_manager is not None
+            hasattr(service, "historical_manager") and service.historical_manager is not None
         )
 
         # Check cache type
@@ -151,7 +149,7 @@ def test_historical_data_manager_directly():
 
         return success
 
-    except Exception as e:
+    except Exception:
         print("❌ HistoricalDataManager test failed: {e}")
         return False
 
@@ -166,9 +164,7 @@ def test_unified_cache_integration():
 
         # Create components
         hdm = HistoricalDataManager()
-        cache = UnifiedCache(
-            historical_manager=hdm, ttl_seconds=300, service_name="test"
-        )
+        cache = UnifiedCache(historical_manager=hdm, ttl_seconds=300, service_name="test")
 
         print("✅ UnifiedCache created successfully")
 
@@ -195,7 +191,7 @@ def test_unified_cache_integration():
 
         return retrieved_data is not None
 
-    except Exception as e:
+    except Exception:
         print("❌ UnifiedCache test failed: {e}")
         return False
 
@@ -242,9 +238,7 @@ def main():
             successful_services.append(service_name)
             print("✅ {service_name}: PASS")
             print("   - Historical Storage: {result['historical_storage_enabled']}")
-            print(
-                f"   - Historical Manager: {result['historical_manager_initialized']}"
-            )
+            print(f"   - Historical Manager: {result['historical_manager_initialized']}")
             print("   - Cache Type: {result['cache_type']}")
         else:
             failed_services.append(service_name)
@@ -259,17 +253,11 @@ def main():
 
     print("\n📈 Overall Results:")
     print("   - Services Passing: {len(successful_services)}/{len(audit_results)}")
-    print(
-        f"   - Successful Services: {', '.join(successful_services) if successful_services else 'None'}"
-    )
-    print(
-        f"   - Failed Services: {', '.join(failed_services) if failed_services else 'None'}"
-    )
+    print(f"   - Successful Services: {', '.join(successful_services) if successful_services else 'None'}")
+    print(f"   - Failed Services: {', '.join(failed_services) if failed_services else 'None'}")
 
     # Determine overall success
-    overall_success = (
-        len(successful_services) == len(audit_results) and hdm_success and cache_success
-    )
+    overall_success = len(successful_services) == len(audit_results) and hdm_success and cache_success
 
     if overall_success:
         print("\n🎉 CONFIGURATION AUDIT PASSED!")

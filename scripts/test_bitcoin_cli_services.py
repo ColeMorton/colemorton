@@ -16,8 +16,8 @@ import sys
 import time
 import unittest
 from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import Mock, patch
+from typing import Any
+
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -40,9 +40,7 @@ class BitcoinCLIServicesTestBase(unittest.TestCase):
         self.scripts_dir = self.project_root / "scripts"
         self.test_timeout = 30  # seconds for API calls
 
-    def run_cli_command(
-        self, cli_script: str, args: List[str], env: str = "test"
-    ) -> Dict[str, Any]:
+    def run_cli_command(self, cli_script: str, args: list[str], env: str = "test") -> dict[str, Any]:
         """Run CLI command and return parsed result"""
         cmd = ["python", str(self.scripts_dir / cli_script)] + args
 
@@ -73,16 +71,14 @@ class BitcoinCLIServicesTestBase(unittest.TestCase):
             "timeout": False,
         }
 
-    def validate_json_output(self, output: str) -> Dict[str, Any]:
+    def validate_json_output(self, output: str) -> dict[str, Any]:
         """Validate and parse JSON output"""
         try:
             return json.loads(output.strip())
         except json.JSONDecodeError as e:
             self.fail(f"Invalid JSON output: {e}. Output was: {output}")
 
-    def assert_valid_bitcoin_data(
-        self, data: Dict[str, Any], required_fields: List[str] = None
-    ):
+    def assert_valid_bitcoin_data(self, data: dict[str, Any], required_fields: list[str] = None):
         """Assert that data contains valid Bitcoin-related fields"""
         self.assertIsInstance(data, dict)
 
@@ -131,9 +127,7 @@ class TestMempoolSpaceService(BitcoinCLIServicesTestBase):
 
     def test_cli_recent_blocks(self):
         """Test CLI recent blocks command"""
-        result = self.run_cli_command(
-            "mempool_space_cli.py", ["blocks", "--limit", "5"]
-        )
+        result = self.run_cli_command("mempool_space_cli.py", ["blocks", "--limit", "5"])
         self.assertEqual(result["returncode"], 0)
 
         data = self.validate_json_output(result["stdout"])
@@ -212,9 +206,7 @@ class TestCoinMetricsService(BitcoinCLIServicesTestBase):
         """Test service can be initialized"""
         service = create_coinmetrics_service("test")
         self.assertIsNotNone(service)
-        self.assertEqual(
-            service.config.base_url, "https://community-api.coinmetrics.io/v4"
-        )
+        self.assertEqual(service.config.base_url, "https://community-api.coinmetrics.io/v4")
 
     def test_cli_supported_assets(self):
         """Test CLI supported assets command"""
@@ -226,11 +218,7 @@ class TestCoinMetricsService(BitcoinCLIServicesTestBase):
         self.assertGreater(len(data), 0)
 
         # Check for Bitcoin in supported assets
-        btc_found = any(
-            asset.get("asset", "").lower() == "btc"
-            for asset in data
-            if isinstance(asset, dict)
-        )
+        btc_found = any(asset.get("asset", "").lower() == "btc" for asset in data if isinstance(asset, dict))
         self.assertTrue(btc_found, "Bitcoin (BTC) not found in supported assets")
 
     def test_cli_bitcoin_metrics(self):
@@ -307,9 +295,7 @@ class TestAlternativeMeService(BitcoinCLIServicesTestBase):
 
     def test_cli_historical_fear_greed(self):
         """Test CLI historical Fear & Greed command"""
-        result = self.run_cli_command(
-            "alternative_me_cli.py", ["historical", "--limit", "5"]
-        )
+        result = self.run_cli_command("alternative_me_cli.py", ["historical", "--limit", "5"])
         self.assertEqual(result["returncode"], 0)
 
         data = self.validate_json_output(result["stdout"])
@@ -324,9 +310,7 @@ class TestAlternativeMeService(BitcoinCLIServicesTestBase):
 
     def test_cli_sentiment_analysis(self):
         """Test CLI sentiment analysis command"""
-        result = self.run_cli_command(
-            "alternative_me_cli.py", ["analysis", "--days", "7"]
-        )
+        result = self.run_cli_command("alternative_me_cli.py", ["analysis", "--days", "7"])
         self.assertEqual(result["returncode"], 0)
 
         data = self.validate_json_output(result["stdout"])
@@ -349,9 +333,7 @@ class TestBinanceAPIService(BitcoinCLIServicesTestBase):
 
     def test_cli_bitcoin_price(self):
         """Test CLI Bitcoin price command"""
-        result = self.run_cli_command(
-            "binance_api_cli.py", ["price", "--symbol", "BTCUSDT"]
-        )
+        result = self.run_cli_command("binance_api_cli.py", ["price", "--symbol", "BTCUSDT"])
         self.assertEqual(result["returncode"], 0)
 
         data = self.validate_json_output(result["stdout"])
@@ -364,9 +346,7 @@ class TestBinanceAPIService(BitcoinCLIServicesTestBase):
 
     def test_cli_24hr_ticker(self):
         """Test CLI 24hr ticker command"""
-        result = self.run_cli_command(
-            "binance_api_cli.py", ["24hr-ticker", "--symbol", "BTCUSDT"]
-        )
+        result = self.run_cli_command("binance_api_cli.py", ["24hr-ticker", "--symbol", "BTCUSDT"])
         self.assertEqual(result["returncode"], 0)
 
         data = self.validate_json_output(result["stdout"])
@@ -468,9 +448,7 @@ class TestBitcoinCLIServicesIntegration(BitcoinCLIServicesTestBase):
             with self.subTest(cli=cli_script):
                 result = self.run_cli_command(cli_script, ["--help"])
                 # Help should return 0 or help might return different codes
-                self.assertIn(
-                    "help", result["stdout"].lower() + result["stderr"].lower()
-                )
+                self.assertIn("help", result["stdout"].lower() + result["stderr"].lower())
 
     def test_error_handling_consistency(self):
         """Test that all services handle invalid commands consistently"""

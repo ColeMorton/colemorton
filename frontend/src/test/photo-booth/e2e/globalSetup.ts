@@ -1,5 +1,4 @@
 import { spawn, type ChildProcess } from "child_process";
-import { setTimeout } from "node:timers/promises";
 
 // Global state for shared dev server only (browsers managed per-worker)
 let globalDevServer: ChildProcess | null = null;
@@ -56,8 +55,8 @@ async function startGlobalDevelopmentServer(): Promise<void> {
   try {
     const { execSync } = await import("child_process");
     execSync(`lsof -ti:${availablePort} | xargs kill -9`, { stdio: "ignore" });
-    await setTimeout(2000); // Wait for cleanup
-  } catch (_e) {
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 2000)); // Wait for cleanup
+  } catch {
     // Port was already free
   }
 
@@ -95,11 +94,8 @@ async function startGlobalDevelopmentServer(): Promise<void> {
     console.log(`🚪 Server process exited with code ${code}, signal ${signal}`);
   });
 
-  let serverOutput = "";
-
   globalDevServer.stdout?.on("data", (data) => {
     const output = data.toString();
-    serverOutput += output;
     if (
       output.includes("Local:") ||
       output.includes("ready in") ||
@@ -131,7 +127,7 @@ async function startGlobalDevelopmentServer(): Promise<void> {
 
   // Give the server some time to start up before health checks
   console.log("🕐 Waiting 5 seconds for server initialization...");
-  await setTimeout(5000);
+  await new Promise((resolve) => globalThis.setTimeout(resolve, 5000));
 
   while (attempts < MAX_SERVER_START_ATTEMPTS) {
     try {
@@ -185,7 +181,7 @@ async function startGlobalDevelopmentServer(): Promise<void> {
       if (success) {
         console.log("✅ Development server is ready");
         globalServerReady = true;
-        await setTimeout(2000);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, 2000));
         return;
       }
     } catch (e: any) {
@@ -194,7 +190,7 @@ async function startGlobalDevelopmentServer(): Promise<void> {
       );
     }
 
-    await setTimeout(2000);
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 2000));
     attempts++;
   }
 
@@ -221,12 +217,10 @@ async function startGlobalProductionServer(): Promise<void> {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  let buildOutput = "";
   let buildError = "";
 
   buildProcess.stdout?.on("data", (data) => {
     const output = data.toString();
-    buildOutput += output;
     if (output.includes("Built in") || output.includes("✓")) {
       console.log("Build:", output.trim());
     }
@@ -266,8 +260,8 @@ async function startGlobalProductionServer(): Promise<void> {
   try {
     const { execSync } = await import("child_process");
     execSync(`lsof -ti:${availablePort} | xargs kill -9`, { stdio: "ignore" });
-    await setTimeout(2000); // Wait for cleanup
-  } catch (_e) {
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 2000)); // Wait for cleanup
+  } catch {
     // Port was already free
   }
 
@@ -282,11 +276,8 @@ async function startGlobalProductionServer(): Promise<void> {
     },
   );
 
-  let serverOutput = "";
-
   globalDevServer.stdout?.on("data", (data) => {
     const output = data.toString();
-    serverOutput += output;
     if (output.includes("Local:") || output.includes("astro")) {
       console.log(`✅ Preview server ready on port ${availablePort}`);
     }
@@ -311,7 +302,7 @@ async function startGlobalProductionServer(): Promise<void> {
   while (attempts < MAX_SERVER_START_ATTEMPTS) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = globalThis.setTimeout(() => controller.abort(), 3000);
 
       const response = await fetch(process.env.E2E_BASE_URL, {
         signal: controller.signal,
@@ -325,7 +316,7 @@ async function startGlobalProductionServer(): Promise<void> {
         globalServerReady = true;
 
         // Wait additional time for full initialization
-        await setTimeout(2000);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, 2000));
         return;
       }
 
@@ -340,7 +331,7 @@ async function startGlobalProductionServer(): Promise<void> {
       }
     }
 
-    await setTimeout(1000);
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 1000));
     attempts++;
   }
 
@@ -405,7 +396,7 @@ export async function teardown(): Promise<void> {
 
       // Wait for graceful shutdown
       await new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => {
+        const timeout = globalThis.setTimeout(() => {
           if (globalDevServer && !globalDevServer.killed) {
             console.warn(`Force killing ${serverType} server`);
             globalDevServer.kill("SIGKILL");
@@ -424,7 +415,7 @@ export async function teardown(): Promise<void> {
       console.log(
         `✅ ${serverType.charAt(0).toUpperCase() + serverType.slice(1)} server stopped`,
       );
-    } catch (_e) {
+    } catch (e) {
       console.warn(`Warning: Failed to stop ${serverType} server:`, e);
     }
   }

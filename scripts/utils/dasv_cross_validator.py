@@ -24,9 +24,8 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 
@@ -37,9 +36,9 @@ class ValidationResult:
 
     passed: bool
     score: float
-    details: Dict[str, Any]
-    violations: List[str]
-    recommendations: List[str]
+    details: dict[str, Any]
+    violations: list[str]
+    recommendations: list[str]
 
 
 @dataclass
@@ -48,11 +47,11 @@ class CrossValidationReport:
 
     overall_passed: bool
     overall_score: float
-    phase_results: Dict[str, ValidationResult]
-    critical_issues: List[str]
-    blocking_issues: List[str]
-    recommendations: List[str]
-    metadata: Dict[str, Any]
+    phase_results: dict[str, ValidationResult]
+    critical_issues: list[str]
+    blocking_issues: list[str]
+    recommendations: list[str]
+    metadata: dict[str, Any]
 
 
 class DASVCrossValidator:
@@ -89,9 +88,7 @@ class DASVCrossValidator:
         # Parse region and date
         parts = region_date.split("_")
         if len(parts) < 2:
-            raise ValueError(
-                f"Invalid region_date format: {region_date}. Expected REGION_YYYYMMDD"
-            )
+            raise ValueError(f"Invalid region_date format: {region_date}. Expected REGION_YYYYMMDD")
 
         region = parts[0]
         date = parts[1]
@@ -113,9 +110,7 @@ class DASVCrossValidator:
                 blocking_issues.extend(discovery_result.violations)
 
         if "analysis" in phase_data:
-            analysis_result = self._validate_analysis_phase(
-                phase_data["analysis"], phase_data.get("discovery")
-            )
+            analysis_result = self._validate_analysis_phase(phase_data["analysis"], phase_data.get("discovery"))
             phase_results["analysis"] = analysis_result
             if not analysis_result.passed:
                 blocking_issues.extend(analysis_result.violations)
@@ -138,9 +133,7 @@ class DASVCrossValidator:
 
         # Calculate overall score
         overall_score = np.mean([result.score for result in phase_results.values()])
-        overall_passed = (
-            overall_score >= self.min_institutional_score and len(blocking_issues) == 0
-        )
+        overall_passed = overall_score >= self.min_institutional_score and len(blocking_issues) == 0
 
         # Compile recommendations
         for result in phase_results.values():
@@ -163,7 +156,7 @@ class DASVCrossValidator:
             },
         )
 
-    def _load_phase_files(self, region: str, date: str) -> Dict[str, Dict[str, Any]]:
+    def _load_phase_files(self, region: str, date: str) -> dict[str, dict[str, Any]]:
         """Load all available phase files for validation"""
         phase_data = {}
 
@@ -173,30 +166,26 @@ class DASVCrossValidator:
             if os.path.exists(file_path):
                 try:
                     if file_path.endswith(".json"):
-                        with open(file_path, "r") as f:
+                        with open(file_path) as f:
                             phase_data[phase] = json.load(f)
                     elif file_path.endswith(".md"):
-                        with open(file_path, "r") as f:
+                        with open(file_path) as f:
                             phase_data[phase] = {
                                 "content": f.read(),
                                 "file_path": file_path,
                             }
-                except Exception as e:
+                except Exception:
                     print("Warning: Could not load {file_path}: {e}")
 
         return phase_data
 
-    def _validate_discovery_phase(
-        self, discovery_data: Dict[str, Any]
-    ) -> ValidationResult:
+    def _validate_discovery_phase(self, discovery_data: dict[str, Any]) -> ValidationResult:
         """Validate discovery phase data quality"""
         violations = []
         score_components = []
 
         # Data freshness validation
-        freshness_score, freshness_violations = self._validate_data_freshness(
-            discovery_data
-        )
+        freshness_score, freshness_violations = self._validate_data_freshness(discovery_data)
         score_components.append(freshness_score)
         violations.extend(freshness_violations)
 
@@ -209,9 +198,7 @@ class DASVCrossValidator:
         violations.extend(completeness_violations)
 
         # Business cycle data consistency
-        cycle_score, cycle_violations = self._validate_business_cycle_data(
-            discovery_data
-        )
+        cycle_score, cycle_violations = self._validate_business_cycle_data(discovery_data)
         score_components.append(cycle_score)
         violations.extend(cycle_violations)
 
@@ -237,7 +224,7 @@ class DASVCrossValidator:
         )
 
     def _validate_analysis_phase(
-        self, analysis_data: Dict[str, Any], discovery_data: Optional[Dict[str, Any]]
+        self, analysis_data: dict[str, Any], discovery_data: dict[str, Any] | None
     ) -> ValidationResult:
         """Validate analysis phase data quality and consistency with discovery"""
         violations = []
@@ -278,9 +265,7 @@ class DASVCrossValidator:
             (
                 consistency_score,
                 consistency_violations,
-            ) = self._validate_discovery_analysis_consistency(
-                discovery_data, analysis_data
-            )
+            ) = self._validate_discovery_analysis_consistency(discovery_data, analysis_data)
             score_components.append(consistency_score)
             violations.extend(consistency_violations)
 
@@ -297,9 +282,9 @@ class DASVCrossValidator:
 
     def _validate_synthesis_phase(
         self,
-        synthesis_data: Dict[str, Any],
-        discovery_data: Optional[Dict[str, Any]],
-        analysis_data: Optional[Dict[str, Any]],
+        synthesis_data: dict[str, Any],
+        discovery_data: dict[str, Any] | None,
+        analysis_data: dict[str, Any] | None,
     ) -> ValidationResult:
         """Validate synthesis phase content and consistency"""
         violations = []
@@ -326,9 +311,7 @@ class DASVCrossValidator:
                 missing_indicators.append(indicator)
 
         if missing_indicators:
-            violations.append(
-                f"Missing key economic indicators: {', '.join(missing_indicators)}"
-            )
+            violations.append(f"Missing key economic indicators: {', '.join(missing_indicators)}")
 
         # Business cycle reference validation
         cycle_terms = ["business cycle", "recession", "expansion", "economic cycle"]
@@ -344,9 +327,7 @@ class DASVCrossValidator:
             (
                 consistency_score,
                 consistency_violations,
-            ) = self._validate_synthesis_consistency(
-                content, discovery_data, analysis_data
-            )
+            ) = self._validate_synthesis_consistency(content, discovery_data, analysis_data)
             score_components.append(consistency_score)
             violations.extend(consistency_violations)
 
@@ -369,9 +350,7 @@ class DASVCrossValidator:
             recommendations=self._generate_synthesis_recommendations(violations),
         )
 
-    def _validate_cross_phase_consistency(
-        self, phase_data: Dict[str, Dict[str, Any]]
-    ) -> ValidationResult:
+    def _validate_cross_phase_consistency(self, phase_data: dict[str, dict[str, Any]]) -> ValidationResult:
         """Validate consistency across all phases"""
         violations = []
         score_components = []
@@ -384,9 +363,7 @@ class DASVCrossValidator:
                 score=0.0,
                 details={},
                 violations=violations,
-                recommendations=[
-                    "Ensure both discovery and analysis phases are completed"
-                ],
+                recommendations=["Ensure both discovery and analysis phases are completed"],
             )
 
         discovery = phase_data["discovery"]
@@ -396,43 +373,25 @@ class DASVCrossValidator:
         discovery_region = discovery.get("metadata", {}).get("region")
         analysis_region = analysis.get("metadata", {}).get("region")
         if discovery_region != analysis_region:
-            violations.append(
-                f"Region mismatch: discovery={discovery_region}, analysis={analysis_region}"
-            )
+            violations.append(f"Region mismatch: discovery={discovery_region}, analysis={analysis_region}")
 
         # Business cycle consistency
         discovery_cycle = discovery.get("business_cycle_data", {}).get("current_phase")
-        analysis_cycle = analysis.get("business_cycle_modeling", {}).get(
-            "current_phase"
-        )
+        analysis_cycle = analysis.get("business_cycle_modeling", {}).get("current_phase")
         if discovery_cycle and analysis_cycle and discovery_cycle != analysis_cycle:
-            violations.append(
-                f"Business cycle phase mismatch: discovery={discovery_cycle}, analysis={analysis_cycle}"
-            )
+            violations.append(f"Business cycle phase mismatch: discovery={discovery_cycle}, analysis={analysis_cycle}")
 
         # Confidence score propagation
-        discovery_confidence = discovery.get("data_quality_assessment", {}).get(
-            "discovery_confidence", 0
-        )
-        analysis_confidence = analysis.get("analysis_quality_metrics", {}).get(
-            "confidence_propagation", 0
-        )
+        discovery_confidence = discovery.get("data_quality_assessment", {}).get("discovery_confidence", 0)
+        analysis_confidence = analysis.get("analysis_quality_metrics", {}).get("confidence_propagation", 0)
         if abs(discovery_confidence - analysis_confidence) > 0.1:
-            violations.append(
-                "Confidence score not properly propagated from discovery to analysis"
-            )
+            violations.append("Confidence score not properly propagated from discovery to analysis")
 
         # Economic indicator consistency validation
-        econ_consistency_score = self._validate_economic_indicator_consistency(
-            discovery, analysis
-        )
+        econ_consistency_score = self._validate_economic_indicator_consistency(discovery, analysis)
         score_components.append(econ_consistency_score)
 
-        overall_score = (
-            np.mean(score_components)
-            if score_components
-            else (1.0 if len(violations) == 0 else 0.7)
-        )
+        overall_score = np.mean(score_components) if score_components else (1.0 if len(violations) == 0 else 0.7)
         passed = overall_score >= self.min_confidence_score and len(violations) == 0
 
         return ValidationResult(
@@ -443,7 +402,7 @@ class DASVCrossValidator:
             recommendations=self._generate_cross_phase_recommendations(violations),
         )
 
-    def _validate_data_freshness(self, data: Dict[str, Any]) -> Tuple[float, List[str]]:
+    def _validate_data_freshness(self, data: dict[str, Any]) -> tuple[float, list[str]]:
         """Validate data freshness against staleness threshold"""
         violations = []
 
@@ -455,9 +414,7 @@ class DASVCrossValidator:
         stale_count = data_freshness.get("stale_data_count", 0)
 
         if overall_freshness < 0.9:
-            violations.append(
-                f"Overall data freshness below threshold: {overall_freshness}"
-            )
+            violations.append(f"Overall data freshness below threshold: {overall_freshness}")
 
         if stale_count > 0:
             violations.append(f"Found {stale_count} stale data points")
@@ -466,16 +423,12 @@ class DASVCrossValidator:
         if "freshness_violations" in data_freshness:
             for violation in data_freshness["freshness_violations"]:
                 if violation.get("age_hours", 0) > self.staleness_hours:
-                    violations.append(
-                        f"Stale data: {violation.get('indicator')} aged {violation.get('age_hours')}h"
-                    )
+                    violations.append(f"Stale data: {violation.get('indicator')} aged {violation.get('age_hours')}h")
 
         score = max(0.0, overall_freshness - (stale_count * 0.1))
         return score, violations
 
-    def _validate_economic_indicators_completeness(
-        self, data: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+    def _validate_economic_indicators_completeness(self, data: dict[str, Any]) -> tuple[float, list[str]]:
         """Validate completeness of economic indicators"""
         violations = []
 
@@ -491,9 +444,7 @@ class DASVCrossValidator:
                 missing_sections.append(section)
 
         if missing_sections:
-            violations.append(
-                f"Missing required sections: {', '.join(missing_sections)}"
-            )
+            violations.append(f"Missing required sections: {', '.join(missing_sections)}")
 
         # Check economic indicators completeness
         econ_indicators = data.get("economic_indicators", {})
@@ -510,9 +461,7 @@ class DASVCrossValidator:
         completeness_score = 1.0 - (len(violations) * 0.2)
         return max(0.0, completeness_score), violations
 
-    def _validate_business_cycle_data(
-        self, data: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+    def _validate_business_cycle_data(self, data: dict[str, Any]) -> tuple[float, list[str]]:
         """Validate business cycle data consistency"""
         violations = []
 
@@ -538,9 +487,7 @@ class DASVCrossValidator:
         score = 1.0 - (len(violations) * 0.25)
         return max(0.0, score), violations
 
-    def _validate_cli_service_health(
-        self, data: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+    def _validate_cli_service_health(self, data: dict[str, Any]) -> tuple[float, list[str]]:
         """Validate CLI service health and availability"""
         violations = []
 
@@ -562,53 +509,39 @@ class DASVCrossValidator:
         return max(0.0, overall_health), violations
 
     def _validate_discovery_analysis_consistency(
-        self, discovery: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+        self, discovery: dict[str, Any], analysis: dict[str, Any]
+    ) -> tuple[float, list[str]]:
         """Validate consistency between discovery and analysis phases"""
         violations = []
 
         # Business cycle consistency
         discovery_cycle = discovery.get("business_cycle_data", {}).get("current_phase")
-        analysis_cycle = analysis.get("business_cycle_modeling", {}).get(
-            "current_phase"
-        )
+        analysis_cycle = analysis.get("business_cycle_modeling", {}).get("current_phase")
 
         if discovery_cycle and analysis_cycle and discovery_cycle != analysis_cycle:
-            violations.append(
-                f"Business cycle phase inconsistency: {discovery_cycle} vs {analysis_cycle}"
-            )
+            violations.append(f"Business cycle phase inconsistency: {discovery_cycle} vs {analysis_cycle}")
 
         # Recession probability consistency
         discovery_recession = (
-            discovery.get("economic_indicators", {})
-            .get("composite_scores", {})
-            .get("recession_probability")
+            discovery.get("economic_indicators", {}).get("composite_scores", {}).get("recession_probability")
         )
-        analysis_recession = analysis.get("business_cycle_modeling", {}).get(
-            "recession_probability"
-        )
+        analysis_recession = analysis.get("business_cycle_modeling", {}).get("recession_probability")
 
         if discovery_recession and analysis_recession:
             variance = abs(discovery_recession - analysis_recession)
             if variance > 0.1:  # Allow 10% variance
-                violations.append(
-                    f"Recession probability variance too high: {variance}"
-                )
+                violations.append(f"Recession probability variance too high: {variance}")
 
         consistency_score = 1.0 - (len(violations) * 0.3)
         return max(0.0, consistency_score), violations
 
-    def _validate_economic_indicator_consistency(
-        self, discovery: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> float:
+    def _validate_economic_indicator_consistency(self, discovery: dict[str, Any], analysis: dict[str, Any]) -> float:
         """Validate economic indicator consistency across phases"""
         consistency_checks = 0
         passed_checks = 0
 
         # Check monetary policy consistency
-        discovery_policy = discovery.get("monetary_policy_context", {}).get(
-            "policy_stance", {}
-        )
+        discovery_policy = discovery.get("monetary_policy_context", {}).get("policy_stance", {})
         analysis_liquidity = analysis.get("liquidity_cycle_positioning", {})
 
         if discovery_policy and analysis_liquidity:
@@ -622,23 +555,17 @@ class DASVCrossValidator:
         return passed_checks / consistency_checks if consistency_checks > 0 else 1.0
 
     def _validate_synthesis_consistency(
-        self, content: str, discovery: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+        self, content: str, discovery: dict[str, Any], analysis: dict[str, Any]
+    ) -> tuple[float, list[str]]:
         """Validate synthesis consistency with discovery and analysis"""
         violations = []
 
         # Check if business cycle phase is mentioned consistently
-        discovery_phase = discovery.get("business_cycle_data", {}).get(
-            "current_phase", ""
-        )
-        analysis_phase = analysis.get("business_cycle_modeling", {}).get(
-            "current_phase", ""
-        )
+        discovery_phase = discovery.get("business_cycle_data", {}).get("current_phase", "")
+        analysis_phase = analysis.get("business_cycle_modeling", {}).get("current_phase", "")
 
         if discovery_phase and discovery_phase.lower() not in content.lower():
-            violations.append(
-                f"Business cycle phase '{discovery_phase}' not referenced in synthesis"
-            )
+            violations.append(f"Business cycle phase '{discovery_phase}' not referenced in synthesis")
 
         # Check for economic indicators mentioned in discovery
         discovery_indicators = discovery.get("economic_indicators", {})
@@ -649,7 +576,7 @@ class DASVCrossValidator:
         consistency_score = 1.0 - (len(violations) * 0.2)
         return max(0.0, consistency_score), violations
 
-    def _detect_hardcoded_values(self, content: str) -> List[str]:
+    def _detect_hardcoded_values(self, content: str) -> list[str]:
         """Detect hardcoded values in synthesis content"""
         violations = []
 
@@ -668,14 +595,12 @@ class DASVCrossValidator:
 
         return violations
 
-    def _generate_discovery_recommendations(self, violations: List[str]) -> List[str]:
+    def _generate_discovery_recommendations(self, violations: list[str]) -> list[str]:
         """Generate recommendations for discovery phase improvements"""
         recommendations = []
 
         if any("freshness" in v.lower() for v in violations):
-            recommendations.append(
-                "Update data sources to ensure freshness within staleness threshold"
-            )
+            recommendations.append("Update data sources to ensure freshness within staleness threshold")
 
         if any("missing" in v.lower() for v in violations):
             recommendations.append("Complete all required economic indicator sections")
@@ -685,7 +610,7 @@ class DASVCrossValidator:
 
         return recommendations
 
-    def _generate_analysis_recommendations(self, violations: List[str]) -> List[str]:
+    def _generate_analysis_recommendations(self, violations: list[str]) -> list[str]:
         """Generate recommendations for analysis phase improvements"""
         recommendations = []
 
@@ -697,28 +622,22 @@ class DASVCrossValidator:
 
         return recommendations
 
-    def _generate_synthesis_recommendations(self, violations: List[str]) -> List[str]:
+    def _generate_synthesis_recommendations(self, violations: list[str]) -> list[str]:
         """Generate recommendations for synthesis phase improvements"""
         recommendations = []
 
         if any("too short" in v.lower() for v in violations):
-            recommendations.append(
-                "Expand synthesis content to meet institutional standards"
-            )
+            recommendations.append("Expand synthesis content to meet institutional standards")
 
         if any("missing" in v.lower() for v in violations):
-            recommendations.append(
-                "Include all required economic indicators and analysis"
-            )
+            recommendations.append("Include all required economic indicators and analysis")
 
         if any("hardcoded" in v.lower() for v in violations):
-            recommendations.append(
-                "Replace hardcoded values with dynamic data references"
-            )
+            recommendations.append("Replace hardcoded values with dynamic data references")
 
         return recommendations
 
-    def _generate_cross_phase_recommendations(self, violations: List[str]) -> List[str]:
+    def _generate_cross_phase_recommendations(self, violations: list[str]) -> list[str]:
         """Generate recommendations for cross-phase consistency improvements"""
         recommendations = []
 
@@ -726,9 +645,7 @@ class DASVCrossValidator:
             recommendations.append("Ensure consistency across all DASV phases")
 
         if any("propagation" in v.lower() for v in violations):
-            recommendations.append(
-                "Properly propagate confidence scores between phases"
-            )
+            recommendations.append("Properly propagate confidence scores between phases")
 
         return recommendations
 
@@ -826,9 +743,7 @@ def main():
     args = parser.parse_args()
 
     # Create validator
-    validator = DASVCrossValidator(
-        variance_threshold=args.variance_threshold, staleness_hours=args.staleness_hours
-    )
+    validator = DASVCrossValidator(variance_threshold=args.variance_threshold, staleness_hours=args.staleness_hours)
 
     try:
         # Run validation

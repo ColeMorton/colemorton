@@ -16,16 +16,14 @@ from jinja2 import Environment, FileSystemLoader
 def load_test_data(file_path: str):
     """Load test data from JSON file"""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return json.load(f)
-    except Exception as e:
+    except Exception:
         print("Error loading test data from {file_path}: {e}")
         return {}
 
 
-def test_template_rendering(
-    template_name: str, data: dict, ticker: str = None, sector: str = None
-):
+def test_template_rendering(template_name: str, data: dict, ticker: str = None, sector: str = None):
     """Test template rendering with sample data"""
     try:
         # Setup Jinja2 environment
@@ -139,11 +137,7 @@ def test_twitter_fundamental_templates():
 
             # Show content preview
             print("   📄 Content Preview:")
-            preview = (
-                result["content"][:150] + "..."
-                if len(result["content"]) > 150
-                else result["content"]
-            )
+            preview = result["content"][:150] + "..." if len(result["content"]) > 150 else result["content"]
             print("      {preview}")
         else:
             print("   ❌ Status: {result['status']}")
@@ -195,9 +189,7 @@ def test_blog_templates():
             print("   ✅ Status: {result['status']}")
             print("   💬 Word Count: {result['word_count']}")
             print("   📏 Character Count: {result['character_count']}")
-            print(
-                f"   🎯 Has Ticker/Sector: {result['has_ticker'] or (sector and sector in result['content'])}"
-            )
+            print(f"   🎯 Has Ticker/Sector: {result['has_ticker'] or (sector and sector in result['content'])}")
             print("   ⚠️ Has Disclaimer: {result['has_disclaimer']}")
             print("   🚫 Bold Formatting: {result['has_bold_formatting']}")
 
@@ -229,27 +221,21 @@ def test_blog_templates():
                 ),
             ]
 
-            section_compliance = sum(
-                1 for _, present in institutional_sections if present
-            )
+            section_compliance = sum(1 for _, present in institutional_sections if present)
             total_sections = len(institutional_sections)
             compliance_rate = section_compliance / total_sections
 
             print("   📋 Has Frontmatter: {has_frontmatter}")
             print("   📑 Has Headers: {has_headers}")
             print("   📊 Has Confidence Scoring: {has_confidence_scoring}")
-            print(
-                f"   🏛️ Institutional Sections: {section_compliance}/{total_sections} ({compliance_rate*100:.1f}%)"
-            )
+            print(f"   🏛️ Institutional Sections: {section_compliance}/{total_sections} ({compliance_rate * 100:.1f}%)")
             print(
                 f"   ✅ Institutional Compliance: {'ACHIEVED' if compliance_rate >= 0.8 else 'PARTIAL' if compliance_rate >= 0.6 else 'NON-COMPLIANT'}"
             )
 
             # Economic context validation
             economic_indicators = ["GDP", "Fed", "employment", "economic", "FRED"]
-            economic_mentions = sum(
-                1 for indicator in economic_indicators if indicator in content
-            )
+            economic_mentions = sum(1 for indicator in economic_indicators if indicator in content)
             print("   🌍 Economic Context: {economic_mentions} indicators present")
 
             # Multi-source validation check
@@ -324,9 +310,7 @@ def test_validation_templates():
             print("   💬 Word Count: {result['word_count']}")
             print("   📊 Has Quality Metrics: {'quality' in result['content'].lower()}")
             print("   📋 Has Validation Tables: {'|' in result['content']}")
-            print(
-                f"   🎯 Has Status Indicators: {'✅' in result['content'] or '❌' in result['content']}"
-            )
+            print(f"   🎯 Has Status Indicators: {'✅' in result['content'] or '❌' in result['content']}")
         else:
             print("   ❌ Status: {result['status']}")
             print("   Error: {result['error']}")
@@ -377,17 +361,11 @@ def test_template_selection_logic():
     # Simulate template selection logic
     def select_optimal_template(data):
         """Simulate the template selection logic"""
-        if any(
-            key in data
-            for key in ["fair_value", "current_price", "dcf_value", "valuation_methods"]
-        ):
+        if any(key in data for key in ["fair_value", "current_price", "dcf_value", "valuation_methods"]):
             return "A_valuation"
-        elif any(
-            key in data
-            for key in ["catalysts", "catalyst_1", "upcoming_events", "timeline_detail"]
-        ):
+        if any(key in data for key in ["catalysts", "catalyst_1", "upcoming_events", "timeline_detail"]):
             return "B_catalyst"
-        elif any(
+        if any(
             key in data
             for key in [
                 "moat_advantages",
@@ -397,7 +375,7 @@ def test_template_selection_logic():
             ]
         ):
             return "C_moat"
-        elif any(
+        if any(
             key in data
             for key in [
                 "common_perception",
@@ -407,7 +385,7 @@ def test_template_selection_logic():
             ]
         ):
             return "D_contrarian"
-        elif any(
+        if any(
             key in data
             for key in [
                 "profitability_grade",
@@ -417,8 +395,7 @@ def test_template_selection_logic():
             ]
         ):
             return "E_financial"
-        else:
-            return "A_valuation"  # fallback
+        return "A_valuation"  # fallback
 
     print("Testing template selection scenarios:")
 
@@ -441,11 +418,7 @@ def generate_test_summary(twitter_results, blog_results, validation_results):
 
     # Count successes and failures
     total_tests = len(twitter_results) + len(blog_results) + len(validation_results)
-    successful_tests = sum(
-        1
-        for r in twitter_results + blog_results + validation_results
-        if r["status"] == "SUCCESS"
-    )
+    successful_tests = sum(1 for r in twitter_results + blog_results + validation_results if r["status"] == "SUCCESS")
     failed_tests = total_tests - successful_tests
 
     print("📈 Overall Results:")
@@ -458,17 +431,13 @@ def generate_test_summary(twitter_results, blog_results, validation_results):
     print(
         f"   Twitter Fundamental (A-E): {sum(1 for r in twitter_results if r['status'] == 'SUCCESS')}/{len(twitter_results)} passed"
     )
-    print(
-        f"   Blog Templates: {sum(1 for r in blog_results if r['status'] == 'SUCCESS')}/{len(blog_results)} passed"
-    )
+    print(f"   Blog Templates: {sum(1 for r in blog_results if r['status'] == 'SUCCESS')}/{len(blog_results)} passed")
     print(
         f"   Validation Framework: {sum(1 for r in validation_results if r['status'] == 'SUCCESS')}/{len(validation_results)} passed"
     )
 
     # Character count analysis for Twitter templates
-    twitter_char_counts = [
-        r["character_count"] for r in twitter_results if r["status"] == "SUCCESS"
-    ]
+    twitter_char_counts = [r["character_count"] for r in twitter_results if r["status"] == "SUCCESS"]
     if twitter_char_counts:
         avg_chars = sum(twitter_char_counts) / len(twitter_char_counts)
         over_limit = sum(1 for count in twitter_char_counts if count > 280)
@@ -498,45 +467,16 @@ def generate_test_summary(twitter_results, blog_results, validation_results):
             if result["status"] == "SUCCESS":
                 content = result["content"]
                 confidence_score = 1 if "/1.0" in content else 0
-                economic_context = (
-                    1
-                    if any(
-                        indicator in content for indicator in ["GDP", "Fed", "economic"]
-                    )
-                    else 0
-                )
-                risk_assessment = (
-                    1
-                    if any(
-                        term in content.lower()
-                        for term in ["risk", "probability", "stress"]
-                    )
-                    else 0
-                )
-                multi_source = (
-                    1
-                    if any(
-                        source in content for source in ["FRED", "Yahoo", "validation"]
-                    )
-                    else 0
-                )
-                institutional_metrics.append(
-                    (confidence_score, economic_context, risk_assessment, multi_source)
-                )
+                economic_context = 1 if any(indicator in content for indicator in ["GDP", "Fed", "economic"]) else 0
+                risk_assessment = 1 if any(term in content.lower() for term in ["risk", "probability", "stress"]) else 0
+                multi_source = 1 if any(source in content for source in ["FRED", "Yahoo", "validation"]) else 0
+                institutional_metrics.append((confidence_score, economic_context, risk_assessment, multi_source))
 
         if institutional_metrics:
-            avg_confidence = sum(m[0] for m in institutional_metrics) / len(
-                institutional_metrics
-            )
-            avg_economic = sum(m[1] for m in institutional_metrics) / len(
-                institutional_metrics
-            )
-            avg_risk = sum(m[2] for m in institutional_metrics) / len(
-                institutional_metrics
-            )
-            avg_sources = sum(m[3] for m in institutional_metrics) / len(
-                institutional_metrics
-            )
+            avg_confidence = sum(m[0] for m in institutional_metrics) / len(institutional_metrics)
+            avg_economic = sum(m[1] for m in institutional_metrics) / len(institutional_metrics)
+            avg_risk = sum(m[2] for m in institutional_metrics) / len(institutional_metrics)
+            avg_sources = sum(m[3] for m in institutional_metrics) / len(institutional_metrics)
 
             print("\n🏛️ Institutional Quality Metrics:")
             print("   Confidence Scoring: {avg_confidence*100:.1f}% adoption")
@@ -544,9 +484,7 @@ def generate_test_summary(twitter_results, blog_results, validation_results):
             print("   Risk Assessment: {avg_risk*100:.1f}% coverage")
             print("   Multi-Source Validation: {avg_sources*100:.1f}% implementation")
 
-            overall_institutional = (
-                avg_confidence + avg_economic + avg_risk + avg_sources
-            ) / 4
+            overall_institutional = (avg_confidence + avg_economic + avg_risk + avg_sources) / 4
             print("   📊 Overall Institutional Score: {overall_institutional*100:.1f}%")
             print(
                 f"   🏆 Certification Status: {'✅ ACHIEVED' if overall_institutional >= 0.9 else '⚠️ PARTIAL' if overall_institutional >= 0.7 else '❌ NOT ACHIEVED'}"

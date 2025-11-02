@@ -7,13 +7,13 @@ Tests all components: HistoricalDataManager, BaseFinancialService integration,
 data discovery API, and end-to-end workflows.
 """
 
-import json
 import logging
 import shutil
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
+
 
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -78,9 +78,7 @@ class HistoricalDataIntegrationTest:
             self.logger.info(f"Created test directory: {self.test_dir}")
 
             # Initialize historical data manager with test directory
-            self.historical_manager = HistoricalDataManager(
-                base_path=self.test_dir / "raw"
-            )
+            self.historical_manager = HistoricalDataManager(base_path=self.test_dir / "raw")
 
             # Initialize discovery API
             self.discovery_api = DataDiscoveryAPI(self.historical_manager)
@@ -246,9 +244,7 @@ class HistoricalDataIntegrationTest:
             # Test symbol search
             found_symbols = self.discovery_api.search_symbols()
             if len(found_symbols) < 3:
-                raise Exception(
-                    f"Expected at least 3 symbols, found {len(found_symbols)}"
-                )
+                raise Exception(f"Expected at least 3 symbols, found {len(found_symbols)}")
 
             self.logger.info(f"✓ Symbol search found {len(found_symbols)} symbols")
 
@@ -260,9 +256,7 @@ class HistoricalDataIntegrationTest:
             self.logger.info("✓ Symbol availability check successful")
 
             # Test data query
-            query_results = self.discovery_api.query_data(
-                symbols=["GOOGL"], data_types=[DataType.STOCK_DAILY_PRICES]
-            )
+            query_results = self.discovery_api.query_data(symbols=["GOOGL"], data_types=[DataType.STOCK_DAILY_PRICES])
 
             if not query_results:
                 raise Exception("Data query returned no results")
@@ -270,9 +264,7 @@ class HistoricalDataIntegrationTest:
             self.logger.info("✓ Data query successful")
 
             # Test discovery report generation
-            report = self.discovery_api.generate_discovery_report(
-                symbols=test_symbols[:2], include_quality=False
-            )
+            report = self.discovery_api.generate_discovery_report(symbols=test_symbols[:2], include_quality=False)
 
             if not report or "summary" not in report:
                 raise Exception("Failed to generate discovery report")
@@ -415,9 +407,7 @@ class HistoricalDataIntegrationTest:
             )
 
             if invalid_quality and invalid_quality.accuracy > 0.5:
-                self.logger.warning(
-                    "Quality metrics may not be detecting data issues properly"
-                )
+                self.logger.warning("Quality metrics may not be detecting data issues properly")
             else:
                 self.logger.info("✓ Quality metrics correctly identify data issues")
 
@@ -474,15 +464,10 @@ class HistoricalDataIntegrationTest:
             self.logger.info(f"OVERALL: {passed}/{total} tests passed")
 
             if passed == total:
-                self.logger.info(
-                    "🎉 ALL TESTS PASSED - Historical data integration is working correctly!"
-                )
+                self.logger.info("🎉 ALL TESTS PASSED - Historical data integration is working correctly!")
                 return True
-            else:
-                self.logger.error(
-                    f"❌ {total - passed} tests failed - Please review the implementation"
-                )
-                return False
+            self.logger.error(f"❌ {total - passed} tests failed - Please review the implementation")
+            return False
 
         finally:
             self.cleanup_test_environment()

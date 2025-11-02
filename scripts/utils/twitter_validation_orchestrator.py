@@ -24,9 +24,10 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 
 # Add services directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "services"))
@@ -35,8 +36,8 @@ from real_time_validation_service import (
     RealTimeValidationService,
     SeverityLevel,
     ValidationResult,
-    ValidationStatus,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +49,9 @@ class ValidationOrchestrationResult:
         self,
         post_path: str,
         real_time_validation: ValidationResult,
-        content_analysis: Dict[str, Any],
-        compliance_check: Dict[str, Any],
-        overall_assessment: Dict[str, Any],
+        content_analysis: dict[str, Any],
+        compliance_check: dict[str, Any],
+        overall_assessment: dict[str, Any],
     ):
         self.post_path = post_path
         self.real_time_validation = real_time_validation
@@ -90,9 +91,7 @@ class ContentCorrectionEngine:
             "market_cap_variance": self._correct_market_cap,
         }
 
-    def generate_corrections(
-        self, validation_result: ValidationResult, original_content: str
-    ) -> Dict[str, Any]:
+    def generate_corrections(self, validation_result: ValidationResult, original_content: str) -> dict[str, Any]:
         """Generate automated corrections for validation issues"""
         corrections = {
             "automated_corrections": [],
@@ -106,29 +105,23 @@ class ContentCorrectionEngine:
 
         for issue in validation_result.issues:
             if issue.metric in self.correction_patterns:
-                correction = self.correction_patterns[issue.metric](
-                    issue, original_content
-                )
+                correction = self.correction_patterns[issue.metric](issue, original_content)
                 if correction:
                     if correction["confidence"] >= 0.9:
                         corrections["automated_corrections"].append(correction)
-                        corrections["corrected_content"] = correction[
-                            "corrected_content"
-                        ]
+                        corrections["corrected_content"] = correction["corrected_content"]
                         high_confidence_corrections += 1
                     else:
                         corrections["manual_review_required"].append(correction)
                     total_corrections += 1
 
         corrections["correction_confidence"] = (
-            high_confidence_corrections / total_corrections
-            if total_corrections > 0
-            else 0.0
+            high_confidence_corrections / total_corrections if total_corrections > 0 else 0.0
         )
 
         return corrections
 
-    def _correct_price_variance(self, issue, content: str) -> Optional[Dict[str, Any]]:
+    def _correct_price_variance(self, issue, content: str) -> dict[str, Any] | None:
         """Correct stock price variance issues"""
         import re
 
@@ -154,9 +147,7 @@ class ContentCorrectionEngine:
 
         return None
 
-    def _correct_return_calculation(
-        self, issue, content: str
-    ) -> Optional[Dict[str, Any]]:
+    def _correct_return_calculation(self, issue, content: str) -> dict[str, Any] | None:
         """Correct return calculation variance issues"""
         import re
 
@@ -182,7 +173,7 @@ class ContentCorrectionEngine:
 
         return None
 
-    def _correct_market_cap(self, issue, content: str) -> Optional[Dict[str, Any]]:
+    def _correct_market_cap(self, issue, content: str) -> dict[str, Any] | None:
         """Correct market cap variance issues"""
         # Market cap corrections typically require manual review
         return {
@@ -205,7 +196,7 @@ class TwitterValidationOrchestrator:
     and automated correction generation.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self.real_time_validator = RealTimeValidationService(config_path)
         self.correction_engine = ContentCorrectionEngine()
 
@@ -231,8 +222,8 @@ class TwitterValidationOrchestrator:
     def validate_twitter_post(
         self,
         post_path: str,
-        source_analysis_path: Optional[str] = None,
-        metadata: Dict[str, Any] = None,
+        source_analysis_path: str | None = None,
+        metadata: dict[str, Any] = None,
     ) -> ValidationOrchestrationResult:
         """
         Complete validation workflow for Twitter post
@@ -250,7 +241,7 @@ class TwitterValidationOrchestrator:
 
         # Read post content
         try:
-            with open(post_path, "r") as f:
+            with open(post_path) as f:
                 post_content = f.read()
         except Exception as e:
             logger.error(f"Failed to read post file {post_path}: {e}")
@@ -258,9 +249,7 @@ class TwitterValidationOrchestrator:
 
         # Phase 1: Real-time financial data validation (CRITICAL)
         logger.info(f"Phase 1: Real-time validation for {post_path}")
-        real_time_result = self.real_time_validator.validate_twitter_post_claims(
-            post_content, metadata
-        )
+        real_time_result = self.real_time_validator.validate_twitter_post_claims(post_content, metadata)
 
         # FAIL-FAST: Block if critical real-time validation issues
         if real_time_result.is_blocking:
@@ -277,9 +266,7 @@ class TwitterValidationOrchestrator:
                     "skipped": True,
                 },
                 overall_assessment={
-                    "validation_time_seconds": (
-                        datetime.now() - start_time
-                    ).total_seconds(),
+                    "validation_time_seconds": (datetime.now() - start_time).total_seconds(),
                     "blocked_reason": "Critical real-time validation failures",
                     "sla_compliance": False,
                 },
@@ -287,9 +274,7 @@ class TwitterValidationOrchestrator:
 
         # Phase 2: Content quality analysis
         logger.info(f"Phase 2: Content analysis for {post_path}")
-        content_analysis = self._analyze_content_quality(
-            post_content, source_analysis_path
-        )
+        content_analysis = self._analyze_content_quality(post_content, source_analysis_path)
 
         # Phase 3: Compliance and regulatory check
         logger.info(f"Phase 3: Compliance check for {post_path}")
@@ -318,14 +303,11 @@ class TwitterValidationOrchestrator:
 
         return result
 
-    def _analyze_content_quality(
-        self, content: str, source_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def _analyze_content_quality(self, content: str, source_path: str | None = None) -> dict[str, Any]:
         """Analyze content quality and template effectiveness"""
         quality_metrics = {
             "character_count": len(content),
-            "has_disclaimer": "not investment advice" in content.lower()
-            or "dyoer" in content.lower(),
+            "has_disclaimer": "not investment advice" in content.lower() or "dyoer" in content.lower(),
             "has_ticker_mention": "$" in content and any(c.isupper() for c in content),
             "has_specific_metrics": any(char in content for char in ["%", "$"]),
             "readability_score": self._calculate_readability_score(content),
@@ -359,7 +341,7 @@ class TwitterValidationOrchestrator:
             "recommendations": self._generate_content_recommendations(quality_metrics),
         }
 
-    def _check_compliance(self, content: str) -> Dict[str, Any]:
+    def _check_compliance(self, content: str) -> dict[str, Any]:
         """Check regulatory compliance and investment disclaimer requirements"""
         compliance_checks = {
             "has_investment_disclaimer": any(
@@ -372,8 +354,7 @@ class TwitterValidationOrchestrator:
                 ]
             ),
             "no_guaranteed_returns": not any(
-                phrase in content.lower()
-                for phrase in ["guaranteed", "promise", "will return", "certain profit"]
+                phrase in content.lower() for phrase in ["guaranteed", "promise", "will return", "certain profit"]
             ),
             "balanced_risk_presentation": any(
                 phrase in content.lower()
@@ -386,8 +367,7 @@ class TwitterValidationOrchestrator:
                     "potential",
                 ]
             ),
-            "source_attribution": "analysis" in content.lower()
-            or "research" in content.lower(),
+            "source_attribution": "analysis" in content.lower() or "research" in content.lower(),
         }
 
         # Calculate compliance score
@@ -397,9 +377,7 @@ class TwitterValidationOrchestrator:
             "compliant": compliance_score >= 7.0,  # 70% compliance threshold
             "compliance_score": compliance_score,
             "checks": compliance_checks,
-            "violations": [
-                key for key, passed in compliance_checks.items() if not passed
-            ],
+            "violations": [key for key, passed in compliance_checks.items() if not passed],
         }
 
     def _calculate_readability_score(self, content: str) -> float:
@@ -407,9 +385,7 @@ class TwitterValidationOrchestrator:
         # Simple readability metrics
         sentences = content.count(".") + content.count("!") + content.count("?") + 1
         words = len(content.split())
-        avg_word_length = (
-            sum(len(word) for word in content.split()) / words if words > 0 else 0
-        )
+        avg_word_length = sum(len(word) for word in content.split()) / words if words > 0 else 0
 
         # Optimal ranges for Twitter content
         readability = 1.0
@@ -433,17 +409,10 @@ class TwitterValidationOrchestrator:
         """Estimate social media engagement potential (0-1 scale)"""
         engagement_signals = {
             "has_numbers": any(char.isdigit() for char in content),
-            "has_controversy": any(
-                word in content.lower()
-                for word in ["vs", "versus", "contrarian", "paradox"]
-            ),
+            "has_controversy": any(word in content.lower() for word in ["vs", "versus", "contrarian", "paradox"]),
             "has_question": "?" in content,
-            "has_call_to_action": any(
-                phrase in content.lower() for phrase in ["choose", "decide", "consider"]
-            ),
-            "has_emojis": any(
-                ord(char) > 127 for char in content
-            ),  # Simple emoji detection
+            "has_call_to_action": any(phrase in content.lower() for phrase in ["choose", "decide", "consider"]),
+            "has_emojis": any(ord(char) > 127 for char in content),  # Simple emoji detection
             "specific_metrics": content.count("%") + content.count("$"),
         }
 
@@ -466,79 +435,55 @@ class TwitterValidationOrchestrator:
 
         return min(1.0, base_score)
 
-    def _generate_content_recommendations(
-        self, quality_metrics: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_content_recommendations(self, quality_metrics: dict[str, Any]) -> list[str]:
         """Generate content improvement recommendations"""
         recommendations = []
 
         if not quality_metrics["has_disclaimer"]:
-            recommendations.append(
-                "Add investment disclaimer ('Not investment advice. DYOER.')"
-            )
+            recommendations.append("Add investment disclaimer ('Not investment advice. DYOER.')")
 
         if not quality_metrics["has_ticker_mention"]:
             recommendations.append("Include ticker symbol with $ prefix (e.g., $TSLA)")
 
         if not quality_metrics["has_specific_metrics"]:
-            recommendations.append(
-                "Add specific financial metrics (percentages, dollar amounts)"
-            )
+            recommendations.append("Add specific financial metrics (percentages, dollar amounts)")
 
         if quality_metrics["character_count"] > 280:
             recommendations.append("Reduce content length for Twitter compatibility")
 
         if quality_metrics["readability_score"] < 0.7:
-            recommendations.append(
-                "Improve readability - shorter sentences, simpler words"
-            )
+            recommendations.append("Improve readability - shorter sentences, simpler words")
 
         if quality_metrics["engagement_potential"] < 0.6:
-            recommendations.append(
-                "Enhance engagement - add contrarian angle or specific question"
-            )
+            recommendations.append("Enhance engagement - add contrarian angle or specific question")
 
         return recommendations
 
     def _generate_overall_assessment(
         self,
         real_time_result: ValidationResult,
-        content_analysis: Dict[str, Any],
-        compliance_check: Dict[str, Any],
+        content_analysis: dict[str, Any],
+        compliance_check: dict[str, Any],
         validation_time: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate overall validation assessment"""
 
         # SLA compliance check
         sla_compliant = (
             validation_time <= self.sla_config["max_validation_time_seconds"]
-            and real_time_result.data_freshness_hours
-            <= self.sla_config["max_data_age_hours"]
+            and real_time_result.data_freshness_hours <= self.sla_config["max_data_age_hours"]
             and not real_time_result.is_blocking
         )
 
         return {
             "validation_time_seconds": validation_time,
             "sla_compliance": sla_compliant,
-            "data_freshness_compliant": real_time_result.data_freshness_hours
-            <= self.sla_config["max_data_age_hours"],
-            "critical_issues_count": len(
-                [
-                    i
-                    for i in real_time_result.issues
-                    if i.severity == SeverityLevel.CRITICAL
-                ]
-            ),
-            "blocking_reason": (
-                "Critical validation failures" if real_time_result.is_blocking else None
-            ),
+            "data_freshness_compliant": real_time_result.data_freshness_hours <= self.sla_config["max_data_age_hours"],
+            "critical_issues_count": len([i for i in real_time_result.issues if i.severity == SeverityLevel.CRITICAL]),
+            "blocking_reason": ("Critical validation failures" if real_time_result.is_blocking else None),
             "recommendations_count": len(content_analysis.get("recommendations", [])),
             "automated_corrections_available": len(
-                [
-                    i
-                    for i in real_time_result.issues
-                    if i.metric in self.correction_engine.correction_patterns
-                ]
+                [i for i in real_time_result.issues if i.metric in self.correction_engine.correction_patterns]
             ),
         }
 
@@ -551,12 +496,10 @@ class TwitterValidationOrchestrator:
             current_avg * (total - 1) + validation_time
         ) / total
 
-    def generate_corrections(
-        self, validation_result: ValidationOrchestrationResult
-    ) -> Dict[str, Any]:
+    def generate_corrections(self, validation_result: ValidationOrchestrationResult) -> dict[str, Any]:
         """Generate automated corrections for validation issues"""
         # Read original content
-        with open(validation_result.post_path, "r") as f:
+        with open(validation_result.post_path) as f:
             original_content = f.read()
 
         corrections = self.correction_engine.generate_corrections(
@@ -571,9 +514,7 @@ class TwitterValidationOrchestrator:
 
         return corrections
 
-    def save_corrected_content(
-        self, corrections: Dict[str, Any], output_path: str
-    ) -> bool:
+    def save_corrected_content(self, corrections: dict[str, Any], output_path: str) -> bool:
         """Save corrected content to file"""
         try:
             with open(output_path, "w") as f:
@@ -600,7 +541,7 @@ class TwitterValidationOrchestrator:
             logger.error(f"Failed to save corrected content: {e}")
             return False
 
-    def get_orchestration_stats(self) -> Dict[str, Any]:
+    def get_orchestration_stats(self) -> dict[str, Any]:
         """Get comprehensive orchestration statistics"""
         return {
             "orchestration_statistics": self.orchestration_stats.copy(),
@@ -626,7 +567,9 @@ if __name__ == "__main__":
     orchestrator = create_twitter_validation_orchestrator()
 
     # Test with the problematic TSLA_vs_NIO post
-    test_post_path = "/Users/colemorton/Projects/sensylate/data/outputs/twitter/fundamental_analysis/TSLA_vs_NIO_20250819.md"
+    test_post_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/twitter/fundamental_analysis/TSLA_vs_NIO_20250819.md"
+    )
 
     try:
         result = orchestrator.validate_twitter_post(test_post_path)
@@ -645,9 +588,7 @@ if __name__ == "__main__":
             print("\nGenerating corrections...")
             corrections = orchestrator.generate_corrections(result)
             print("Automated corrections: {len(corrections['automated_corrections'])}")
-            print(
-                f"Manual review required: {len(corrections['manual_review_required'])}"
-            )
+            print(f"Manual review required: {len(corrections['manual_review_required'])}")
 
     except FileNotFoundError:
         print("Test file not found - creating mock validation test")

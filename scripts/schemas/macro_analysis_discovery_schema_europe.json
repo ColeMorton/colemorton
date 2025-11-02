@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/macro_analysis_discovery_europe.json",
+  "$id": "https://colemorton.com/schemas/macro_analysis_discovery_europe.json",
   "title": "Macro-Economic Analysis Discovery Schema - European Region",
   "description": "European-specific validation schema for macro-economic analysis discovery JSON outputs from CLI-enhanced analyst framework",
   "type": "object",

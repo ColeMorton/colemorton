@@ -12,9 +12,10 @@ Command-line interface for Federal Reserve Economic Data with:
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -45,12 +46,8 @@ class FREDEconomicCLI(BaseFinancialCLI):
 
         @self.app.command("indicator")
         def get_economic_indicator(
-            series_id: str = typer.Argument(
-                ..., help="FRED series ID (e.g., GDP, UNRATE, FEDFUNDS)"
-            ),
-            date_range: str = typer.Option(
-                "1y", help="Time period (1y, 2y, 5y, 10y, ytd)"
-            ),
+            series_id: str = typer.Argument(..., help="FRED series ID (e.g., GDP, UNRATE, FEDFUNDS)"),
+            date_range: str = typer.Option("1y", help="Time period (1y, 2y, 5y, 10y, ytd)"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -59,9 +56,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_economic_indicator(series_id, date_range)
-                self._output_result(
-                    result, output_format, f"Economic Indicator: {series_id}"
-                )
+                self._output_result(result, output_format, f"Economic Indicator: {series_id}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get economic indicator {series_id}")
@@ -112,9 +107,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.search_series(search_text, limit)
-                self._output_result(
-                    result, output_format, f"Search Results: {search_text}"
-                )
+                self._output_result(result, output_format, f"Search Results: {search_text}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to search for '{search_text}'")
@@ -125,9 +118,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 ...,
                 help="Sector (technology, healthcare, financial, energy, retail, housing)",
             ),
-            indicators: str = typer.Option(
-                "", help="Comma-separated specific indicators"
-            ),
+            indicators: str = typer.Option("", help="Comma-separated specific indicators"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.JSON, help="Output format"),
         ):
@@ -136,9 +127,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_sector_indicators(sector, indicators)
-                self._output_result(
-                    result, output_format, f"Sector Indicators: {sector}"
-                )
+                self._output_result(result, output_format, f"Sector Indicators: {sector}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get sector indicators for {sector}")
@@ -174,9 +163,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_interest_rates(rate_type, period)
-                self._output_result(
-                    result, output_format, f"Interest Rates: {rate_type} ({period})"
-                )
+                self._output_result(result, output_format, f"Interest Rates: {rate_type} ({period})")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get interest rates for {rate_type}")
@@ -191,9 +178,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_available_indicators()
-                self._output_result(
-                    result, output_format, "Available Economic Indicators"
-                )
+                self._output_result(result, output_format, "Available Economic Indicators")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get available indicators")
@@ -215,9 +200,7 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 category_list = [cat.strip() for cat in categories.split(",")]
 
                 analysis = {
-                    "analysis_timestamp": service.get_economic_indicator(
-                        "FEDFUNDS", period
-                    ).get("timestamp"),
+                    "analysis_timestamp": service.get_economic_indicator("FEDFUNDS", period).get("timestamp"),
                     "analysis_period": period,
                     "categories_analyzed": category_list,
                     "economic_data": {},
@@ -227,42 +210,28 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 for category in category_list:
                     try:
                         if category == "inflation":
-                            analysis["economic_data"][
-                                "inflation"
-                            ] = service.get_inflation_data(period)
+                            analysis["economic_data"]["inflation"] = service.get_inflation_data(period)
                         elif category == "interest_rates":
-                            analysis["economic_data"][
-                                "interest_rates"
-                            ] = service.get_interest_rates("all", period)
+                            analysis["economic_data"]["interest_rates"] = service.get_interest_rates("all", period)
                         elif category == "employment":
-                            analysis["economic_data"][
-                                "employment"
-                            ] = service.get_economic_indicator("UNRATE", period)
+                            analysis["economic_data"]["employment"] = service.get_economic_indicator("UNRATE", period)
                         elif category == "gdp":
-                            analysis["economic_data"][
-                                "gdp"
-                            ] = service.get_economic_indicator("GDP", period)
+                            analysis["economic_data"]["gdp"] = service.get_economic_indicator("GDP", period)
                         else:
                             # Try as direct series ID
-                            analysis["economic_data"][
-                                category
-                            ] = service.get_economic_indicator(category, period)
+                            analysis["economic_data"][category] = service.get_economic_indicator(category, period)
 
                     except Exception as e:
                         analysis["economic_data"][category] = {"error": str(e)}
 
-                self._output_result(
-                    analysis, output_format, f"Economic Analysis ({period})"
-                )
+                self._output_result(analysis, output_format, f"Economic Analysis ({period})")
 
             except Exception as e:
                 self._handle_error(e, "Failed to perform economic analysis")
 
         @self.app.command("batch")
         def batch_indicators(
-            series_ids: str = typer.Argument(
-                ..., help="Comma-separated FRED series IDs"
-            ),
+            series_ids: str = typer.Argument(..., help="Comma-separated FRED series IDs"),
             date_range: str = typer.Option("1y", help="Time period"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
@@ -275,16 +244,12 @@ class FREDEconomicCLI(BaseFinancialCLI):
                 results = []
                 for series_id in series_list:
                     try:
-                        indicator_data = service.get_economic_indicator(
-                            series_id, date_range
-                        )
+                        indicator_data = service.get_economic_indicator(series_id, date_range)
                         stats = indicator_data.get("statistics", {})
 
                         row = {
                             "series_id": series_id,
-                            "series_title": indicator_data.get(
-                                "series_title", "Unknown"
-                            ),
+                            "series_title": indicator_data.get("series_title", "Unknown"),
                             "latest_value": stats.get("latest_value", "N/A"),
                             "trend": stats.get("trend", "N/A"),
                             "observations": stats.get("observations_count", 0),
@@ -302,40 +267,37 @@ class FREDEconomicCLI(BaseFinancialCLI):
                         }
                         results.append(row)
 
-                self._output_result(
-                    results, output_format, f"Batch Economic Indicators ({date_range})"
-                )
+                self._output_result(results, output_format, f"Batch Economic Indicators ({date_range})")
 
             except Exception as e:
                 self._handle_error(e, "Batch indicator operation failed")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform FRED Economic service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

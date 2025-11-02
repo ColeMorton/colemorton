@@ -98,7 +98,7 @@ describe("Contact Page E2E Tests", () => {
       await page.type("#email", "cole.morton@hotmail.com");
 
       await page.waitForSelector("#organization", { timeout: 5000 });
-      await page.type("#organization", "Sensylate Testing Corporation");
+      await page.type("#organization", "Cole Morton Testing Corporation");
 
       // Select inquiry type from dropdown
       await page.waitForSelector("#inquiry-type", { timeout: 5000 });
@@ -128,7 +128,7 @@ describe("Contact Page E2E Tests", () => {
 
       expect(nameValue).toBe("John Doe");
       expect(emailValue).toBe("cole.morton@hotmail.com");
-      expect(organizationValue).toBe("Sensylate Testing Corporation");
+      expect(organizationValue).toBe("Cole Morton Testing Corporation");
       expect(inquiryTypeValue).toBe("technical-collaboration");
       expect(messageValue).toBe(
         "This is a comprehensive test message from the E2E test suite. Testing the enhanced professional contact form submission flow with all new fields including organization and inquiry type selection.",

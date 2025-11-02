@@ -9,7 +9,7 @@ This script handles the more complex patterns that the basic standardizer missed
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -79,7 +79,7 @@ class CompletePathStandardizer:
 
         return False
 
-    def standardize_file(self, file_path: Path) -> Tuple[bool, List[str]]:
+    def standardize_file(self, file_path: Path) -> tuple[bool, list[str]]:
         """
         Standardize a single command file with comprehensive pattern matching
 
@@ -90,9 +90,9 @@ class CompletePathStandardizer:
             return False, []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:
+        except Exception:
             print("Error reading {file_path}: {e}")
             return False, []
 
@@ -147,13 +147,13 @@ class CompletePathStandardizer:
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
-            except Exception as e:
+            except Exception:
                 print("Error writing {file_path}: {e}")
                 return False, []
 
         return changed, changes_made
 
-    def standardize_all_files(self) -> Dict[str, List[str]]:
+    def standardize_all_files(self) -> dict[str, list[str]]:
         """
         Standardize all command files
 
@@ -192,7 +192,7 @@ class CompletePathStandardizer:
 
         return results
 
-    def validate_completion(self) -> Dict[str, List[str]]:
+    def validate_completion(self) -> dict[str, list[str]]:
         """
         Validate that all path references are now standardized
 
@@ -228,17 +228,15 @@ class CompletePathStandardizer:
             file_issues = []
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
                 for pattern, description in problem_patterns:
                     try:
                         matches = re.findall(pattern, content)
                         if matches:
-                            file_issues.append(
-                                f"{description}: {len(matches)} occurrences"
-                            )
-                    except re.error as e:
+                            file_issues.append(f"{description}: {len(matches)} occurrences")
+                    except re.error:
                         print("Regex error with pattern {pattern}: {e}")
                         continue
 
@@ -246,7 +244,7 @@ class CompletePathStandardizer:
                     relative_path = file_path.relative_to(self.commands_dir)
                     issues[str(relative_path)] = file_issues
 
-            except Exception as e:
+            except Exception:
                 print("Error validating {file_path}: {e}")
                 continue
 

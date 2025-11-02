@@ -13,16 +13,14 @@ Advanced volatility analysis engine providing:
 Provides institutional-grade volatility intelligence for trading and risk management.
 """
 
-import sys
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any
 
 import numpy as np
 from scipy import stats
-from scipy.optimize import minimize
+
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -51,7 +49,7 @@ class VolatilitySignal:
     confidence: float  # Signal confidence (0-1)
     time_horizon: str  # 'short_term', 'medium_term', 'long_term'
     risk_reward_ratio: float  # Expected risk/reward
-    key_drivers: List[str]  # Main signal drivers
+    key_drivers: list[str]  # Main signal drivers
 
 
 @dataclass
@@ -60,10 +58,10 @@ class VolatilityForecast:
 
     forecast_horizon: str  # '1w', '1m', '3m', '6m'
     expected_vix: float  # Forecasted VIX level
-    confidence_interval: Tuple[float, float]  # (lower, upper) bounds
+    confidence_interval: tuple[float, float]  # (lower, upper) bounds
     forecast_method: str  # Forecasting methodology used
-    scenario_analysis: Dict[str, float]  # Bull/base/bear scenarios
-    key_assumptions: List[str]  # Critical forecast assumptions
+    scenario_analysis: dict[str, float]  # Bull/base/bear scenarios
+    key_assumptions: list[str]  # Critical forecast assumptions
 
 
 class VIXVolatilityAnalyzer:
@@ -123,8 +121,8 @@ class VIXVolatilityAnalyzer:
         }
 
     def analyze_volatility_environment(
-        self, vix_data: Dict[str, Any], market_data: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, vix_data: dict[str, Any], market_data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Comprehensive volatility environment analysis
 
@@ -141,9 +139,7 @@ class VIXVolatilityAnalyzer:
             current_vix = vix_series[-1] if len(vix_series) > 0 else 20.0
 
             # Regime identification
-            volatility_regime = self._identify_volatility_regime(
-                vix_series, current_vix
-            )
+            volatility_regime = self._identify_volatility_regime(vix_series, current_vix)
 
             # Term structure analysis
             term_structure = self._analyze_term_structure(current_vix)
@@ -152,19 +148,13 @@ class VIXVolatilityAnalyzer:
             mean_reversion = self._analyze_mean_reversion(vix_series, current_vix)
 
             # Sentiment indicators
-            sentiment_analysis = self._calculate_sentiment_indicators(
-                vix_series, volatility_regime, market_data
-            )
+            sentiment_analysis = self._calculate_sentiment_indicators(vix_series, volatility_regime, market_data)
 
             # Trading signals
-            trading_signals = self._generate_volatility_signals(
-                vix_series, volatility_regime, mean_reversion
-            )
+            trading_signals = self._generate_volatility_signals(vix_series, volatility_regime, mean_reversion)
 
             # Volatility forecasting
-            volatility_forecast = self._forecast_volatility(
-                vix_series, volatility_regime
-            )
+            volatility_forecast = self._forecast_volatility(vix_series, volatility_regime)
 
             # Risk management metrics
             risk_metrics = self._calculate_risk_metrics(vix_series, volatility_regime)
@@ -183,9 +173,7 @@ class VIXVolatilityAnalyzer:
                 ),
                 "analysis_timestamp": datetime.now().isoformat(),
                 "data_quality": self._assess_data_quality(vix_data),
-                "confidence_score": self._calculate_analysis_confidence(
-                    volatility_regime, len(vix_series)
-                ),
+                "confidence_score": self._calculate_analysis_confidence(volatility_regime, len(vix_series)),
             }
 
         except Exception as e:
@@ -195,49 +183,38 @@ class VIXVolatilityAnalyzer:
                 "analysis_timestamp": datetime.now().isoformat(),
             }
 
-    def _extract_vix_series(self, vix_data: Dict[str, Any]) -> np.ndarray:
+    def _extract_vix_series(self, vix_data: dict[str, Any]) -> np.ndarray:
         """Extract VIX time series from data structure"""
         try:
             if "observations" in vix_data:
                 values = []
                 for obs in vix_data["observations"]:
-                    if (
-                        "value" in obs
-                        and obs["value"] != "."
-                        and obs["value"] is not None
-                    ):
+                    if "value" in obs and obs["value"] != "." and obs["value"] is not None:
                         values.append(float(obs["value"]))
 
-                return (
-                    np.array(values) if values else np.array([20.0])
-                )  # Default VIX level
-            else:
-                # Mock data for development
-                np.random.seed(42)  # Reproducible results
-                base_vix = 18.0
-                volatility = 0.3
-                days = 252  # One year of data
+                return np.array(values) if values else np.array([20.0])  # Default VIX level
+            # Mock data for development
+            np.random.seed(42)  # Reproducible results
+            base_vix = 18.0
+            volatility = 0.3
+            days = 252  # One year of data
 
-                # Generate realistic VIX-like series with mean reversion
-                vix_series = [base_vix]
-                for i in range(days - 1):
-                    # Mean reversion with random shocks
-                    mean_reversion = -0.01 * (vix_series[-1] - 19.5)
-                    shock = np.random.normal(0, volatility)
-                    next_vix = max(
-                        9.0, vix_series[-1] + mean_reversion + shock
-                    )  # Floor at 9
-                    vix_series.append(next_vix)
+            # Generate realistic VIX-like series with mean reversion
+            vix_series = [base_vix]
+            for i in range(days - 1):
+                # Mean reversion with random shocks
+                mean_reversion = -0.01 * (vix_series[-1] - 19.5)
+                shock = np.random.normal(0, volatility)
+                next_vix = max(9.0, vix_series[-1] + mean_reversion + shock)  # Floor at 9
+                vix_series.append(next_vix)
 
-                return np.array(vix_series)
+            return np.array(vix_series)
 
-        except Exception as e:
+        except Exception:
             # Return default VIX series on error
             return np.array([20.0, 19.5, 21.2, 18.8, 22.1])
 
-    def _identify_volatility_regime(
-        self, vix_series: np.ndarray, current_vix: float
-    ) -> VolatilityRegime:
+    def _identify_volatility_regime(self, vix_series: np.ndarray, current_vix: float) -> VolatilityRegime:
         """Identify current volatility regime with statistical validation"""
 
         try:
@@ -255,9 +232,7 @@ class VIXVolatilityAnalyzer:
             regime_duration = self._estimate_regime_duration(vix_series, current_vix)
 
             # Calculate regime probability based on statistical fit
-            regime_probability = self._calculate_regime_probability(
-                current_vix, regime_type, vix_series
-            )
+            regime_probability = self._calculate_regime_probability(current_vix, regime_type, vix_series)
 
             # Mean reversion speed calculation
             mean_reversion_speed = self._calculate_mean_reversion_speed(vix_series)
@@ -275,7 +250,7 @@ class VIXVolatilityAnalyzer:
                 stability_score=stability_score,
             )
 
-        except Exception as e:
+        except Exception:
             return VolatilityRegime(
                 regime_type="normal",
                 regime_probability=0.7,
@@ -286,7 +261,7 @@ class VIXVolatilityAnalyzer:
                 stability_score=0.6,
             )
 
-    def _analyze_term_structure(self, current_vix: float) -> Dict[str, Any]:
+    def _analyze_term_structure(self, current_vix: float) -> dict[str, Any]:
         """Analyze VIX term structure and its implications"""
 
         try:
@@ -336,12 +311,8 @@ class VIXVolatilityAnalyzer:
                 },
                 "term_premium": float(term_premium),
                 "curve_steepness": float(curve_steepness),
-                "contango_backwardation": (
-                    "contango" if vix3m_ratio > 1.0 else "backwardation"
-                ),
-                "trading_implications": self._derive_term_structure_implications(
-                    structure_shape, term_premium
-                ),
+                "contango_backwardation": ("contango" if vix3m_ratio > 1.0 else "backwardation"),
+                "trading_implications": self._derive_term_structure_implications(structure_shape, term_premium),
             }
 
         except Exception as e:
@@ -351,9 +322,7 @@ class VIXVolatilityAnalyzer:
                 "error": f"Term structure analysis failed: {str(e)}",
             }
 
-    def _analyze_mean_reversion(
-        self, vix_series: np.ndarray, current_vix: float
-    ) -> Dict[str, Any]:
+    def _analyze_mean_reversion(self, vix_series: np.ndarray, current_vix: float) -> dict[str, Any]:
         """Analyze VIX mean reversion characteristics"""
 
         try:
@@ -377,9 +346,7 @@ class VIXVolatilityAnalyzer:
 
             # Expected time to mean
             if abs(deviation_from_mean) > 0.1:
-                time_to_mean = abs(deviation_from_mean) / (
-                    reversion_speed * current_vix
-                )
+                time_to_mean = abs(deviation_from_mean) / (reversion_speed * current_vix)
             else:
                 time_to_mean = 0
 
@@ -413,17 +380,11 @@ class VIXVolatilityAnalyzer:
                 "time_to_mean_estimate": float(time_to_mean),
                 "reversion_strength": reversion_strength,
                 "reversion_probability": float(reversion_probability),
-                "statistical_significance": float(
-                    np.clip(statistical_significance, 0.0, 1.0)
-                ),
+                "statistical_significance": float(np.clip(statistical_significance, 0.0, 1.0)),
                 "mean_reversion_signal": (
                     "buy_volatility"
                     if current_vix < long_term_mean * 0.8
-                    else (
-                        "sell_volatility"
-                        if current_vix > long_term_mean * 1.3
-                        else "neutral"
-                    )
+                    else ("sell_volatility" if current_vix > long_term_mean * 1.3 else "neutral")
                 ),
             }
 
@@ -438,8 +399,8 @@ class VIXVolatilityAnalyzer:
         self,
         vix_series: np.ndarray,
         volatility_regime: VolatilityRegime,
-        market_data: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        market_data: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         """Calculate market sentiment indicators based on volatility"""
 
         try:
@@ -449,9 +410,7 @@ class VIXVolatilityAnalyzer:
             fear_greed_components = {
                 "vix_level": self._score_vix_for_fear_greed(current_vix),
                 "vix_momentum": self._score_vix_momentum(vix_series),
-                "volatility_regime": self._score_regime_for_sentiment(
-                    volatility_regime
-                ),
+                "volatility_regime": self._score_regime_for_sentiment(volatility_regime),
             }
 
             # Combined Fear & Greed score
@@ -475,17 +434,13 @@ class VIXVolatilityAnalyzer:
                 risk_appetite = "very_low"
 
             # Risk-on/Risk-off assessment
-            risk_environment = self._assess_risk_environment(
-                current_vix, volatility_regime, sentiment
-            )
+            risk_environment = self._assess_risk_environment(current_vix, volatility_regime, sentiment)
 
             # Positioning indicators
             positioning = self._analyze_volatility_positioning(vix_series, current_vix)
 
             # Contrarian signals
-            contrarian_signals = self._generate_contrarian_signals(
-                sentiment, volatility_regime, positioning
-            )
+            contrarian_signals = self._generate_contrarian_signals(sentiment, volatility_regime, positioning)
 
             return {
                 "fear_greed_index": float(fear_greed_score),
@@ -496,9 +451,7 @@ class VIXVolatilityAnalyzer:
                 "positioning_indicators": positioning,
                 "contrarian_signals": contrarian_signals,
                 "sentiment_momentum": self._calculate_sentiment_momentum(vix_series),
-                "extreme_readings": self._identify_extreme_readings(
-                    current_vix, vix_series
-                ),
+                "extreme_readings": self._identify_extreme_readings(current_vix, vix_series),
             }
 
         except Exception as e:
@@ -512,8 +465,8 @@ class VIXVolatilityAnalyzer:
         self,
         vix_series: np.ndarray,
         volatility_regime: VolatilityRegime,
-        mean_reversion: Dict[str, Any],
-    ) -> List[VolatilitySignal]:
+        mean_reversion: dict[str, Any],
+    ) -> list[VolatilitySignal]:
         """Generate trading signals based on volatility analysis"""
 
         signals = []
@@ -527,9 +480,7 @@ class VIXVolatilityAnalyzer:
                         VolatilitySignal(
                             signal_type="mean_reversion",
                             signal_strength=(
-                                "strong"
-                                if mean_reversion["reversion_strength"] == "very_strong"
-                                else "moderate"
+                                "strong" if mean_reversion["reversion_strength"] == "very_strong" else "moderate"
                             ),
                             direction="bearish",  # Expect VIX to fall
                             confidence=mean_reversion["reversion_probability"],
@@ -614,11 +565,7 @@ class VIXVolatilityAnalyzer:
                 if abs(recent_momentum) > 0.2:  # Strong momentum
                     signals.append(
                         VolatilitySignal(
-                            signal_type=(
-                                "trend_continuation"
-                                if recent_momentum > 0
-                                else "mean_reversion"
-                            ),
+                            signal_type=("trend_continuation" if recent_momentum > 0 else "mean_reversion"),
                             signal_strength="moderate",
                             direction="bullish" if recent_momentum > 0 else "bearish",
                             confidence=0.65,
@@ -645,7 +592,7 @@ class VIXVolatilityAnalyzer:
 
     def _forecast_volatility(
         self, vix_series: np.ndarray, volatility_regime: VolatilityRegime
-    ) -> Dict[str, VolatilityForecast]:
+    ) -> dict[str, VolatilityForecast]:
         """Generate volatility forecasts for different time horizons"""
 
         forecasts = {}
@@ -663,7 +610,7 @@ class VIXVolatilityAnalyzer:
 
             return forecasts
 
-        except Exception as e:
+        except Exception:
             # Return conservative forecasts on error
             default_forecast = VolatilityForecast(
                 forecast_horizon="1m",
@@ -707,13 +654,9 @@ class VIXVolatilityAnalyzer:
 
             # Scenario analysis
             scenario_analysis = {
-                "bull": max(
-                    10.0, expected_vix - forecast_std
-                ),  # Low volatility scenario
+                "bull": max(10.0, expected_vix - forecast_std),  # Low volatility scenario
                 "base": expected_vix,
-                "bear": min(
-                    60.0, expected_vix + 1.5 * forecast_std
-                ),  # High volatility scenario
+                "bear": min(60.0, expected_vix + 1.5 * forecast_std),  # High volatility scenario
             }
 
             # Key assumptions
@@ -748,9 +691,7 @@ class VIXVolatilityAnalyzer:
             )
 
     # Helper methods for internal calculations
-    def _estimate_regime_duration(
-        self, vix_series: np.ndarray, current_vix: float
-    ) -> int:
+    def _estimate_regime_duration(self, vix_series: np.ndarray, current_vix: float) -> int:
         """Estimate how long current regime has persisted"""
         if len(vix_series) < 5:
             return 1
@@ -767,9 +708,7 @@ class VIXVolatilityAnalyzer:
 
         return min(days_in_regime, 180)  # Cap at 6 months
 
-    def _calculate_regime_probability(
-        self, current_vix: float, regime_type: str, vix_series: np.ndarray
-    ) -> float:
+    def _calculate_regime_probability(self, current_vix: float, regime_type: str, vix_series: np.ndarray) -> float:
         """Calculate statistical probability of regime classification"""
 
         regime_bounds = self.vix_regime_thresholds[regime_type]
@@ -834,9 +773,7 @@ class VIXVolatilityAnalyzer:
 
         return float(np.clip(stability, 0.0, 1.0))
 
-    def _derive_term_structure_implications(
-        self, structure_shape: str, term_premium: float
-    ) -> List[str]:
+    def _derive_term_structure_implications(self, structure_shape: str, term_premium: float) -> list[str]:
         """Derive trading implications from term structure analysis"""
 
         implications = []
@@ -869,9 +806,7 @@ class VIXVolatilityAnalyzer:
             )
 
         if term_premium > 3.0:
-            implications.append(
-                "High volatility risk premium - consider selling volatility"
-            )
+            implications.append("High volatility risk premium - consider selling volatility")
         elif term_premium < -2.0:
             implications.append("Negative risk premium - volatility selling risky")
 
@@ -883,14 +818,13 @@ class VIXVolatilityAnalyzer:
         # Invert VIX: lower VIX = higher greed score
         if current_vix <= 12:
             return 85.0  # Extreme greed
-        elif current_vix <= 16:
+        if current_vix <= 16:
             return 70.0  # Greed
-        elif current_vix <= 24:
+        if current_vix <= 24:
             return 50.0  # Neutral
-        elif current_vix <= 35:
+        if current_vix <= 35:
             return 25.0  # Fear
-        else:
-            return 10.0  # Extreme fear
+        return 10.0  # Extreme fear
 
     def _score_vix_momentum(self, vix_series: np.ndarray) -> float:
         """Score VIX momentum for sentiment (0-100)"""
@@ -903,14 +837,13 @@ class VIXVolatilityAnalyzer:
         # Convert to 0-100 score (negative momentum = greed)
         if momentum < -0.2:
             return 80.0  # Strong greed (VIX falling)
-        elif momentum < -0.1:
+        if momentum < -0.1:
             return 65.0
-        elif momentum < 0.1:
+        if momentum < 0.1:
             return 50.0  # Neutral
-        elif momentum < 0.3:
+        if momentum < 0.3:
             return 35.0
-        else:
-            return 15.0  # Strong fear (VIX rising)
+        return 15.0  # Strong fear (VIX rising)
 
     def _score_regime_for_sentiment(self, regime: VolatilityRegime) -> float:
         """Score volatility regime for sentiment (0-100)"""
@@ -925,9 +858,7 @@ class VIXVolatilityAnalyzer:
 
         return regime_scores.get(regime.regime_type, 50.0)
 
-    def _assess_risk_environment(
-        self, current_vix: float, regime: VolatilityRegime, sentiment: str
-    ) -> Dict[str, Any]:
+    def _assess_risk_environment(self, current_vix: float, regime: VolatilityRegime, sentiment: str) -> dict[str, Any]:
         """Assess overall risk-on/risk-off environment"""
 
         # Risk assessment based on multiple factors
@@ -963,18 +894,15 @@ class VIXVolatilityAnalyzer:
 
         if current_vix < 15 and sentiment in ["greed", "extreme_greed"]:
             return "late_cycle_euphoria"
-        elif current_vix < 20 and sentiment == "greed":
+        if current_vix < 20 and sentiment == "greed":
             return "mid_cycle_expansion"
-        elif current_vix > 30 and sentiment in ["fear", "extreme_fear"]:
+        if current_vix > 30 and sentiment in ["fear", "extreme_fear"]:
             return "crisis_capitulation"
-        elif current_vix > 20 and sentiment == "fear":
+        if current_vix > 20 and sentiment == "fear":
             return "early_cycle_correction"
-        else:
-            return "transitional_phase"
+        return "transitional_phase"
 
-    def _analyze_volatility_positioning(
-        self, vix_series: np.ndarray, current_vix: float
-    ) -> Dict[str, Any]:
+    def _analyze_volatility_positioning(self, vix_series: np.ndarray, current_vix: float) -> dict[str, Any]:
         """Analyze positioning indicators for volatility"""
 
         # Simplified positioning analysis
@@ -983,9 +911,7 @@ class VIXVolatilityAnalyzer:
         try:
             # VIX percentile as positioning proxy
             if len(vix_series) >= 252:
-                annual_percentile = stats.percentileofscore(
-                    vix_series[-252:], current_vix
-                )
+                annual_percentile = stats.percentileofscore(vix_series[-252:], current_vix)
             else:
                 annual_percentile = stats.percentileofscore(vix_series, current_vix)
 
@@ -1011,8 +937,8 @@ class VIXVolatilityAnalyzer:
             return {"positioning_assessment": "unknown", "contrarian_signal": "neutral"}
 
     def _generate_contrarian_signals(
-        self, sentiment: str, regime: VolatilityRegime, positioning: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, sentiment: str, regime: VolatilityRegime, positioning: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate contrarian trading signals"""
 
         signals = {}
@@ -1036,17 +962,13 @@ class VIXVolatilityAnalyzer:
         if positioning_signal != "neutral":
             signals["positioning_contrarian"] = {
                 "signal": positioning_signal,
-                "strength": (
-                    "moderate"
-                    if positioning.get("positioning_extremity", 0) > 0.6
-                    else "weak"
-                ),
+                "strength": ("moderate" if positioning.get("positioning_extremity", 0) > 0.6 else "weak"),
                 "rationale": f"Positioning appears {positioning.get('positioning_assessment', 'unknown')}",
             }
 
         return signals
 
-    def _calculate_sentiment_momentum(self, vix_series: np.ndarray) -> Dict[str, Any]:
+    def _calculate_sentiment_momentum(self, vix_series: np.ndarray) -> dict[str, Any]:
         """Calculate momentum in market sentiment"""
 
         if len(vix_series) < 10:
@@ -1054,9 +976,7 @@ class VIXVolatilityAnalyzer:
 
         # Compare recent vs longer-term VIX levels
         recent_avg = np.mean(vix_series[-5:])
-        longer_avg = (
-            np.mean(vix_series[-20:]) if len(vix_series) >= 20 else np.mean(vix_series)
-        )
+        longer_avg = np.mean(vix_series[-20:]) if len(vix_series) >= 20 else np.mean(vix_series)
 
         momentum_ratio = recent_avg / longer_avg
 
@@ -1065,17 +985,14 @@ class VIXVolatilityAnalyzer:
                 "momentum": "fear_increasing",
                 "strength": "strong" if momentum_ratio > 1.2 else "moderate",
             }
-        elif momentum_ratio < 0.9:
+        if momentum_ratio < 0.9:
             return {
                 "momentum": "fear_decreasing",
                 "strength": "strong" if momentum_ratio < 0.8 else "moderate",
             }
-        else:
-            return {"momentum": "neutral", "strength": "weak"}
+        return {"momentum": "neutral", "strength": "weak"}
 
-    def _identify_extreme_readings(
-        self, current_vix: float, vix_series: np.ndarray
-    ) -> Dict[str, Any]:
+    def _identify_extreme_readings(self, current_vix: float, vix_series: np.ndarray) -> dict[str, Any]:
         """Identify extreme VIX readings and their implications"""
 
         extremes = {}
@@ -1107,9 +1024,9 @@ class VIXVolatilityAnalyzer:
     def _derive_market_implications(
         self,
         regime: VolatilityRegime,
-        term_structure: Dict[str, Any],
-        sentiment: Dict[str, Any],
-    ) -> List[str]:
+        term_structure: dict[str, Any],
+        sentiment: dict[str, Any],
+    ) -> list[str]:
         """Derive market implications from volatility analysis"""
 
         implications = []
@@ -1141,9 +1058,7 @@ class VIXVolatilityAnalyzer:
 
         return implications
 
-    def _calculate_risk_metrics(
-        self, vix_series: np.ndarray, regime: VolatilityRegime
-    ) -> Dict[str, Any]:
+    def _calculate_risk_metrics(self, vix_series: np.ndarray, regime: VolatilityRegime) -> dict[str, Any]:
         """Calculate risk management metrics"""
 
         try:
@@ -1181,9 +1096,7 @@ class VIXVolatilityAnalyzer:
                 "tail_risk_score": tail_risk_score,
                 "risk_budget_recommendation": risk_budget_utilization,
                 "hedging_cost_assessment": self._assess_hedging_costs(current_vix),
-                "volatility_risk_premium": self._estimate_volatility_risk_premium(
-                    vix_series
-                ),
+                "volatility_risk_premium": self._estimate_volatility_risk_premium(vix_series),
             }
 
         except Exception as e:
@@ -1193,15 +1106,14 @@ class VIXVolatilityAnalyzer:
                 "error": f"Risk metrics calculation failed: {str(e)}",
             }
 
-    def _assess_hedging_costs(self, current_vix: float) -> Dict[str, Any]:
+    def _assess_hedging_costs(self, current_vix: float) -> dict[str, Any]:
         """Assess current hedging costs based on VIX level"""
 
         if current_vix < 15:
             return {"cost_level": "low", "recommendation": "favorable_for_hedging"}
-        elif current_vix < 25:
+        if current_vix < 25:
             return {"cost_level": "moderate", "recommendation": "normal_hedging_costs"}
-        else:
-            return {"cost_level": "high", "recommendation": "expensive_hedging"}
+        return {"cost_level": "high", "recommendation": "expensive_hedging"}
 
     def _estimate_volatility_risk_premium(self, vix_series: np.ndarray) -> float:
         """Estimate volatility risk premium"""
@@ -1212,10 +1124,9 @@ class VIXVolatilityAnalyzer:
             current_implied_vol = vix_series[-1]
             risk_premium = current_implied_vol - realized_vol
             return float(risk_premium)
-        else:
-            return 2.0  # Typical long-term average
+        return 2.0  # Typical long-term average
 
-    def _assess_data_quality(self, vix_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_data_quality(self, vix_data: dict[str, Any]) -> dict[str, Any]:
         """Assess quality of VIX data for analysis"""
 
         try:
@@ -1239,9 +1150,7 @@ class VIXVolatilityAnalyzer:
                 "data_completeness": completeness,
                 "observation_count": data_points,
                 "recommendation": (
-                    "Analysis reliable"
-                    if quality in ["excellent", "good"]
-                    else "Use results with caution"
+                    "Analysis reliable" if quality in ["excellent", "good"] else "Use results with caution"
                 ),
             }
 
@@ -1252,16 +1161,12 @@ class VIXVolatilityAnalyzer:
                 "recommendation": "Data quality uncertain",
             }
 
-    def _calculate_analysis_confidence(
-        self, regime: VolatilityRegime, data_points: int
-    ) -> float:
+    def _calculate_analysis_confidence(self, regime: VolatilityRegime, data_points: int) -> float:
         """Calculate overall confidence in volatility analysis"""
 
         # Base confidence on regime probability and data quality
         regime_confidence = regime.regime_probability
-        data_confidence = min(
-            1.0, data_points / 100
-        )  # Full confidence with 100+ data points
+        data_confidence = min(1.0, data_points / 100)  # Full confidence with 100+ data points
 
         overall_confidence = 0.6 * regime_confidence + 0.4 * data_confidence
 

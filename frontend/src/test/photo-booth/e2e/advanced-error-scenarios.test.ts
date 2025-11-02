@@ -338,7 +338,6 @@ describe("Photo Booth Advanced Error Scenarios", () => {
       const { page } = context;
 
       let networkCallCount = 0;
-      const maxRetries = 3;
 
       // Simulate intermittent connectivity
       await page.route("/api/dashboards.json", async (route) => {
@@ -509,11 +508,6 @@ describe("Photo Booth Advanced Error Scenarios", () => {
       await PhotoBoothE2EHelper.sleep(15000);
 
       // Check for data validation error handling
-      const hasDataErrors =
-        ((await page.$("text*=data")) && (await page.$("text*=error"))) ||
-        (await page.$("text*=invalid")) ||
-        (await page.$("[data-chart-error]"));
-
       const pageIsResponsive = await page.evaluate(() => {
         return (
           document.readyState === "complete" &&

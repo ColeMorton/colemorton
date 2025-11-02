@@ -7,6 +7,7 @@ Registers all industry analysis DASV scripts with the global registry
 import sys
 from pathlib import Path
 
+
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -16,7 +17,7 @@ from industry_analysis.industry_analysis import IndustryAnalysisScript
 from industry_analysis.industry_discovery import IndustryDiscoveryScript
 from industry_analysis.industry_synthesis import IndustrySynthesisScript
 from industry_analysis.industry_validation import IndustryValidationScript
-from script_config import ScriptConfig, load_default_config
+from script_config import load_default_config
 
 # Import registry components
 from script_registry import get_global_registry, register_script
@@ -45,7 +46,7 @@ def register_industry_analysis_scripts():
             register_script(script_class, script_name)
             print("  ✅ Registered: {script_name}")
             registered_count += 1
-        except Exception as e:
+        except Exception:
             print("  ❌ Failed to register {script_name}: {e}")
 
     print(
@@ -103,14 +104,14 @@ def test_industry_script_execution():
             print("  ✅ industry_discovery - Test passed")
         else:
             print("  ❌ industry_discovery - Test failed: {result.error}")
-    except Exception as e:
+    except Exception:
         print("  ❌ industry_discovery - Exception: {e}")
 
     # Test analysis script (requires discovery output)
     test_params_analysis = test_params.copy()
-    test_params_analysis[
-        "discovery_file"
-    ] = "./data/outputs/industry_analysis/discovery/software_infrastructure_20250728_discovery.json"
+    test_params_analysis["discovery_file"] = (
+        "./data/outputs/industry_analysis/discovery/software_infrastructure_20250728_discovery.json"
+    )
 
     try:
         result = registry.execute_script("industry_analysis", **test_params_analysis)
@@ -118,7 +119,7 @@ def test_industry_script_execution():
             print("  ✅ industry_analysis - Test passed")
         else:
             print("  ❌ industry_analysis - Test failed: {result.error}")
-    except Exception as e:
+    except Exception:
         print("  ❌ industry_analysis - Exception: {e}")
 
 

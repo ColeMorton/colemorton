@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/trade_history_analysis.json",
+  "$id": "https://colemorton.com/schemas/trade_history_analysis.json",
   "title": "Trade History Analysis Schema",
   "description": "JSON Schema for validating trade history analysis phase outputs with institutional-grade trading validation standards",
   "type": "object",

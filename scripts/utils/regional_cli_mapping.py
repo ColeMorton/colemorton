@@ -5,7 +5,8 @@ Maps regions to appropriate CLI services and data sources
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class RegionalCLIMapping:
         self.service_mappings = self._initialize_service_mappings()
         self.priority_mappings = self._initialize_priority_mappings()
 
-    def _initialize_service_mappings(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_service_mappings(self) -> dict[str, dict[str, Any]]:
         """Initialize region-specific service mappings"""
         return {
             "US": {
@@ -111,7 +112,7 @@ class RegionalCLIMapping:
             },
         }
 
-    def _initialize_priority_mappings(self) -> Dict[str, List[str]]:
+    def _initialize_priority_mappings(self) -> dict[str, list[str]]:
         """Initialize service priority by region"""
         return {
             "US": [
@@ -152,7 +153,7 @@ class RegionalCLIMapping:
             ],
         }
 
-    def get_services_for_region(self, region: str) -> Dict[str, List[str]]:
+    def get_services_for_region(self, region: str) -> dict[str, list[str]]:
         """Get prioritized service list for region"""
         region = region.upper()
 
@@ -169,19 +170,15 @@ class RegionalCLIMapping:
             "prioritized": self.priority_mappings[region],
         }
 
-    def get_regional_specialties(self, region: str) -> Dict[str, str]:
+    def get_regional_specialties(self, region: str) -> dict[str, str]:
         """Get regional service specialties"""
         region = region.upper()
-        return self.service_mappings.get(region, self.service_mappings["US"])[
-            "regional_specialties"
-        ]
+        return self.service_mappings.get(region, self.service_mappings["US"])["regional_specialties"]
 
-    def get_data_focus(self, region: str) -> Dict[str, str]:
+    def get_data_focus(self, region: str) -> dict[str, str]:
         """Get regional data focus mappings"""
         region = region.upper()
-        return self.service_mappings.get(region, self.service_mappings["US"])[
-            "data_focus"
-        ]
+        return self.service_mappings.get(region, self.service_mappings["US"])["data_focus"]
 
     def get_minimum_services_required(self, region: str) -> int:
         """Get minimum number of services required for institutional grade"""
@@ -197,9 +194,7 @@ class RegionalCLIMapping:
 
         return requirements.get(region, 4)  # Default to 4
 
-    def validate_service_coverage(
-        self, region: str, available_services: List[str]
-    ) -> Dict[str, Any]:
+    def validate_service_coverage(self, region: str, available_services: list[str]) -> dict[str, Any]:
         """Validate if available services provide adequate regional coverage"""
         region = region.upper()
         region_services = self.get_services_for_region(region)
@@ -207,12 +202,8 @@ class RegionalCLIMapping:
         min_required = self.get_minimum_services_required(region)
 
         # Check coverage
-        primary_coverage = len(
-            [s for s in region_services["primary"] if s in available_services]
-        )
-        total_coverage = len(
-            [s for s in region_services["all"] if s in available_services]
-        )
+        primary_coverage = len([s for s in region_services["primary"] if s in available_services])
+        total_coverage = len([s for s in region_services["all"] if s in available_services])
 
         # Check specialty coverage
         specialty_coverage = {}
@@ -228,16 +219,12 @@ class RegionalCLIMapping:
             "primary_coverage": primary_coverage,
             "minimum_required": min_required,
             "specialty_coverage": specialty_coverage,
-            "missing_primary": [
-                s for s in region_services["primary"] if s not in available_services
-            ],
+            "missing_primary": [s for s in region_services["primary"] if s not in available_services],
             "available_services": available_services,
             "coverage_percentage": total_coverage / len(region_services["all"]) * 100,
         }
 
-    def get_service_alternatives(
-        self, region: str, unavailable_service: str
-    ) -> List[str]:
+    def get_service_alternatives(self, region: str, unavailable_service: str) -> list[str]:
         """Get alternative services if one is unavailable"""
         region = region.upper()
 
@@ -253,7 +240,7 @@ class RegionalCLIMapping:
 
         return alternatives.get(unavailable_service, [])
 
-    def get_regional_data_priorities(self, region: str) -> List[Dict[str, Any]]:
+    def get_regional_data_priorities(self, region: str) -> list[dict[str, Any]]:
         """Get regional data collection priorities"""
         region = region.upper()
 
@@ -344,15 +331,13 @@ def create_regional_cli_mapping() -> RegionalCLIMapping:
     return RegionalCLIMapping()
 
 
-def get_services_for_region(region: str) -> Dict[str, List[str]]:
+def get_services_for_region(region: str) -> dict[str, list[str]]:
     """Convenience function to get services for region"""
     mapping = create_regional_cli_mapping()
     return mapping.get_services_for_region(region)
 
 
-def validate_regional_service_coverage(
-    region: str, available_services: List[str]
-) -> Dict[str, Any]:
+def validate_regional_service_coverage(region: str, available_services: list[str]) -> dict[str, Any]:
     """Convenience function to validate service coverage"""
     mapping = create_regional_cli_mapping()
     return mapping.validate_service_coverage(region, available_services)

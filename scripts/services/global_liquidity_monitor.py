@@ -13,9 +13,9 @@ Integrates with FRED, ECB, BoJ, and PBoC APIs for institutional-grade liquidity 
 
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -26,9 +26,9 @@ from .base_financial_service import (
     ValidationError,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 @dataclass
@@ -54,7 +54,7 @@ class CentralBankBalance:
     yoy_change: float  # Year-over-year change (%)
     qoq_change: float  # Quarter-over-quarter change (%)
     policy_stance: str  # 'expanding', 'tapering', 'contracting', 'neutral'
-    asset_composition: Dict[str, float]  # Breakdown by asset type
+    asset_composition: dict[str, float]  # Breakdown by asset type
     forward_guidance: str  # Policy direction indication
 
 
@@ -66,8 +66,8 @@ class LiquidityCondition:
     composite_score: float  # -1 to +1 scale (negative = tight, positive = abundant)
     regime_probability: float  # Confidence in regime classification
     regime_duration_months: int  # How long in current regime
-    key_drivers: List[str]  # Primary factors driving liquidity conditions
-    risk_asset_implications: Dict[str, str]  # Impact on different asset classes
+    key_drivers: list[str]  # Primary factors driving liquidity conditions
+    risk_asset_implications: dict[str, str]  # Impact on different asset classes
 
 
 @dataclass
@@ -79,7 +79,7 @@ class CrossBorderFlow:
     flow_direction: str  # 'inflow', 'outflow', 'neutral'
     volatility_index: float  # Flow volatility measure
     risk_sentiment_indicator: float  # Risk-on/risk-off measure
-    regional_breakdown: Dict[str, float]  # Flows by region
+    regional_breakdown: dict[str, float]  # Flows by region
 
 
 class GlobalLiquidityMonitor(BaseFinancialService):
@@ -101,7 +101,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
         # Liquidity assessment matrix
         self.liquidity_matrix = self._initialize_liquidity_matrix()
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate global liquidity response data"""
         if not isinstance(data, dict):
             raise ValidationError(f"Invalid response format for {endpoint}")
@@ -116,7 +116,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
 
         return data
 
-    def _initialize_central_bank_config(self) -> Dict[str, Any]:
+    def _initialize_central_bank_config(self) -> dict[str, Any]:
         """Initialize central bank monitoring configuration"""
         return {
             "fed": {
@@ -156,7 +156,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             },
         }
 
-    def _initialize_liquidity_matrix(self) -> Dict[str, Any]:
+    def _initialize_liquidity_matrix(self) -> dict[str, Any]:
         """Initialize liquidity condition assessment matrix"""
         return {
             "regime_thresholds": {
@@ -205,9 +205,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             },
         }
 
-    def get_global_m2_analysis(
-        self, lookback_months: int = 24
-    ) -> Dict[str, M2MoneySupply]:
+    def get_global_m2_analysis(self, lookback_months: int = 24) -> dict[str, M2MoneySupply]:
         """Get M2 money supply analysis for major economies"""
         try:
             major_economies = ["US", "EU", "JP", "CN"]
@@ -222,7 +220,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to fetch M2 data: {e}")
 
-    def _fetch_m2_data(self, economy: str, lookback_months: int) -> Dict[str, Any]:
+    def _fetch_m2_data(self, economy: str, lookback_months: int) -> dict[str, Any]:
         """Fetch M2 data for specific economy (production would use real APIs)"""
         # Mock M2 data with realistic trends
         base_levels = {"US": 21.7, "EU": 15.2, "JP": 1100.0, "CN": 280.0}
@@ -246,9 +244,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             volatility = 2.5
 
         # Generate monthly growth rates
-        monthly_growth = np.random.normal(
-            base_growth / 12, volatility / 12, lookback_months
-        )
+        monthly_growth = np.random.normal(base_growth / 12, volatility / 12, lookback_months)
 
         # Calculate levels and growth rates
         current_level = base_levels[economy] * (1 + np.sum(monthly_growth) / 100)
@@ -263,17 +259,13 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             "historical_data": monthly_growth,
         }
 
-    def _analyze_m2_trends(
-        self, economy: str, m2_data: Dict[str, Any]
-    ) -> M2MoneySupply:
+    def _analyze_m2_trends(self, economy: str, m2_data: dict[str, Any]) -> M2MoneySupply:
         """Analyze M2 trends and characteristics"""
         historical_data = m2_data["historical_data"]
 
         # Calculate historical percentile
         current_growth = m2_data["yoy_growth"]
-        percentile = (
-            np.sum(historical_data * 12 <= current_growth) / len(historical_data)
-        ) * 100
+        percentile = (np.sum(historical_data * 12 <= current_growth) / len(historical_data)) * 100
 
         # Determine trend direction
         recent_trend = np.mean(historical_data[-6:]) * 12  # Last 6 months annualized
@@ -300,7 +292,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             currency=m2_data["currency"],
         )
 
-    def get_central_bank_analysis(self) -> Dict[str, CentralBankBalance]:
+    def get_central_bank_analysis(self) -> dict[str, CentralBankBalance]:
         """Get central bank balance sheet analysis"""
         try:
             central_banks = ["fed", "ecb", "boj", "pboc"]
@@ -315,7 +307,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to fetch central bank data: {e}")
 
-    def _fetch_central_bank_data(self, central_bank: str) -> Dict[str, Any]:
+    def _fetch_central_bank_data(self, central_bank: str) -> dict[str, Any]:
         """Fetch central bank balance sheet data (production would use real APIs)"""
         config = self.central_bank_config[central_bank]
 
@@ -349,9 +341,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             "config": config,
         }
 
-    def _analyze_central_bank_balance(
-        self, cb_name: str, cb_data: Dict[str, Any]
-    ) -> CentralBankBalance:
+    def _analyze_central_bank_balance(self, cb_name: str, cb_data: dict[str, Any]) -> CentralBankBalance:
         """Analyze central bank balance sheet trends"""
         # Generate asset composition (mock data)
         if cb_name == "fed":
@@ -399,8 +389,8 @@ class GlobalLiquidityMonitor(BaseFinancialService):
 
     def assess_global_liquidity_conditions(
         self,
-        m2_analysis: Dict[str, M2MoneySupply],
-        cb_analysis: Dict[str, CentralBankBalance],
+        m2_analysis: dict[str, M2MoneySupply],
+        cb_analysis: dict[str, CentralBankBalance],
     ) -> LiquidityCondition:
         """Assess overall global liquidity conditions"""
         try:
@@ -408,9 +398,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             m2_scores = []
             for economy, m2_data in m2_analysis.items():
                 # Normalize M2 growth to -1 to +1 scale
-                normalized_growth = (
-                    m2_data.yoy_growth_rate - 4.0
-                ) / 8.0  # 4% baseline, 8% range
+                normalized_growth = (m2_data.yoy_growth_rate - 4.0) / 8.0  # 4% baseline, 8% range
                 m2_scores.append(max(-1.0, min(1.0, normalized_growth)))
 
             m2_composite = np.mean(m2_scores)
@@ -470,18 +458,14 @@ class GlobalLiquidityMonitor(BaseFinancialService):
         except Exception as e:
             raise ValidationError(f"Failed to assess liquidity conditions: {e}")
 
-    def get_cross_border_capital_flows(
-        self, lookback_quarters: int = 8
-    ) -> List[CrossBorderFlow]:
+    def get_cross_border_capital_flows(self, lookback_quarters: int = 8) -> list[CrossBorderFlow]:
         """Analyze cross-border capital flows"""
         try:
             flow_types = ["portfolio", "direct_investment", "banking"]
             capital_flows = []
 
             for flow_type in flow_types:
-                flow_data = self._generate_capital_flow_data(
-                    flow_type, lookback_quarters
-                )
+                flow_data = self._generate_capital_flow_data(flow_type, lookback_quarters)
                 capital_flows.append(flow_data)
 
             return capital_flows
@@ -489,9 +473,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to fetch capital flow data: {e}")
 
-    def _generate_capital_flow_data(
-        self, flow_type: str, quarters: int
-    ) -> CrossBorderFlow:
+    def _generate_capital_flow_data(self, flow_type: str, quarters: int) -> CrossBorderFlow:
         """Generate capital flow data (production would use real data sources)"""
         np.random.seed(42 + hash(flow_type) % 100)
 
@@ -514,9 +496,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
 
         # Calculate metrics
         net_flow = quarterly_flows[-1]  # Latest quarter
-        flow_direction = (
-            "inflow" if net_flow > 10 else "outflow" if net_flow < -10 else "neutral"
-        )
+        flow_direction = "inflow" if net_flow > 10 else "outflow" if net_flow < -10 else "neutral"
         volatility_index = np.std(quarterly_flows) / 100.0  # Normalized volatility
         risk_sentiment = np.tanh(net_flow / 100.0)  # Risk-on/risk-off measure
 
@@ -536,21 +516,17 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             regional_breakdown=regional_breakdown,
         )
 
-    def get_comprehensive_liquidity_analysis(self) -> Dict[str, Any]:
+    def get_comprehensive_liquidity_analysis(self) -> dict[str, Any]:
         """Get comprehensive global liquidity analysis"""
         try:
             # Get all components
             m2_analysis = self.get_global_m2_analysis()
             cb_analysis = self.get_central_bank_analysis()
-            liquidity_conditions = self.assess_global_liquidity_conditions(
-                m2_analysis, cb_analysis
-            )
+            liquidity_conditions = self.assess_global_liquidity_conditions(m2_analysis, cb_analysis)
             capital_flows = self.get_cross_border_capital_flows()
 
             # Generate trading implications
-            trading_implications = self._generate_trading_implications(
-                liquidity_conditions
-            )
+            trading_implications = self._generate_trading_implications(liquidity_conditions)
 
             return {
                 "analysis_timestamp": datetime.now().isoformat(),
@@ -594,13 +570,9 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform comprehensive liquidity analysis: {e}"
-            )
+            raise DataNotFoundError(f"Failed to perform comprehensive liquidity analysis: {e}")
 
-    def _generate_trading_implications(
-        self, liquidity_conditions: LiquidityCondition
-    ) -> Dict[str, Any]:
+    def _generate_trading_implications(self, liquidity_conditions: LiquidityCondition) -> dict[str, Any]:
         """Generate trading implications from liquidity analysis"""
         regime = liquidity_conditions.liquidity_regime
         composite_score = liquidity_conditions.composite_score
@@ -646,9 +618,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             "asset_allocation": allocation,
             "strategy_focus": strategy_focus,
             "risk_budget_adjustment": f"{risk_budget_adjustment:+d}%",
-            "hedging_recommendation": (
-                "reduced" if composite_score > 0.3 else "increased"
-            ),
+            "hedging_recommendation": ("reduced" if composite_score > 0.3 else "increased"),
             "volatility_expectation": "lower" if regime == "abundant" else "higher",
             "regime_monitoring": [
                 "M2 growth rate changes",
@@ -658,7 +628,7 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             ],
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on global liquidity monitor"""
         health_status = super().health_check()
 
@@ -672,12 +642,8 @@ class GlobalLiquidityMonitor(BaseFinancialService):
             health_status["central_bank_analysis"] = len(cb_data) == 4
 
             # Test liquidity assessment
-            liquidity_conditions = self.assess_global_liquidity_conditions(
-                m2_data, cb_data
-            )
-            health_status["liquidity_assessment"] = (
-                liquidity_conditions.regime_probability > 0.7
-            )
+            liquidity_conditions = self.assess_global_liquidity_conditions(m2_data, cb_data)
+            health_status["liquidity_assessment"] = liquidity_conditions.regime_probability > 0.7
 
             # Test capital flows
             flows = self.get_cross_border_capital_flows(4)

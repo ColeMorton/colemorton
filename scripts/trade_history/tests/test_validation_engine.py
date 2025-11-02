@@ -32,15 +32,11 @@ def test_statistical_validation_engine():
     def validate_win_rate_calculation(analysis_data):
         """Validate win rate calculation accuracy."""
 
-        reported_win_rate = analysis_data["performance_measurement"][
-            "statistical_analysis"
-        ]["win_rate"]
+        reported_win_rate = analysis_data["performance_measurement"]["statistical_analysis"]["win_rate"]
 
         # Cross-check calculation (simulated)
         winning_trades = 26  # Example: 26 out of 45 trades
-        total_trades = analysis_data["performance_measurement"]["statistical_analysis"][
-            "total_trades"
-        ]
+        total_trades = analysis_data["performance_measurement"]["statistical_analysis"]["total_trades"]
         cross_check_win_rate = winning_trades / total_trades
 
         variance = abs(reported_win_rate - cross_check_win_rate)
@@ -57,14 +53,10 @@ def test_statistical_validation_engine():
     def validate_sharpe_ratio_calculation(analysis_data):
         """Validate Sharpe ratio calculation accuracy."""
 
-        reported_sharpe = analysis_data["performance_measurement"][
-            "statistical_analysis"
-        ]["sharpe_ratio"]
+        reported_sharpe = analysis_data["performance_measurement"]["statistical_analysis"]["sharpe_ratio"]
 
         # Cross-check calculation components
-        total_return = analysis_data["performance_measurement"]["statistical_analysis"][
-            "total_return"
-        ]
+        total_return = analysis_data["performance_measurement"]["statistical_analysis"]["total_return"]
         risk_free_rate = 0.02  # 2% annual risk-free rate
         volatility = 0.12  # Example volatility
 
@@ -89,9 +81,7 @@ def test_statistical_validation_engine():
     def validate_sample_adequacy(analysis_data):
         """Validate statistical sample adequacy."""
 
-        total_trades = analysis_data["performance_measurement"]["statistical_analysis"][
-            "total_trades"
-        ]
+        total_trades = analysis_data["performance_measurement"]["statistical_analysis"]["total_trades"]
         minimum_threshold = 10
         threshold_met = total_trades >= minimum_threshold
 
@@ -133,12 +123,8 @@ def test_statistical_validation_engine():
     print("  Tolerance Met: {'✅' if sharpe_validation['tolerance_met'] else '❌'}")
 
     print("\nSample Adequacy:")
-    print(
-        f"  Total Trades: {sample_analysis_data['performance_measurement']['statistical_analysis']['total_trades']}"
-    )
-    print(
-        f"  Threshold Met: {'✅' if sample_adequacy['minimum_threshold_met'] else '❌'}"
-    )
+    print(f"  Total Trades: {sample_analysis_data['performance_measurement']['statistical_analysis']['total_trades']}")
+    print(f"  Threshold Met: {'✅' if sample_adequacy['minimum_threshold_met'] else '❌'}")
     print("  Statistical Power: {sample_adequacy['statistical_power']:.2f}")
     print("  Adequacy Score: {sample_adequacy['adequacy_score']:.2f}")
 
@@ -196,17 +182,13 @@ def test_report_integrity_validation():
             "strategic_optimization_roadmap",
         ]
 
-        sections_present = sum(
-            1 for section in required_sections if content_sections.get(section, False)
-        )
+        sections_present = sum(1 for section in required_sections if content_sections.get(section, False))
         completeness_score = sections_present / len(required_sections)
 
         return {
             "executive_dashboard": content_sections.get("executive_dashboard", False),
             "critical_issues": content_sections.get("critical_execution_issues", False),
-            "optimization_roadmap": content_sections.get(
-                "strategic_optimization_roadmap", False
-            ),
+            "optimization_roadmap": content_sections.get("strategic_optimization_roadmap", False),
             "section_count": sections_present,
             "completeness_score": completeness_score,
         }
@@ -217,8 +199,7 @@ def test_report_integrity_validation():
         monitor_data = synthesis_data["live_signals_monitor"]
 
         return {
-            "position_tracking": monitor_data["position_tracking"]["active_positions"]
-            > 0,
+            "position_tracking": monitor_data["position_tracking"]["active_positions"] > 0,
             "market_context": True,  # Assume present for test
             "signal_strength": monitor_data["position_tracking"]["top_performers"] > 0,
             "real_time_focus": True,  # Current date relevance
@@ -247,40 +228,24 @@ def test_report_integrity_validation():
     content_accuracy = validate_content_accuracy(sample_synthesis_data)
 
     print("Internal Report Structure:")
-    print(
-        f"  Executive Dashboard: {'✅' if internal_validation['executive_dashboard'] else '❌'}"
-    )
-    print(
-        f"  Critical Issues: {'✅' if internal_validation['critical_issues'] else '❌'}"
-    )
-    print(
-        f"  Optimization Roadmap: {'✅' if internal_validation['optimization_roadmap'] else '❌'}"
-    )
+    print(f"  Executive Dashboard: {'✅' if internal_validation['executive_dashboard'] else '❌'}")
+    print(f"  Critical Issues: {'✅' if internal_validation['critical_issues'] else '❌'}")
+    print(f"  Optimization Roadmap: {'✅' if internal_validation['optimization_roadmap'] else '❌'}")
     print("  Section Count: {internal_validation['section_count']}/9")
     print("  Completeness Score: {internal_validation['completeness_score']:.1%}")
 
     print("\nLive Monitor Structure:")
-    print(
-        f"  Position Tracking: {'✅' if live_validation['position_tracking'] else '❌'}"
-    )
+    print(f"  Position Tracking: {'✅' if live_validation['position_tracking'] else '❌'}")
     print("  Market Context: {'✅' if live_validation['market_context'] else '❌'}")
     print("  Signal Strength: {'✅' if live_validation['signal_strength'] else '❌'}")
     print("  Real-time Focus: {'✅' if live_validation['real_time_focus'] else '❌'}")
     print("  Completeness Score: {live_validation['completeness_score']:.1%}")
 
     print("\nContent Accuracy:")
-    print(
-        f"  Discovery-Analysis Alignment: {content_accuracy['discovery_analysis_alignment']:.1%}"
-    )
-    print(
-        f"  Analysis-Synthesis Alignment: {content_accuracy['analysis_synthesis_alignment']:.1%}"
-    )
-    print(
-        f"  Cross-Report Consistency: {content_accuracy['cross_report_consistency']:.1%}"
-    )
-    print(
-        f"  Calculation Verification: {content_accuracy['calculation_verification']:.1%}"
-    )
+    print(f"  Discovery-Analysis Alignment: {content_accuracy['discovery_analysis_alignment']:.1%}")
+    print(f"  Analysis-Synthesis Alignment: {content_accuracy['analysis_synthesis_alignment']:.1%}")
+    print(f"  Cross-Report Consistency: {content_accuracy['cross_report_consistency']:.1%}")
+    print(f"  Calculation Verification: {content_accuracy['calculation_verification']:.1%}")
 
     print("✅ Report integrity validation tested\n")
 
@@ -343,9 +308,7 @@ def test_business_logic_validation():
                 coherence_checks["mfe_mae_relationship"] = False
 
             # Check exit efficiency bounds
-            if trade["return"] > 0 and (
-                trade["exit_efficiency"] < 0 or trade["exit_efficiency"] > 1
-            ):
+            if trade["return"] > 0 and (trade["exit_efficiency"] < 0 or trade["exit_efficiency"] > 1):
                 coherence_checks["exit_efficiency_bounds"] = False
 
             # Check duration reasonableness (1-365 days)
@@ -360,9 +323,7 @@ def test_business_logic_validation():
         feasibility_results = []
 
         for opp in opportunities:
-            feasibility_score = (
-                opp["confidence"] * 0.9
-            )  # Slight discount for implementation
+            feasibility_score = opp["confidence"] * 0.9  # Slight discount for implementation
             timeline_realistic = "week" in opp["timeline"] or "month" in opp["timeline"]
 
             feasibility_results.append(
@@ -397,9 +358,7 @@ def test_business_logic_validation():
 
     # Test business logic validation
     signal_coherence = validate_signal_effectiveness_coherence(sample_data["trades"])
-    optimization_feasibility = validate_optimization_feasibility(
-        sample_data["optimization_opportunities"]
-    )
+    optimization_feasibility = validate_optimization_feasibility(sample_data["optimization_opportunities"])
     risk_coherence = validate_risk_assessment_coherence()
 
     print("Signal Effectiveness Coherence:")
@@ -417,9 +376,7 @@ def test_business_logic_validation():
     portfolio_risk = risk_coherence["portfolio_risk_coherence"]
     market_context = risk_coherence["market_context_integration"]
 
-    print(
-        f"  Portfolio Risk Checks: {sum(portfolio_risk.values())}/{len(portfolio_risk)} ✅"
-    )
+    print(f"  Portfolio Risk Checks: {sum(portfolio_risk.values())}/{len(portfolio_risk)} ✅")
     print("  Market Context: {market_context['regime_classification']}")
     print("  Context Accuracy: {'✅' if market_context['regime_accuracy'] else '❌'}")
 
@@ -458,17 +415,14 @@ def test_confidence_scoring_methodology():
     def calculate_component_confidence(scores, weights):
         """Calculate weighted component confidence."""
 
-        weighted_sum = sum(
-            score * weight for score, weight in zip(scores.values(), weights.values())
-        )
+        weighted_sum = sum(score * weight for score, weight in zip(scores.values(), weights.values(), strict=False))
         return weighted_sum
 
     def calculate_overall_confidence(phase_confidences, phase_weights):
         """Calculate overall confidence score."""
 
         overall = sum(
-            conf * weight
-            for conf, weight in zip(phase_confidences.values(), phase_weights.values())
+            conf * weight for conf, weight in zip(phase_confidences.values(), phase_weights.values(), strict=False)
         )
         return overall
 
@@ -480,14 +434,13 @@ def test_confidence_scoring_methodology():
                 "institutional_grade",
                 "Highest quality, ready for external presentation",
             )
-        elif confidence_score >= 0.80:
+        if confidence_score >= 0.80:
             return "operational_grade", "High quality, suitable for internal decisions"
-        elif confidence_score >= 0.70:
+        if confidence_score >= 0.70:
             return "standard_grade", "Acceptable quality with minor limitations noted"
-        elif confidence_score >= 0.60:
+        if confidence_score >= 0.60:
             return "developmental_grade", "Usable with significant caveats and warnings"
-        else:
-            return "inadequate", "Insufficient quality, requires major improvements"
+        return "inadequate", "Insufficient quality, requires major improvements"
 
     # Calculate component confidences
     discovery_weights = {
@@ -509,15 +462,9 @@ def test_confidence_scoring_methodology():
         "action_specificity": 0.15,
     }
 
-    discovery_confidence = calculate_component_confidence(
-        phase_scores["discovery"], discovery_weights
-    )
-    analysis_confidence = calculate_component_confidence(
-        phase_scores["analysis"], analysis_weights
-    )
-    synthesis_confidence = calculate_component_confidence(
-        phase_scores["synthesis"], synthesis_weights
-    )
+    discovery_confidence = calculate_component_confidence(phase_scores["discovery"], discovery_weights)
+    analysis_confidence = calculate_component_confidence(phase_scores["analysis"], analysis_weights)
+    synthesis_confidence = calculate_component_confidence(phase_scores["synthesis"], synthesis_weights)
 
     # Calculate overall confidence
     phase_confidences = {
@@ -534,44 +481,22 @@ def test_confidence_scoring_methodology():
 
     print("Component Confidence Scores:")
     print("  Discovery Phase: {discovery_confidence:.3f}")
-    print(
-        f"    Data Completeness: {phase_scores['discovery']['data_completeness']:.2f}"
-    )
-    print(
-        f"    Fundamental Integration: {phase_scores['discovery']['fundamental_integration']:.2f}"
-    )
-    print(
-        f"    Market Context Quality: {phase_scores['discovery']['market_context_quality']:.2f}"
-    )
-    print(
-        f"    Portfolio Metadata: {phase_scores['discovery']['portfolio_metadata']:.2f}"
-    )
+    print(f"    Data Completeness: {phase_scores['discovery']['data_completeness']:.2f}")
+    print(f"    Fundamental Integration: {phase_scores['discovery']['fundamental_integration']:.2f}")
+    print(f"    Market Context Quality: {phase_scores['discovery']['market_context_quality']:.2f}")
+    print(f"    Portfolio Metadata: {phase_scores['discovery']['portfolio_metadata']:.2f}")
 
     print("\n  Analysis Phase: {analysis_confidence:.3f}")
-    print(
-        f"    Statistical Significance: {phase_scores['analysis']['statistical_significance']:.2f}"
-    )
-    print(
-        f"    Calculation Accuracy: {phase_scores['analysis']['calculation_accuracy']:.2f}"
-    )
-    print(
-        f"    Pattern Reliability: {phase_scores['analysis']['pattern_reliability']:.2f}"
-    )
-    print(
-        f"    Optimization Feasibility: {phase_scores['analysis']['optimization_feasibility']:.2f}"
-    )
+    print(f"    Statistical Significance: {phase_scores['analysis']['statistical_significance']:.2f}")
+    print(f"    Calculation Accuracy: {phase_scores['analysis']['calculation_accuracy']:.2f}")
+    print(f"    Pattern Reliability: {phase_scores['analysis']['pattern_reliability']:.2f}")
+    print(f"    Optimization Feasibility: {phase_scores['analysis']['optimization_feasibility']:.2f}")
 
     print("\n  Synthesis Phase: {synthesis_confidence:.3f}")
     print("    Content Accuracy: {phase_scores['synthesis']['content_accuracy']:.2f}")
-    print(
-        f"    Template Compliance: {phase_scores['synthesis']['template_compliance']:.2f}"
-    )
-    print(
-        f"    Audience Appropriateness: {phase_scores['synthesis']['audience_appropriateness']:.2f}"
-    )
-    print(
-        f"    Action Specificity: {phase_scores['synthesis']['action_specificity']:.2f}"
-    )
+    print(f"    Template Compliance: {phase_scores['synthesis']['template_compliance']:.2f}")
+    print(f"    Audience Appropriateness: {phase_scores['synthesis']['audience_appropriateness']:.2f}")
+    print(f"    Action Specificity: {phase_scores['synthesis']['action_specificity']:.2f}")
 
     print("\nOverall Assessment:")
     print("  Overall Confidence: {overall_confidence:.3f}")
@@ -596,12 +521,14 @@ def validate_validation_schema():
     Validate that the validation JSON schema is properly structured.
     """
 
-    schema_path = "/Users/colemorton/Projects/sensylate/data/outputs/trade_history/validate/trading_validation_schema_v1.json"
+    schema_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/trade_history/validate/trading_validation_schema_v1.json"
+    )
 
     print("=== Validation Schema Validation ===\n")
 
     try:
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = json.load(f)
 
         # Check required top-level properties
@@ -629,10 +556,7 @@ def validate_validation_schema():
         stat_val = schema["properties"].get("statistical_validation", {})
         stat_props = stat_val.get("properties", {})
 
-        if (
-            "calculation_accuracy" in stat_props
-            and "significance_testing" in stat_props
-        ):
+        if "calculation_accuracy" in stat_props and "significance_testing" in stat_props:
             print("✅ Statistical validation structure valid")
         else:
             print("❌ Statistical validation structure incomplete")
@@ -655,15 +579,15 @@ def validate_validation_schema():
         else:
             print("❌ Overall assessment structure incomplete")
 
-        print("Total top-level properties: {len(schema_props)}")
+        print(f"Total top-level properties: {len(schema_props)}")
         print("✅ Schema validation complete")
 
     except FileNotFoundError:
         print("❌ Schema file not found")
     except json.JSONDecodeError as e:
-        print("❌ Invalid JSON in schema: {e}")
+        print(f"❌ Invalid JSON in schema: {e}")
     except Exception as e:
-        print("❌ Schema validation error: {e}")
+        print(f"❌ Schema validation error: {e}")
 
 
 def main():

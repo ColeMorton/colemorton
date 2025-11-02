@@ -14,9 +14,9 @@ Integrates with FRED, Alpha Vantage, and sector ETF data for institutional-grade
 
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -27,9 +27,9 @@ from .base_financial_service import (
     ValidationError,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 @dataclass
@@ -38,7 +38,7 @@ class SectorSensitivity:
 
     sector_name: str
     sector_etf: str  # ETF ticker symbol
-    factor_sensitivities: Dict[str, float]  # Beta coefficients to economic factors
+    factor_sensitivities: dict[str, float]  # Beta coefficients to economic factors
     economic_cycle_beta: float  # Sensitivity to business cycle
     interest_rate_beta: float  # Sensitivity to interest rate changes
     inflation_beta: float  # Sensitivity to inflation changes
@@ -52,10 +52,10 @@ class EconomicRegimeSector:
     """Sector performance by economic regime"""
 
     regime_type: str  # 'expansion', 'peak', 'contraction', 'trough'
-    outperforming_sectors: List[str]
-    underperforming_sectors: List[str]
-    sector_rankings: Dict[str, float]  # Sector name -> expected return
-    confidence_scores: Dict[str, float]  # Confidence in each ranking
+    outperforming_sectors: list[str]
+    underperforming_sectors: list[str]
+    sector_rankings: dict[str, float]  # Sector name -> expected return
+    confidence_scores: dict[str, float]  # Confidence in each ranking
     historical_hit_rate: float  # Historical accuracy of regime predictions
 
 
@@ -64,15 +64,13 @@ class SectorRotationSignal:
     """Sector rotation trading signal"""
 
     signal_date: datetime
-    rotation_type: (
-        str  # 'defensive_to_cyclical', 'cyclical_to_defensive', 'growth_to_value'
-    )
-    recommended_overweight: List[str]  # Sectors to overweight
-    recommended_underweight: List[str]  # Sectors to underweight
+    rotation_type: str  # 'defensive_to_cyclical', 'cyclical_to_defensive', 'growth_to_value'
+    recommended_overweight: list[str]  # Sectors to overweight
+    recommended_underweight: list[str]  # Sectors to underweight
     signal_strength: str  # 'strong', 'moderate', 'weak'
     time_horizon: str  # '1M', '3M', '6M', '12M'
     confidence: float
-    economic_drivers: List[str]  # Economic factors driving the signal
+    economic_drivers: list[str]  # Economic factors driving the signal
 
 
 @dataclass
@@ -81,7 +79,7 @@ class FactorAttribution:
 
     sector_name: str
     total_return: float
-    factor_contributions: Dict[str, float]  # Factor name -> contribution to return
+    factor_contributions: dict[str, float]  # Factor name -> contribution to return
     idiosyncratic_return: float  # Sector-specific return
     explained_variance: float  # Proportion of return explained by factors
     residual_risk: float  # Unexplained volatility
@@ -108,7 +106,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
         # Historical correlation matrix
         self.correlation_matrix = self._initialize_correlation_matrix()
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate sector economic correlation response data"""
         if not isinstance(data, dict):
             raise ValidationError(f"Invalid response format for {endpoint}")
@@ -123,7 +121,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
 
         return data
 
-    def _initialize_sector_config(self) -> Dict[str, Any]:
+    def _initialize_sector_config(self) -> dict[str, Any]:
         """Initialize sector ETF configuration"""
         return {
             "sectors": {
@@ -172,7 +170,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             "market_benchmark": "SPY",
         }
 
-    def _initialize_economic_factors(self) -> Dict[str, Any]:
+    def _initialize_economic_factors(self) -> dict[str, Any]:
         """Initialize economic factor definitions"""
         return {
             "gdp_growth": {
@@ -219,7 +217,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             },
         }
 
-    def _initialize_correlation_matrix(self) -> Dict[str, Dict[str, float]]:
+    def _initialize_correlation_matrix(self) -> dict[str, dict[str, float]]:
         """Initialize historical sector-factor correlation matrix"""
         return {
             "technology": {
@@ -323,17 +321,13 @@ class SectorEconomicCorrelations(BaseFinancialService):
             },
         }
 
-    def get_sector_sensitivities(
-        self, lookback_months: int = 36
-    ) -> Dict[str, SectorSensitivity]:
+    def get_sector_sensitivities(self, lookback_months: int = 36) -> dict[str, SectorSensitivity]:
         """Calculate sector sensitivities to economic factors"""
         try:
             sector_sensitivities = {}
 
             for sector_name in self.sector_config["sectors"].keys():
-                sensitivity = self._calculate_sector_sensitivity(
-                    sector_name, lookback_months
-                )
+                sensitivity = self._calculate_sector_sensitivity(sector_name, lookback_months)
                 sector_sensitivities[sector_name] = sensitivity
 
             return sector_sensitivities
@@ -341,9 +335,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to calculate sector sensitivities: {e}")
 
-    def _calculate_sector_sensitivity(
-        self, sector_name: str, lookback_months: int
-    ) -> SectorSensitivity:
+    def _calculate_sector_sensitivity(self, sector_name: str, lookback_months: int) -> SectorSensitivity:
         """Calculate individual sector sensitivity (production would use real regression analysis)"""
         sector_info = self.sector_config["sectors"][sector_name]
         correlations = self.correlation_matrix[sector_name]
@@ -357,9 +349,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             factor_sensitivities[factor] = beta
 
         # Calculate composite betas
-        economic_cycle_beta = np.mean(
-            [correlations["gdp_growth"], -correlations["unemployment"]]
-        )
+        economic_cycle_beta = np.mean([correlations["gdp_growth"], -correlations["unemployment"]])
 
         interest_rate_beta = correlations["interest_rates"]
         inflation_beta = correlations["inflation"]
@@ -389,9 +379,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             r_squared=r_squared,
         )
 
-    def get_economic_regime_sectors(
-        self, current_regime: str = "expansion"
-    ) -> EconomicRegimeSector:
+    def get_economic_regime_sectors(self, current_regime: str = "expansion") -> EconomicRegimeSector:
         """Get sector performance by economic regime"""
         try:
             regime_data = self._analyze_regime_sector_performance(current_regime)
@@ -489,9 +477,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
         confidence_scores = {}
         for sector in performance["rankings"].keys():
             base_confidence = 0.75
-            rank_confidence = (
-                abs(performance["rankings"][sector]) * 2
-            )  # Higher for extreme rankings
+            rank_confidence = abs(performance["rankings"][sector]) * 2  # Higher for extreme rankings
             confidence_scores[sector] = min(0.95, base_confidence + rank_confidence)
 
         return EconomicRegimeSector(
@@ -503,9 +489,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             historical_hit_rate=0.72,  # Mock historical accuracy
         )
 
-    def generate_sector_rotation_signals(
-        self, economic_indicators: Dict[str, Any]
-    ) -> List[SectorRotationSignal]:
+    def generate_sector_rotation_signals(self, economic_indicators: dict[str, Any]) -> list[SectorRotationSignal]:
         """Generate sector rotation signals based on economic indicators"""
         try:
             signals = []
@@ -522,7 +506,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
         except Exception as e:
             raise DataNotFoundError(f"Failed to generate rotation signals: {e}")
 
-    def _assess_economic_conditions(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_economic_conditions(self, indicators: dict[str, Any]) -> dict[str, Any]:
         """Assess current economic conditions (mock analysis)"""
         # Mock economic condition assessment
         return {
@@ -533,9 +517,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             "cycle_stage": "mid_expansion",  # early_expansion, mid_expansion, late_expansion, contraction
         }
 
-    def _generate_rotation_signal(
-        self, conditions: Dict[str, Any]
-    ) -> SectorRotationSignal:
+    def _generate_rotation_signal(self, conditions: dict[str, Any]) -> SectorRotationSignal:
         """Generate sector rotation signal based on economic conditions"""
         growth_momentum = conditions["growth_momentum"]
         inflation_trend = conditions["inflation_trend"]
@@ -580,16 +562,14 @@ class SectorEconomicCorrelations(BaseFinancialService):
         )
 
     def perform_factor_attribution(
-        self, sector_returns: Dict[str, float], factor_returns: Dict[str, float]
-    ) -> Dict[str, FactorAttribution]:
+        self, sector_returns: dict[str, float], factor_returns: dict[str, float]
+    ) -> dict[str, FactorAttribution]:
         """Perform factor attribution analysis for sector returns"""
         try:
             attributions = {}
 
             for sector_name, sector_return in sector_returns.items():
-                attribution = self._calculate_factor_attribution(
-                    sector_name, sector_return, factor_returns
-                )
+                attribution = self._calculate_factor_attribution(sector_name, sector_return, factor_returns)
                 attributions[sector_name] = attribution
 
             return attributions
@@ -598,7 +578,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
             raise DataNotFoundError(f"Failed to perform factor attribution: {e}")
 
     def _calculate_factor_attribution(
-        self, sector_name: str, sector_return: float, factor_returns: Dict[str, float]
+        self, sector_name: str, sector_return: float, factor_returns: dict[str, float]
     ) -> FactorAttribution:
         """Calculate factor attribution for individual sector"""
         if sector_name not in self.correlation_matrix:
@@ -642,14 +622,12 @@ class SectorEconomicCorrelations(BaseFinancialService):
             residual_risk=residual_risk,
         )
 
-    def get_comprehensive_sector_analysis(self) -> Dict[str, Any]:
+    def get_comprehensive_sector_analysis(self) -> dict[str, Any]:
         """Get comprehensive sector-economic correlation analysis"""
         try:
             # Get all analysis components
             sector_sensitivities = self.get_sector_sensitivities()
-            regime_analysis = self.get_economic_regime_sectors(
-                "expansion"
-            )  # Current regime
+            regime_analysis = self.get_economic_regime_sectors("expansion")  # Current regime
 
             # Mock economic indicators for rotation signals
             mock_indicators = {
@@ -662,16 +640,10 @@ class SectorEconomicCorrelations(BaseFinancialService):
 
             # Mock factor attribution
             mock_sector_returns = {
-                sector: np.random.normal(0.08, 0.15)
-                for sector in self.sector_config["sectors"].keys()
+                sector: np.random.normal(0.08, 0.15) for sector in self.sector_config["sectors"].keys()
             }
-            mock_factor_returns = {
-                factor: np.random.normal(0, 0.10)
-                for factor in self.economic_factors.keys()
-            }
-            factor_attribution = self.perform_factor_attribution(
-                mock_sector_returns, mock_factor_returns
-            )
+            mock_factor_returns = {factor: np.random.normal(0, 0.10) for factor in self.economic_factors.keys()}
+            factor_attribution = self.perform_factor_attribution(mock_sector_returns, mock_factor_returns)
 
             # Generate investment recommendations
             investment_recommendations = self._generate_investment_recommendations(
@@ -728,15 +700,13 @@ class SectorEconomicCorrelations(BaseFinancialService):
             }
 
         except Exception as e:
-            raise DataNotFoundError(
-                f"Failed to perform comprehensive sector analysis: {e}"
-            )
+            raise DataNotFoundError(f"Failed to perform comprehensive sector analysis: {e}")
 
     def _generate_investment_recommendations(
         self,
         regime_analysis: EconomicRegimeSector,
-        rotation_signal: Optional[SectorRotationSignal],
-    ) -> Dict[str, Any]:
+        rotation_signal: SectorRotationSignal | None,
+    ) -> dict[str, Any]:
         """Generate investment recommendations based on analysis"""
         recommendations = {
             "portfolio_allocation": {
@@ -764,37 +734,26 @@ class SectorEconomicCorrelations(BaseFinancialService):
             # Combine signals (intersection for high confidence)
             final_overweight = list(set(regime_overweight) & set(signal_overweight))
             if len(final_overweight) < 2:
-                final_overweight.extend(
-                    [s for s in signal_overweight if s not in final_overweight][:2]
-                )
+                final_overweight.extend([s for s in signal_overweight if s not in final_overweight][:2])
 
             final_underweight = list(set(regime_underweight) & set(signal_underweight))
             if len(final_underweight) < 2:
-                final_underweight.extend(
-                    [s for s in signal_underweight if s not in final_underweight][:2]
-                )
+                final_underweight.extend([s for s in signal_underweight if s not in final_underweight][:2])
         else:
             final_overweight = regime_overweight
             final_underweight = regime_underweight
 
-        recommendations["portfolio_allocation"][
-            "overweight_sectors"
-        ] = final_overweight[:3]
-        recommendations["portfolio_allocation"][
-            "underweight_sectors"
-        ] = final_underweight[:2]
+        recommendations["portfolio_allocation"]["overweight_sectors"] = final_overweight[:3]
+        recommendations["portfolio_allocation"]["underweight_sectors"] = final_underweight[:2]
 
         # All other sectors neutral
         all_sectors = set(self.sector_config["sectors"].keys())
         allocated_sectors = set(final_overweight + final_underweight)
-        recommendations["portfolio_allocation"]["neutral_sectors"] = list(
-            all_sectors - allocated_sectors
-        )
+        recommendations["portfolio_allocation"]["neutral_sectors"] = list(all_sectors - allocated_sectors)
 
         # Generate tactical trades
         recommendations["tactical_trades"] = [
-            f"Long {self.sector_config['sectors'][sector]['etf']} ({sector})"
-            for sector in final_overweight
+            f"Long {self.sector_config['sectors'][sector]['etf']} ({sector})" for sector in final_overweight
         ] + [
             f"Short/Underweight {self.sector_config['sectors'][sector]['etf']} ({sector})"
             for sector in final_underweight
@@ -810,7 +769,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
 
         return recommendations
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform health check on sector correlation service"""
         health_status = super().health_check()
 
@@ -821,9 +780,7 @@ class SectorEconomicCorrelations(BaseFinancialService):
 
             # Test regime analysis
             regime_analysis = self.get_economic_regime_sectors("expansion")
-            health_status["regime_analysis"] = (
-                len(regime_analysis.outperforming_sectors) > 0
-            )
+            health_status["regime_analysis"] = len(regime_analysis.outperforming_sectors) > 0
 
             # Test rotation signals
             mock_indicators = {"gdp_growth": 2.0, "inflation": 2.5}
@@ -870,9 +827,7 @@ def create_sector_economic_correlations(
     # Use absolute path to config directory
     config_dir = Path(__file__).parent.parent.parent / "config"
     config_loader = ConfigLoader(str(config_dir))
-    service_config = config_loader.get_service_config(
-        "sector_economic_correlations", env
-    )
+    service_config = config_loader.get_service_config("sector_economic_correlations", env)
 
     # Convert to ServiceConfig format with historical_storage
     config = ServiceConfig(

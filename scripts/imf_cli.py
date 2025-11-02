@@ -13,10 +13,10 @@ Command-line interface for International Monetary Fund (IMF) Data Portal with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import typer
-from rich.console import Console
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -44,12 +44,8 @@ class IMFCLI(BaseFinancialCLI):
 
         @self.app.command("country")
         def get_country_data(
-            indicator: str = typer.Argument(
-                ..., help="Economic indicator (e.g., NGDP_RPCH, PCPIPCH, LUR)"
-            ),
-            country_code: str = typer.Argument(
-                ..., help="Country code (e.g., USA, CHN, DEU)"
-            ),
+            indicator: str = typer.Argument(..., help="Economic indicator (e.g., NGDP_RPCH, PCPIPCH, LUR)"),
+            country_code: str = typer.Argument(..., help="Country code (e.g., USA, CHN, DEU)"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment (dev/test/prod)"),
@@ -59,21 +55,15 @@ class IMFCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_country_data(
-                    indicator, country_code, start_year, end_year
-                )
-                self._output_result(
-                    result, output_format, f"Country Data: {country_code} - {indicator}"
-                )
+                result = service.get_country_data(indicator, country_code, start_year, end_year)
+                self._output_result(result, output_format, f"Country Data: {country_code} - {indicator}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get country data for {country_code}")
 
         @self.app.command("global")
         def get_global_data(
-            indicator: str = typer.Argument(
-                ..., help="Economic indicator (e.g., NGDP_RPCH, PCPIPCH, LUR)"
-            ),
+            indicator: str = typer.Argument(..., help="Economic indicator (e.g., NGDP_RPCH, PCPIPCH, LUR)"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment"),
@@ -105,12 +95,8 @@ class IMFCLI(BaseFinancialCLI):
             try:
                 service = self._get_service(env)
 
-                result = service.get_regional_data(
-                    indicator, region, start_year, end_year
-                )
-                self._output_result(
-                    result, output_format, f"Regional Data: {region} - {indicator}"
-                )
+                result = service.get_regional_data(indicator, region, start_year, end_year)
+                self._output_result(result, output_format, f"Regional Data: {region} - {indicator}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get regional data for {region}")
@@ -118,9 +104,7 @@ class IMFCLI(BaseFinancialCLI):
         @self.app.command("multiple")
         def get_multiple_countries(
             indicator: str = typer.Argument(..., help="Economic indicator"),
-            country_codes: str = typer.Argument(
-                ..., help="Comma-separated country codes (e.g., USA,CHN,JPN)"
-            ),
+            country_codes: str = typer.Argument(..., help="Comma-separated country codes (e.g., USA,CHN,JPN)"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment"),
@@ -129,19 +113,13 @@ class IMFCLI(BaseFinancialCLI):
             """Get economic data for multiple countries"""
             try:
                 service = self._get_service(env)
-                country_list = [
-                    code.strip().upper() for code in country_codes.split(",")
-                ]
+                country_list = [code.strip().upper() for code in country_codes.split(",")]
 
-                result = service.get_multiple_countries(
-                    indicator, country_list, start_year, end_year
-                )
-                self._output_result(
-                    result, output_format, f"Multi-Country Data: {indicator}"
-                )
+                result = service.get_multiple_countries(indicator, country_list, start_year, end_year)
+                self._output_result(result, output_format, f"Multi-Country Data: {indicator}")
 
             except Exception as e:
-                self._handle_error(e, f"Failed to get multi-country data")
+                self._handle_error(e, "Failed to get multi-country data")
 
         @self.app.command("datasets")
         def get_available_datasets(
@@ -157,15 +135,10 @@ class IMFCLI(BaseFinancialCLI):
                 # Convert for table display
                 if output_format == OutputFormat.TABLE and isinstance(result, dict):
                     datasets = result.get("datasets", {})
-                    table_data = [
-                        {"code": code, "description": desc}
-                        for code, desc in datasets.items()
-                    ]
+                    table_data = [{"code": code, "description": desc} for code, desc in datasets.items()]
                     result = table_data
 
-                self._output_result(
-                    result, output_format, "Available IMF Economic Indicators"
-                )
+                self._output_result(result, output_format, "Available IMF Economic Indicators")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get available datasets")
@@ -184,10 +157,7 @@ class IMFCLI(BaseFinancialCLI):
                 # Convert for table display
                 if output_format == OutputFormat.TABLE and isinstance(result, dict):
                     countries = result.get("country_codes", {})
-                    table_data = [
-                        {"country_code": iso2, "iso3_code": iso3}
-                        for iso2, iso3 in countries.items()
-                    ]
+                    table_data = [{"country_code": iso2, "iso3_code": iso3} for iso2, iso3 in countries.items()]
                     result = table_data
 
                 self._output_result(result, output_format, "Major Country Codes")
@@ -209,10 +179,7 @@ class IMFCLI(BaseFinancialCLI):
                 # Convert for table display
                 if output_format == OutputFormat.TABLE and isinstance(result, dict):
                     regions = result.get("regions", {})
-                    table_data = [
-                        {"region_code": code, "description": desc}
-                        for code, desc in regions.items()
-                    ]
+                    table_data = [{"region_code": code, "description": desc} for code, desc in regions.items()]
                     result = table_data
 
                 self._output_result(result, output_format, "Available Regions")
@@ -222,9 +189,7 @@ class IMFCLI(BaseFinancialCLI):
 
         @self.app.command("gdp-growth")
         def get_gdp_growth_comparison(
-            country_codes: str = typer.Argument(
-                ..., help="Comma-separated country codes"
-            ),
+            country_codes: str = typer.Argument(..., help="Comma-separated country codes"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment"),
@@ -233,23 +198,17 @@ class IMFCLI(BaseFinancialCLI):
             """Get GDP growth comparison for multiple countries"""
             try:
                 service = self._get_service(env)
-                country_list = [
-                    code.strip().upper() for code in country_codes.split(",")
-                ]
+                country_list = [code.strip().upper() for code in country_codes.split(",")]
 
-                result = service.get_gdp_growth_comparison(
-                    country_list, start_year, end_year
-                )
-                self._output_result(result, output_format, f"GDP Growth Comparison")
+                result = service.get_gdp_growth_comparison(country_list, start_year, end_year)
+                self._output_result(result, output_format, "GDP Growth Comparison")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get GDP growth comparison")
 
         @self.app.command("inflation")
         def get_inflation_comparison(
-            country_codes: str = typer.Argument(
-                ..., help="Comma-separated country codes"
-            ),
+            country_codes: str = typer.Argument(..., help="Comma-separated country codes"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment"),
@@ -258,23 +217,17 @@ class IMFCLI(BaseFinancialCLI):
             """Get inflation rate comparison for multiple countries"""
             try:
                 service = self._get_service(env)
-                country_list = [
-                    code.strip().upper() for code in country_codes.split(",")
-                ]
+                country_list = [code.strip().upper() for code in country_codes.split(",")]
 
-                result = service.get_inflation_comparison(
-                    country_list, start_year, end_year
-                )
-                self._output_result(result, output_format, f"Inflation Rate Comparison")
+                result = service.get_inflation_comparison(country_list, start_year, end_year)
+                self._output_result(result, output_format, "Inflation Rate Comparison")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get inflation comparison")
 
         @self.app.command("unemployment")
         def get_unemployment_comparison(
-            country_codes: str = typer.Argument(
-                ..., help="Comma-separated country codes"
-            ),
+            country_codes: str = typer.Argument(..., help="Comma-separated country codes"),
             start_year: int = typer.Option(None, help="Starting year for data"),
             end_year: int = typer.Option(None, help="Ending year for data"),
             env: str = typer.Option("dev", help="Environment"),
@@ -283,16 +236,10 @@ class IMFCLI(BaseFinancialCLI):
             """Get unemployment rate comparison for multiple countries"""
             try:
                 service = self._get_service(env)
-                country_list = [
-                    code.strip().upper() for code in country_codes.split(",")
-                ]
+                country_list = [code.strip().upper() for code in country_codes.split(",")]
 
-                result = service.get_unemployment_comparison(
-                    country_list, start_year, end_year
-                )
-                self._output_result(
-                    result, output_format, f"Unemployment Rate Comparison"
-                )
+                result = service.get_unemployment_comparison(country_list, start_year, end_year)
+                self._output_result(result, output_format, "Unemployment Rate Comparison")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get unemployment comparison")
@@ -308,19 +255,15 @@ class IMFCLI(BaseFinancialCLI):
                 service = self._get_service(env)
 
                 result = service.get_global_economic_overview(year)
-                self._output_result(result, output_format, f"Global Economic Overview")
+                self._output_result(result, output_format, "Global Economic Overview")
 
             except Exception as e:
                 self._handle_error(e, "Failed to get global economic overview")
 
         @self.app.command("compare")
         def compare_countries(
-            country_codes: str = typer.Argument(
-                ..., help="Comma-separated country codes"
-            ),
-            indicators: str = typer.Option(
-                "NGDP_RPCH,PCPIPCH,LUR", help="Comma-separated indicators"
-            ),
+            country_codes: str = typer.Argument(..., help="Comma-separated country codes"),
+            indicators: str = typer.Option("NGDP_RPCH,PCPIPCH,LUR", help="Comma-separated indicators"),
             year: int = typer.Option(None, help="Specific year for comparison"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
@@ -328,25 +271,17 @@ class IMFCLI(BaseFinancialCLI):
             """Compare multiple economic indicators across countries"""
             try:
                 service = self._get_service(env)
-                country_list = [
-                    code.strip().upper() for code in country_codes.split(",")
-                ]
+                country_list = [code.strip().upper() for code in country_codes.split(",")]
                 indicator_list = [ind.strip().upper() for ind in indicators.split(",")]
 
                 comparison_data = []
                 for indicator in indicator_list:
                     try:
-                        result = service.get_multiple_countries(
-                            indicator, country_list, year, year
-                        )
+                        result = service.get_multiple_countries(indicator, country_list, year, year)
                         if result:
-                            comparison_data.append(
-                                {"indicator": indicator, "data": result}
-                            )
+                            comparison_data.append({"indicator": indicator, "data": result})
                     except Exception as e:
-                        comparison_data.append(
-                            {"indicator": indicator, "error": str(e)}
-                        )
+                        comparison_data.append({"indicator": indicator, "error": str(e)})
 
                 final_result = {
                     "comparison_data": comparison_data,
@@ -357,18 +292,14 @@ class IMFCLI(BaseFinancialCLI):
                     "timestamp": datetime.now().isoformat(),
                 }
 
-                self._output_result(
-                    final_result, output_format, f"Country Economic Comparison"
-                )
+                self._output_result(final_result, output_format, "Country Economic Comparison")
 
             except Exception as e:
                 self._handle_error(e, "Failed to compare countries")
 
         @self.app.command("quick")
         def quick_country_overview(
-            country_code: str = typer.Argument(
-                ..., help="Country code (e.g., USA, CHN, DEU)"
-            ),
+            country_code: str = typer.Argument(..., help="Country code (e.g., USA, CHN, DEU)"),
             year: int = typer.Option(None, help="Specific year for data"),
             env: str = typer.Option("dev", help="Environment"),
             output_format: str = typer.Option(OutputFormat.TABLE, help="Output format"),
@@ -387,15 +318,11 @@ class IMFCLI(BaseFinancialCLI):
                 overview_data = []
                 for indicator in indicators:
                     try:
-                        result = service.get_country_data(
-                            indicator, country_code, year, year
-                        )
+                        result = service.get_country_data(indicator, country_code, year, year)
                         overview_data.append(
                             {
                                 "indicator": indicator,
-                                "description": service.datasets.get(
-                                    indicator, "Unknown"
-                                ),
+                                "description": service.datasets.get(indicator, "Unknown"),
                                 "data": result,
                             }
                         )
@@ -403,9 +330,7 @@ class IMFCLI(BaseFinancialCLI):
                         overview_data.append(
                             {
                                 "indicator": indicator,
-                                "description": service.datasets.get(
-                                    indicator, "Unknown"
-                                ),
+                                "description": service.datasets.get(indicator, "Unknown"),
                                 "error": str(e),
                             }
                         )
@@ -431,40 +356,37 @@ class IMFCLI(BaseFinancialCLI):
                         "timestamp": datetime.now().isoformat(),
                     }
 
-                self._output_result(
-                    final_result, output_format, f"Quick Overview: {country_code}"
-                )
+                self._output_result(final_result, output_format, f"Quick Overview: {country_code}")
 
             except Exception as e:
                 self._handle_error(e, f"Failed to get overview for {country_code}")
 
-    def perform_health_check(self, env: str) -> Dict[str, Any]:
+    def perform_health_check(self, env: str) -> dict[str, Any]:
         """Perform IMF service health check"""
         service = self._get_service(env)
         return service.health_check()
 
-    def perform_cache_action(self, action: str, env: str) -> Dict[str, Any]:
+    def perform_cache_action(self, action: str, env: str) -> dict[str, Any]:
         """Perform cache management action"""
         service = self._get_service(env)
 
         if action == "clear":
             service.clear_cache()
             return {"action": "clear", "status": "success", "message": "Cache cleared"}
-        elif action == "cleanup":
+        if action == "cleanup":
             service.cleanup_cache()
             return {
                 "action": "cleanup",
                 "status": "success",
                 "message": "Expired cache entries removed",
             }
-        elif action == "stats":
+        if action == "stats":
             return {
                 "action": "stats",
                 "cache_info": service.get_service_info(),
                 "cache_directory": str(service.cache.cache_dir),
             }
-        else:
-            raise ValidationError(f"Unknown cache action: {action}")
+        raise ValidationError(f"Unknown cache action: {action}")
 
 
 def main():

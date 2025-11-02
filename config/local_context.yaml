@@ -1,9 +1,9 @@
-# Local Development Context Configuration for Sensylate
+# Local Development Context Configuration for Cole Morton
 # This configuration provides the default context for all commands in local development
 
 execution:
   environment: local
-  working_directory: /Users/colemorton/Projects/sensylate
+  working_directory: /Users/colemorton/Projects/colemorton
   timeout: 300
   session_management: true
 
@@ -35,7 +35,7 @@ mcp:
   # Server priorities for tool discovery
   server_priorities:
     - yahoo-finance
-    - sensylate-trading
+    - colemorton-trading
     - sec-edgar
     - fred-economic
     - content-automation

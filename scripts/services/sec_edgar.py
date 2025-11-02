@@ -12,7 +12,7 @@ Production-grade SEC EDGAR filing data integration with:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -20,6 +20,7 @@ from .base_financial_service import (
     ServiceConfig,
     ValidationError,
 )
+
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -41,11 +42,7 @@ class SECEDGARService(BaseFinancialService):
         super().__init__(config)
 
         # Override headers to include SEC required User-Agent
-        self.config.headers.update(
-            {
-                "User-Agent": "Sensylate Trading Analysis Platform (contact@sensylate.com)"
-            }
-        )
+        self.config.headers.update({"User-Agent": "Colemorton Trading Analysis Platform (cole.morton@hotmail.com)"})
 
         # Common financial statement mappings
         self.financial_statement_mappings = {
@@ -70,19 +67,13 @@ class SECEDGARService(BaseFinancialService):
                 "StockholdersEquity": ["us-gaap:StockholdersEquity"],
             },
             "cash_flow": {
-                "CashFlowFromOperations": [
-                    "us-gaap:NetCashProvidedByUsedInOperatingActivities"
-                ],
-                "CashFlowFromInvesting": [
-                    "us-gaap:NetCashProvidedByUsedInInvestingActivities"
-                ],
-                "CashFlowFromFinancing": [
-                    "us-gaap:NetCashProvidedByUsedInFinancingActivities"
-                ],
+                "CashFlowFromOperations": ["us-gaap:NetCashProvidedByUsedInOperatingActivities"],
+                "CashFlowFromInvesting": ["us-gaap:NetCashProvidedByUsedInInvestingActivities"],
+                "CashFlowFromFinancing": ["us-gaap:NetCashProvidedByUsedInFinancingActivities"],
             },
         }
 
-    def _validate_response(self, data: Dict[str, Any], endpoint: str) -> Dict[str, Any]:
+    def _validate_response(self, data: dict[str, Any], endpoint: str) -> dict[str, Any]:
         """Validate SEC EDGAR response data"""
 
         if not isinstance(data, dict):
@@ -98,7 +89,7 @@ class SECEDGARService(BaseFinancialService):
 
         return data
 
-    def get_company_tickers(self) -> Dict[str, Any]:
+    def get_company_tickers(self) -> dict[str, Any]:
         """
         Get company tickers and CIK mappings
 
@@ -108,13 +99,11 @@ class SECEDGARService(BaseFinancialService):
         result = self._make_request_with_retry("/files/company_tickers.json")
 
         # Add metadata
-        result.update(
-            {"data_source": "SEC EDGAR", "timestamp": datetime.now().isoformat()}
-        )
+        result.update({"data_source": "SEC EDGAR", "timestamp": datetime.now().isoformat()})
 
         return result
 
-    def get_company_facts(self, cik: str) -> Dict[str, Any]:
+    def get_company_facts(self, cik: str) -> dict[str, Any]:
         """
         Get company facts for a specific CIK
 
@@ -129,9 +118,7 @@ class SECEDGARService(BaseFinancialService):
 
         # Pad CIK with leading zeros to 10 digits
         cik_padded = cik.zfill(10)
-        result = self._make_request_with_retry(
-            f"/api/xbrl/companyfacts/CIK{cik_padded}.json"
-        )
+        result = self._make_request_with_retry(f"/api/xbrl/companyfacts/CIK{cik_padded}.json")
 
         # Add metadata
         result.update(
@@ -145,7 +132,7 @@ class SECEDGARService(BaseFinancialService):
 
         return result
 
-    def get_company_concept(self, cik: str, taxonomy: str, tag: str) -> Dict[str, Any]:
+    def get_company_concept(self, cik: str, taxonomy: str, tag: str) -> dict[str, Any]:
         """
         Get company concept data
 
@@ -161,9 +148,7 @@ class SECEDGARService(BaseFinancialService):
             raise ValidationError("CIK, taxonomy, and tag are required")
 
         cik_padded = cik.zfill(10)
-        result = self._make_request_with_retry(
-            f"/api/xbrl/companyconcept/CIK{cik_padded}/{taxonomy}/{tag}.json"
-        )
+        result = self._make_request_with_retry(f"/api/xbrl/companyconcept/CIK{cik_padded}/{taxonomy}/{tag}.json")
 
         # Add metadata
         result.update(
@@ -178,7 +163,7 @@ class SECEDGARService(BaseFinancialService):
 
         return result
 
-    def get_submissions(self, cik: str) -> Dict[str, Any]:
+    def get_submissions(self, cik: str) -> dict[str, Any]:
         """
         Get company submissions
 
@@ -206,7 +191,7 @@ class SECEDGARService(BaseFinancialService):
 
         return result
 
-    def search_company_by_ticker(self, ticker: str) -> Optional[Dict[str, Any]]:
+    def search_company_by_ticker(self, ticker: str) -> dict[str, Any] | None:
         """
         Search for company by ticker symbol
 
@@ -237,9 +222,7 @@ class SECEDGARService(BaseFinancialService):
 
         return None
 
-    def get_company_filings(
-        self, ticker: str, filing_type: str = "10-K"
-    ) -> Dict[str, Any]:
+    def get_company_filings(self, ticker: str, filing_type: str = "10-K") -> dict[str, Any]:
         """
         Get company filings for a specific ticker and filing type
 
@@ -270,9 +253,7 @@ class SECEDGARService(BaseFinancialService):
                         "filing_date": recent_filings["filingDate"][i],
                         "accession_number": recent_filings["accessionNumber"][i],
                         "primary_document": recent_filings["primaryDocument"][i],
-                        "report_date": recent_filings.get(
-                            "reportDate", [None] * len(recent_filings["form"])
-                        )[i],
+                        "report_date": recent_filings.get("reportDate", [None] * len(recent_filings["form"]))[i],
                     }
                     filings.append(filing_data)
 
@@ -287,9 +268,7 @@ class SECEDGARService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_financial_statements(
-        self, ticker: str, period: str = "annual"
-    ) -> Dict[str, Any]:
+    def get_financial_statements(self, ticker: str, period: str = "annual") -> dict[str, Any]:
         """
         Get financial statements data for a ticker
 
@@ -335,9 +314,7 @@ class SECEDGARService(BaseFinancialService):
                                     )
 
                             if recent_values:
-                                financial_data[category][metric_name] = recent_values[
-                                    :5
-                                ]  # Recent 5 values
+                                financial_data[category][metric_name] = recent_values[:5]  # Recent 5 values
                         break
 
         return {
@@ -350,7 +327,7 @@ class SECEDGARService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_sec_metrics(self, ticker: str, fiscal_year: str = None) -> Dict[str, Any]:
+    def get_sec_metrics(self, ticker: str, fiscal_year: str = None) -> dict[str, Any]:
         """
         Get key SEC metrics for fundamental analysis
 
@@ -387,13 +364,9 @@ class SECEDGARService(BaseFinancialService):
             "RevenueFromContractWithCustomerExcludingAssessedTax",
         ]:
             if revenue_tag in us_gaap_facts:
-                revenue_units = (
-                    us_gaap_facts[revenue_tag].get("units", {}).get("USD", [])
-                )
+                revenue_units = us_gaap_facts[revenue_tag].get("units", {}).get("USD", [])
                 if revenue_units:
-                    revenue_data = sorted(
-                        revenue_units, key=lambda x: x.get("end", ""), reverse=True
-                    )[:4]
+                    revenue_data = sorted(revenue_units, key=lambda x: x.get("end", ""), reverse=True)[:4]
                     break
 
         # Net Income
@@ -402,9 +375,7 @@ class SECEDGARService(BaseFinancialService):
             if ni_tag in us_gaap_facts:
                 ni_units = us_gaap_facts[ni_tag].get("units", {}).get("USD", [])
                 if ni_units:
-                    net_income_data = sorted(
-                        ni_units, key=lambda x: x.get("end", ""), reverse=True
-                    )[:4]
+                    net_income_data = sorted(ni_units, key=lambda x: x.get("end", ""), reverse=True)[:4]
                     break
 
         # Assets
@@ -412,9 +383,7 @@ class SECEDGARService(BaseFinancialService):
         if "Assets" in us_gaap_facts:
             assets_units = us_gaap_facts["Assets"].get("units", {}).get("USD", [])
             if assets_units:
-                assets_data = sorted(
-                    assets_units, key=lambda x: x.get("end", ""), reverse=True
-                )[:4]
+                assets_data = sorted(assets_units, key=lambda x: x.get("end", ""), reverse=True)[:4]
 
         # Calculate basic metrics
         if revenue_data and net_income_data:
@@ -423,16 +392,12 @@ class SECEDGARService(BaseFinancialService):
                 latest_net_income = net_income_data[0]["val"]
 
                 if latest_revenue and latest_revenue > 0:
-                    metrics["profitability"]["net_margin"] = (
-                        latest_net_income / latest_revenue
-                    ) * 100
+                    metrics["profitability"]["net_margin"] = (latest_net_income / latest_revenue) * 100
 
                 if assets_data:
                     latest_assets = assets_data[0]["val"]
                     if latest_assets and latest_assets > 0:
-                        metrics["profitability"]["roa"] = (
-                            latest_net_income / latest_assets
-                        ) * 100
+                        metrics["profitability"]["roa"] = (latest_net_income / latest_assets) * 100
 
             except (TypeError, ZeroDivisionError):
                 pass
@@ -452,9 +417,7 @@ class SECEDGARService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def search_filings(
-        self, query: str, date_range: str = "last_year"
-    ) -> Dict[str, Any]:
+    def search_filings(self, query: str, date_range: str = "last_year") -> dict[str, Any]:
         """
         Search SEC filings by query terms
 
@@ -491,7 +454,7 @@ class SECEDGARService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_supported_filings(self) -> Dict[str, Any]:
+    def get_supported_filings(self) -> dict[str, Any]:
         """Get list of supported filing types"""
         return {
             "supported_filings": [
@@ -518,7 +481,7 @@ class SECEDGARService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Service health check"""
         try:
             # Test API connectivity with company tickers endpoint
@@ -543,9 +506,7 @@ class SECEDGARService(BaseFinancialService):
                     "Company search by ticker/CIK",
                     "Filing search capabilities",
                 ],
-                "supported_filing_types": len(
-                    self.get_supported_filings()["supported_filings"]
-                ),
+                "supported_filing_types": len(self.get_supported_filings()["supported_filings"]),
                 "timestamp": datetime.now().isoformat(),
             }
 

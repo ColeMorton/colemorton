@@ -10,9 +10,10 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
+
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,14 +29,13 @@ try:
     from services.yahoo_finance import create_yahoo_finance_service
 
     CLI_SERVICES_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     print("⚠️  CLI services not available: {e}")
     CLI_SERVICES_AVAILABLE = False
 
 # Import base script and registry
 try:
     from base_script import BaseScript
-
     from script_registry import ScriptConfig, twitter_script
 
     REGISTRY_AVAILABLE = True
@@ -50,9 +50,9 @@ class IndustryValidation:
     def __init__(
         self,
         industry: str,
-        discovery_file: Optional[str] = None,
-        analysis_file: Optional[str] = None,
-        synthesis_file: Optional[str] = None,
+        discovery_file: str | None = None,
+        analysis_file: str | None = None,
+        synthesis_file: str | None = None,
         output_dir: str = "./data/outputs/industry_analysis/validation",
     ):
         """
@@ -89,39 +89,39 @@ class IndustryValidation:
         self.quality_assessment = {}
         self.critical_findings = []
 
-    def _load_discovery_data(self) -> Optional[Dict[str, Any]]:
+    def _load_discovery_data(self) -> dict[str, Any] | None:
         """Load discovery phase data"""
         if self.discovery_file and os.path.exists(self.discovery_file):
             try:
-                with open(self.discovery_file, "r") as f:
+                with open(self.discovery_file) as f:
                     data = json.load(f)
                 print("✅ Loaded discovery data from: {self.discovery_file}")
                 return data
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load discovery data: {e}")
         return None
 
-    def _load_analysis_data(self) -> Optional[Dict[str, Any]]:
+    def _load_analysis_data(self) -> dict[str, Any] | None:
         """Load analysis phase data"""
         if self.analysis_file and os.path.exists(self.analysis_file):
             try:
-                with open(self.analysis_file, "r") as f:
+                with open(self.analysis_file) as f:
                     data = json.load(f)
                 print("✅ Loaded analysis data from: {self.analysis_file}")
                 return data
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load analysis data: {e}")
         return None
 
-    def _load_synthesis_content(self) -> Optional[str]:
+    def _load_synthesis_content(self) -> str | None:
         """Load synthesis phase content"""
         if self.synthesis_file and os.path.exists(self.synthesis_file):
             try:
-                with open(self.synthesis_file, "r", encoding="utf-8") as f:
+                with open(self.synthesis_file, encoding="utf-8") as f:
                     content = f.read()
                 print("✅ Loaded synthesis content from: {self.synthesis_file}")
                 return content
-            except Exception as e:
+            except Exception:
                 print("⚠️  Failed to load synthesis content: {e}")
         return None
 
@@ -140,7 +140,7 @@ class IndustryValidation:
             }
             print("✅ Initialized {len(self.cli_services)} CLI services for validation")
             self._check_cli_service_health()
-        except Exception as e:
+        except Exception:
             print("⚠️  Failed to initialize CLI services: {e}")
             self.cli_services = {}
 
@@ -166,25 +166,17 @@ class IndustryValidation:
                     "last_check": datetime.now().isoformat(),
                 }
 
-    def validate_workflow_completeness(self) -> Dict[str, Any]:
+    def validate_workflow_completeness(self) -> dict[str, Any]:
         """Validate completeness of DASV workflow"""
         completeness = {
             "discovery_phase": {
                 "present": self.discovery_data is not None,
-                "confidence": (
-                    self.discovery_data.get("discovery_confidence", 0.0)
-                    if self.discovery_data
-                    else 0.0
-                ),
+                "confidence": (self.discovery_data.get("discovery_confidence", 0.0) if self.discovery_data else 0.0),
                 "quality_score": self._assess_discovery_quality(),
             },
             "analysis_phase": {
                 "present": self.analysis_data is not None,
-                "confidence": (
-                    self.analysis_data.get("analysis_confidence", 0.0)
-                    if self.analysis_data
-                    else 0.0
-                ),
+                "confidence": (self.analysis_data.get("analysis_confidence", 0.0) if self.analysis_data else 0.0),
                 "quality_score": self._assess_analysis_quality(),
             },
             "synthesis_phase": {
@@ -196,7 +188,7 @@ class IndustryValidation:
         }
         return completeness
 
-    def validate_data_consistency(self) -> Dict[str, Any]:
+    def validate_data_consistency(self) -> dict[str, Any]:
         """Validate data consistency across DASV phases"""
         consistency_checks = {
             "industry_identification": self._check_industry_consistency(),
@@ -209,15 +201,13 @@ class IndustryValidation:
 
         # Calculate overall consistency
         scores = [
-            v
-            for k, v in consistency_checks.items()
-            if isinstance(v, (int, float)) and k != "overall_consistency"
+            v for k, v in consistency_checks.items() if isinstance(v, (int, float)) and k != "overall_consistency"
         ]
         consistency_checks["overall_consistency"] = np.mean(scores) if scores else 0.0
 
         return consistency_checks
 
-    def validate_template_compliance(self) -> Dict[str, Any]:
+    def validate_template_compliance(self) -> dict[str, Any]:
         """Validate synthesis template compliance"""
         if not self.synthesis_content:
             return {
@@ -237,16 +227,12 @@ class IndustryValidation:
         }
 
         # Calculate overall compliance
-        scores = [
-            v
-            for k, v in compliance.items()
-            if isinstance(v, (int, float)) and k != "overall_compliance"
-        ]
+        scores = [v for k, v in compliance.items() if isinstance(v, (int, float)) and k != "overall_compliance"]
         compliance["overall_compliance"] = np.mean(scores) if scores else 0.0
 
         return compliance
 
-    def validate_real_time_data(self) -> Dict[str, Any]:
+    def validate_real_time_data(self) -> dict[str, Any]:
         """Validate data currency using real-time CLI services"""
         real_time_validation = {
             "cli_service_health": self._validate_cli_health(),
@@ -258,16 +244,12 @@ class IndustryValidation:
         }
 
         # Calculate overall currency score
-        scores = [
-            v
-            for k, v in real_time_validation.items()
-            if isinstance(v, (int, float)) and k != "overall_currency"
-        ]
+        scores = [v for k, v in real_time_validation.items() if isinstance(v, (int, float)) and k != "overall_currency"]
         real_time_validation["overall_currency"] = np.mean(scores) if scores else 0.0
 
         return real_time_validation
 
-    def validate_quality_standards(self) -> Dict[str, Any]:
+    def validate_quality_standards(self) -> dict[str, Any]:
         """Validate institutional quality standards"""
         quality_standards = {
             "confidence_thresholds": self._validate_confidence_thresholds(),
@@ -280,16 +262,12 @@ class IndustryValidation:
         }
 
         # Calculate overall quality score
-        scores = [
-            v
-            for k, v in quality_standards.items()
-            if isinstance(v, (int, float)) and k != "overall_quality"
-        ]
+        scores = [v for k, v in quality_standards.items() if isinstance(v, (int, float)) and k != "overall_quality"]
         quality_standards["overall_quality"] = np.mean(scores) if scores else 0.0
 
         return quality_standards
 
-    def identify_critical_findings(self) -> List[Dict[str, Any]]:
+    def identify_critical_findings(self) -> list[dict[str, Any]]:
         """Identify critical findings requiring attention"""
         findings = []
 
@@ -321,9 +299,7 @@ class IndustryValidation:
                 )
 
         # Check CLI service health
-        healthy_services = sum(
-            1 for s in self.cli_service_health.values() if s.get("status") == "healthy"
-        )
+        healthy_services = sum(1 for s in self.cli_service_health.values() if s.get("status") == "healthy")
         total_services = len(self.cli_service_health)
         if total_services > 0 and healthy_services / total_services < 0.8:
             findings.append(
@@ -394,14 +370,11 @@ class IndustryValidation:
         if confidence_factors:
             base_confidence = np.mean(confidence_factors)
             # Apply penalty for critical findings
-            critical_penalty = (
-                len([f for f in self.critical_findings if f["severity"] == "high"])
-                * 0.5
-            )
+            critical_penalty = len([f for f in self.critical_findings if f["severity"] == "high"]) * 0.5
             return max(round(base_confidence - critical_penalty, 1), 0.0)
         return 0.0
 
-    def generate_usage_recommendations(self) -> Dict[str, Any]:
+    def generate_usage_recommendations(self) -> dict[str, Any]:
         """Generate usage recommendations based on validation results"""
         validation_confidence = self.calculate_validation_confidence()
 
@@ -411,14 +384,12 @@ class IndustryValidation:
             "usage_guidelines": self._generate_usage_guidelines(validation_confidence),
             "risk_considerations": self._generate_risk_considerations(),
             "improvement_opportunities": self._generate_improvement_opportunities(),
-            "certification_status": self._determine_certification_status(
-                validation_confidence
-            ),
+            "certification_status": self._determine_certification_status(validation_confidence),
         }
 
         return recommendations
 
-    def generate_validation_output(self) -> Dict[str, Any]:
+    def generate_validation_output(self) -> dict[str, Any]:
         """Generate comprehensive validation phase output"""
         validation_data = {
             "metadata": {
@@ -448,13 +419,11 @@ class IndustryValidation:
         self.validation_results = validation_data
         return validation_data
 
-    def save_validation_output(self, data: Dict[str, Any]) -> str:
+    def save_validation_output(self, data: dict[str, Any]) -> str:
         """Save validation output to file"""
         os.makedirs(self.output_dir, exist_ok=True)
 
-        filename = (
-            f"{self.industry}_{self.timestamp.strftime('%Y%m%d')}_validation.json"
-        )
+        filename = f"{self.industry}_{self.timestamp.strftime('%Y%m%d')}_validation.json"
         filepath = os.path.join(self.output_dir, filename)
 
         with open(filepath, "w") as f:
@@ -472,9 +441,7 @@ class IndustryValidation:
         quality_factors = []
 
         # CLI service utilization
-        cli_services = self.discovery_data.get("metadata", {}).get(
-            "cli_services_utilized", []
-        )
+        cli_services = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
         service_factor = min(len(cli_services) / 7, 1.0)  # Target 7 services
         quality_factors.append(service_factor)
 
@@ -485,9 +452,7 @@ class IndustryValidation:
             "trend_analysis",
             "economic_indicators",
         ]
-        present_sections = sum(
-            1 for section in required_sections if section in self.discovery_data
-        )
+        present_sections = sum(1 for section in required_sections if section in self.discovery_data)
         completeness_factor = present_sections / len(required_sections)
         quality_factors.append(completeness_factor)
 
@@ -513,9 +478,7 @@ class IndustryValidation:
             "risk_matrix",
             "economic_sensitivity",
         ]
-        present_sections = sum(
-            1 for section in required_sections if section in self.analysis_data
-        )
+        present_sections = sum(1 for section in required_sections if section in self.analysis_data)
         completeness_factor = present_sections / len(required_sections)
         quality_factors.append(completeness_factor)
 
@@ -540,9 +503,7 @@ class IndustryValidation:
         quality_factors = []
 
         # Document length (proxy for completeness)
-        length_factor = min(
-            len(self.synthesis_content) / 10000, 1.0
-        )  # Target 10k+ characters
+        length_factor = min(len(self.synthesis_content) / 10000, 1.0)  # Target 10k+ characters
         quality_factors.append(length_factor)
 
         # Required sections presence
@@ -554,11 +515,7 @@ class IndustryValidation:
             "Risk Assessment",
             "Investment Decision Framework",
         ]
-        present_sections = sum(
-            1
-            for section in required_sections
-            if section.lower() in self.synthesis_content.lower()
-        )
+        present_sections = sum(1 for section in required_sections if section.lower() in self.synthesis_content.lower())
         section_factor = present_sections / len(required_sections)
         quality_factors.append(section_factor)
 
@@ -584,16 +541,12 @@ class IndustryValidation:
         industries = []
 
         if self.discovery_data:
-            discovery_industry = self.discovery_data.get("metadata", {}).get(
-                "industry", ""
-            )
+            discovery_industry = self.discovery_data.get("metadata", {}).get("industry", "")
             if discovery_industry:
                 industries.append(discovery_industry)
 
         if self.analysis_data:
-            analysis_industry = self.analysis_data.get("metadata", {}).get(
-                "industry", ""
-            )
+            analysis_industry = self.analysis_data.get("metadata", {}).get("industry", "")
             if analysis_industry:
                 industries.append(analysis_industry)
 
@@ -622,19 +575,16 @@ class IndustryValidation:
         # Low variance and reasonable range indicate consistency
         if reasonable_range and variance <= 0.25:
             return 10.0
-        elif reasonable_range:
+        if reasonable_range:
             return 8.0
-        else:
-            return 5.0
+        return 5.0
 
     def _check_data_references(self) -> float:
         """Check data reference integrity"""
         references_valid = True
 
         if self.analysis_data:
-            discovery_ref = self.analysis_data.get("metadata", {}).get(
-                "discovery_reference"
-            )
+            discovery_ref = self.analysis_data.get("metadata", {}).get("discovery_reference")
             if discovery_ref and discovery_ref != self.discovery_file:
                 references_valid = False
 
@@ -660,8 +610,7 @@ class IndustryValidation:
                 dates = [ts.split("T")[0] for ts in timestamps]
                 if all(date == dates[0] for date in dates):
                     return 10.0
-                else:
-                    return 7.0
+                return 7.0
             except:
                 return 5.0
 
@@ -687,9 +636,7 @@ class IndustryValidation:
             "## 💼 Industry Investment Decision",
         ]
 
-        present_headers = sum(
-            1 for header in required_headers if header in self.synthesis_content
-        )
+        present_headers = sum(1 for header in required_headers if header in self.synthesis_content)
         return (present_headers / len(required_headers)) * 10
 
     def _check_required_sections(self) -> float:
@@ -707,11 +654,7 @@ class IndustryValidation:
             "Confidence",
         ]
 
-        present_sections = sum(
-            1
-            for section in required_sections
-            if section.lower() in self.synthesis_content.lower()
-        )
+        present_sections = sum(1 for section in required_sections if section.lower() in self.synthesis_content.lower())
         return (present_sections / len(required_sections)) * 10
 
     def _check_formatting_standards(self) -> float:
@@ -720,10 +663,7 @@ class IndustryValidation:
             return 0.0
 
         # Check for metadata presence
-        has_metadata = (
-            "Generated:" in self.synthesis_content
-            and "Confidence:" in self.synthesis_content
-        )
+        has_metadata = "Generated:" in self.synthesis_content and "Confidence:" in self.synthesis_content
 
         # Check for author attribution
         has_author = "Cole Morton" in self.synthesis_content
@@ -775,9 +715,7 @@ class IndustryValidation:
         if not self.cli_service_health:
             return 0.0
 
-        healthy_count = sum(
-            1 for s in self.cli_service_health.values() if s.get("status") == "healthy"
-        )
+        healthy_count = sum(1 for s in self.cli_service_health.values() if s.get("status") == "healthy")
         total_count = len(self.cli_service_health)
 
         return (healthy_count / total_count) * 10 if total_count > 0 else 0.0
@@ -791,9 +729,7 @@ class IndustryValidation:
         if self.discovery_data:
             try:
                 discovery_time = datetime.fromisoformat(
-                    self.discovery_data.get("metadata", {})
-                    .get("execution_timestamp", "")
-                    .replace("Z", "+00:00")
+                    self.discovery_data.get("metadata", {}).get("execution_timestamp", "").replace("Z", "+00:00")
                 )
                 days_old = (current_time - discovery_time).days
                 freshness_scores.append(max(10 - days_old, 0))
@@ -803,9 +739,7 @@ class IndustryValidation:
         if self.analysis_data:
             try:
                 analysis_time = datetime.fromisoformat(
-                    self.analysis_data.get("metadata", {})
-                    .get("execution_timestamp", "")
-                    .replace("Z", "+00:00")
+                    self.analysis_data.get("metadata", {}).get("execution_timestamp", "").replace("Z", "+00:00")
                 )
                 days_old = (current_time - analysis_time).days
                 freshness_scores.append(max(10 - days_old, 0))
@@ -855,9 +789,7 @@ class IndustryValidation:
 
         # Check for multi-source validation
         if self.discovery_data:
-            cli_services = self.discovery_data.get("metadata", {}).get(
-                "cli_services_utilized", []
-            )
+            cli_services = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
             if len(cli_services) >= 5:
                 evidence_score += 1.0
 
@@ -894,9 +826,7 @@ class IndustryValidation:
             return 0.0
 
         coherence_factors = [
-            "BUY" in self.synthesis_content
-            or "HOLD" in self.synthesis_content
-            or "SELL" in self.synthesis_content,
+            "BUY" in self.synthesis_content or "HOLD" in self.synthesis_content or "SELL" in self.synthesis_content,
             "recommendation" in self.synthesis_content.lower(),
             "catalyst" in self.synthesis_content.lower(),
             "risk" in self.synthesis_content.lower(),
@@ -939,7 +869,7 @@ class IndustryValidation:
         return (sum(presentation_factors) / len(presentation_factors)) * 10
 
     # Usage recommendations
-    def _generate_usage_guidelines(self, confidence: float) -> List[str]:
+    def _generate_usage_guidelines(self, confidence: float) -> list[str]:
         """Generate usage guidelines based on confidence"""
         if confidence >= 9.5:
             return [
@@ -948,66 +878,51 @@ class IndustryValidation:
                 "Meets all quality standards for professional use",
                 "Ready for publication and external distribution",
             ]
-        elif confidence >= 9.0:
+        if confidence >= 9.0:
             return [
                 "Approved for internal investment analysis",
                 "Suitable for team discussions and planning",
                 "Minor improvements recommended before client use",
                 "Good quality for professional reference",
             ]
-        elif confidence >= 8.0:
+        if confidence >= 8.0:
             return [
                 "Suitable for preliminary analysis and research",
                 "Requires additional validation before investment use",
                 "Good foundation for further analysis development",
                 "Not recommended for client-facing applications",
             ]
-        else:
-            return [
-                "Not recommended for investment decisions",
-                "Significant quality issues require resolution",
-                "Additional data collection and analysis needed",
-                "Use only for educational or research purposes",
-            ]
+        return [
+            "Not recommended for investment decisions",
+            "Significant quality issues require resolution",
+            "Additional data collection and analysis needed",
+            "Use only for educational or research purposes",
+        ]
 
-    def _generate_risk_considerations(self) -> List[str]:
+    def _generate_risk_considerations(self) -> list[str]:
         """Generate risk considerations for usage"""
         considerations = []
 
         # Check for high-severity findings
-        high_severity_findings = [
-            f for f in self.critical_findings if f["severity"] == "high"
-        ]
+        high_severity_findings = [f for f in self.critical_findings if f["severity"] == "high"]
         if high_severity_findings:
-            considerations.append(
-                "Critical quality issues identified requiring immediate attention"
-            )
+            considerations.append("Critical quality issues identified requiring immediate attention")
 
         # Check CLI service health
         if self.cli_service_health:
-            unhealthy_services = [
-                s
-                for s in self.cli_service_health.values()
-                if s.get("status") != "healthy"
-            ]
+            unhealthy_services = [s for s in self.cli_service_health.values() if s.get("status") != "healthy"]
             if len(unhealthy_services) > 2:
-                considerations.append(
-                    "Multiple CLI service issues may affect data quality"
-                )
+                considerations.append("Multiple CLI service issues may affect data quality")
 
         # Check data freshness
         if self.discovery_data:
             try:
                 discovery_time = datetime.fromisoformat(
-                    self.discovery_data.get("metadata", {})
-                    .get("execution_timestamp", "")
-                    .replace("Z", "+00:00")
+                    self.discovery_data.get("metadata", {}).get("execution_timestamp", "").replace("Z", "+00:00")
                 )
                 days_old = (datetime.now() - discovery_time).days
                 if days_old > 7:
-                    considerations.append(
-                        f"Analysis data is {days_old} days old - consider refresh"
-                    )
+                    considerations.append(f"Analysis data is {days_old} days old - consider refresh")
             except:
                 pass
 
@@ -1016,7 +931,7 @@ class IndustryValidation:
 
         return considerations
 
-    def _generate_improvement_opportunities(self) -> List[str]:
+    def _generate_improvement_opportunities(self) -> list[str]:
         """Generate improvement opportunities"""
         opportunities = []
 
@@ -1024,9 +939,7 @@ class IndustryValidation:
         if self.discovery_data:
             discovery_confidence = self.discovery_data.get("discovery_confidence", 0.0)
             if discovery_confidence < 9.5:
-                opportunities.append(
-                    "Enhance discovery phase data collection for higher confidence"
-                )
+                opportunities.append("Enhance discovery phase data collection for higher confidence")
 
         if self.analysis_data:
             analysis_confidence = self.analysis_data.get("analysis_confidence", 0.0)
@@ -1040,18 +953,12 @@ class IndustryValidation:
 
         # Check CLI service utilization
         if self.discovery_data:
-            cli_services = self.discovery_data.get("metadata", {}).get(
-                "cli_services_utilized", []
-            )
+            cli_services = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
             if len(cli_services) < 7:
-                opportunities.append(
-                    "Expand CLI service utilization for comprehensive data coverage"
-                )
+                opportunities.append("Expand CLI service utilization for comprehensive data coverage")
 
         if not opportunities:
-            opportunities.append(
-                "Analysis meets high quality standards - consider validation enhancement protocols"
-            )
+            opportunities.append("Analysis meets high quality standards - consider validation enhancement protocols")
 
         return opportunities
 
@@ -1059,19 +966,16 @@ class IndustryValidation:
         """Determine certification status"""
         if confidence >= 9.5:
             return "INSTITUTIONAL_CERTIFIED"
-        elif confidence >= 9.0:
+        if confidence >= 9.0:
             return "PROFESSIONAL_APPROVED"
-        elif confidence >= 8.0:
+        if confidence >= 8.0:
             return "INTERNAL_USE_APPROVED"
-        else:
-            return "DEVELOPMENT_STAGE"
+        return "DEVELOPMENT_STAGE"
 
-    def _generate_validation_summary(self) -> Dict[str, Any]:
+    def _generate_validation_summary(self) -> dict[str, Any]:
         """Generate validation summary"""
         confidence = self.calculate_validation_confidence()
-        critical_count = len(
-            [f for f in self.critical_findings if f["severity"] == "high"]
-        )
+        critical_count = len([f for f in self.critical_findings if f["severity"] == "high"])
 
         return {
             "overall_assessment": self._get_overall_assessment(confidence),
@@ -1087,14 +991,13 @@ class IndustryValidation:
         """Get overall assessment description"""
         if confidence >= 9.5:
             return "Exceptional institutional-quality analysis exceeding professional standards"
-        elif confidence >= 9.0:
+        if confidence >= 9.0:
             return "High-quality professional analysis meeting institutional baselines"
-        elif confidence >= 8.0:
+        if confidence >= 8.0:
             return "Good quality analysis suitable for internal use with minor improvements needed"
-        else:
-            return "Analysis requires significant improvements before professional use"
+        return "Analysis requires significant improvements before professional use"
 
-    def _identify_primary_strengths(self) -> List[str]:
+    def _identify_primary_strengths(self) -> list[str]:
         """Identify primary strengths of the analysis"""
         strengths = []
 
@@ -1105,15 +1008,9 @@ class IndustryValidation:
 
         # Check confidence scores
         high_confidence_phases = []
-        if (
-            self.discovery_data
-            and self.discovery_data.get("discovery_confidence", 0.0) >= 9.0
-        ):
+        if self.discovery_data and self.discovery_data.get("discovery_confidence", 0.0) >= 9.0:
             high_confidence_phases.append("discovery")
-        if (
-            self.analysis_data
-            and self.analysis_data.get("analysis_confidence", 0.0) >= 9.0
-        ):
+        if self.analysis_data and self.analysis_data.get("analysis_confidence", 0.0) >= 9.0:
             high_confidence_phases.append("analysis")
 
         if len(high_confidence_phases) >= 2:
@@ -1121,9 +1018,7 @@ class IndustryValidation:
 
         # Check CLI service utilization
         if self.discovery_data:
-            cli_services = self.discovery_data.get("metadata", {}).get(
-                "cli_services_utilized", []
-            )
+            cli_services = self.discovery_data.get("metadata", {}).get("cli_services_utilized", [])
             if len(cli_services) >= 6:
                 strengths.append("Comprehensive multi-source data integration")
 
@@ -1137,48 +1032,32 @@ class IndustryValidation:
 
         return strengths
 
-    def _identify_key_recommendations(self) -> List[str]:
+    def _identify_key_recommendations(self) -> list[str]:
         """Identify key recommendations for improvement"""
         recommendations = []
 
         # Check for critical findings
         high_severity = [f for f in self.critical_findings if f["severity"] == "high"]
         if high_severity:
-            recommendations.append(
-                "Address critical quality issues before institutional use"
-            )
+            recommendations.append("Address critical quality issues before institutional use")
 
         # Check confidence thresholds
         low_confidence_phases = []
-        if (
-            self.discovery_data
-            and self.discovery_data.get("discovery_confidence", 0.0) < 9.0
-        ):
+        if self.discovery_data and self.discovery_data.get("discovery_confidence", 0.0) < 9.0:
             low_confidence_phases.append("discovery")
-        if (
-            self.analysis_data
-            and self.analysis_data.get("analysis_confidence", 0.0) < 9.0
-        ):
+        if self.analysis_data and self.analysis_data.get("analysis_confidence", 0.0) < 9.0:
             low_confidence_phases.append("analysis")
 
         if low_confidence_phases:
-            recommendations.append(
-                f"Enhance {', '.join(low_confidence_phases)} phase(s) to meet confidence thresholds"
-            )
+            recommendations.append(f"Enhance {', '.join(low_confidence_phases)} phase(s) to meet confidence thresholds")
 
         # Check CLI service health
-        unhealthy_services = sum(
-            1 for s in self.cli_service_health.values() if s.get("status") != "healthy"
-        )
+        unhealthy_services = sum(1 for s in self.cli_service_health.values() if s.get("status") != "healthy")
         if unhealthy_services > 1:
-            recommendations.append(
-                "Improve CLI service reliability and data collection infrastructure"
-            )
+            recommendations.append("Improve CLI service reliability and data collection infrastructure")
 
         if not recommendations:
-            recommendations.append(
-                "Consider validation enhancement protocols for premium certification"
-            )
+            recommendations.append("Consider validation enhancement protocols for premium certification")
 
         return recommendations
 
@@ -1194,7 +1073,7 @@ if REGISTRY_AVAILABLE:
     class IndustryValidationScript(BaseScript):
         """Registry-integrated industry validation script"""
 
-        def execute(self, **kwargs) -> Dict[str, Any]:
+        def execute(self, **kwargs) -> dict[str, Any]:
             """Execute industry validation workflow"""
             industry = kwargs.get("industry", "software_infrastructure")
             discovery_file = kwargs.get("discovery_file")
@@ -1206,14 +1085,10 @@ if REGISTRY_AVAILABLE:
             date_str = datetime.now().strftime("%Y%m%d")
 
             if not discovery_file:
-                discovery_file = os.path.join(
-                    base_dir, "discovery", f"{industry}_{date_str}_discovery.json"
-                )
+                discovery_file = os.path.join(base_dir, "discovery", f"{industry}_{date_str}_discovery.json")
 
             if not analysis_file:
-                analysis_file = os.path.join(
-                    base_dir, "analysis", f"{industry}_{date_str}_analysis.json"
-                )
+                analysis_file = os.path.join(base_dir, "analysis", f"{industry}_{date_str}_analysis.json")
 
             if not synthesis_file:
                 synthesis_file = os.path.join(base_dir, f"{industry}_{date_str}.md")
@@ -1235,9 +1110,7 @@ if REGISTRY_AVAILABLE:
                 "status": "success",
                 "output_path": output_path,
                 "confidence": validation_data["validation_confidence"],
-                "certification": validation_data["usage_recommendations"][
-                    "certification_status"
-                ],
+                "certification": validation_data["usage_recommendations"]["certification_status"],
                 "critical_issues": len(validation_data["critical_findings"]),
                 "industry": industry,
                 "timestamp": validation.timestamp.isoformat(),
@@ -1282,14 +1155,10 @@ def main():
     date_str = datetime.now().strftime("%Y%m%d")
 
     if not args.discovery_file:
-        args.discovery_file = os.path.join(
-            base_dir, "discovery", f"{args.industry}_{date_str}_discovery.json"
-        )
+        args.discovery_file = os.path.join(base_dir, "discovery", f"{args.industry}_{date_str}_discovery.json")
 
     if not args.analysis_file:
-        args.analysis_file = os.path.join(
-            base_dir, "analysis", f"{args.industry}_{date_str}_analysis.json"
-        )
+        args.analysis_file = os.path.join(base_dir, "analysis", f"{args.industry}_{date_str}_analysis.json")
 
     if not args.synthesis_file:
         args.synthesis_file = os.path.join(base_dir, f"{args.industry}_{date_str}.md")
@@ -1313,9 +1182,7 @@ def main():
     # Display results
     print("\n✅ Industry validation complete!")
     print("📊 Validation Confidence: {validation_data['validation_confidence']}/10.0")
-    print(
-        f"🏆 Certification Status: {validation_data['usage_recommendations']['certification_status']}"
-    )
+    print(f"🏆 Certification Status: {validation_data['usage_recommendations']['certification_status']}")
     print("⚠️  Critical Issues: {len(validation_data['critical_findings'])}")
     print("📁 Output saved to: {output_path}")
 

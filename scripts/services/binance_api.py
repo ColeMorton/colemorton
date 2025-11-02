@@ -13,7 +13,7 @@ Production-grade Binance API integration with:
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .base_financial_service import (
     BaseFinancialService,
@@ -21,9 +21,9 @@ from .base_financial_service import (
     ServiceConfig,
 )
 
+
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
-from config_loader import ConfigLoader
 
 
 class BinanceAPIService(BaseFinancialService):
@@ -45,8 +45,8 @@ class BinanceAPIService(BaseFinancialService):
             self.config.base_url = "https://api.binance.com"
 
     def _validate_response(
-        self, data: Union[Dict[str, Any], List[Dict[str, Any]]], endpoint: str
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, data: dict[str, Any] | list[dict[str, Any]], endpoint: str
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Validate Binance API response data"""
 
         if not data:
@@ -54,66 +54,62 @@ class BinanceAPIService(BaseFinancialService):
 
         # Check for Binance API error responses
         if isinstance(data, dict) and "code" in data and "msg" in data:
-            raise DataNotFoundError(
-                f"Binance API error: {data['msg']} (Code: {data['code']})"
-            )
+            raise DataNotFoundError(f"Binance API error: {data['msg']} (Code: {data['code']})")
 
         return data
 
-    def get_exchange_info(self) -> Dict[str, Any]:
+    def get_exchange_info(self) -> dict[str, Any]:
         """Get exchange trading rules and symbol information"""
         endpoint = "/api/v3/exchangeInfo"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "exchange info")
 
-    def get_server_time(self) -> Dict[str, Any]:
+    def get_server_time(self) -> dict[str, Any]:
         """Get server time"""
         endpoint = "/api/v3/time"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "server time")
 
-    def get_24hr_ticker_stats(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def get_24hr_ticker_stats(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Get 24hr ticker price change statistics"""
         endpoint = "/api/v3/ticker/24hr"
         params = {"symbol": symbol.upper()}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"24hr ticker stats for {symbol}")
 
-    def get_all_24hr_ticker_stats(self) -> List[Dict[str, Any]]:
+    def get_all_24hr_ticker_stats(self) -> list[dict[str, Any]]:
         """Get 24hr ticker price change statistics for all symbols"""
         endpoint = "/api/v3/ticker/24hr"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "all 24hr ticker stats")
 
-    def get_symbol_price_ticker(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def get_symbol_price_ticker(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Get latest price for a symbol"""
         endpoint = "/api/v3/ticker/price"
         params = {"symbol": symbol.upper()}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"price ticker for {symbol}")
 
-    def get_all_symbol_price_tickers(self) -> List[Dict[str, Any]]:
+    def get_all_symbol_price_tickers(self) -> list[dict[str, Any]]:
         """Get latest prices for all symbols"""
         endpoint = "/api/v3/ticker/price"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "all symbol prices")
 
-    def get_order_book_ticker(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def get_order_book_ticker(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Get best price/qty on the order book"""
         endpoint = "/api/v3/ticker/bookTicker"
         params = {"symbol": symbol.upper()}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"order book ticker for {symbol}")
 
-    def get_all_order_book_tickers(self) -> List[Dict[str, Any]]:
+    def get_all_order_book_tickers(self) -> list[dict[str, Any]]:
         """Get best price/qty on the order book for all symbols"""
         endpoint = "/api/v3/ticker/bookTicker"
         data = self._make_request_with_retry(endpoint)
         return self._validate_response(data, "all order book tickers")
 
-    def get_order_book(
-        self, symbol: str = "BTCUSDT", limit: int = 100
-    ) -> Dict[str, Any]:
+    def get_order_book(self, symbol: str = "BTCUSDT", limit: int = 100) -> dict[str, Any]:
         """Get order book depth"""
         valid_limits = [5, 10, 20, 50, 100, 500, 1000, 5000]
         if limit not in valid_limits:
@@ -124,9 +120,7 @@ class BinanceAPIService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"order book for {symbol}")
 
-    def get_recent_trades(
-        self, symbol: str = "BTCUSDT", limit: int = 500
-    ) -> List[Dict[str, Any]]:
+    def get_recent_trades(self, symbol: str = "BTCUSDT", limit: int = 500) -> list[dict[str, Any]]:
         """Get recent trades list"""
         if limit > 1000:
             limit = 1000
@@ -138,9 +132,7 @@ class BinanceAPIService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"recent trades for {symbol}")
 
-    def get_historical_trades(
-        self, symbol: str = "BTCUSDT", limit: int = 500
-    ) -> List[Dict[str, Any]]:
+    def get_historical_trades(self, symbol: str = "BTCUSDT", limit: int = 500) -> list[dict[str, Any]]:
         """Get older market trades"""
         if limit > 1000:
             limit = 1000
@@ -156,10 +148,10 @@ class BinanceAPIService(BaseFinancialService):
         self,
         symbol: str = "BTCUSDT",
         interval: str = "1h",
-        start_time: Optional[str] = None,
-        end_time: Optional[str] = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
         limit: int = 500,
-    ) -> List[List[Union[str, float]]]:
+    ) -> list[list[str | float]]:
         """Get kline/candlestick data"""
 
         # Validate interval
@@ -200,14 +192,14 @@ class BinanceAPIService(BaseFinancialService):
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"klines for {symbol}")
 
-    def get_average_price(self, symbol: str = "BTCUSDT") -> Dict[str, Any]:
+    def get_average_price(self, symbol: str = "BTCUSDT") -> dict[str, Any]:
         """Get current average price for a symbol"""
         endpoint = "/api/v3/avgPrice"
         params = {"symbol": symbol.upper()}
         data = self._make_request_with_retry(endpoint, params=params)
         return self._validate_response(data, f"average price for {symbol}")
 
-    def get_bitcoin_data(self) -> Dict[str, Any]:
+    def get_bitcoin_data(self) -> dict[str, Any]:
         """Get comprehensive Bitcoin market data"""
         bitcoin_data = {}
 
@@ -237,7 +229,7 @@ class BinanceAPIService(BaseFinancialService):
 
         return bitcoin_data
 
-    def get_bitcoin_orderbook_analysis(self, limit: int = 100) -> Dict[str, Any]:
+    def get_bitcoin_orderbook_analysis(self, limit: int = 100) -> dict[str, Any]:
         """Get Bitcoin order book with analysis"""
         order_book = self.get_order_book("BTCUSDT", limit)
 
@@ -267,9 +259,7 @@ class BinanceAPIService(BaseFinancialService):
                     "spread_percent": round(spread_percent, 4),
                     "bid_volume_top_10": round(bid_volume, 4),
                     "ask_volume_top_10": round(ask_volume, 4),
-                    "buy_sell_ratio": round(bid_volume / ask_volume, 4)
-                    if ask_volume > 0
-                    else 0,
+                    "buy_sell_ratio": round(bid_volume / ask_volume, 4) if ask_volume > 0 else 0,
                 },
                 "timestamp": datetime.now().isoformat(),
             }
@@ -282,7 +272,7 @@ class BinanceAPIService(BaseFinancialService):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_market_summary(self, symbols: List[str] = None) -> Dict[str, Any]:
+    def get_market_summary(self, symbols: list[str] = None) -> dict[str, Any]:
         """Get market summary for specified symbols or Bitcoin-focused symbols"""
         if symbols is None:
             symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "ADAUSDT", "SOLUSDT"]
@@ -302,9 +292,7 @@ class BinanceAPIService(BaseFinancialService):
                     "symbol": symbol,
                     "current_price": float(price_data.get("price", 0)),
                     "price_change_24h": float(ticker_data.get("priceChange", 0)),
-                    "price_change_percent_24h": float(
-                        ticker_data.get("priceChangePercent", 0)
-                    ),
+                    "price_change_percent_24h": float(ticker_data.get("priceChangePercent", 0)),
                     "volume_24h": float(ticker_data.get("volume", 0)),
                     "high_24h": float(ticker_data.get("highPrice", 0)),
                     "low_24h": float(ticker_data.get("lowPrice", 0)),
@@ -312,32 +300,26 @@ class BinanceAPIService(BaseFinancialService):
 
                 summary["symbols"].append(symbol_summary)
 
-            except Exception as e:
+            except Exception:
                 # Skip failed symbols
                 continue
 
         # Calculate market overview
         if summary["symbols"]:
             total_volume = sum([s["volume_24h"] for s in summary["symbols"]])
-            avg_change = sum(
-                [s["price_change_percent_24h"] for s in summary["symbols"]]
-            ) / len(summary["symbols"])
+            avg_change = sum([s["price_change_percent_24h"] for s in summary["symbols"]]) / len(summary["symbols"])
 
             summary["market_overview"] = {
                 "total_symbols": len(summary["symbols"]),
                 "total_volume_24h": round(total_volume, 2),
                 "average_change_percent_24h": round(avg_change, 2),
-                "symbols_up": len(
-                    [s for s in summary["symbols"] if s["price_change_percent_24h"] > 0]
-                ),
-                "symbols_down": len(
-                    [s for s in summary["symbols"] if s["price_change_percent_24h"] < 0]
-                ),
+                "symbols_up": len([s for s in summary["symbols"] if s["price_change_percent_24h"] > 0]),
+                "symbols_down": len([s for s in summary["symbols"] if s["price_change_percent_24h"] < 0]),
             }
 
         return summary
 
-    def get_bitcoin_price_history(self, days: int = 7) -> Dict[str, Any]:
+    def get_bitcoin_price_history(self, days: int = 7) -> dict[str, Any]:
         """Get Bitcoin price history for analysis"""
         if days > 30:
             days = 30
@@ -380,9 +362,7 @@ class BinanceAPIService(BaseFinancialService):
                     "close_price": float(kline[4]),
                     "volume": float(kline[5]),
                     "close_time": int(kline[6]),
-                    "datetime": datetime.fromtimestamp(
-                        int(kline[0]) / 1000
-                    ).isoformat(),
+                    "datetime": datetime.fromtimestamp(int(kline[0]) / 1000).isoformat(),
                 }
                 price_history.append(price_data)
 
@@ -415,7 +395,7 @@ class BinanceAPIService(BaseFinancialService):
                     "timestamp": datetime.now().isoformat(),
                 }
 
-        except Exception as e:
+        except Exception:
             pass
 
         return {
@@ -447,7 +427,7 @@ def create_binance_api_service(env: str = "dev") -> BinanceAPIService:
 
         return BinanceAPIService(service_config)
 
-    except Exception as e:
+    except Exception:
         # Fallback configuration
         service_config = ServiceConfig(
             name="binance_api",

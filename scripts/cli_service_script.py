@@ -10,7 +10,7 @@ BaseScript implementation for executing CLI services through the script registry
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from cli_wrapper import CLIServiceManager
 from errors import ValidationError
@@ -19,9 +19,7 @@ from script_config import ScriptConfig
 from script_registry import BaseScript, twitter_script
 
 
-@twitter_script(
-    name="cli_service", content_types=["cli_service"], requires_validation=False
-)
+@twitter_script(name="cli_service", content_types=["cli_service"], requires_validation=False)
 class CLIServiceScript(BaseScript):
     """
     Generalized CLI service script
@@ -50,9 +48,7 @@ class CLIServiceScript(BaseScript):
         # Setup enhanced logging adapter for consistency
         self._setup_enhanced_logger_adapter()
 
-        self.logger.info(
-            f"CLI service script initialized with {len(self.cli_manager.services)} services"
-        )
+        self.logger.info(f"CLI service script initialized with {len(self.cli_manager.services)} services")
 
     def _setup_enhanced_logger_adapter(self):
         """Setup enhanced logger with consistent adapter methods"""
@@ -83,9 +79,7 @@ class CLIServiceScript(BaseScript):
 
             self.logger.error(f"Operation failed: {message}{error_details}")
 
-        def log_api_call(
-            service, command, args=None, response_time=None, status=None, details=None
-        ):
+        def log_api_call(service, command, args=None, response_time=None, status=None, details=None):
             """Detailed API call logging"""
             args_str = f"({', '.join(map(str, args))})" if args else ""
             timing_str = f" [{response_time:.2f}s]" if response_time else ""
@@ -104,10 +98,10 @@ class CLIServiceScript(BaseScript):
         self,
         service_name: str,
         command: str,
-        args: Optional[List[str]] = None,
-        options: Optional[Dict[str, Any]] = None,
-        timeout: Optional[int] = None,
-        retry_count: Optional[int] = None,
+        args: list[str] | None = None,
+        options: dict[str, Any] | None = None,
+        timeout: int | None = None,
+        retry_count: int | None = None,
         **kwargs,
     ) -> ProcessingResult:
         """Execute CLI service command"""
@@ -153,9 +147,7 @@ class CLIServiceScript(BaseScript):
                         },
                     )
 
-                    result = service_wrapper.execute_command(
-                        command, *cmd_args, **cmd_options
-                    )
+                    result = service_wrapper.execute_command(command, *cmd_args, **cmd_options)
 
                     # Add CLI-specific metadata
                     result.add_metadata("cli_service", service_name)
@@ -265,9 +257,7 @@ class CLIServiceScript(BaseScript):
 
         # Validate service name
         if not service_name or not service_name.strip():
-            raise ValidationError(
-                "Service name cannot be empty", context={"service_name": service_name}
-            )
+            raise ValidationError("Service name cannot be empty", context={"service_name": service_name})
 
         if service_name not in self.available_services:
             raise ValidationError(
@@ -280,9 +270,7 @@ class CLIServiceScript(BaseScript):
 
         # Validate command
         if not command or not command.strip():
-            raise ValidationError(
-                "Command cannot be empty", context={"command": command}
-            )
+            raise ValidationError("Command cannot be empty", context={"command": command})
 
         # Validate args
         if args is not None and not isinstance(args, list):
@@ -314,7 +302,7 @@ class CLIServiceScript(BaseScript):
                     context={"retry_count": retry_count},
                 )
 
-    def get_usage_examples(self) -> List[Dict[str, Any]]:
+    def get_usage_examples(self) -> list[dict[str, Any]]:
         """Get usage examples for the script"""
 
         examples = []
@@ -368,15 +356,15 @@ class CLIServiceScript(BaseScript):
 
         return examples
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         """Get list of available CLI services"""
         return self.available_services.copy()
 
-    def get_service_health(self) -> Dict[str, Any]:
+    def get_service_health(self) -> dict[str, Any]:
         """Get health status of all CLI services"""
         return self.cli_manager.health_check_all()
 
-    def get_service_info(self, service_name: str) -> Dict[str, Any]:
+    def get_service_info(self, service_name: str) -> dict[str, Any]:
         """Get information about a specific service"""
 
         if service_name not in self.available_services:

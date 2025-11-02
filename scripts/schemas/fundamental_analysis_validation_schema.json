@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/fundamental_analysis_validation.json",
+  "$id": "https://colemorton.com/schemas/fundamental_analysis_validation.json",
   "title": "Fundamental Analysis Validation Schema",
   "description": "Comprehensive validation schema for fundamental analysis validation JSON outputs from CLI-enhanced DASV framework",
   "type": "object",

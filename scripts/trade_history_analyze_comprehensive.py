@@ -19,12 +19,13 @@ CRITICAL REQUIREMENTS:
 
 import json
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 
 warnings.filterwarnings("ignore")
 
@@ -41,9 +42,9 @@ class TradeHistoryAnalyzer:
         self.active_trades = self.csv_data[self.csv_data["Status"] == "Active"].copy()
         self.analysis_timestamp = datetime.now().isoformat()
 
-    def _load_discovery_data(self) -> Dict[str, Any]:
+    def _load_discovery_data(self) -> dict[str, Any]:
         """Load discovery phase data"""
-        with open(self.discovery_file_path, "r") as f:
+        with open(self.discovery_file_path) as f:
             return json.load(f)
 
     def _load_csv_data(self) -> pd.DataFrame:
@@ -55,16 +56,15 @@ class TradeHistoryAnalyzer:
         """Calculate conservative confidence score based on sample size"""
         if sample_size < 5:
             return 0.0  # Insufficient data
-        elif sample_size < 10:
+        if sample_size < 10:
             return 0.4  # Low confidence
-        elif sample_size < 20:
+        if sample_size < 20:
             return 0.6  # Medium confidence
-        elif sample_size < 30:
+        if sample_size < 30:
             return 0.8  # High confidence
-        else:
-            return 0.9  # Very high confidence
+        return 0.9  # Very high confidence
 
-    def phase_2a_signal_effectiveness(self) -> Dict[str, Any]:
+    def phase_2a_signal_effectiveness(self) -> dict[str, Any]:
         """Phase 2A: Signal Effectiveness Analysis"""
         print("Executing Phase 2A: Signal Effectiveness Analysis...")
 
@@ -84,9 +84,7 @@ class TradeHistoryAnalyzer:
         # Strategy-level analysis
         strategy_analysis = {}
         for strategy in ["SMA", "EMA"]:
-            strategy_trades = self.closed_trades[
-                self.closed_trades["Strategy_Type"] == strategy
-            ]
+            strategy_trades = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
 
             if len(strategy_trades) < 5:
                 strategy_analysis[strategy] = {
@@ -101,36 +99,20 @@ class TradeHistoryAnalyzer:
             wins = strategy_trades[strategy_trades["PnL"] > 0]
             losses = strategy_trades[strategy_trades["PnL"] <= 0]
 
-            win_rate = (
-                len(wins) / len(strategy_trades) if len(strategy_trades) > 0 else 0
-            )
+            win_rate = len(wins) / len(strategy_trades) if len(strategy_trades) > 0 else 0
             avg_win = wins["Return"].mean() if len(wins) > 0 else 0
             avg_loss = losses["Return"].mean() if len(losses) > 0 else 0
-            profit_factor = (
-                abs(wins["PnL"].sum() / losses["PnL"].sum())
-                if losses["PnL"].sum() != 0
-                else float("inf")
-            )
+            profit_factor = abs(wins["PnL"].sum() / losses["PnL"].sum()) if losses["PnL"].sum() != 0 else float("inf")
 
             # MFE capture analysis
-            mfe_trades = strategy_trades[
-                strategy_trades["Max_Favourable_Excursion"].notna()
-            ]
+            mfe_trades = strategy_trades[strategy_trades["Max_Favourable_Excursion"].notna()]
             mfe_capture_rate = (
-                (mfe_trades["Return"] / mfe_trades["Max_Favourable_Excursion"]).mean()
-                if len(mfe_trades) > 0
-                else 0
+                (mfe_trades["Return"] / mfe_trades["Max_Favourable_Excursion"]).mean() if len(mfe_trades) > 0 else 0
             )
 
             # Exit efficiency
-            exit_eff_trades = strategy_trades[
-                strategy_trades["Exit_Efficiency_Fixed"].notna()
-            ]
-            avg_exit_efficiency = (
-                exit_eff_trades["Exit_Efficiency_Fixed"].mean()
-                if len(exit_eff_trades) > 0
-                else 0
-            )
+            exit_eff_trades = strategy_trades[strategy_trades["Exit_Efficiency_Fixed"].notna()]
+            avg_exit_efficiency = exit_eff_trades["Exit_Efficiency_Fixed"].mean() if len(exit_eff_trades) > 0 else 0
 
             strategy_analysis[strategy] = {
                 "sample_size": len(strategy_trades),
@@ -143,22 +125,14 @@ class TradeHistoryAnalyzer:
                 "mfe_capture_rate": mfe_capture_rate,
                 "average_exit_efficiency": avg_exit_efficiency,
                 "best_trade": {
-                    "ticker": strategy_trades.loc[
-                        strategy_trades["Return"].idxmax(), "Ticker"
-                    ],
+                    "ticker": strategy_trades.loc[strategy_trades["Return"].idxmax(), "Ticker"],
                     "return": strategy_trades["Return"].max(),
-                    "pnl": strategy_trades.loc[
-                        strategy_trades["Return"].idxmax(), "PnL"
-                    ],
+                    "pnl": strategy_trades.loc[strategy_trades["Return"].idxmax(), "PnL"],
                 },
                 "worst_trade": {
-                    "ticker": strategy_trades.loc[
-                        strategy_trades["Return"].idxmin(), "Ticker"
-                    ],
+                    "ticker": strategy_trades.loc[strategy_trades["Return"].idxmin(), "Ticker"],
                     "return": strategy_trades["Return"].min(),
-                    "pnl": strategy_trades.loc[
-                        strategy_trades["Return"].idxmin(), "PnL"
-                    ],
+                    "pnl": strategy_trades.loc[strategy_trades["Return"].idxmin(), "PnL"],
                 },
             }
 
@@ -171,23 +145,18 @@ class TradeHistoryAnalyzer:
         analysis["overall_effectiveness"] = {
             "total_win_rate": len(all_wins) / len(self.closed_trades),
             "average_win_return": all_wins["Return"].mean() if len(all_wins) > 0 else 0,
-            "average_loss_return": (
-                all_losses["Return"].mean() if len(all_losses) > 0 else 0
-            ),
+            "average_loss_return": (all_losses["Return"].mean() if len(all_losses) > 0 else 0),
             "overall_profit_factor": (
-                abs(all_wins["PnL"].sum() / all_losses["PnL"].sum())
-                if all_losses["PnL"].sum() != 0
-                else float("inf")
+                abs(all_wins["PnL"].sum() / all_losses["PnL"].sum()) if all_losses["PnL"].sum() != 0 else float("inf")
             ),
             "mfe_capture_efficiency": (
-                self.closed_trades["Return"]
-                / self.closed_trades["Max_Favourable_Excursion"]
+                self.closed_trades["Return"] / self.closed_trades["Max_Favourable_Excursion"]
             ).mean(),
         }
 
         return analysis
 
-    def phase_2b_statistical_performance(self) -> Dict[str, Any]:
+    def phase_2b_statistical_performance(self) -> dict[str, Any]:
         """Phase 2B: Statistical Performance Measurement"""
         print("Executing Phase 2B: Statistical Performance Measurement...")
 
@@ -225,20 +194,12 @@ class TradeHistoryAnalyzer:
         std_return = np.std(returns)
         risk_free_rate = 0.0525 / 252  # Daily risk-free rate
 
-        sharpe_ratio = (
-            (mean_return - risk_free_rate) / std_return if std_return != 0 else 0
-        )
+        sharpe_ratio = (mean_return - risk_free_rate) / std_return if std_return != 0 else 0
 
         # Sortino ratio (downside deviation)
         negative_returns = returns[returns < 0]
-        downside_deviation = (
-            np.std(negative_returns) if len(negative_returns) > 0 else 0
-        )
-        sortino_ratio = (
-            (mean_return - risk_free_rate) / downside_deviation
-            if downside_deviation != 0
-            else 0
-        )
+        downside_deviation = np.std(negative_returns) if len(negative_returns) > 0 else 0
+        sortino_ratio = (mean_return - risk_free_rate) / downside_deviation if downside_deviation != 0 else 0
 
         # Calmar ratio (based on max drawdown)
         cumulative_returns = np.cumprod(1 + returns)
@@ -261,35 +222,26 @@ class TradeHistoryAnalyzer:
 
         analysis["trade_quality_analysis"] = {
             "distribution": quality_dist,
-            "excellent_rate": quality_dist.get("Excellent", 0)
-            / len(self.closed_trades),
-            "poor_rate": (
-                quality_dist.get("Poor", 0)
-                + quality_dist.get("Failed to Capture Upside", 0)
-            )
+            "excellent_rate": quality_dist.get("Excellent", 0) / len(self.closed_trades),
+            "poor_rate": (quality_dist.get("Poor", 0) + quality_dist.get("Failed to Capture Upside", 0))
             / len(self.closed_trades),
             "quality_vs_performance": {},
         }
 
         # Quality vs performance correlation
         for quality in quality_dist.keys():
-            quality_trades = self.closed_trades[
-                self.closed_trades["Trade_Quality"] == quality
-            ]
+            quality_trades = self.closed_trades[self.closed_trades["Trade_Quality"] == quality]
             if len(quality_trades) > 0:
-                analysis["trade_quality_analysis"]["quality_vs_performance"][
-                    quality
-                ] = {
+                analysis["trade_quality_analysis"]["quality_vs_performance"][quality] = {
                     "count": len(quality_trades),
                     "average_return": quality_trades["Return"].mean(),
-                    "win_rate": len(quality_trades[quality_trades["PnL"] > 0])
-                    / len(quality_trades),
+                    "win_rate": len(quality_trades[quality_trades["PnL"] > 0]) / len(quality_trades),
                     "total_pnl": quality_trades["PnL"].sum(),
                 }
 
         return analysis
 
-    def phase_2c_pattern_recognition(self) -> Dict[str, Any]:
+    def phase_2c_pattern_recognition(self) -> dict[str, Any]:
         """Phase 2C: Pattern Recognition"""
         print("Executing Phase 2C: Pattern Recognition...")
 
@@ -299,30 +251,20 @@ class TradeHistoryAnalyzer:
         }
 
         # Convert timestamps
-        self.closed_trades["Entry_Date"] = pd.to_datetime(
-            self.closed_trades["Entry_Timestamp"]
-        )
-        self.closed_trades["Exit_Date"] = pd.to_datetime(
-            self.closed_trades["Exit_Timestamp"]
-        )
-        self.closed_trades["Entry_Month"] = self.closed_trades[
-            "Entry_Date"
-        ].dt.strftime("%Y-%m")
+        self.closed_trades["Entry_Date"] = pd.to_datetime(self.closed_trades["Entry_Timestamp"])
+        self.closed_trades["Exit_Date"] = pd.to_datetime(self.closed_trades["Exit_Timestamp"])
+        self.closed_trades["Entry_Month"] = self.closed_trades["Entry_Date"].dt.strftime("%Y-%m")
 
         # Temporal patterns
         monthly_performance = (
-            self.closed_trades.groupby("Entry_Month")
-            .agg({"Return": ["mean", "count"], "PnL": "sum"})
-            .round(4)
+            self.closed_trades.groupby("Entry_Month").agg({"Return": ["mean", "count"], "PnL": "sum"}).round(4)
         )
 
         monthly_patterns = {}
         for month in monthly_performance.index:
             monthly_patterns[month] = {
                 "trade_count": int(monthly_performance.loc[month, ("Return", "count")]),
-                "average_return": float(
-                    monthly_performance.loc[month, ("Return", "mean")]
-                ),
+                "average_return": float(monthly_performance.loc[month, ("Return", "mean")]),
                 "total_pnl": float(monthly_performance.loc[month, ("PnL", "sum")]),
             }
 
@@ -341,28 +283,23 @@ class TradeHistoryAnalyzer:
         # Strategy effectiveness comparison
         strategy_comparison = {}
         for strategy in ["SMA", "EMA"]:
-            strategy_trades = self.closed_trades[
-                self.closed_trades["Strategy_Type"] == strategy
-            ]
+            strategy_trades = self.closed_trades[self.closed_trades["Strategy_Type"] == strategy]
             if len(strategy_trades) >= 5:
                 strategy_comparison[strategy] = {
                     "sample_size": len(strategy_trades),
-                    "win_rate": len(strategy_trades[strategy_trades["PnL"] > 0])
-                    / len(strategy_trades),
+                    "win_rate": len(strategy_trades[strategy_trades["PnL"] > 0]) / len(strategy_trades),
                     "average_return": strategy_trades["Return"].mean(),
                     "total_pnl": strategy_trades["PnL"].sum(),
                     "average_duration": strategy_trades["Duration_Days"].mean(),
-                    "confidence": self._calculate_confidence_score(
-                        len(strategy_trades)
-                    ),
+                    "confidence": self._calculate_confidence_score(len(strategy_trades)),
                 }
 
         analysis["strategy_comparison"] = strategy_comparison
 
         # Sector performance patterns
-        sector_mapping = self.discovery_data["authoritative_trade_data"][
-            "ticker_universe"
-        ]["sector_distribution"]["all_trades"]
+        sector_mapping = self.discovery_data["authoritative_trade_data"]["ticker_universe"]["sector_distribution"][
+            "all_trades"
+        ]
 
         # Create reverse mapping for tickers to sectors
         ticker_to_sector = {}
@@ -388,8 +325,7 @@ class TradeHistoryAnalyzer:
             if len(group_trades) > 0:
                 duration_analysis[duration_group] = {
                     "count": len(group_trades),
-                    "win_rate": len(group_trades[group_trades["PnL"] > 0])
-                    / len(group_trades),
+                    "win_rate": len(group_trades[group_trades["PnL"] > 0]) / len(group_trades),
                     "average_return": group_trades["Return"].mean(),
                     "total_pnl": group_trades["PnL"].sum(),
                 }
@@ -400,37 +336,19 @@ class TradeHistoryAnalyzer:
         analysis["predictive_characteristics"] = {
             "high_mfe_mae_ratio_performance": {
                 "threshold": 5.0,
-                "trades_above_threshold": len(
-                    self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0]
-                ),
+                "trades_above_threshold": len(self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0]),
                 "average_return_above": (
-                    self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0][
-                        "Return"
-                    ].mean()
-                    if len(
-                        self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0]
-                    )
-                    > 0
+                    self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0]["Return"].mean()
+                    if len(self.closed_trades[self.closed_trades["MFE_MAE_Ratio"] > 5.0]) > 0
                     else 0
                 ),
             },
             "exit_efficiency_correlation": {
                 "high_efficiency_threshold": 0.7,
-                "trades_high_efficiency": len(
-                    self.closed_trades[
-                        self.closed_trades["Exit_Efficiency_Fixed"] > 0.7
-                    ]
-                ),
+                "trades_high_efficiency": len(self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"] > 0.7]),
                 "average_return_high_efficiency": (
-                    self.closed_trades[
-                        self.closed_trades["Exit_Efficiency_Fixed"] > 0.7
-                    ]["Return"].mean()
-                    if len(
-                        self.closed_trades[
-                            self.closed_trades["Exit_Efficiency_Fixed"] > 0.7
-                        ]
-                    )
-                    > 0
+                    self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"] > 0.7]["Return"].mean()
+                    if len(self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"] > 0.7]) > 0
                     else 0
                 ),
             },
@@ -438,7 +356,7 @@ class TradeHistoryAnalyzer:
 
         return analysis
 
-    def phase_2d_risk_assessment(self) -> Dict[str, Any]:
+    def phase_2d_risk_assessment(self) -> dict[str, Any]:
         """Phase 2D: Risk Assessment"""
         print("Executing Phase 2D: Risk Assessment...")
 
@@ -468,9 +386,7 @@ class TradeHistoryAnalyzer:
                 "worst_case_return": np.min(returns),
                 "worst_case_pnl": self.closed_trades["PnL"].min(),
                 "tail_ratio": (
-                    abs(var_95 / np.mean(returns[returns > 0]))
-                    if np.mean(returns[returns > 0]) != 0
-                    else 0
+                    abs(var_95 / np.mean(returns[returns > 0])) if np.mean(returns[returns > 0]) != 0 else 0
                 ),
             },
         }
@@ -484,19 +400,13 @@ class TradeHistoryAnalyzer:
                 "max_position_count": ticker_exposure.max(),
                 "most_traded_ticker": ticker_exposure.index[0],
                 "concentration_ratio": (
-                    ticker_exposure.iloc[0] / len(self.closed_trades)
-                    if len(self.closed_trades) > 0
-                    else 0
+                    ticker_exposure.iloc[0] / len(self.closed_trades) if len(self.closed_trades) > 0 else 0
                 ),
             },
             "strategy_concentration": {
-                "sma_weight": len(
-                    self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"]
-                )
+                "sma_weight": len(self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"])
                 / len(self.closed_trades),
-                "ema_weight": len(
-                    self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"]
-                )
+                "ema_weight": len(self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"])
                 / len(self.closed_trades),
             },
         }
@@ -511,57 +421,40 @@ class TradeHistoryAnalyzer:
             "current_drawdown": float(drawdowns.iloc[-1]) if len(drawdowns) > 0 else 0,
             "drawdown_periods": len(drawdowns[drawdowns < 0]),
             "recovery_factor": (
-                float(-pnl_series.iloc[-1] / drawdowns.min())
-                if drawdowns.min() != 0
-                else float("inf")
+                float(-pnl_series.iloc[-1] / drawdowns.min()) if drawdowns.min() != 0 else float("inf")
             ),
         }
 
         # Market context and volatility
         analysis["market_context"] = {
             "trading_period": {
-                "start_date": self.closed_trades["Entry_Date"]
-                .min()
-                .strftime("%Y-%m-%d"),
+                "start_date": self.closed_trades["Entry_Date"].min().strftime("%Y-%m-%d"),
                 "end_date": self.closed_trades["Exit_Date"].max().strftime("%Y-%m-%d"),
-                "total_days": (
-                    self.closed_trades["Exit_Date"].max()
-                    - self.closed_trades["Entry_Date"].min()
-                ).days,
+                "total_days": (self.closed_trades["Exit_Date"].max() - self.closed_trades["Entry_Date"].min()).days,
             },
             "volatility_environment": {
                 "return_volatility": float(np.std(returns)),
                 "high_volatility_trades": len(
-                    self.closed_trades[
-                        abs(self.closed_trades["Return"]) > 2 * np.std(returns)
-                    ]
+                    self.closed_trades[abs(self.closed_trades["Return"]) > 2 * np.std(returns)]
                 ),
                 "volatility_adjusted_return": (
-                    float(np.mean(returns) / np.std(returns))
-                    if np.std(returns) != 0
-                    else 0
+                    float(np.mean(returns) / np.std(returns)) if np.std(returns) != 0 else 0
                 ),
             },
         }
 
         # Optimization recommendations
-        analysis[
-            "optimization_recommendations"
-        ] = self._generate_optimization_recommendations()
+        analysis["optimization_recommendations"] = self._generate_optimization_recommendations()
 
         return analysis
 
-    def _generate_optimization_recommendations(self) -> List[Dict[str, Any]]:
+    def _generate_optimization_recommendations(self) -> list[dict[str, Any]]:
         """Generate optimization recommendations based on analysis"""
         recommendations = []
 
         # Strategy balance recommendation
-        sma_count = len(
-            self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"]
-        )
-        ema_count = len(
-            self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"]
-        )
+        sma_count = len(self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"])
+        ema_count = len(self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"])
 
         if sma_count > 3 * ema_count:
             recommendations.append(
@@ -575,13 +468,7 @@ class TradeHistoryAnalyzer:
             )
 
         # Trade quality improvement
-        poor_trades = len(
-            self.closed_trades[
-                self.closed_trades["Trade_Quality"].str.contains(
-                    "Poor|Failed", na=False
-                )
-            ]
-        )
+        poor_trades = len(self.closed_trades[self.closed_trades["Trade_Quality"].str.contains("Poor|Failed", na=False)])
         if poor_trades / len(self.closed_trades) > 0.3:
             recommendations.append(
                 {
@@ -594,9 +481,7 @@ class TradeHistoryAnalyzer:
             )
 
         # Exit efficiency optimization
-        low_exit_eff = self.closed_trades[
-            self.closed_trades["Exit_Efficiency_Fixed"] < 0.5
-        ]
+        low_exit_eff = self.closed_trades[self.closed_trades["Exit_Efficiency_Fixed"] < 0.5]
         if len(low_exit_eff) > len(self.closed_trades) * 0.4:
             recommendations.append(
                 {
@@ -610,12 +495,10 @@ class TradeHistoryAnalyzer:
 
         return recommendations
 
-    def generate_comprehensive_analysis(self) -> Dict[str, Any]:
+    def generate_comprehensive_analysis(self) -> dict[str, Any]:
         """Generate the complete DASV Phase 2 analysis"""
         print("Starting DASV Phase 2 Comprehensive Analysis...")
-        print(
-            f"Analyzing {len(self.closed_trades)} closed trades and {len(self.active_trades)} active trades"
-        )
+        print(f"Analyzing {len(self.closed_trades)} closed trades and {len(self.active_trades)} active trades")
 
         # Execute all phases
         phase_2a = self.phase_2a_signal_effectiveness()
@@ -630,18 +513,14 @@ class TradeHistoryAnalyzer:
                 "analysis_type": "DASV_Phase_2_Comprehensive",
                 "execution_timestamp": self.analysis_timestamp,
                 "protocol_version": "DASV_Phase_2.1",
-                "data_source": self.discovery_data["authoritative_trade_data"][
-                    "csv_file_path"
-                ],
+                "data_source": self.discovery_data["authoritative_trade_data"]["csv_file_path"],
                 "discovery_data_source": self.discovery_file_path,
             },
             "data_scope": {
                 "total_trades": len(self.csv_data),
                 "closed_trades_analyzed": len(self.closed_trades),
                 "active_trades_tracked": len(self.active_trades),
-                "strategies_analyzed": list(
-                    self.closed_trades["Strategy_Type"].unique()
-                ),
+                "strategies_analyzed": list(self.closed_trades["Strategy_Type"].unique()),
                 "analysis_period": {
                     "start_date": self.closed_trades["Entry_Timestamp"].min(),
                     "end_date": self.closed_trades["Exit_Timestamp"].max(),
@@ -652,43 +531,31 @@ class TradeHistoryAnalyzer:
                 },
             },
             "confidence_assessment": {
-                "overall_confidence": self._calculate_confidence_score(
-                    len(self.closed_trades)
-                ),
+                "overall_confidence": self._calculate_confidence_score(len(self.closed_trades)),
                 "sma_strategy_confidence": self._calculate_confidence_score(
-                    len(
-                        self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"]
-                    )
+                    len(self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"])
                 ),
                 "ema_strategy_confidence": self._calculate_confidence_score(
-                    len(
-                        self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"]
-                    )
+                    len(self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"])
                 ),
-                "statistical_significance": (
-                    "medium" if len(self.closed_trades) >= 30 else "low"
-                ),
+                "statistical_significance": ("medium" if len(self.closed_trades) >= 30 else "low"),
             },
             "phase_2a_signal_effectiveness": phase_2a,
             "phase_2b_statistical_performance": phase_2b,
             "phase_2c_pattern_recognition": phase_2c,
             "phase_2d_risk_assessment": phase_2d,
-            "summary_insights": self._generate_summary_insights(
-                phase_2a, phase_2b, phase_2c, phase_2d
-            ),
+            "summary_insights": self._generate_summary_insights(phase_2a, phase_2b, phase_2c, phase_2d),
             "validation_checks": self._perform_validation_checks(),
         }
 
         return analysis
 
     def _generate_summary_insights(
-        self, phase_2a: Dict, phase_2b: Dict, phase_2c: Dict, phase_2d: Dict
-    ) -> Dict[str, Any]:
+        self, phase_2a: dict, phase_2b: dict, phase_2c: dict, phase_2d: dict
+    ) -> dict[str, Any]:
         """Generate high-level summary insights"""
         total_pnl = self.closed_trades["PnL"].sum()
-        win_rate = len(self.closed_trades[self.closed_trades["PnL"] > 0]) / len(
-            self.closed_trades
-        )
+        win_rate = len(self.closed_trades[self.closed_trades["PnL"] > 0]) / len(self.closed_trades)
 
         return {
             "key_performance_metrics": {
@@ -701,84 +568,56 @@ class TradeHistoryAnalyzer:
             "strategy_insights": {
                 "dominant_strategy": (
                     "SMA"
-                    if len(
-                        self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"]
-                    )
-                    > len(
-                        self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"]
-                    )
+                    if len(self.closed_trades[self.closed_trades["Strategy_Type"] == "SMA"])
+                    > len(self.closed_trades[self.closed_trades["Strategy_Type"] == "EMA"])
                     else "EMA"
                 ),
                 "best_performing_strategy": (
                     max(
                         phase_2a["strategy_effectiveness"].keys(),
-                        key=lambda x: phase_2a["strategy_effectiveness"][x].get(
-                            "total_pnl", 0
-                        ),
+                        key=lambda x: phase_2a["strategy_effectiveness"][x].get("total_pnl", 0),
                     )
                     if phase_2a["strategy_effectiveness"]
                     else None
                 ),
-                "strategy_diversification": len(
-                    self.closed_trades["Strategy_Type"].unique()
-                ),
+                "strategy_diversification": len(self.closed_trades["Strategy_Type"].unique()),
             },
             "risk_insights": {
                 "concentration_risk_level": (
                     "high"
-                    if phase_2d["concentration_risk"]["ticker_concentration"][
-                        "concentration_ratio"
-                    ]
-                    > 0.2
+                    if phase_2d["concentration_risk"]["ticker_concentration"]["concentration_ratio"] > 0.2
                     else "moderate"
                 ),
                 "tail_risk_assessment": (
-                    "high"
-                    if phase_2d["portfolio_risk_metrics"]["value_at_risk"]["var_95"]
-                    < -0.1
-                    else "moderate"
+                    "high" if phase_2d["portfolio_risk_metrics"]["value_at_risk"]["var_95"] < -0.1 else "moderate"
                 ),
                 "volatility_environment": (
-                    "high"
-                    if phase_2b["risk_adjusted_metrics"]["volatility"] > 0.15
-                    else "moderate"
+                    "high" if phase_2b["risk_adjusted_metrics"]["volatility"] > 0.15 else "moderate"
                 ),
             },
             "optimization_priority": {
                 "immediate_actions": len(
-                    [
-                        r
-                        for r in phase_2d["optimization_recommendations"]
-                        if r["priority"] == "high"
-                    ]
+                    [r for r in phase_2d["optimization_recommendations"] if r["priority"] == "high"]
                 ),
                 "medium_term_actions": len(
-                    [
-                        r
-                        for r in phase_2d["optimization_recommendations"]
-                        if r["priority"] == "medium"
-                    ]
+                    [r for r in phase_2d["optimization_recommendations"] if r["priority"] == "medium"]
                 ),
                 "total_recommendations": len(phase_2d["optimization_recommendations"]),
             },
         }
 
-    def _perform_validation_checks(self) -> Dict[str, Any]:
+    def _perform_validation_checks(self) -> dict[str, Any]:
         """Perform validation checks on the analysis"""
         checks = {
             "data_integrity": {
                 "pnl_calculation_check": abs(
-                    self.closed_trades["PnL"].sum()
-                    - self.discovery_data["performance_metrics"]["total_pnl"]
+                    self.closed_trades["PnL"].sum() - self.discovery_data["performance_metrics"]["total_pnl"]
                 )
                 < 0.01,
                 "trade_count_match": len(self.closed_trades)
                 == self.discovery_data["performance_metrics"]["total_closed_trades"],
                 "win_rate_consistency": abs(
-                    (
-                        len(self.closed_trades[self.closed_trades["PnL"] > 0])
-                        / len(self.closed_trades)
-                    )
+                    (len(self.closed_trades[self.closed_trades["PnL"] > 0]) / len(self.closed_trades))
                     - self.discovery_data["performance_metrics"]["win_rate"]
                 )
                 < 0.01,
@@ -790,9 +629,9 @@ class TradeHistoryAnalyzer:
             },
         }
 
-        checks["overall_validation_status"] = all(
-            checks["data_integrity"].values()
-        ) and all(checks["analysis_completeness"].values())
+        checks["overall_validation_status"] = all(checks["data_integrity"].values()) and all(
+            checks["analysis_completeness"].values()
+        )
 
         return checks
 
@@ -800,7 +639,9 @@ class TradeHistoryAnalyzer:
 def main():
     """Main execution function"""
     # Use the most recent discovery file
-    discovery_file = "/Users/colemorton/Projects/sensylate-command-system-enhancements/data/outputs/trade_history/discovery/live_signals_20250804.json"
+    discovery_file = (
+        "/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/discovery/live_signals_20250804.json"
+    )
 
     # Initialize analyzer
     analyzer = TradeHistoryAnalyzer(discovery_file)
@@ -809,9 +650,7 @@ def main():
     analysis_results = analyzer.generate_comprehensive_analysis()
 
     # Save results
-    output_dir = Path(
-        "/Users/colemorton/Projects/sensylate-command-system-enhancements/data/outputs/trade_history/analysis"
-    )
+    output_dir = Path("/Users/colemorton/Projects/colemorton.com/data/outputs/trade_history/analysis")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = output_dir / f"live_signals_{datetime.now().strftime('%Y%m%d')}.json"
@@ -822,18 +661,10 @@ def main():
     print("\n=== DASV Phase 2 Analysis Complete ===")
     print("Analysis saved to: {output_file}")
     print("Total trades analyzed: {len(analyzer.closed_trades)}")
-    print(
-        f"Overall confidence: {analysis_results['confidence_assessment']['overall_confidence']:.2f}"
-    )
-    print(
-        f"Total PnL: ${analysis_results['summary_insights']['key_performance_metrics']['total_realized_pnl']:.2f}"
-    )
-    print(
-        f"Win Rate: {analysis_results['summary_insights']['key_performance_metrics']['overall_win_rate']:.1%}"
-    )
-    print(
-        f"Sharpe Ratio: {analysis_results['summary_insights']['key_performance_metrics']['sharpe_ratio']:.3f}"
-    )
+    print(f"Overall confidence: {analysis_results['confidence_assessment']['overall_confidence']:.2f}")
+    print(f"Total PnL: ${analysis_results['summary_insights']['key_performance_metrics']['total_realized_pnl']:.2f}")
+    print(f"Win Rate: {analysis_results['summary_insights']['key_performance_metrics']['overall_win_rate']:.1%}")
+    print(f"Sharpe Ratio: {analysis_results['summary_insights']['key_performance_metrics']['sharpe_ratio']:.3f}")
     print(
         f"Optimization Recommendations: {analysis_results['summary_insights']['optimization_priority']['total_recommendations']}"
     )

@@ -370,7 +370,7 @@ export class PhotoBoothE2EHelper {
         );
         console.log("✅ Dashboard loading completed");
       }
-    } catch (e) {
+    } catch {
       console.log("⚠️ Loading completion check failed, proceeding...");
     }
 
@@ -525,7 +525,7 @@ export class PhotoBoothE2EHelper {
         if (!page.isClosed()) {
           await page.close();
         }
-      } catch (e) {
+      } catch {
         // Silently handle page closure errors
       }
     }
@@ -606,7 +606,7 @@ export class PhotoBoothE2EHelper {
         }
 
         await this.sleep(500);
-      } catch (e) {
+      } catch {
         await this.sleep(500);
       }
     }

@@ -11,8 +11,8 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
+
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -20,7 +20,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fixtures.test_utils import (
     BitcoinCLITestScenarios,
-    BitcoinTestFixtures,
     CLIMockingUtilities,
 )
 
@@ -37,9 +36,7 @@ class TestBitcoinCLIMocking(unittest.TestCase):
     def test_mempool_space_fees_cli_success(self, mock_subprocess):
         """Test successful mempool.space fees CLI command with subprocess mocking"""
         # Mock successful CLI execution
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.mempool_space_fee_estimates_success()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.mempool_space_fee_estimates_success()
 
         # Simulate CLI command execution
         cmd = [
@@ -63,9 +60,7 @@ class TestBitcoinCLIMocking(unittest.TestCase):
     @patch("subprocess.run")
     def test_blockchain_com_latest_block_cli_success(self, mock_subprocess):
         """Test successful blockchain.com latest block CLI command"""
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.blockchain_com_latest_block_success()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.blockchain_com_latest_block_success()
 
         cmd = [
             "python",
@@ -87,9 +82,7 @@ class TestBitcoinCLIMocking(unittest.TestCase):
     @patch("subprocess.run")
     def test_alternative_me_fear_greed_cli_success(self, mock_subprocess):
         """Test successful alternative.me fear & greed CLI command"""
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.alternative_me_fear_greed_success()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.alternative_me_fear_greed_success()
 
         cmd = [
             "python",
@@ -113,9 +106,7 @@ class TestBitcoinCLIMocking(unittest.TestCase):
     @patch("subprocess.run")
     def test_binance_price_ticker_cli_success(self, mock_subprocess):
         """Test successful binance price ticker CLI command"""
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.binance_price_ticker_success()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.binance_price_ticker_success()
 
         cmd = [
             "python",
@@ -141,9 +132,7 @@ class TestBitcoinCLIMocking(unittest.TestCase):
     @patch("subprocess.run")
     def test_bitcoin_network_stats_overview_cli_success(self, mock_subprocess):
         """Test successful bitcoin network stats overview CLI command"""
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.bitcoin_network_stats_overview_success()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.bitcoin_network_stats_overview_success()
 
         cmd = [
             "python",
@@ -183,9 +172,7 @@ class TestBitcoinCLIErrorScenarios(unittest.TestCase):
     @patch("subprocess.run")
     def test_network_connection_error_handling(self, mock_subprocess):
         """Test CLI handling of network connection errors"""
-        mock_subprocess.return_value = (
-            BitcoinCLITestScenarios.network_connection_error()
-        )
+        mock_subprocess.return_value = BitcoinCLITestScenarios.network_connection_error()
 
         cmd = ["python", "blockchain_com_cli.py", "latest-block", "--env", "test"]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -225,9 +212,7 @@ class TestBitcoinCLIHealthChecks(unittest.TestCase):
         for service_name in self.bitcoin_services:
             with self.subTest(service=service_name):
                 # Mock successful health check
-                mock_subprocess.return_value = (
-                    CLIMockingUtilities.mock_cli_health_check_success(service_name)
-                )
+                mock_subprocess.return_value = CLIMockingUtilities.mock_cli_health_check_success(service_name)
 
                 cmd = ["python", f"{service_name}_cli.py", "health", "--env", "test"]
                 result = subprocess.run(cmd, capture_output=True, text=True)
@@ -238,9 +223,7 @@ class TestBitcoinCLIHealthChecks(unittest.TestCase):
                 success_indicators = ["healthy", "success", service_name]
                 output_content = result.stdout.lower()
 
-                has_success_indicator = any(
-                    indicator in output_content for indicator in success_indicators
-                )
+                has_success_indicator = any(indicator in output_content for indicator in success_indicators)
                 self.assertTrue(
                     has_success_indicator,
                     f"No success indicator found for {service_name}",
@@ -257,9 +240,7 @@ class TestBitcoinCLIConfigManagement(unittest.TestCase):
 
         for service_name in services:
             with self.subTest(service=service_name):
-                mock_subprocess.return_value = (
-                    CLIMockingUtilities.mock_cli_config_output(service_name)
-                )
+                mock_subprocess.return_value = CLIMockingUtilities.mock_cli_config_output(service_name)
 
                 cmd = ["python", f"{service_name}_cli.py", "config", "--env", "test"]
                 result = subprocess.run(cmd, capture_output=True, text=True)
@@ -291,27 +272,15 @@ class TestBitcoinCLIOutputFormats(unittest.TestCase):
             with self.subTest(cli=cli_script, command=command):
                 # Mock appropriate successful response based on CLI
                 if "mempool_space" in cli_script:
-                    mock_subprocess.return_value = (
-                        BitcoinCLITestScenarios.mempool_space_fee_estimates_success()
-                    )
+                    mock_subprocess.return_value = BitcoinCLITestScenarios.mempool_space_fee_estimates_success()
                 elif "blockchain_com" in cli_script:
-                    mock_subprocess.return_value = (
-                        BitcoinCLITestScenarios.blockchain_com_latest_block_success()
-                    )
+                    mock_subprocess.return_value = BitcoinCLITestScenarios.blockchain_com_latest_block_success()
                 elif "alternative_me" in cli_script:
-                    mock_subprocess.return_value = (
-                        BitcoinCLITestScenarios.alternative_me_fear_greed_success()
-                    )
+                    mock_subprocess.return_value = BitcoinCLITestScenarios.alternative_me_fear_greed_success()
                 elif "binance_api" in cli_script:
-                    mock_subprocess.return_value = (
-                        BitcoinCLITestScenarios.binance_price_ticker_success()
-                    )
+                    mock_subprocess.return_value = BitcoinCLITestScenarios.binance_price_ticker_success()
 
-                cmd_parts = (
-                    ["python", cli_script]
-                    + command.split()
-                    + ["--output-format", "json", "--env", "test"]
-                )
+                cmd_parts = ["python", cli_script] + command.split() + ["--output-format", "json", "--env", "test"]
                 result = subprocess.run(cmd_parts, capture_output=True, text=True)
 
                 self.assertEqual(result.returncode, 0)
@@ -320,9 +289,7 @@ class TestBitcoinCLIOutputFormats(unittest.TestCase):
                 try:
                     output_data = json.loads(result.stdout)
                     for field in expected_fields:
-                        self.assertIn(
-                            field, output_data, f"Missing field {field} in {cli_script}"
-                        )
+                        self.assertIn(field, output_data, f"Missing field {field} in {cli_script}")
                 except json.JSONDecodeError:
                     self.fail(f"{cli_script} produced invalid JSON output")
 

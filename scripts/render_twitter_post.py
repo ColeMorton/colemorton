@@ -10,13 +10,11 @@ def render_twitter_post(ticker, date):
 
     # Load data from metadata
     metadata_file = f"data/outputs/twitter/post_strategy/{ticker}_{date}_metadata.json"
-    with open(metadata_file, "r") as f:
+    with open(metadata_file) as f:
         metadata = json.load(f)
 
     # Set up Jinja2 environment with autoescape for security
-    env = Environment(
-        loader=FileSystemLoader("scripts/templates/twitter/"), autoescape=True
-    )
+    env = Environment(loader=FileSystemLoader("scripts/templates/twitter/"), autoescape=True)
 
     # Prepare context for template
     context = {
@@ -41,9 +39,7 @@ def render_twitter_post(ticker, date):
             "avg_trade_length": metadata["performance_metrics"]["avg_trade_length"],
             "expectancy": metadata["performance_metrics"]["expectancy"],
             "current_month": metadata["seasonality"]["current_month"],
-            "current_month_performance": metadata["seasonality"][
-                "current_month_performance"
-            ],
+            "current_month_performance": metadata["seasonality"]["current_month_performance"],
             "best_months": metadata["seasonality"]["best_months"],
             "worst_months": metadata["seasonality"]["worst_months"],
             "current_price": metadata["market_data"]["current_price"],
@@ -123,6 +119,6 @@ if __name__ == "__main__":
     try:
         content = render_twitter_post(ticker, date)
         print(content)
-    except Exception as e:
+    except Exception:
         print("Error rendering Twitter post: {e}")
         sys.exit(1)

@@ -15,6 +15,7 @@ import logging
 import sys
 from pathlib import Path
 
+
 # Add utils directory to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
 sys.path.insert(0, str(Path(__file__).parent / "services"))
@@ -22,10 +23,9 @@ sys.path.insert(0, str(Path(__file__).parent / "services"))
 from twitter_validation_orchestrator import create_twitter_validation_orchestrator
 from validation_monitoring_service import create_validation_monitoring_service
 
+
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -44,12 +44,14 @@ def test_enhanced_validation_system():
         monitor = create_validation_monitoring_service()
         print("   ✓ Orchestrator initialized")
         print("   ✓ Monitoring service initialized")
-    except Exception as e:
+    except Exception:
         print("   ✗ Service initialization failed: {e}")
         return False
 
     # Test post path (the problematic TSLA_vs_NIO post)
-    post_path = "/Users/colemorton/Projects/sensylate/data/outputs/twitter/fundamental_analysis/TSLA_vs_NIO_20250819.md"
+    post_path = (
+        "/Users/colemorton/Projects/colemorton/data/outputs/twitter/fundamental_analysis/TSLA_vs_NIO_20250819.md"
+    )
 
     print("\n2. Testing Enhanced Validation Pipeline...")
     print("   Target: {Path(post_path).name}")
@@ -60,26 +62,18 @@ def test_enhanced_validation_system():
 
         metadata = {"ticker": "TSLA_vs_NIO", "analysis_type": "comparative_analysis"}
 
-        result = orchestrator.validate_twitter_post(
-            post_path=post_path, metadata=metadata
-        )
+        result = orchestrator.validate_twitter_post(post_path=post_path, metadata=metadata)
 
-        print(
-            f"   ✓ Validation completed in {result.overall_assessment['validation_time_seconds']:.2f}s"
-        )
+        print(f"   ✓ Validation completed in {result.overall_assessment['validation_time_seconds']:.2f}s")
 
         # Track event for SLA monitoring
         monitor.track_validation_event(result)
 
         print("\n3. Enhanced Validation Results:")
-        print(
-            f"   Overall Reliability Score: {result.overall_reliability_score:.1f}/10.0"
-        )
+        print(f"   Overall Reliability Score: {result.overall_reliability_score:.1f}/10.0")
         print("   Ready for Publication: {result.ready_for_publication}")
         print("   Blocking Issues Present: {result.is_blocking}")
-        print(
-            f"   SLA Compliance: {result.overall_assessment.get('sla_compliance', 'Unknown')}"
-        )
+        print(f"   SLA Compliance: {result.overall_assessment.get('sla_compliance', 'Unknown')}")
 
         # Display real-time validation results
         rt_validation = result.real_time_validation
@@ -105,15 +99,9 @@ def test_enhanced_validation_system():
             print("6. Automated Correction Engine:")
             corrections = orchestrator.generate_corrections(result)
 
-            print(
-                f"   Automated Corrections Available: {len(corrections['automated_corrections'])}"
-            )
-            print(
-                f"   Manual Review Required: {len(corrections['manual_review_required'])}"
-            )
-            print(
-                f"   Correction Confidence: {corrections['correction_confidence']:.1%}"
-            )
+            print(f"   Automated Corrections Available: {len(corrections['automated_corrections'])}")
+            print(f"   Manual Review Required: {len(corrections['manual_review_required'])}")
+            print(f"   Correction Confidence: {corrections['correction_confidence']:.1%}")
 
             if corrections["automated_corrections"]:
                 print("\n   High-Confidence Automated Corrections:")
@@ -124,13 +112,9 @@ def test_enhanced_validation_system():
             # Save corrected content for demonstration
             if corrections["corrected_content"] != "":
                 corrected_path = post_path.replace(".md", "_corrected.md")
-                success = orchestrator.save_corrected_content(
-                    corrections, corrected_path
-                )
+                success = orchestrator.save_corrected_content(corrections, corrected_path)
                 if success:
-                    print(
-                        f"   ✓ Corrected content saved to: {Path(corrected_path).name}"
-                    )
+                    print(f"   ✓ Corrected content saved to: {Path(corrected_path).name}")
 
         # Display SLA monitoring results
         print("\n7. SLA Monitoring & Performance:")
@@ -139,11 +123,7 @@ def test_enhanced_validation_system():
 
         sla_breakdown = sla_status["sla_breakdown"]
         for metric, data in sla_breakdown.items():
-            status_icon = (
-                "✓"
-                if data["status"] == "healthy"
-                else ("⚠" if data["status"] == "degraded" else "✗")
-            )
+            status_icon = "✓" if data["status"] == "healthy" else ("⚠" if data["status"] == "degraded" else "✗")
             print(
                 f"   {status_icon} {metric.replace('_', ' ').title()}: {data['current_value']:.1f} {data['unit']} ({data['status']})"
             )
@@ -160,25 +140,15 @@ def test_enhanced_validation_system():
             print("\n8. Performance Metrics:")
             print("   Average Validation Time: {perf['average_time_seconds']:.2f}s")
             print("   P95 Validation Time: {perf['p95_time_seconds']:.2f}s")
-            print(
-                f"   Data Freshness P95: {performance['data_freshness']['p95_hours']:.1f}h"
-            )
+            print(f"   Data Freshness P95: {performance['data_freshness']['p95_hours']:.1f}h")
 
         print("\n9. System Behavior Analysis:")
         if result.is_blocking:
-            print(
-                "   ✓ FAIL-FAST LOGIC WORKING: Critical issues correctly blocked publication"
-            )
-            print(
-                "   ✓ AUTOMATED CORRECTIONS: High-confidence fixes generated for immediate application"
-            )
-            print(
-                "   ✓ This demonstrates the fix for the original TSLA_vs_NIO validation issues"
-            )
+            print("   ✓ FAIL-FAST LOGIC WORKING: Critical issues correctly blocked publication")
+            print("   ✓ AUTOMATED CORRECTIONS: High-confidence fixes generated for immediate application")
+            print("   ✓ This demonstrates the fix for the original TSLA_vs_NIO validation issues")
         else:
-            print(
-                "   ✓ VALIDATION PASSED: Content meets institutional quality standards"
-            )
+            print("   ✓ VALIDATION PASSED: Content meets institutional quality standards")
 
         print("   ✓ REAL-TIME INTEGRATION: Live market data validation completed")
         print("   ✓ SLA MONITORING: Performance and freshness tracking active")
@@ -190,7 +160,7 @@ def test_enhanced_validation_system():
         print("   → Creating mock validation test instead...")
         return test_mock_validation_scenario(orchestrator, monitor)
 
-    except Exception as e:
+    except Exception:
         print("   ✗ Validation failed: {e}")
         logger.exception("Validation test failed")
         return False
@@ -233,14 +203,10 @@ def test_mock_validation_scenario(orchestrator, monitor):
 
         for issue in validation_result.issues:
             severity_icon = "🚫" if issue.is_blocking else "⚠️"
-            print(
-                f"   {severity_icon} {issue.severity.value.upper()}: {issue.description}"
-            )
+            print(f"   {severity_icon} {issue.severity.value.upper()}: {issue.description}")
 
         if validation_result.is_blocking:
-            print(
-                "   ✓ FAIL-FAST WORKING: Critical financial accuracy issues correctly blocked"
-            )
+            print("   ✓ FAIL-FAST WORKING: Critical financial accuracy issues correctly blocked")
 
         # Test SLA monitoring
         print("\n   → Testing SLA monitoring with mock event...")
@@ -263,12 +229,10 @@ def test_mock_validation_scenario(orchestrator, monitor):
         sla_status = monitor.get_sla_status()
         print("   SLA Status: {sla_status['overall_sla_status']}")
 
-        print(
-            "\n   ✓ MOCK VALIDATION SUCCESSFUL: All enhanced systems working correctly"
-        )
+        print("\n   ✓ MOCK VALIDATION SUCCESSFUL: All enhanced systems working correctly")
         return True
 
-    except Exception as e:
+    except Exception:
         print("   ✗ Mock validation failed: {e}")
         return False
 

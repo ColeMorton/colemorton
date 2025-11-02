@@ -10,7 +10,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -34,7 +34,7 @@ class CacheStats:
     def total_requests(self) -> int:
         return self.hits + self.misses
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "hits": self.hits,
             "misses": self.misses,
@@ -51,16 +51,14 @@ class UnifiedCacheManager:
     Production-grade cache manager with unified configuration
     """
 
-    def __init__(self, service_name: str, config_path: Optional[str] = None):
+    def __init__(self, service_name: str, config_path: str | None = None):
         self.service_name = service_name
         self.config = self._load_config(config_path)
         self.cache_dir = Path(self.config["global_cache"]["directory"]) / service_name
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Service-specific TTL
-        self.ttl = self.config["service_ttl_settings"].get(
-            service_name, self.config["service_ttl_settings"]["default"]
-        )
+        self.ttl = self.config["service_ttl_settings"].get(service_name, self.config["service_ttl_settings"]["default"])
 
         # Performance tracking
         self.stats = CacheStats()
@@ -69,31 +67,23 @@ class UnifiedCacheManager:
         # Configuration
         self.max_size_mb = self.config["global_cache"]["max_size_mb"]
         self.compression_enabled = self.config["global_cache"]["compression_enabled"]
-        self.monitoring_enabled = self.config["cache_optimization"][
-            "monitoring_enabled"
-        ]
+        self.monitoring_enabled = self.config["cache_optimization"]["monitoring_enabled"]
 
-        self.logger.info(
-            f"Cache manager initialized for {service_name} with {self.ttl}s TTL"
-        )
+        self.logger.info(f"Cache manager initialized for {service_name} with {self.ttl}s TTL")
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
         """Load unified cache configuration"""
         if config_path is None:
-            config_path = (
-                Path(__file__).parent.parent.parent / "config" / "cache_config.yaml"
-            )
+            config_path = Path(__file__).parent.parent.parent / "config" / "cache_config.yaml"
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            self.logger.warning(
-                f"Cache config not found at {config_path}, using defaults"
-            )
+            self.logger.warning(f"Cache config not found at {config_path}, using defaults")
             return self._default_config()
 
-    def _default_config(self) -> Dict[str, Any]:
+    def _default_config(self) -> dict[str, Any]:
         """Default configuration if config file not found"""
         return {
             "global_cache": {
@@ -116,9 +106,7 @@ class UnifiedCacheManager:
         logger = logging.getLogger(f"cache.{self.service_name}")
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
@@ -129,7 +117,7 @@ class UnifiedCacheManager:
         hash_key = hashlib.md5(f"{self.service_name}_{key}".encode()).hexdigest()
         return self.cache_dir / f"{hash_key}.json"
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> dict[str, Any] | None:
         """Retrieve cached data if not expired"""
         if not self.config["global_cache"]["enabled"]:
             self.stats.misses += 1
@@ -141,7 +129,7 @@ class UnifiedCacheManager:
             return None
 
         try:
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 cached_data = json.load(f)
 
             # Check if cache is expired
@@ -165,7 +153,7 @@ class UnifiedCacheManager:
             self.logger.warning(f"Cache corruption detected for {key}: {e}")
             return None
 
-    def set(self, key: str, data: Dict[str, Any]) -> None:
+    def set(self, key: str, data: dict[str, Any]) -> None:
         """Store data in cache with timestamp"""
         if not self.config["global_cache"]["enabled"]:
             return
@@ -200,7 +188,7 @@ class UnifiedCacheManager:
         expired_count = 0
         for cache_file in self.cache_dir.glob("*.json"):
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     cached_data = json.load(f)
                 cached_time = datetime.fromisoformat(cached_data["timestamp"])
                 if datetime.now() - cached_time > timedelta(seconds=self.ttl):
@@ -220,7 +208,7 @@ class UnifiedCacheManager:
         total_size = sum(f.stat().st_size for f in self.cache_dir.glob("*.json"))
         return total_size / (1024 * 1024)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get comprehensive cache statistics"""
         return {
             "service_name": self.service_name,
@@ -230,7 +218,7 @@ class UnifiedCacheManager:
             **self.stats.to_dict(),
         }
 
-    def warm_cache(self, warm_keys: List[str], warm_function: callable) -> None:
+    def warm_cache(self, warm_keys: list[str], warm_function: callable) -> None:
         """Proactively warm cache with frequently accessed data"""
         if not self.config["cache_optimization"].get("warm_cache_enabled", False):
             return
@@ -247,9 +235,7 @@ class UnifiedCacheManager:
             except Exception as e:
                 self.logger.warning(f"Failed to warm cache for {key}: {e}")
 
-        self.logger.info(
-            f"Cache warming completed: {warmed}/{len(warm_keys)} keys warmed"
-        )
+        self.logger.info(f"Cache warming completed: {warmed}/{len(warm_keys)} keys warmed")
 
     def log_stats(self) -> None:
         """Log current cache statistics"""
@@ -258,9 +244,7 @@ class UnifiedCacheManager:
             self.logger.info(f"Cache stats: {stats}")
 
 
-def create_cache_manager(
-    service_name: str, config_path: Optional[str] = None
-) -> UnifiedCacheManager:
+def create_cache_manager(service_name: str, config_path: str | None = None) -> UnifiedCacheManager:
     """Factory function to create cache manager instances"""
     return UnifiedCacheManager(service_name, config_path)
 

@@ -9,7 +9,7 @@ Converts hardcoded paths to {VARIABLE} syntax across all 47 command files.
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -59,7 +59,7 @@ class CommandReferenceStandardizer:
                 return True
         return False
 
-    def standardize_file(self, file_path: Path) -> Tuple[bool, List[str]]:
+    def standardize_file(self, file_path: Path) -> tuple[bool, list[str]]:
         """
         Standardize a single command file
 
@@ -70,9 +70,9 @@ class CommandReferenceStandardizer:
             return False, []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:
+        except Exception:
             print("Error reading {file_path}: {e}")
             return False, []
 
@@ -89,9 +89,7 @@ class CommandReferenceStandardizer:
                 new_lines = []
 
                 for line in lines:
-                    if re.search(pattern, line) and not self._should_preserve_line(
-                        line
-                    ):
+                    if re.search(pattern, line) and not self._should_preserve_line(line):
                         old_line = line
                         new_line = re.sub(pattern, replacement, line)
                         if old_line != new_line:
@@ -110,13 +108,13 @@ class CommandReferenceStandardizer:
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 return True, changes_made
-            except Exception as e:
+            except Exception:
                 print("Error writing {file_path}: {e}")
                 return False, []
 
         return False, []
 
-    def standardize_all_commands(self) -> Dict[str, List[str]]:
+    def standardize_all_commands(self) -> dict[str, list[str]]:
         """
         Standardize all command files
 
@@ -154,7 +152,7 @@ class CommandReferenceStandardizer:
 
         return results
 
-    def validate_standardization(self) -> Dict[str, List[str]]:
+    def validate_standardization(self) -> dict[str, list[str]]:
         """
         Validate that all path references are now standardized
 
@@ -212,7 +210,7 @@ class CommandReferenceStandardizer:
             file_issues = []
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
                 for pattern, description in problem_patterns:
@@ -224,7 +222,7 @@ class CommandReferenceStandardizer:
                     relative_path = file_path.relative_to(self.commands_dir)
                     issues[str(relative_path)] = file_issues
 
-            except Exception as e:
+            except Exception:
                 print("Error validating {file_path}: {e}")
 
         return issues
@@ -250,9 +248,7 @@ class CommandReferenceStandardizer:
             report.append("- `{DATA_OUTPUTS}/` for output directories")
             report.append("- `{SCHEMAS_BASE}/` for schema paths")
         else:
-            report.append(
-                f"❌ **Found {len(issues)} files with inconsistent references:**"
-            )
+            report.append(f"❌ **Found {len(issues)} files with inconsistent references:**")
             report.append("")
 
             for file_path, file_issues in issues.items():
@@ -284,9 +280,7 @@ def main():
         action="store_true",
         help="Generate and display standardization report",
     )
-    parser.add_argument(
-        "--commands-dir", help="Path to commands directory (default: .claude/commands)"
-    )
+    parser.add_argument("--commands-dir", help="Path to commands directory (default: .claude/commands)")
 
     args = parser.parse_args()
 

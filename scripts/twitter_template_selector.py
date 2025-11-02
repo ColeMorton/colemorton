@@ -9,17 +9,15 @@ Advanced template selection system with:
 - Selection validation and optimization
 """
 
-import json
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 
 class TwitterTemplateSelector:
     """Advanced template selection and optimization system"""
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         """Initialize the template selector"""
         self.templates_dir = templates_dir or Path(__file__).parent / "templates"
 
@@ -56,9 +54,9 @@ class TwitterTemplateSelector:
     def select_optimal_template(
         self,
         content_type: str,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[str, Dict[str, Any]]:
+        data: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> tuple[str, dict[str, Any]]:
         """
         Select the optimal template based on data characteristics and context
 
@@ -100,7 +98,7 @@ class TwitterTemplateSelector:
 
         return selected_template, selection_metadata
 
-    def _initialize_selection_rules(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    def _initialize_selection_rules(self) -> dict[str, dict[str, dict[str, Any]]]:
         """Initialize template selection rules"""
 
         return {
@@ -268,9 +266,9 @@ class TwitterTemplateSelector:
 
     def _calculate_template_score(
         self,
-        data: Dict[str, Any],
-        rule: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any],
+        rule: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> float:
         """Calculate template selection score based on data and rules"""
 
@@ -279,9 +277,7 @@ class TwitterTemplateSelector:
 
         # Check required indicators
         required_indicators = rule.get("required_indicators", [])
-        indicators_found = sum(
-            1 for indicator in required_indicators if data.get(indicator)
-        )
+        indicators_found = sum(1 for indicator in required_indicators if data.get(indicator))
 
         if required_indicators:
             indicator_score = indicators_found / len(required_indicators)
@@ -317,9 +313,7 @@ class TwitterTemplateSelector:
 
         return min(1.0, max(0.0, normalized_score))
 
-    def _evaluate_criterion(
-        self, data: Dict[str, Any], criterion: str, min_threshold: float
-    ) -> float:
+    def _evaluate_criterion(self, data: dict[str, Any], criterion: str, min_threshold: float) -> float:
         """Evaluate a specific scoring criterion"""
 
         if criterion == "valuation_gap":
@@ -332,56 +326,32 @@ class TwitterTemplateSelector:
         elif criterion == "method_confidence":
             methods = data.get("valuation_methods", [])
             if methods:
-                avg_confidence = sum(m.get("confidence", 0) for m in methods) / len(
-                    methods
-                )
-                return (
-                    1.0
-                    if avg_confidence >= min_threshold
-                    else avg_confidence / min_threshold
-                )
+                avg_confidence = sum(m.get("confidence", 0) for m in methods) / len(methods)
+                return 1.0 if avg_confidence >= min_threshold else avg_confidence / min_threshold
 
         elif criterion == "catalyst_count":
             catalysts = data.get("catalysts", [])
-            catalyst_count = (
-                len(catalysts) if catalysts else data.get("catalyst_count", 0)
-            )
-            return (
-                1.0
-                if catalyst_count >= min_threshold
-                else catalyst_count / min_threshold
-            )
+            catalyst_count = len(catalysts) if catalysts else data.get("catalyst_count", 0)
+            return 1.0 if catalyst_count >= min_threshold else catalyst_count / min_threshold
 
         elif criterion == "catalyst_probability":
             catalysts = data.get("catalysts", [])
             if catalysts:
-                avg_prob = sum(c.get("probability", 0) for c in catalysts) / len(
-                    catalysts
-                )
+                avg_prob = sum(c.get("probability", 0) for c in catalysts) / len(catalysts)
                 return 1.0 if avg_prob >= min_threshold else avg_prob / min_threshold
 
         elif criterion == "moat_strength":
             moat_strength = data.get("moat_strength", 0)
-            return (
-                1.0 if moat_strength >= min_threshold else moat_strength / min_threshold
-            )
+            return 1.0 if moat_strength >= min_threshold else moat_strength / min_threshold
 
         elif criterion == "advantage_count":
             advantages = data.get("competitive_advantages", [])
             advantage_count = len(advantages) if advantages else 0
-            return (
-                1.0
-                if advantage_count >= min_threshold
-                else advantage_count / min_threshold
-            )
+            return 1.0 if advantage_count >= min_threshold else advantage_count / min_threshold
 
         elif criterion == "contrarian_strength":
             contrarian_score = data.get("contrarian_score", 0)
-            return (
-                1.0
-                if contrarian_score >= min_threshold
-                else contrarian_score / min_threshold
-            )
+            return 1.0 if contrarian_score >= min_threshold else contrarian_score / min_threshold
 
         elif criterion == "mispricing_magnitude":
             mispricing = data.get("mispricing_percentage", 0)
@@ -389,56 +359,33 @@ class TwitterTemplateSelector:
 
         elif criterion == "financial_health_score":
             financial_score = data.get("financial_health_score", 0)
-            return (
-                1.0
-                if financial_score >= min_threshold
-                else financial_score / min_threshold
-            )
+            return 1.0 if financial_score >= min_threshold else financial_score / min_threshold
 
         elif criterion == "performance_strength":
             net_performance = data.get("net_performance", 0)
-            return (
-                1.0
-                if net_performance >= min_threshold
-                else max(0, net_performance / min_threshold)
-            )
+            return 1.0 if net_performance >= min_threshold else max(0, net_performance / min_threshold)
 
         elif criterion == "rotation_strength":
             rotation_score = data.get("rotation_score", 0)
-            return (
-                1.0
-                if rotation_score >= min_threshold
-                else rotation_score / min_threshold
-            )
+            return 1.0 if rotation_score >= min_threshold else rotation_score / min_threshold
 
         elif criterion == "performance_data_quality":
             quality_score = data.get("data_quality_score", 0)
-            return (
-                1.0 if quality_score >= min_threshold else quality_score / min_threshold
-            )
+            return 1.0 if quality_score >= min_threshold else quality_score / min_threshold
 
         # Default evaluation for other criteria
         criterion_value = data.get(criterion, 0)
         if isinstance(criterion_value, (int, float)):
-            return (
-                1.0
-                if criterion_value >= min_threshold
-                else criterion_value / min_threshold
-            )
-        elif isinstance(criterion_value, (list, dict)):
-            return (
-                1.0
-                if len(criterion_value) >= min_threshold
-                else len(criterion_value) / min_threshold
-            )
-        else:
-            return 1.0 if criterion_value else 0.0
+            return 1.0 if criterion_value >= min_threshold else criterion_value / min_threshold
+        if isinstance(criterion_value, (list, dict)):
+            return 1.0 if len(criterion_value) >= min_threshold else len(criterion_value) / min_threshold
+        return 1.0 if criterion_value else 0.0
 
     def _generate_selection_reason(
         self,
         selected_template: str,
-        template_scores: Dict[str, float],
-        rule: Dict[str, Any],
+        template_scores: dict[str, float],
+        rule: dict[str, Any],
     ) -> str:
         """Generate human-readable selection reason"""
 
@@ -458,19 +405,15 @@ class TwitterTemplateSelector:
         ]
 
         # Add comparison context
-        other_scores = [
-            f"{k}: {v:.2f}"
-            for k, v in template_scores.items()
-            if k != selected_template
-        ]
+        other_scores = [f"{k}: {v:.2f}" for k, v in template_scores.items() if k != selected_template]
         if other_scores:
             reason_parts.append(f"Alternatives: {', '.join(other_scores)}")
 
         return ". ".join(reason_parts)
 
     def validate_template_selection(
-        self, content_type: str, template_variant: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content_type: str, template_variant: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate that a template selection is appropriate"""
 
         if content_type not in self.selection_rules:
@@ -504,9 +447,7 @@ class TwitterTemplateSelector:
             "validation_timestamp": datetime.now().isoformat(),
         }
 
-    def get_template_recommendations(
-        self, content_type: str, data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def get_template_recommendations(self, content_type: str, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Get ranked template recommendations with explanations"""
 
         if content_type not in self.selection_rules:
@@ -519,9 +460,7 @@ class TwitterTemplateSelector:
             score = self._calculate_template_score(data, rule)
 
             # Generate recommendation explanation
-            explanation = self._generate_template_explanation(
-                template_variant, rule, data
-            )
+            explanation = self._generate_template_explanation(template_variant, rule, data)
 
             recommendations.append(
                 {
@@ -538,9 +477,7 @@ class TwitterTemplateSelector:
 
         return recommendations
 
-    def _generate_template_explanation(
-        self, template_variant: str, rule: Dict[str, Any], data: Dict[str, Any]
-    ) -> str:
+    def _generate_template_explanation(self, template_variant: str, rule: dict[str, Any], data: dict[str, Any]) -> str:
         """Generate explanation for why a template is recommended"""
 
         required_indicators = rule.get("required_indicators", [])
@@ -549,9 +486,7 @@ class TwitterTemplateSelector:
         explanation_parts = []
 
         if found_indicators:
-            explanation_parts.append(
-                f"Has {len(found_indicators)}/{len(required_indicators)} required indicators"
-            )
+            explanation_parts.append(f"Has {len(found_indicators)}/{len(required_indicators)} required indicators")
 
         # Add specific explanations based on template type
         if template_variant == "A_valuation":
@@ -572,15 +507,9 @@ class TwitterTemplateSelector:
             if data.get("financial_health"):
                 explanation_parts.append("Contains financial health analysis")
 
-        return (
-            ". ".join(explanation_parts)
-            if explanation_parts
-            else "General template match"
-        )
+        return ". ".join(explanation_parts) if explanation_parts else "General template match"
 
-    def update_template_performance(
-        self, template_variant: str, performance_metrics: Dict[str, Any]
-    ) -> None:
+    def update_template_performance(self, template_variant: str, performance_metrics: dict[str, Any]) -> None:
         """Update template performance tracking"""
 
         if template_variant not in self.template_performance:
@@ -590,7 +519,7 @@ class TwitterTemplateSelector:
             {"timestamp": datetime.now().isoformat(), "metrics": performance_metrics}
         )
 
-    def get_template_performance_analytics(self) -> Dict[str, Any]:
+    def get_template_performance_analytics(self) -> dict[str, Any]:
         """Get template performance analytics"""
 
         analytics = {}
@@ -608,9 +537,7 @@ class TwitterTemplateSelector:
             analytics[template_variant] = {
                 "usage_count": len(performance_data),
                 "average_metrics": avg_metrics,
-                "latest_performance": (
-                    performance_data[-1] if performance_data else None
-                ),
+                "latest_performance": (performance_data[-1] if performance_data else None),
             }
 
         return analytics

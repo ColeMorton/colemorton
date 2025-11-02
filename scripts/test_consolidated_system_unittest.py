@@ -8,14 +8,12 @@ Converted from utility script to proper unittest framework.
 
 import csv
 import json
-import os
 import shutil
 import sys
 import tempfile
 import unittest
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+
 
 # Add utils directory to path
 sys.path.insert(0, str(Path(__file__).parent / "utils"))
@@ -24,7 +22,6 @@ from historical_data_manager import (
     DataType,
     HistoricalDataManager,
     Timeframe,
-    create_historical_data_manager,
 )
 
 
@@ -102,14 +99,10 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
 
         # Check file structure
         expected_csv = self.test_dir / "stocks" / "TEST_CONSOLIDATED" / "daily.csv"
-        expected_meta = (
-            self.test_dir / "stocks" / "TEST_CONSOLIDATED" / "daily.meta.json"
-        )
+        expected_meta = self.test_dir / "stocks" / "TEST_CONSOLIDATED" / "daily.meta.json"
 
         self.assertTrue(expected_csv.exists(), f"CSV file should exist: {expected_csv}")
-        self.assertTrue(
-            expected_meta.exists(), f"Metadata file should exist: {expected_meta}"
-        )
+        self.assertTrue(expected_meta.exists(), f"Metadata file should exist: {expected_meta}")
 
         # Verify file has content
         csv_size = expected_csv.stat().st_size
@@ -199,9 +192,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
             timeframe=Timeframe.DAILY,
         )
 
-        self.assertEqual(
-            len(final_retrieved), 4, "Should have 4 unique records (3 + 1 new)"
-        )
+        self.assertEqual(len(final_retrieved), 4, "Should have 4 unique records (3 + 1 new)")
 
         # Verify dates are unique
         dates = [record["date"] for record in final_retrieved]
@@ -225,20 +216,14 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         actual_files = [f for f in all_files if f.is_file()]
 
         # Should have exactly 2 files (CSV + metadata)
-        self.assertEqual(
-            len(actual_files), 2, "Should create exactly 2 files in consolidated format"
-        )
+        self.assertEqual(len(actual_files), 2, "Should create exactly 2 files in consolidated format")
 
         # Calculate theoretical improvement
         old_structure_files = 3 * 2  # 3 periods × 2 files each (CSV + meta)
         new_structure_files = 2  # 1 CSV + 1 meta
 
-        reduction_percentage = (
-            (old_structure_files - new_structure_files) / old_structure_files * 100
-        )
-        self.assertGreaterEqual(
-            reduction_percentage, 60, "Should achieve at least 60% file reduction"
-        )
+        reduction_percentage = (old_structure_files - new_structure_files) / old_structure_files * 100
+        self.assertGreaterEqual(reduction_percentage, 60, "Should achieve at least 60% file reduction")
 
     def test_metadata_integrity(self):
         """Test metadata file integrity and content"""
@@ -256,7 +241,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         meta_path = self.test_dir / "stocks" / "TEST_CONSOLIDATED" / "daily.meta.json"
         self.assertTrue(meta_path.exists())
 
-        with open(meta_path, "r") as f:
+        with open(meta_path) as f:
             metadata = json.load(f)
 
         # Verify required fields
@@ -293,7 +278,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         csv_path = self.test_dir / "stocks" / "TEST_CONSOLIDATED" / "daily.csv"
         self.assertTrue(csv_path.exists())
 
-        with open(csv_path, "r") as f:
+        with open(csv_path) as f:
             reader = csv.DictReader(f)
             csv_records = list(reader)
 
@@ -311,9 +296,7 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
         ]
         first_record = csv_records[0]
         for header in expected_headers:
-            self.assertIn(
-                header, first_record, f"CSV missing required column: {header}"
-            )
+            self.assertIn(header, first_record, f"CSV missing required column: {header}")
 
         # Verify data types and values
         for record in csv_records:
@@ -350,12 +333,8 @@ class TestConsolidatedStorageSystem(unittest.TestCase):
                 self.assertTrue(success, f"Storage should succeed for {timeframe}")
 
                 # Verify correct file created
-                expected_path = (
-                    self.test_dir / "stocks" / "TEST_CONSOLIDATED" / expected_filename
-                )
-                self.assertTrue(
-                    expected_path.exists(), f"File should exist: {expected_path}"
-                )
+                expected_path = self.test_dir / "stocks" / "TEST_CONSOLIDATED" / expected_filename
+                self.assertTrue(expected_path.exists(), f"File should exist: {expected_path}")
 
 
 def run_test_suite():
@@ -377,9 +356,7 @@ def run_test_suite():
     print("   Failures: {len(test_results.failures)}")
     print("   Errors: {len(test_results.errors)}")
     success_rate = (
-        (test_results.testsRun - len(test_results.failures) - len(test_results.errors))
-        / test_results.testsRun
-        * 100
+        (test_results.testsRun - len(test_results.failures) - len(test_results.errors)) / test_results.testsRun * 100
     )
     print("   Success rate: {success_rate:.1f}%")
 

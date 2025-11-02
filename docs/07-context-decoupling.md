@@ -1,5 +1,8 @@
 # Decoupling context from Claude Commands creates architectures that grow gracefully
 
+**Version**: 2.0 | **Last Updated**: 2024-08-14 | **Status**: Reference
+**Authority**: Platform Architecture | **Audience**: Command Developers
+
 **The most effective way to decouple context from Claude Commands is through a layered architecture combining dependency injection, Model Context Protocol (MCP) integration, and explicit context providers.** This architectural pattern separates execution logic from environmental state, enabling commands to remain pure functions while contexts handle all external dependencies, configuration, and state management. Research across enterprise systems, CLI tools, and AI agent architectures reveals that **constructor injection paired with interface abstraction** provides the optimal balance of flexibility and maintainability. The key insight is treating context as a first-class architectural concern that flows through the system via explicit contracts rather than ambient state.
 
 ## Three patterns form the foundation of maintainable context systems

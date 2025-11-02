@@ -6,7 +6,7 @@
   "_documentation": {
     "_note": "This section provides comprehensive inline documentation for manual editing",
     "layout": "Defines 2x2 grid structure: top-left waterfall (50%), top-right 2x2 gauge grid (50%), bottom-left scatter (50%), bottom-right bar chart (50%)",
-    "color_scheme": "Sensylate brand colors: #26c6da (cyan/positive), #7e57c2 (purple/negative), #3179f5 (blue/neutral). NO red/green colors",
+    "color_scheme": "Colemorton brand colors: #26c6da (cyan/positive), #7e57c2 (purple/negative), #3179f5 (blue/neutral). NO red/green colors",
     "chart_definitions": "Individual chart configurations with data sources, positioning, colors, and behavior settings",
     "styling": "Visual parameters: Heebo fonts, 1600x1000 canvas, 140-180px margins, precise spacing ratios",
     "waterfall_prevention": "CRITICAL: prevent_totals=true prevents purple box anomaly in waterfall charts"
@@ -62,14 +62,14 @@
   },
 
   "color_scheme": {
-    "sensylate_palette": {
+    "colemorton_palette": {
       "primary_data": "#26c6da",
       "secondary_data": "#7e57c2",
       "tertiary_data": "#3179f5",
       "positive": "#26c6da",
       "negative": "#7e57c2",
       "neutral": "#3179f5",
-      "_doc": "Sensylate brand colors only - NO red/green allowed"
+      "_doc": "Colemorton brand colors only - NO red/green allowed"
     },
     "backgrounds": {
       "light": "#ffffff",

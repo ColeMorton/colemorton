@@ -9,7 +9,7 @@ chart_engine: "plotly"  # Options: "plotly" (default), "matplotlib" (fallback)
 
 # Plotly-specific Configuration
 plotly:
-  template: "sensylate_light"  # Default template: sensylate_light, sensylate_dark, sensylate_dashboard
+  template: "colemorton_light"  # Default template: colemorton_light, colemorton_dark, colemorton_dashboard
   high_dpi: true              # Enable high-DPI templates for export quality
   export:
     formats: ["png", "pdf", "svg"]  # Multiple export formats available
@@ -44,12 +44,12 @@ output:
   dpi: 300
   quality: "high"
 
-# Sensylate Design System Integration
+# Cole Morton Design System Integration
 design_system:
   # color_palette_path: Colors defined directly in this configuration
   # specification_path: Configuration defined directly in this file
 
-  # Chart colors from Sensylate palette
+  # Chart colors from Cole Morton palette
   colors:
     primary_data: "#26c6da"      # Cyan - primary data visualization
     secondary_data: "#7e57c2"    # Purple - secondary data visualization

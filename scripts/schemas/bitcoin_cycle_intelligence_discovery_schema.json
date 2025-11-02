@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sensylate.com/schemas/bitcoin_cycle_intelligence_discovery.json",
+  "$id": "https://colemorton.com/schemas/bitcoin_cycle_intelligence_discovery.json",
   "title": "Bitcoin Cycle Intelligence Discovery Schema",
   "description": "Comprehensive validation schema for Bitcoin cycle intelligence discovery JSON outputs from CLI-enhanced analyst framework",
   "type": "object",
